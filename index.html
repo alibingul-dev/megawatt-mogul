@@ -4580,7 +4580,7 @@ function update(dt){
   for(let i=floats.length-1;i>=0;i--)if(floats[i].life<=0)floats.splice(i,1);
   for(const k in pops){pops[k]-=dt*1.8;if(pops[k]<=0)delete pops[k];}
   const G=GOALS[S.goal];
-  if(G&&G.ok()){if(G.r)S.cash+=G.r;S.goal++;sfx.goal();toast(G.r?`Goal done: +₵${fmt(G.r)}`:'Goal done','good');}
+  if(G&&G.ok()){if(G.r)S.cash+=G.r;trackOnce('goal-'+String(S.goal+1).padStart(2,'0'));S.goal++;sfx.goal();toast(G.r?`Goal done: +₵${fmt(G.r)}`:'Goal done','good');}
   S.saveT=(S.saveT||0)+dt;if(S.saveT>30){S.saveT=0;save();}
   if(S.saleT>0){S.saleT-=dt;if(S.saleT<=0&&S.saleAcc>0){floatTxt(CITY.x,CITY.y-40,'+₵'+fmt(S.saleAcc));S.saleAcc=0;}}
 }
@@ -4601,6 +4601,7 @@ function onHour(h){
 }
 function completePad(p){
   sfx.build();S.paid[p.id]=0;padLock=p.id;
+  trackOnce('built-'+p.id+(p.kind==='upg'?'-lv'+(S.up[p.key]+1):''));
   if(p.kind==='build'){
     S.built[p.id]=true;
     if(p.type!=='battery')S.plants.push({id:p.id,type:p.type,x:p.x,y:p.y,pile:0,acc:0,broken:false});
@@ -5144,7 +5145,7 @@ function hud(dt){
 }
 
 /* ======================= CREW PANEL ======================= */
-function openCrew(){renderCrew();$('mCrew').classList.add('on');}
+function openCrew(){trackOnce('opened-crew-plan');renderCrew();$('mCrew').classList.add('on');}
 function renderCrew(){
   const vals=todayCurve(),lo=Math.min(...vals),hi=Math.max(...vals),avg=todayAvg();
   const r=$('minRange');r.min=0;r.max=Math.ceil(hi*1.1);r.value=S.crew.auto?avg.toFixed(1):S.crew.min;r.disabled=S.crew.auto;
@@ -5173,6 +5174,52 @@ $('crewClose').onclick=()=>$('mCrew').classList.remove('on');
 $('minRange').oninput=e=>{S.crew.min=+e.target.value;S.stats.planned++;renderCrewLive();};
 $('minAuto').onchange=e=>{S.crew.auto=e.target.checked;if(!S.crew.auto)S.crew.min=+todayAvg().toFixed(1);S.stats.planned++;renderCrew();};
 $('crewList').addEventListener('click',e=>{const b=e.target.closest('button[data-r]');if(!b||b.disabled)return;S.crew.roles[+b.dataset.h]=b.dataset.r;S.stats.planned++;helpers[+b.dataset.h].state='idle';sfx.pick();renderCrew();save();});
+
+
+/* ======================= ANALYTICS (GoatCounter, no cookies, public build only) ======================= */
+const GC_URL='https://megawattmogul.goatcounter.com/count';
+const GC_ON=/\.github\.io$/.test(location.hostname);
+const GC_DEBUG=/[?&]gcdebug/.test(location.search);
+const gcQueue=[];let gcReady=false;
+if(GC_ON){
+  const sc=document.createElement('script');sc.async=true;sc.src='https://gc.zgo.at/count.js';
+  sc.dataset.goatcounter=GC_URL;
+  sc.onload=()=>{gcReady=true;while(gcQueue.length)gcSend(gcQueue.shift());};
+  document.head.appendChild(sc);
+}
+function gcSend(name){try{window.goatcounter.count({path:'event/'+name,title:name,event:true});}catch(e){}}
+function track(name){
+  if(GC_DEBUG)console.log('[track]',name);
+  if(!GC_ON)return;
+  if(gcReady&&window.goatcounter&&window.goatcounter.count)gcSend(name);else gcQueue.push(name);
+}
+function trackOnce(name){
+  let m={};try{m=JSON.parse(localStorage.getItem('mwmogul_tracked')||'{}');}catch(e){}
+  if(m[name])return;m[name]=1;try{localStorage.setItem('mwmogul_tracked',JSON.stringify(m));}catch(e){}
+  track(name);
+}
+function dayNum(t){const d=new Date(t);return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000);}
+function trackSessionStart(){
+  let m={};try{m=JSON.parse(localStorage.getItem('mwmogul_visits')||'{}');}catch(e){}
+  const today=dayNum(Date.now());
+  if(!m.first){m.first=today;track('new-player');}
+  track('play');
+  const age=today-m.first;
+  if(age>=1&&m.last!==today){
+    track('returned');
+    if(age===1)track('returned-day1');
+    else if(age<=7)track('returned-day2to7');
+    else track('returned-day8plus');
+  }
+  m.last=today;try{localStorage.setItem('mwmogul_visits',JSON.stringify(m));}catch(e){}
+}
+let sessionStart=0,sessionMarks={};
+function trackSessionLength(){
+  if(!sessionStart)return;const mins=(Date.now()-sessionStart)/60000;
+  for(const[k,v]of[['session-1m',1],['session-5m',5],['session-15m',15],['session-30m',30]])if(mins>=v&&!sessionMarks[k]){sessionMarks[k]=1;track(k);}
+}
+setInterval(trackSessionLength,30000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)trackSessionLength();});
 
 /* ======================= SAVE / OFFLINE ======================= */
 function save(){try{S.lastSave=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
@@ -5269,6 +5316,7 @@ function openLook(){
   $('mLook').classList.add('on');
 }
 function applyLook(){
+  trackOnce('changed-look');
   if(!player)return;
   const pos=player.position.clone(),ry=player.rotation.y;
   scene.remove(player);player=makeChar(0);player.position.copy(pos);player.rotation.y=ry;scene.add(player);
@@ -5297,6 +5345,7 @@ function start(kit){
 let playing=false;
 function beginPlay(){
   if(playing)return;playing=true;audioInit();sfx.goal();
+  sessionStart=Date.now();trackSessionStart();
   const L=$('loading');L.classList.add('out');document.body.classList.remove('title');setTimeout(()=>L.remove(),500);
   last=0;
   try{if(had)offline(bootGap);else toast('Walk to the wind turbine and grab its energy.');}catch(e){console.error(e);}
