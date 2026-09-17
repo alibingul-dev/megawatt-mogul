@@ -222,7 +222,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.26</div>
+  <div class="t-ver" id="tVer">v0.26.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -391,7 +391,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.26 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.26.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4575,8 +4575,8 @@ const HQ={x:280,y:620};
 const BAT={x:1090,y:640,store:{x:1020,y:775},take:{x:1160,y:775}};
 const DEPOTS=[
   {id:'bat',x:BAT.x,y:BAT.y,store:BAT.store,take:BAT.take},
-  {id:'batridge',x:700,y:1300,store:{x:630,y:1420},take:{x:770,y:1420}},
-  {id:'batdesert',x:700,y:1680,store:{x:630,y:1800},take:{x:770,y:1800}},
+  {id:'batridge',x:950,y:1580,store:{x:880,y:1500},take:{x:1020,y:1500}},
+  {id:'batdesert',x:520,y:1960,store:{x:450,y:1880},take:{x:590,y:1880}},
 ];
 const depotsOn=()=>DEPOTS.filter(d=>built(d.id));
 const PLANT_TYPES={
@@ -4598,18 +4598,18 @@ const PADS=[
   {id:'s3',kind:'build',type:'solar',x:560,y:1040,cost:400,req:'t4'},
   {id:'t5',kind:'build',type:'turbine',x:680,y:1040,cost:600,req:'s3'},
   {id:'s4',kind:'build',type:'solar',x:800,y:1040,cost:900,req:'t5'},
-  {id:'helper',kind:'upg',key:'helper',label:['Hire helper','Yardımcı al'],icon:'👷',x:370,y:800,base:450,growth:2.3,max:5,req:'bat'},
+  {id:'helper',kind:'upg',key:'helper',label:['Hire helper','Yardımcı al'],icon:'👷',x:370,y:800,base:450,growth:1.55,max:15,req:'bat'},
   {id:'batcap',kind:'upg',key:'batcap',label:['Bigger battery','Büyük batarya'],icon:'🔋',x:1040,y:900,base:500,growth:2.1,max:6,req:'bat'},
   {id:'grid',kind:'upg',key:'grid',label:['Grid link','Şebeke bağlantısı'],icon:'🔌',x:1150,y:900,base:3000,growth:1,max:1,req:'batcap'},
   {id:'ridge',kind:'gate',region:'ridge',label:['Open the windy ridge','Rüzgârlı sırtı aç'],icon:'🚧',x:700,y:1180,cost:1500,req:'bat'},
-  {id:'batridge',kind:'build',type:'battery',x:700,y:1300,cost:3500,req:'ridge'},
+  {id:'batridge',kind:'build',type:'battery',x:950,y:1580,cost:3500,req:'ridge'},
   {id:'town1',kind:'build',type:'town',x:170,y:1565,cost:6000,req:'ridge'},
   {id:'w1',kind:'build',type:'bigwind',x:300,y:1340,cost:2500,req:'ridge'},
   {id:'w2',kind:'build',type:'bigwind',x:560,y:1400,cost:4500,req:'w1'},
   {id:'w3',kind:'build',type:'bigwind',x:840,y:1340,cost:8000,req:'w2'},
   {id:'w4',kind:'build',type:'bigwind',x:1100,y:1400,cost:14000,req:'w3'},
   {id:'desert',kind:'gate',region:'desert',label:['Open the solar desert','Güneş çölünü aç'],icon:'🚧',x:700,y:1570,cost:15000,req:'w2'},
-  {id:'batdesert',kind:'build',type:'battery',x:700,y:1680,cost:18000,req:'desert'},
+  {id:'batdesert',kind:'build',type:'battery',x:520,y:1960,cost:18000,req:'desert'},
   {id:'town2',kind:'build',type:'town',x:1250,y:1690,cost:24000,req:'desert'},
   {id:'f1',kind:'build',type:'solarfarm',x:350,y:1790,cost:22000,req:'desert'},
   {id:'f2',kind:'build',type:'solarfarm',x:700,y:1820,cost:40000,req:'f1'},
@@ -5031,7 +5031,7 @@ function update(dt){
       if(dist(P,D.take)<48&&S.battery>=1&&S.carry<carryCap()&&batUsable()){S.battery--;carryAdd(S);batTick=0.07;sfx.pick();flyers.push({x:D.x,y:D.y,h0:1,tx:()=>S.px,ty:()=>S.py,h1:2.2+S.carry*0.3,life:0,kind:'cell'});break;}
     }
   }
-  if(S.up.grid&&S.battery>=1&&PEAK_H.includes(h)){gridTick-=gdt;if(gridTick<=0){S.battery--;sellCell(BAT.x,BAT.y,false);gridTick=0.5;}}
+  if(S.up.grid&&S.battery>=1&&PEAK_H.includes(h)&&batUsable()){gridTick-=gdt;if(gridTick<=0){S.battery--;sellCell(BAT.x,BAT.y,false,false,nearestMarket(BAT));gridTick=0.5;}}
   let on=null;
   for(const p of PADS){if(padVisible(p)&&!padDone(p)&&Math.abs(S.px-p.x)<40&&Math.abs(S.py-p.y)<40){on=p;break;}}
   if(on!==standPad){standPad=on;standT=0;}
@@ -5070,7 +5070,8 @@ function sellCell(x,y,byPlayer,crew,mk){
   if(PEAK_H.includes(Math.floor(hourNow())%24)&&byPlayer)S.stats.peakCells++;
   if(crew){S.stats.crewCells++;S.stats.crewRev+=p;}
   const tgt=m.id==='city'?{x:CITY.x,y:CITY.y-30}:{x:m.x,y:m.y};
-  flyers.push({x,y,h0:2,tx:()=>tgt.x,ty:()=>tgt.y,h1:3,life:0,kind:'cell'});
+  if(Math.hypot(tgt.x-x,tgt.y-y)<260)flyers.push({x,y,h0:2,tx:()=>tgt.x,ty:()=>tgt.y,h1:3,life:0,kind:'cell'});
+  else flyers.push({x,y,h0:1.6,tx:()=>x,ty:()=>y-26,h1:3.2,life:0,kind:'coin'});
   S.saleAcc=(S.saleAcc||0)+p;S.saleT=0.4;sfx.sell();
 }
 function onNewDay(quiet){
@@ -5151,7 +5152,7 @@ function marketOptions(){return ['auto','city'].concat(townsOn().map(t=>t.id));}
 function updateHelper(hp,i,dt){
   const role=S.crew.roles[i]||'sell';
   const sp=165*(1+0.08*S.up.boots)*modMult('helperSpeed'),cap=6+2*Math.floor(S.up.bag/2);
-  if(modActive('helperOff')){hp.status='On strike';hp.target=null;hp.state='idle';const dx=HQ.x+(i*28-50)-hp.x,dy=HQ.y+95-hp.y,l=Math.hypot(dx,dy);hp.moving=l>8;if(l>8){const st=Math.min(l,120*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);}hp.walk+=dt*10;return;}
+  if(modActive('helperOff')){hp.status='On strike';hp.target=null;hp.state='idle';const dx=HQ.x+((i%8)*26-90)+Math.floor(i/8)*8-hp.x,dy=HQ.y+95+Math.floor(i/8)*26-hp.y,l=Math.hypot(dx,dy);hp.moving=l>8;if(l>8){const st=Math.min(l,120*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);}hp.walk+=dt*10;return;}
   const slotPlan=S.crew.plan?S.crew.plan[slotOf(Math.floor(hourNow())%24)]:'auto';
   if(role==='safety'){
     const fires=S.plants.filter(p=>(p.fire||0)>0);
@@ -5221,8 +5222,8 @@ function updateHelper(hp,i,dt){
       else if(fixedSite){hp.status='Waiting for output '+codeOf(fixedSite.id);go(fixedSite.x+34,fixedSite.y+42);}
       else if(grpType){const g=S.plants.filter(p=>p.type===grpType);
         if(g.length){const c=g.reduce((a,p)=>({x:a.x+p.x/g.length,y:a.y+p.y/g.length}),{x:0,y:0});
-          hp.status='Waiting for output '+CODE_PREFIX[grpType]+'*';go(c.x+20,c.y+48);}else{hp.status='Looking for work';go(HQ.x+(i*28-50),HQ.y+95);}}
-      else{go(HQ.x+(i*28-50),HQ.y+95);}}
+          hp.status='Waiting for output '+CODE_PREFIX[grpType]+'*';go(c.x+20,c.y+48);}else{hp.status='Looking for work';go(HQ.x+((i%8)*26-90)+Math.floor(i/8)*8,HQ.y+95+Math.floor(i/8)*26);}}
+      else{go(HQ.x+((i%8)*26-90)+Math.floor(i/8)*8,HQ.y+95+Math.floor(i/8)*26);}}
   }
   if(hp.state==='toPlant'){
     hp.status=hp.target?'Collecting '+codeOf(hp.target.id):'Collecting';
@@ -5847,7 +5848,7 @@ function render(dt,now){
     const pp=pops[p.id]||0;o.scale.setScalar(1+Math.sin(pp*Math.PI)*0.2);
     const done=padDone(p),left=Math.ceil(cost-paid);
     let name=p.kind==='build'?(p.type==='town'?L('Town market','Kasaba pazarı'):p.type==='battery'?(p.id==='bat'?L('Battery station','Batarya istasyonu'):L('Field depot','Saha deposu')):tt(PLANT_TYPES[p.type].name)):p.kind==='upg'?`${tt(p.label)}${S.up[p.key]?' '+L('lv','sv')+(S.up[p.key]+1):''}`:tt(p.label);
-    if(p.key==='helper')name=`${L('Hire helper','Yardımcı al')} ${S.up.helper+1}/5`;
+    if(p.key==='helper')name=`${L('Hire helper','Yardımcı al')} ${S.up.helper+1}/15`;
     place('pn'+p.id,'nm',p.x,p.y,0.1,name,p.kind==='gate'?-44:-40);
     place('pc'+p.id,'tag '+(done?'ok':S.cash>=left?'ok':'no'),p.x,p.y,0.1,done?L('MAX','MAKS'):'₵'+fmt(left),p.kind==='gate'?34:34);
   }
@@ -5916,7 +5917,7 @@ function hud(dt){
   $('pnow').textContent='₵'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
   const G=GOALS[S.goal];$('goal').innerHTML=G?`🎯 ${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.');
-  $('crewBtn').hidden=S.up.helper<1;$('crewN').textContent=`${S.up.helper}/5`;
+  $('crewBtn').hidden=S.up.helper<1;$('crewN').textContent=`${S.up.helper}/15`;
   const alertOn=helpers.some(h=>(h.waitT||0)>15);$('crewAlert').hidden=!alertOn;$('crewBtn').setAttribute('aria-label',alertOn?'Crew plan: a helper is stuck waiting':'Crew plan');
   const bn=$('banner');
   if(curtailNow()){const cw=curtailWindow(S.day);bn.hidden=false;bn.className='banner cheap';bn.textContent=L(`📋 Dispatch order until ${cw[1]}:00 · store, don't sell`,`📋 ${cw[1]}:00'e kadar yük atma talimatı · satma, depola`);}
@@ -6701,7 +6702,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.26';
+const GAME_VERSION='0.26.2';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
