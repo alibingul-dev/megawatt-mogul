@@ -219,7 +219,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.23</div>
+  <div class="t-ver" id="tVer">v0.23.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -363,6 +363,8 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="sTut" data-i18n="sTut">Replay the tutorial</button>
     <button id="sCloud" hidden>Sign in with Google</button>
     <button id="sCloudOut" hidden>Sign out</button>
+    <button id="sPull" hidden>Load from cloud</button>
+    <button id="sPush" hidden>Save to cloud</button>
     <button id="sExport" data-i18n="sExport">Copy save code</button>
     <button id="sImport" data-i18n="sImport">Load a save code</button>
     <button id="sSound">Sound: on</button>
@@ -371,7 +373,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.23 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.23.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -6545,7 +6547,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.23';
+const GAME_VERSION='0.23.1';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
@@ -6565,6 +6567,8 @@ async function initCloud(){
 function cloudUI(){
   if(!CLOUD_ON){$('sCloud').hidden=true;$('sCloudOut').hidden=true;return;}
   $('sCloud').hidden=!!fbUser;$('sCloudOut').hidden=!fbUser;
+  $('sPull').hidden=!fbUser;$('sPush').hidden=!fbUser;
+  $('sPull').textContent=L('Load from cloud','Bulut kaydını yükle');$('sPush').textContent=L('Save to cloud','Buluta kaydet');
   $('sCloud').textContent=L('Sign in with Google','Google ile giriş yap');
   $('sCloudOut').textContent=fbUser?L('Sign out','Çıkış yap')+' · '+(S.nick||fbUser.displayName||''):L('Sign out','Çıkış yap');
   $('leadBtn').hidden=false;
@@ -6583,8 +6587,9 @@ async function afterSignIn(){
     if(doc.exists&&doc.data().save){
       const cloud=JSON.parse(doc.data().save);
       const mine=saveSize(S),theirs=saveSize(cloud);
-      if(Math.abs(mine-theirs)<1||theirs<=mine){await cloudSave(true);}
-      else askWhichSave(cloud,mine,theirs);
+      const same=Math.abs(mine-theirs)<1&&cloud.day===S.day&&Math.abs((cloud.cash||0)-S.cash)<1;
+      if(same){await cloudSave(true);}
+      else askWhichSave(cloud,mine,theirs);   // both directions, always your call
     }else await cloudSave(true);
   }catch(e){console.warn('cloud read',e);toast(L('Could not read the cloud save.','Bulut kaydı okunamadı.'),'big');}
   if(!S.nick)askNick();
@@ -6670,6 +6675,19 @@ function logLedger(type,amount,note){
 }
 $('sCloud').onclick=()=>{$('mSet').classList.remove('on');signInCloud();};
 $('sCloudOut').onclick=()=>{$('mSet').classList.remove('on');signOutCloud();};
+$('sPull').onclick=async()=>{
+  $('mSet').classList.remove('on');
+  if(!fbUser||!fbDb)return;
+  try{const doc=await fbDb.collection('users').doc(fbUser.uid).get();
+    if(!doc.exists||!doc.data().save)return toast(L('No cloud save yet.','Bulutta kayıt yok.'),'big');
+    const cloud=JSON.parse(doc.data().save);askWhichSave(cloud,saveSize(S),saveSize(cloud));
+  }catch(e){toast(L('Could not read the cloud save.','Bulut kaydı okunamadı.'),'big');}
+};
+$('sPush').onclick=async()=>{
+  $('mSet').classList.remove('on');
+  if(!fbUser)return;
+  await cloudSave(true);toast(L('This device is now the cloud save.','Bu cihazdaki kayıt buluta yazıldı.'),'good');
+};
 $('leadBtn').onclick=openLead;
 if(CLOUD_ON){setTimeout(initCloud,1500);setInterval(()=>cloudSave(false),60*1000);
   addEventListener('visibilitychange',()=>{if(document.hidden)cloudSave(true);});}
