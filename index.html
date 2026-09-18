@@ -222,7 +222,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.26.2</div>
+  <div class="t-ver" id="tVer">v0.26.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -391,7 +391,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.26.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.26.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4758,7 +4758,8 @@ function fixTime(p,base){return base*(S.cash<repairCost(p)?2:1);}
 /* snow: cover builds up on snowy days, panels lose output until they are cleared */
 function snowing(){return DAY.weather==='snowy';}
 /* fire: starts from lightning or worn-out gear, spreads if nobody puts it out */
-const FIRE_SPREAD=22;      // game seconds before it jumps to the next site
+const FIRE_SPREAD=30;      // game seconds before it jumps to the next site
+const FIRE_MAX=2;          // never more than this many fires at once
 const FIRE_RANGE=340;      // how far it can jump
 function burning(){return S.plants.filter(p=>(p.fire||0)>0);}
 function anyFire(){return burning().length>0||(S.batFire||0)>0;}
@@ -4775,15 +4776,18 @@ function startBatFire(why){
   trackOnce('fire-battery');
 }
 function fireOut(p){
-  p.fire=0;p.fireT=0;p.broken=true;p.brokenAt=gameNow();
+  p.fire=0;p.fireT=0;p.fireC=0;p.spread=0;p.broken=true;p.brokenAt=gameNow();
   sfx.fix();floatTxt(p.x,p.y,L('Fire out','Yangın söndü'));
   toast(L(`${codeOf(p.id)} is out. It needs a repair now.`,`${codeOf(p.id)} söndürüldü. Şimdi onarım gerekiyor.`),'good');
   trackOnce('fire-out');
 }
 function spreadFrom(p){
-  const cand=S.plants.filter(q=>q!==p&&PLANT_TYPES[q.type]&&!q.fire&&dist(q,p)<FIRE_RANGE);
+  if(p.spread)return;                                  // a fire jumps at most once
+  if(burning().length+((S.batFire||0)>0?1:0)>=FIRE_MAX)return;   // never a runaway chain
+  const cand=S.plants.filter(q=>q!==p&&PLANT_TYPES[q.type]&&!q.fire&&!q.broken&&dist(q,p)<FIRE_RANGE);
   if(!cand.length)return;
   cand.sort((a,b)=>dist(a,p)-dist(b,p));
+  p.spread=1;
   startFire(cand[0],L('spread','sıçradı'));
 }
 function snowPanel(p){return Math.max(0,Math.min(1,p.snow||0));}
@@ -5002,8 +5006,8 @@ function update(dt){
       const D=depotsOn()[0];if(D){const near=S.plants.filter(q=>PLANT_TYPES[q.type]&&!q.fire&&dist(q,D)<FIRE_RANGE).sort((a,b)=>dist(a,D)-dist(b,D))[0];if(near)startFire(near,L('spread','sıçradı'));}}}
   {const fp=S.plants.find(p=>(p.fire||0)>0&&dist(P,p)<80);
    const D0=depotsOn().find(D=>dist(P,D)<80);
-   if(fp&&!S.moving){fp.fireT=(fp.fireT||0)+dt/2.5;if(fp.fireT>=1)fireOut(fp);}
-   else if(S.batFire>0&&D0&&!S.moving){S.batFireT=(S.batFireT||0)+dt/2.5;
+   if(fp&&!S.moving){fp.fireT=(fp.fireT||0)+dt/2;fp.fire=Math.max(0.01,fp.fire-gdt*1.2);if(fp.fireT>=1)fireOut(fp);}
+   else if(S.batFire>0&&D0&&!S.moving){S.batFireT=(S.batFireT||0)+dt/2;S.batFire=Math.max(0.01,S.batFire-gdt*1.2);
      if(S.batFireT>=1){S.batFire=0;S.batFireT=0;sfx.fix();floatTxt(D0.x,D0.y,L('Fire out','Yangın söndü'));toast(L('Battery fire is out. The system needs a repair.','Batarya yangını söndü. Sistem onarım bekliyor.'),'good');}}
    else{S.plants.forEach(p=>{if(p.fire)p.fireT=0;});if(S.batFire)S.batFireT=0;}}
   // random ignition: worn plants, hot days, tired batteries
@@ -5162,7 +5166,7 @@ function updateHelper(hp,i,dt){
       hp.status='Fighting fire';hp.target=null;hp.state='idle';
       const dx=tgt.x+30-hp.x,dy=tgt.y+30-hp.y,l=Math.hypot(dx,dy);
       if(l>12&&dist(hp,tgt)>70){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.moving=true;hp.walk+=dt*10;hp.fireT=0;return;}
-      hp.fireT=(hp.fireT||0)+dt/3.5;
+      hp.fireT=(hp.fireT||0)+dt/3;if(tgt.fire!==undefined)tgt.fire=Math.max(0.01,tgt.fire-gdt*1.2);
       if(tgt.fire!==undefined)tgt.fireC=Math.min(1,hp.fireT);else S.batFireC=Math.min(1,hp.fireT);
       if(hp.fireT>=1){hp.fireT=0;
         if(tgt.fire!==undefined){tgt.fireC=0;fireOut(tgt);}
@@ -6314,7 +6318,7 @@ const TIPS=[
  {id:'life',icon:'♻️',ok:()=>S.plants.some(p=>plantAge(p)>plantLife(p)*0.6),lock:['Unlocks as your plants age.','Santralleriniz yaşlandıkça açılır.'],t:['Repower ageing plants','Yaşlı santralleri yenile'],d:['After its lifetime a plant loses 1% output per day and breaks more often. Stand next to it and pay 60% of the build cost to rebuild it with 10% more output.','Ömrü dolan santral günde %1 üretim kaybeder ve daha sık bozulur. Yanında durup inşa bedelinin %60\'ını ödersen %10 fazla üretimle yenilenir.']},
  {id:'batlife',icon:'🔋',ok:()=>built('bat')&&(S.batCycles||0)>20,lock:['Unlocks after 20 battery cycles.','20 batarya çevriminden sonra açılır.'],t:['Batteries wear out','Batarya yorulur'],d:['Every full charge counts as a cycle and each cycle takes 0.02% off capacity. Refurbish at the main station to reset health to 100%.','Her tam dolum bir çevrim sayılır ve her çevrim kapasiteden %0,02 alır. Ana istasyonda yenileyerek sağlığı %100\'e döndür.']},
  {id:'fixcost',icon:'🧰',ok:()=>!!S.stats.fixSpend,lock:['Unlocks after your first repair.','İlk tamirinden sonra açılır.'],t:['Repairs cost spare parts','Tamir yedek parça yer'],d:['A repair costs about 1% of the plant\'s build cost, never more than 15% of a day\'s income. The periodic service halves it; postponing doubles it.','Tamir, santralin inşa bedelinin yaklaşık %1\'i kadardır ve günlük kazancının %15\'ini asla geçmez. Dönemsel bakım bunu yarıya indirir, ertelemek iki katına çıkarır.']},
- {id:'fire',icon:'🧯',ok:()=>!!S.stats.fires||true,lock:['',''],t:['Fires spread','Yangın yayılır'],d:['Lightning and worn gear can start a fire. A burning site makes nothing, and after about 20 seconds the fire jumps to the nearest site. Stand next to it with the extinguisher, or give a helper the Safety role. Once it is out, the site still needs a repair.','Yıldırım ve yıpranmış ekipman yangın çıkarabilir. Yanan tesis üretmez ve yaklaşık 20 saniye sonra yangın en yakın tesise sıçrar. Yanına git ve söndür ya da bir yardımcıya Afet rolü ver. Söndükten sonra tesis onarım bekler.']},
+ {id:'fire',icon:'🧯',ok:()=>!!S.stats.fires||true,lock:['',''],t:['Fires spread','Yangın yayılır'],d:['Lightning and worn gear can start a fire. A burning site makes nothing, and after about 30 seconds the fire jumps once to the nearest site — never more than two fires at a time. Stand next to it with the extinguisher (2 s), or give a helper the Safety role. Once it is out, the site still needs a repair.','Yıldırım ve yıpranmış ekipman yangın çıkarabilir. Yanan tesis üretmez ve yaklaşık 30 saniye sonra en yakın tesise bir kez sıçrar — aynı anda en fazla iki yangın olur. Yanına git ve söndür (2 sn) ya da bir yardımcıya Afet rolü ver. Söndükten sonra tesis onarım bekler.']},
  {id:'storm',icon:'⛈️',ok:()=>!!S.hints.broke,lock:['Unlocks after your first breakdown.','İlk arızadan sonra açılır.'],t:['Storm days','Fırtınalı günler'],d:['Turbines break 3× more often in storms. Stay close to them, or buy lightning rods and insurance when the cards offer them.','Fırtınada türbinler 3 kat sık bozulur. Yakınlarında kal ya da kart teklif ettiğinde paratoner ve sigorta al.']},
  {id:'snow',icon:'🌨️',ok:()=>S.plants.some(p=>PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='solar'),lock:['Unlocks with your first solar panel.','İlk güneş panelinle açılır.'],t:['Sweep the snow off','Karı süpür'],d:['On snowy days panels get covered and lose up to 70% of their output. Stand next to a panel to sweep it clean; sunshine melts the rest.','Karlı günlerde paneller kaplanır ve üretimin %70\'ine kadarını kaybeder. Yanında durup süpür; kalanı güneş eritir.']},
  {id:'winter',icon:'❄️',ok:()=>S.day>=20,lock:['Unlocks as the seasons turn.','Mevsimler döndükçe açılır.'],t:['Prepare for winter','Kışa hazırlan'],d:['In winter solar drops almost by half while wind and demand rise. Build turbines before December.','Kışın güneş neredeyse yarıya iner, rüzgâr ve talep artar. Aralık gelmeden türbin kur.']},
@@ -6702,7 +6706,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.26.2';
+const GAME_VERSION='0.26.3';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
