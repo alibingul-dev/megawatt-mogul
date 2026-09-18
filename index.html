@@ -222,7 +222,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.30.1</div>
+  <div class="t-ver" id="tVer">v0.31.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -392,6 +392,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="sPush" hidden>Save to cloud</button>
     <button id="sExport" data-i18n="sExport">Copy save code</button>
     <button id="sImport" data-i18n="sImport">Load a save code</button>
+    <button id="sRestore">Restore a backup</button>
     <button id="sSound">Sound: on</button>
     <button id="sShadow">Shadows: on</button>
     <button id="sFlash">Flashes: on</button>
@@ -399,7 +400,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.30.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.31.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -6414,6 +6415,15 @@ $('repPrev').onclick=()=>openReport(1);
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.31.1',t:['Sign-in never wipes a game','Giriş oyununu silmez'],l:[
+   ['Signing in can no longer replace a save that has progress — it asks you which one to keep.','Giriş yapmak artık ilerlemesi olan bir kaydı değiştiremiyor — hangisini tutacağını soruyor.'],
+   ['A rescue copy is kept right before any cloud load: Settings → “Restore a backup”.','Her bulut yüklemesinden hemen önce bir kurtarma kopyası saklanıyor: Ayarlar → “Yedeği geri yükle”.']]},
+ {v:'0.31',t:['Add friends from the board','Tablodan arkadaş ekle'],l:[
+   ['Tap + next to any player on the leaderboard to send a friend request — no code needed.','Liderlik tablosunda bir oyuncunun yanındaki + ile arkadaşlık isteği gönder — koda gerek yok.'],
+   ['Requests can be accepted, rejected or blocked; blocked players are listed and can be unblocked.','İstekler kabul edilebilir, reddedilebilir veya engellenebilir; engellenenler listelenir ve engel kaldırılabilir.']]},
+ {v:'0.30.2',t:['Everyone on the board','Herkes tabloda'],l:[
+   ['Fixed: players who had not yet written the new fields were missing from the 24 h and 7 day tabs.','Düzeltildi: yeni alanları henüz yazmamış oyuncular 24 saat ve 7 gün sekmelerinde görünmüyordu.'],
+   ['Settings: “Restore a backup” brings back a save that got wiped on this device.','Ayarlar: “Yedeği geri yükle” bu cihazda silinen kaydı geri getiriyor.']]},
  {v:'0.30',t:['Efficiency, firing, filters','Verimlilik, kovma, filtreler'],l:[
    ['The report shows how much of your energy actually got sold — waste is now visible.','Rapor enerjinin ne kadarının gerçekten satıldığını gösteriyor — israf artık görünür.'],
    ['You can let a helper go. Do it during a strike and the next hires work at 20%, then 75% for three days.','Yardımcıyı işten çıkarabilirsin. Grev sırasında kovarsan yeni gelenler %20, sonra üç gün %75 verimle çalışır.'],
@@ -6881,7 +6891,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));applyLang();}
+function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));applyLang();}
 $('gear').onclick=()=>{syncSet();$('mSet').classList.add('on');};
 $('sClose').onclick=()=>$('mSet').classList.remove('on');
 $('sSound').onclick=()=>{S.muted=!S.muted;syncSet();};
@@ -6892,7 +6902,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.30.1';
+const GAME_VERSION='0.31.1';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
@@ -6933,10 +6943,13 @@ async function afterSignIn(){
       const cloud=JSON.parse(doc.data().save);
       const base=S.syncBase||0, cs=cloud.lastSave||0, ls=S.lastSave||0;
       const cloudMoved=cs>base+2000||(cloud.dev&&cloud.dev!==DEV_ID&&cs>ls+30000), localMoved=ls>base+2000;
+      const hasProgress=(S.earned>0||S.day>0||S.soldCells>0||S.plants.length>1);
       if(cloudMoved&&localMoved&&Math.abs(saveSize(cloud)-saveSize(S))>Math.max(200,saveSize(cloud)*0.05)){
         askWhichSave(cloud,saveSize(S),saveSize(cloud));      // both sides really moved: your call
+      }else if(cloudMoved&&hasProgress&&Math.abs(saveSize(cloud)-saveSize(S))>1){
+        askWhichSave(cloud,saveSize(S),saveSize(cloud));      // this device has a game going: never silently replace it
       }else if(cloudMoved&&!localMoved){
-        pullCloud(cloud);                                      // this device was just behind
+        pullCloud(cloud);                                      // truly empty device: safe to pull
       }else{
         await cloudSave(true);                                 // this device is the newer one
       }
@@ -6946,6 +6959,7 @@ async function afterSignIn(){
 }
 function pullCloud(cloud){
   try{
+    try{if(S.earned>0||S.day>0)localStorage.setItem(SAVE_KEY+'_rescue',JSON.stringify(S));}catch(e){}
     localStorage.setItem(SAVE_BACKUP,JSON.stringify(S));
     cloud.syncBase=cloud.lastSave||Date.now();cloud.dev=DEV_ID;
     localStorage.setItem(SAVE_KEY,JSON.stringify(cloud));
@@ -6981,7 +6995,9 @@ async function cloudSave(force){
       const otherDevice=(cloud.dev&&cloud.dev!==DEV_ID);
       const cloudAhead=cs>base+2000;
       const iMoved=ls>base+2000&&saveSize(S)>saveSize(cloud);
-      if(otherDevice&&cloudAhead&&!iMoved){cloudBusy=false;pullCloud(cloud);return;}
+      const hasProgress=(S.earned>0||S.day>0||S.soldCells>0||S.plants.length>1);
+      if(otherDevice&&cloudAhead&&!iMoved&&!hasProgress){cloudBusy=false;pullCloud(cloud);return;}
+      if(otherDevice&&cloudAhead&&!iMoved&&hasProgress&&!askedSave){askedSave=true;cloudBusy=false;askWhichSave(cloud,saveSize(S),saveSize(cloud));return;}
       if(otherDevice&&cloudAhead&&iMoved&&!askedSave){askedSave=true;cloudBusy=false;askWhichSave(cloud,saveSize(S),saveSize(cloud));return;}
     }
     S.syncBase=S.lastSave;S.dev=DEV_ID;
@@ -7020,13 +7036,39 @@ async function addFriend(code){
   try{
     const c=await fbDb.collection('codes').doc(code).get();
     if(!c.exists)return L('No player with that code.','Bu kodda oyuncu yok.');
-    const other=c.data().uid;
-    const mine=S.nick||'?';
-    await fbDb.collection('friends').doc(other).collection('list').doc(fbUser.uid).set({name:mine,status:'pending',updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
-    await fbDb.collection('friends').doc(fbUser.uid).collection('list').doc(other).set({name:'',status:'sent',updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
-    trackOnce('friend-request');
+    return await requestFriend(c.data().uid,'');
+  }catch(e){return L('Could not send the request.','İstek gönderilemedi.');}
+}
+let friendMap={};                                  // uid -> status, refreshed when the board opens
+async function loadFriendMap(){
+  friendMap={};
+  if(!fbUser||!fbDb)return friendMap;
+  try{const snap=await fbDb.collection('friends').doc(fbUser.uid).collection('list').limit(80).get();
+    snap.forEach(d=>{friendMap[d.id]=(d.data()||{}).status||'';});}catch(e){}
+  return friendMap;
+}
+async function requestFriend(uid,name){
+  if(!fbUser||!fbDb||uid===fbUser.uid)return '';
+  if(friendMap[uid]==='blocked')return L('You blocked this player.','Bu oyuncuyu engelledin.');
+  try{
+    await fbDb.collection('friends').doc(uid).collection('list').doc(fbUser.uid).set({name:S.nick||'?',status:'pending',updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await fbDb.collection('friends').doc(fbUser.uid).collection('list').doc(uid).set({name:name||'',status:'sent',updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    friendMap[uid]='sent';trackOnce('friend-request');
     return L('Request sent.','İstek gönderildi.');
   }catch(e){return L('Could not send the request.','İstek gönderilemedi.');}
+}
+async function blockUser(uid,name){
+  if(!fbUser||!fbDb)return;
+  try{
+    await fbDb.collection('friends').doc(fbUser.uid).collection('list').doc(uid).set({name:name||'',status:'blocked',updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await fbDb.collection('friends').doc(uid).collection('list').doc(fbUser.uid).delete();   // they stop seeing the thread
+    friendMap[uid]='blocked';S.group=(S.group||[]).filter(u=>u!==uid);save();
+    trackOnce('friend-blocked');
+  }catch(e){}
+}
+async function unblockUser(uid){
+  if(!fbUser||!fbDb)return;
+  try{await fbDb.collection('friends').doc(fbUser.uid).collection('list').doc(uid).delete();delete friendMap[uid];trackOnce('friend-unblocked');}catch(e){}
 }
 async function acceptFriend(uid,name){
   if(!fbUser||!fbDb)return;
@@ -7049,9 +7091,9 @@ async function renderGroup(kind){
     :L('Your own group. Pick who is in it below.','Kendi grubun. Kimlerin olacağını aşağıdan seç.');
   $('leadBody').innerHTML=`<p style="text-align:center">${L('Loading…','Yükleniyor…')}</p>`;
   try{
-    const snap=await fbDb.collection('friends').doc(fbUser.uid).collection('list').limit(50).get();
-    const pend=[],acc=[];
-    snap.forEach(d=>{const v=d.data();(v.status==='pending'?pend:v.status==='accepted'?acc:[]).push({uid:d.id,...v});});
+    const snap=await fbDb.collection('friends').doc(fbUser.uid).collection('list').limit(80).get();
+    const pend=[],acc=[],blocked=[];
+    snap.forEach(d=>{const v=d.data();const b=(v.status==='pending'?pend:v.status==='accepted'?acc:v.status==='blocked'?blocked:[]);b.push({uid:d.id,...v});});
     let ids=acc.map(f=>f.uid);
     if(kind==='grp'){const g=S.group||[];ids=ids.filter(u=>g.includes(u));}
     const profs=[];
@@ -7061,12 +7103,14 @@ async function renderGroup(kind){
     profs.sort((a,b)=>(b[field]||0)-(a[field]||0));
     let html='';
     if(kind==='fr'&&pend.length)html+=`<p style="font-weight:800;margin-top:8px">${L('Requests','İstekler')}</p>`+pend.map(f=>
-      `<div class="tip"><b>${(f.name||'?').slice(0,16)}</b><div class="btns" style="grid-template-columns:1fr 1fr;margin-top:6px"><button data-ok="${f.uid}" data-n="${(f.name||'').slice(0,16)}">${L('Accept','Kabul et')}</button><button data-no="${f.uid}">${L('Ignore','Yoksay')}</button></div></div>`).join('');
+      `<div class="tip"><b>${(f.name||'?').slice(0,16)}</b><div class="btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px"><button data-ok="${f.uid}" data-n="${(f.name||'').slice(0,16)}" style="background:#E1F4EA">${L('Accept','Kabul et')}</button><button data-no="${f.uid}">${L('Reject','Reddet')}</button><button data-blk="${f.uid}" data-n="${(f.name||'').slice(0,16)}" style="background:#FFE3E8;color:#E8364F">${L('Block','Engelle')}</button></div></div>`).join('');
     html+=profs.length>1
       ?`<table class="rtab"><tr><th>#</th><th>${L('Player','Oyuncu')}</th><th>${leadTab==='day'?L('24 h','24 saat'):leadTab==='week'?L('7-day','7 gün'):L('All time','Tüm zamanlar')}</th><th>${L('Day','Gün')}</th></tr>`+
         profs.map((v,i)=>`<tr${v.me?' style="font-weight:800;background:#FFF6DA"':''} data-p="${v.uid}"><td>${i+1}</td><td>${(v.name||'?').slice(0,16)}</td><td>₵${fmt(v[field]||0)}</td><td>${v.day||0}</td></tr>`).join('')+`</table>`
       :`<p style="text-align:center">${kind==='grp'?L('Your group is empty. Tap “Edit group”.','Grubun boş. “Grubu düzenle”ye dokun.'):L('No friends yet. Share your code above.','Henüz arkadaş yok. Yukarıdaki kodunu paylaş.')}</p>`;
     if(acc.length)html+=`<div class="btns"><button id="grpEdit">${L('Edit group','Grubu düzenle')}</button></div>`;
+    if(kind==='fr'&&blocked.length)html+=`<p style="font-weight:800;margin-top:10px">${L('Blocked','Engellenenler')}</p>`+blocked.map(f=>
+      `<div class="tip" style="display:flex;justify-content:space-between;align-items:center"><b>${(f.name||'?').slice(0,16)}</b><button data-unblk="${f.uid}" style="background:#EEF1F6;border-radius:10px;padding:6px 12px;font-weight:800">${L('Unblock','Engeli kaldır')}</button></div>`).join('');
     $('leadBody').innerHTML=html;
     const ge=$('grpEdit');if(ge)ge.onclick=()=>editGroup(acc);
   }catch(e){$('leadBody').innerHTML=`<p style="text-align:center">${L('Could not load the list.','Liste yüklenemedi.')}</p>`;}
@@ -7124,10 +7168,15 @@ async function showFriendCard(uid){
 $('leadTabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;leadTab=b.dataset.t;openLead();};
 $('leadFilters').onclick=e=>{const b=e.target.closest('button[data-f]');if(!b)return;leadFilter=b.dataset.f;openLead();};
 $('leadBody').addEventListener('click',async e=>{
+  const req=e.target.closest('button[data-req]'),blk=e.target.closest('button[data-blk]'),unb=e.target.closest('button[data-unblk]');
   const ok=e.target.closest('button[data-ok]'),no=e.target.closest('button[data-no]'),del=e.target.closest('button[data-del]'),row=e.target.closest('tr[data-p]');
-  if(ok){await acceptFriend(ok.dataset.ok,ok.dataset.n);renderFriends();}
-  else if(no){await removeFriend(no.dataset.no);renderFriends();}
-  else if(del){await removeFriend(del.dataset.del);renderFriends();}
+  if(req){const b=req;b.textContent='…';b.disabled=true;const m=await requestFriend(b.dataset.req,b.dataset.n);
+    b.outerHTML=`<span style="color:#5C6780;font-size:11px">${L('sent','gönderildi')}</span>`;if(m)toast(m,'good');}
+  else if(blk){await blockUser(blk.dataset.blk,blk.dataset.n);renderGroup(leadFilter);}
+  else if(unb){await unblockUser(unb.dataset.unblk);renderGroup(leadFilter);}
+  else if(ok){await acceptFriend(ok.dataset.ok,ok.dataset.n);renderGroup(leadFilter);}
+  else if(no){await removeFriend(no.dataset.no);renderGroup(leadFilter);}
+  else if(del){await removeFriend(del.dataset.del);renderGroup(leadFilter);}
   else if(row)showFriendCard(row.dataset.p);
 });
 $('frAdd').onclick=async()=>{$('frMsg').textContent=L('Sending…','Gönderiliyor…');const m=await addFriend($('frCode').value);$('frMsg').textContent=m;$('frCode').value='';renderFriends();};
@@ -7150,15 +7199,26 @@ async function openLead(){
   const field=byDay?'day1':byWeek?'recent':'wealth';
   try{
     await cloudSave(true);
-    const snap=await fbDb.collection('leaderboard').orderBy(field,'desc').limit(25).get();
-    let i=0,rows='';snap.forEach(d=>{i++;const v=d.data(),me=fbUser&&d.id===fbUser.uid;
+    // order by wealth (every row has it, even from older builds), then rank client-side
+    const snap=await fbDb.collection('leaderboard').orderBy('wealth','desc').limit(60).get();
+    const list=[];snap.forEach(d=>{const v=d.data();list.push({uid:d.id,...v});});
+    list.sort((a,b)=>((b[field]||0)-(a[field]||0)));
+    await loadFriendMap();
+    let i=0,rows='';list.slice(0,25).forEach(v=>{i++;const me=fbUser&&v.uid===fbUser.uid;
       const val=byDay?(v.day1||0):byWeek?(v.recent||0):(v.wealth||0);
-      rows+=`<tr${me?' style="font-weight:800;background:#FFF6DA"':''}><td>${i}</td><td>${(v.name||'?').slice(0,16)}</td><td>₵${fmt(val)}</td><td>${v.day||0}</td></tr>`;});
+      const st=friendMap[v.uid]||'';
+      const act=me?''
+        :st==='accepted'?`<span style="color:#23B26D;font-weight:800">✓</span>`
+        :st==='sent'?`<span style="color:#5C6780;font-size:11px">${L('sent','gönderildi')}</span>`
+        :st==='pending'?`<span style="color:#6A5CFF;font-size:11px">${L('waiting','bekliyor')}</span>`
+        :st==='blocked'?`<span style="color:#E8364F;font-size:11px">${L('blocked','engelli')}</span>`
+        :fbUser?`<button data-req="${v.uid}" data-n="${(v.name||'').slice(0,16)}" style="background:#1D2433;color:#fff;border-radius:9px;padding:2px 9px;font-weight:800">+</button>`:'';
+      rows+=`<tr${me?' style="font-weight:800;background:#FFF6DA"':''}><td>${i}</td><td>${(v.name||'?').slice(0,16)}</td><td>₵${fmt(val)}</td><td>${v.day||0}</td><td>${act}</td></tr>`;});
     $('leadSub').textContent=byDay
       ?L('Earned in the last 24 real hours — a brand-new player can win this one.','Son 24 gerçek saatte kazanılan — yeni başlayan da kazanabilir.')
       :byWeek?L('Earnings of the last 7 game days — the same race for everyone.','Son 7 oyun gününün kazancı — herkes için aynı yarış.')
       :L('Ranked by wealth (cash + 70% of what you built).','Zenginliğe göre sıralanır (nakit + yatırımların %70\'i).');
-    $('leadBody').innerHTML=(rows?`<table class="rtab"><tr><th>#</th><th>${L('Player','Oyuncu')}</th><th>${byDay?L('24 h','24 saat'):byWeek?L('7-day','7 gün'):L('All time','Tüm zamanlar')}</th><th>${L('Day','Gün')}</th></tr>${rows}</table>`:`<p style="text-align:center">${L('No entries yet.','Henüz kayıt yok.')}</p>`)+prizeHTML();
+    $('leadBody').innerHTML=(rows?`<table class="rtab"><tr><th>#</th><th>${L('Player','Oyuncu')}</th><th>${byDay?L('24 h','24 saat'):byWeek?L('7-day','7 gün'):L('All time','Tüm zamanlar')}</th><th>${L('Day','Gün')}</th><th></th></tr>${rows}</table>`:`<p style="text-align:center">${L('No entries yet.','Henüz kayıt yok.')}</p>`)+prizeHTML();
   }catch(e){$('leadBody').innerHTML=`<p style="text-align:center">${L('Could not load the board.','Tablo yüklenemedi.')}</p>`;}
 }
 $('leadClose').onclick=()=>$('mLead').classList.remove('on');
@@ -7315,6 +7375,24 @@ $('sExport').onclick=()=>{
   $('codeBox').value=code;$('codeBox').readOnly=true;$('codeMsg').textContent='';$('codeGo').textContent='Copy';
   $('codeGo').onclick=async()=>{try{await navigator.clipboard.writeText(code);$('codeMsg').textContent='Copied.';}catch(e){$('codeBox').select();document.execCommand&&document.execCommand('copy');$('codeMsg').textContent='Selected. Copy it with your keyboard if needed.';}};
   $('mCode').classList.add('on');
+};
+$('sRestore').onclick=()=>{
+  $('mSet').classList.remove('on');
+  const opts=[];
+  const add=(key,label)=>{try{const raw=localStorage.getItem(key);if(!raw)return;const o=JSON.parse(raw);
+    if(o&&typeof o==='object'&&o.day!=null)opts.push({key,label,o});}catch(e){}};
+  add(SAVE_KEY+'_rescue',L('Before cloud sign-in','Bulut girişinden önce'));
+  add(SAVE_PREV,L('Previous save','Önceki kayıt'));
+  add(SAVE_BACKUP,L('Older backup','Daha eski yedek'));
+  $('cloTitle').textContent=L('Restore a backup','Yedeği geri yükle');
+  $('cloSub').textContent=opts.length
+    ?L('The game keeps two backups on this device. Pick one.','Oyun bu cihazda iki yedek tutar. Birini seç.')
+    :L('No backup on this device. If you were signed in, sign in again and use “Load from cloud”.','Bu cihazda yedek yok. Giriş yapmıştıysan tekrar giriş yapıp “Bulut kaydını yükle” seçeneğini kullan.');
+  $('cloOpts').innerHTML=opts.map((x,i)=>`<button data-r="${i}"><b>${x.label}</b><small>${L('Earned','Kazanç')} ₵${fmt(x.o.earned||0)} · ${L('day','gün')} ${(x.o.day||0)+1}</small></button>`).join('');
+  $('cloOpts').onclick=e=>{const b=e.target.closest('button[data-r]');if(!b)return;
+    const x=opts[+b.dataset.r];if(!x)return;
+    try{localStorage.setItem(SAVE_KEY,JSON.stringify(x.o));removeEventListener('pagehide',save);trackOnce('save-restored');location.reload();}catch(err){}};
+  $('mCloud').classList.add('on');
 };
 $('sImport').onclick=()=>{
   $('mSet').classList.remove('on');
