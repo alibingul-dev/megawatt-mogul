@@ -8,13 +8,15 @@
 <title>Megawatt Mogul</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root{ color-scheme:light only; --ink:#1D2433; --soft:#5C6780; --panel:rgba(255,255,255,.95); --peak:#E8364F; --cheap:#23B26D; --bat:#6A5CFF; --gold:#FFC83D;
-  --disp:'Lilita One','Arial Rounded MT Bold','Trebuchet MS',sans-serif; --body:'Nunito','Segoe UI',system-ui,sans-serif; }
+  --disp:'Fredoka','Nunito','Arial Rounded MT Bold','Trebuchet MS',sans-serif; --body:'Nunito','Segoe UI',system-ui,sans-serif; }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --panel:rgba(255,255,255,.95); } }
 :root[data-theme="dark"]{ --panel:rgba(255,255,255,.95); }
 *{box-sizing:border-box;margin:0;padding:0}
+.tag,.cnt,.big,.fl,.code,.cash,.pnow,.clock,.banner,.tut-name,.t-sub,.t-play,.crewb .cnum,.rule .val{font-weight:600}
+.t-name{font-weight:400}
 [hidden]{display:none!important}
 body.far .nm,body.far .cnt{display:none!important}
 .rb.zb{font-size:22px;font-weight:800}
@@ -44,7 +46,7 @@ html,body{height:100%;overflow:hidden;background:#3B7A4A;font-family:var(--body)
 .coin{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFE58A,#FFB300 60%,#C77F00);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);flex:0 0 auto}
 .wic{font-size:18px;line-height:1}
 .wealth{font-family:var(--disp);font-size:15px;color:#7A5A00;display:flex;gap:4px;align-items:center;line-height:1.1}
-.wealth b{font-weight:400}
+.wealth b{font-weight:600}
 .carry{font-size:12px;color:var(--soft);font-weight:800}
 .carry b{color:var(--ink)}
 .lossc{font-size:11px;font-weight:800;color:#fff;background:#E8364F;border-radius:7px;padding:0 6px;margin-top:2px;display:inline-block}
@@ -75,7 +77,7 @@ body.title #mini{visibility:hidden}
 #toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 150px);width:min(440px,calc(100% - 24px));display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:5}
 .toast{background:rgba(29,36,51,.94);color:#fff;border-radius:14px;padding:9px 13px;font-size:14px;font-weight:600;text-align:center;animation:tin .25s ease-out}
 .toast.good{background:rgba(24,140,86,.96)}
-.toast.big{background:rgba(232,54,79,.97);font-family:var(--disp);font-size:18px;font-weight:400}
+.toast.big{background:rgba(232,54,79,.97);font-family:var(--disp);font-size:18px;font-weight:600}
 @keyframes tin{from{transform:translateY(10px);opacity:0}}
 #joy{position:fixed;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.6);pointer-events:none;display:none}
 #knob{position:absolute;left:31px;top:31px;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.9);box-shadow:0 3px 0 rgba(0,0,0,.2)}
@@ -83,7 +85,7 @@ body.title #mini{visibility:hidden}
 .modal{position:fixed;inset:0;background:rgba(10,16,30,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:30}
 .modal.on{display:flex}
 .sheet{background:#fff;color:#1D2433;border-radius:22px;padding:18px;width:min(420px,100%);max-height:92vh;overflow:auto;text-align:center;box-shadow:0 6px 0 rgba(0,0,0,.2)}
-.sheet h2{font-family:var(--disp);font-size:26px;font-weight:400;margin-bottom:4px;color:#1D2433}
+.sheet h2{font-family:var(--disp);font-size:26px;font-weight:700;margin-bottom:4px;color:#1D2433}
 .sheet p{color:#4A5568;font-size:14px;margin:4px 0}
 .sheet .amt{font-family:var(--disp);font-size:36px;margin:8px 0}
 .btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
@@ -118,7 +120,7 @@ body.title #mini{visibility:hidden}
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .mcard{background:#F4F6FA;color:#1D2433;border-radius:12px;padding:9px 11px}
 .mcard small{display:block;font-size:11.5px;color:#4A5568;font-weight:800}
-.mcard b{display:block;font-family:var(--disp);font-size:20px;font-weight:400}
+.mcard b{display:block;font-family:var(--disp);font-size:20px;font-weight:600}
 .rtab{width:100%;font-size:13px;margin-top:10px;border-collapse:collapse}
 .rtab th,.rtab td{padding:5px 4px;border-bottom:1px solid #E3E8EF;text-align:right;color:#1D2433}
 .rtab th:first-child,.rtab td:first-child{text-align:left}
@@ -151,6 +153,9 @@ body.title #mini{visibility:hidden}
 .assign button{background:#EEF1F6;color:#1D2433;border-radius:12px;padding:7px 8px;text-align:left}
 .assign button small{display:block;font-size:10.5px;color:var(--soft);font-weight:800}
 .assign button b{display:block;font-size:13px}
+.skills{font-size:12px;color:#4A5568;font-weight:800;letter-spacing:.5px;margin-top:2px}
+.warn{font-size:12px;color:var(--peak);font-weight:800;margin-top:4px}
+.assign button.duty{background:#E1F4EA;border:2px solid #23B26D}
 .role-desc{font-size:12.5px;color:var(--soft);margin-top:5px;min-height:18px}
 .note{font-size:12.5px;color:var(--soft);background:#FFF6DA;border-radius:10px;padding:7px 10px;margin-top:6px}
 
@@ -164,7 +169,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .t-rot{transform-origin:60px 68px;animation:spin 3.2s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .t-card{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:-6vh}
-.t-name{font-family:var(--disp);line-height:.88;display:flex;flex-direction:column;color:#FFD23F;
+.t-name{font-family:'Lilita One',var(--disp);line-height:.88;display:flex;flex-direction:column;color:#FFD23F;
   -webkit-text-stroke:3px #1D2433;paint-order:stroke fill;text-shadow:0 6px 0 #1D2433}
 .t-name span:first-child{font-size:clamp(52px,15vw,84px);transform:rotate(-3deg)}
 .t-name span:last-child{font-size:clamp(64px,19vw,104px);color:#fff;transform:rotate(-3deg) translateX(12px)}
@@ -222,7 +227,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.31.3</div>
+  <div class="t-ver" id="tVer">v0.33</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -400,7 +405,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.31.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.33 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4712,6 +4717,42 @@ const GOALS=[
   {t:['Open the solar desert','Güneş çölünü aç'],ok:()=>S.regions.desert,at:()=>pad('desert'),r:5000},
 ];
 const MORALE_DAYS=3;
+/* every helper is a person: a name, three skills (1-5) and a shift */
+const NAMES_TR=['Kerem','Selin','Emre','Deniz','Burak','Ela','Mert','Zeynep','Onur','Cem','Aslı','Tuna','Ece','Barış','Ayşe','Kaan','Nil','Serkan','Derya','Umut'];
+const NAMES_EN=['Kerem','Mia','Alex','Robin','Jonas','Ella','Marco','Nina','Owen','Sam','Ivy','Theo','Eve','Felix','Ada','Kai','Nora','Leo','Dana','Max'];
+const SHIFTS=[{id:0,name:['Day','Gündüz'],icon:'🌅',from:6,to:14,pay:1},
+              {id:1,name:['Evening','Akşam'],icon:'🌇',from:14,to:22,pay:1.1},
+              {id:2,name:['Night','Gece'],icon:'🌙',from:22,to:6,pay:1.5}];
+function rollSkill(){const v=Math.random();return v<0.08?1:v<0.40?2:v<0.75?3:v<0.94?4:5;}   // mostly 2-3, a 5 is rare
+function makeStaff(){
+  const pool=S.lang==='tr'?NAMES_TR:NAMES_EN;
+  const used=(S.crew.staff||[]).map(x=>x&&x.name);
+  let name=pool[Math.floor(Math.random()*pool.length)],guard=0;
+  while(used.includes(name)&&guard++<40)name=pool[Math.floor(Math.random()*pool.length)];
+  return {name,f:rollSkill(),r:rollSkill(),s:rollSkill(),sh:0};
+}
+function staffOf(i){
+  S.crew.staff=S.crew.staff||[];
+  if(!S.crew.staff[i])S.crew.staff[i]=makeStaff();
+  const t=S.crew.staff[i];
+  if(t.sh==null)t.sh=0;
+  return t;
+}
+const skillField =i=>0.8+(staffOf(i).f-1)*0.125;        // 1★ 0.80 … 5★ 1.30
+const skillFixT  =i=>1.4-(staffOf(i).r-1)*0.2;          // 1★ 1.40 … 5★ 0.60
+const skillFixC  =i=>1.1-(staffOf(i).r-1)*0.1;          // 1★ 1.10 … 5★ 0.70
+const skillSafeT =i=>1.4-(staffOf(i).s-1)*0.2;
+function bestSafety(){let b=0;for(let i=0;i<S.up.helper;i++){if(S.crew.roles[i]==='safety'&&onDuty(i))b=Math.max(b,staffOf(i).s);}return b;}
+function shiftOf(i){return SHIFTS[staffOf(i).sh||0];}
+function onDuty(i){const sh=shiftOf(i),h=Math.floor(hourNow())%24;
+  return sh.from<sh.to ? (h>=sh.from&&h<sh.to) : (h>=sh.from||h<sh.to);}
+function dailyWage(i){
+  const t=staffOf(i),st=(t.f+t.r+t.s)/9;                // 9 stars = an average crew member
+  const base=Math.max(6,dayIncome()*0.02);
+  return Math.round(base*Math.max(0.6,Math.min(1.7,st))*shiftOf(i).pay);
+}
+function wageBill(){let w=0;for(let i=0;i<S.up.helper;i++)w+=dailyWage(i);return w;}
+function stars(n){return '★'.repeat(n)+'☆'.repeat(5-n);}
 function moraleMult(){
   if(!S.morale||gameNow()>S.morale.until)return 1;
   return modActive('helperOff')?0.2:0.75;      // fired during a strike: the new crew drags its feet
@@ -4731,7 +4772,7 @@ function fresh(){
     plants:[{id:'t1',type:'turbine',x:560,y:760,pile:4,acc:0,broken:false}],
     built:{t1:true},paid:{},up:{bag:0,boots:0,helper:0,batcap:0,bateff:0,grid:0},regions:{},
     battery:0,sat:0,day:0,t:8*HOUR,daySec:DAY_SEC,goal:0,soldCells:0,
-    crew:{auto:true,min:10,roles:[],plan:['auto','auto','auto','auto'],sites:[],mkts:[]},
+    crew:{auto:true,min:10,roles:[],plan:['auto','auto','auto','auto'],sites:[],mkts:[],staff:[]},
     satT:{},snow:0,bat:{},batFire:0,batFireT:0,batCycles:0,batCharge:0,batFault:false,morale:null,mods:[],contract:null,event:null,nextEvent:null,cardHour:null,cardHour2:null,cardSoon:0,cardDay:-1,dayEarned:0,lastDayEarned:0,
     lang:'en',tutDone:false,tipsSeen:{},seenVer:'',claimed:{},badges:[],earnLog:[],group:[],nick:'',ref:'',guest:false,syncBase:0,dev:'',ledger:[],cardPrefs:{},cardHist:[],dayLog:[],debt:0,
     stats:{stored:0,peakCells:0,planned:0,crewCells:0,crewRev:0,byMkt:{},fixSpend:0},hints:{},muted:false,shadows:true,lowFlash:false,speed:1,lastSave:Date.now()};
@@ -4828,7 +4869,8 @@ function fireOut(p){
   trackOnce('fire-out');
 }
 function spreadFrom(p){
-  if(p.spread)return;                                  // a fire jumps at most once
+  if(p.spread)return;
+  if(Math.random()<bestSafety()*0.12)return;                 // a skilled safety officer on duty contains it                                  // a fire jumps at most once
   if(burning().length+((S.batFire||0)>0?1:0)>=FIRE_MAX)return;   // never a runaway chain
   const cand=S.plants.filter(q=>q!==p&&PLANT_TYPES[q.type]&&!q.fire&&!q.broken&&dist(q,p)<FIRE_RANGE);
   if(!cand.length)return;
@@ -4985,6 +5027,9 @@ function syncHelpers(){
   while(helpers.length<S.up.helper){helpers.push({x:HQ.x+40,y:HQ.y+90,carry:0,state:'idle',target:null,tick:0,walk:Math.random()*6,face:0,moving:false});}
   while(helpers.length>S.up.helper){const h=helpers.pop();const o=helperObjs.pop();if(o)scene.remove(o);}
   while(S.crew.roles.length<S.up.helper)S.crew.roles.push('sell');
+  S.crew.staff=S.crew.staff||[];
+  while(S.crew.staff.length<S.up.helper)S.crew.staff.push(makeStaff());
+  while(S.crew.staff.length>S.up.helper)S.crew.staff.pop();
   while(S.crew.roles.length>S.up.helper)S.crew.roles.pop();
   if(S.crew.sites)S.crew.sites.length=Math.min(S.crew.sites.length,S.up.helper);
   if(S.crew.mkts)S.crew.mkts.length=Math.min(S.crew.mkts.length,S.up.helper);
@@ -5142,8 +5187,17 @@ function sellCell(x,y,byPlayer,crew,mk,fromStore){
   else flyers.push({x,y,h0:1.6,tx:()=>x,ty:()=>y-26,h1:3.2,life:0,kind:'coin'});
   S.saleAcc=(S.saleAcc||0)+p;S.saleT=0.4;sfx.sell();
 }
+function chargeWages(){
+  if(S.up.helper<=0)return 0;
+  const w=wageBill();if(w<=0)return 0;
+  S.cash=Math.max(0,S.cash-w);
+  S.stats.wageSpend=(S.stats.wageSpend||0)+w;
+  logLedger('wage',-w,S.up.helper+' crew');
+  return w;
+}
 function onNewDay(quiet){
   S.lastDayEarned=S.dayEarned||S.lastDayEarned||0;if(!quiet){S.dayLog=(S.dayLog||[]).concat({day:S.day-1,earn:Math.round(S.dayEarned||0),icons:[WEATHER[makeDay(S.day-1).weather].icon]}).slice(-30);}S.dayEarned=0;
+  {const paid=chargeWages();if(!quiet&&paid>0)toast(L(`Crew wages paid: ₵${fmt(paid)}`,`Ekip ücretleri ödendi: ₵${fmt(paid)}`),'');}
   const se=seasonOf(S.day),prev=seasonOf(S.day-1),w=WEATHER[DAY.weather];
   if(!quiet&&DAY.shock&&DAY.shock.hour===0&&(DAY.shock.type==='cap'||DAY.shock.type==='floor')){const sh=DAY.shock;sfx.warn();toast(sh.type==='cap'?L(`🔺 Cap price series all day (×${sh.mult.toFixed(1)}).`,`🔺 Gün boyu tavan fiyat serisi (×${sh.mult.toFixed(1)}).`):L('🔻 Floor price series all day. Fill the battery.','🔻 Gün boyu taban fiyat serisi. Bataryayı doldur.'),'big');}
   if(!quiet){if(se!==prev)toast(`${se.icon} ${L(se.name[0]+' has arrived.',se.name[1]+' geldi.')}`,'big');
@@ -5203,7 +5257,7 @@ function completePad(p){
 }
 /* ---- helper AI with roles ---- */
 const SLOTS=[{id:'night',name:['Night','Gece'],range:'22–06'},{id:'morning',name:['Morning','Sabah'],range:'06–12'},{id:'midday',name:['Midday','Öğle'],range:'12–17'},{id:'evening',name:['Evening','Akşam'],range:'17–22'}];
-const ST_TR={'Fighting fire':'Yangına müdahale','Waiting for output':'Üretim bekliyor','Collecting':'Topluyor','Repairing':'Onarıyor','On strike':'Grevde','Looking for work':'İş arıyor','Collecting':'Topluyor','Selling':'Satıyor','Storing':'Depoluyor','Emptying battery':'Bataryayı boşaltıyor','Selling stored energy':'Depodakini satıyor'};
+const ST_TR={'Off shift':'Vardiya dışı','Fighting fire':'Yangına müdahale','Waiting for output':'Üretim bekliyor','Collecting':'Topluyor','Repairing':'Onarıyor','On strike':'Grevde','Looking for work':'İş arıyor','Collecting':'Topluyor','Selling':'Satıyor','Storing':'Depoluyor','Emptying battery':'Bataryayı boşaltıyor','Selling stored energy':'Depodakini satıyor'};
 function stTr(st){if(!st)return '';if(S.lang!=='tr')return st;if(st.startsWith('Waiting for output'))return 'Üretim bekliyor '+st.slice(18);
   if(st.startsWith('Waiting for'))return st.replace('Waiting for','Bekliyor:');
   if(st.startsWith('Collecting '))return 'Topluyor '+st.slice(11);
@@ -5226,8 +5280,15 @@ function siteOptions(){
 function marketOptions(){return ['auto','city'].concat(townsOn().map(t=>t.id));}
 function updateHelper(hp,i,dt){
   const role=S.crew.roles[i]||'sell';
-  const sp=165*(1+0.08*S.up.boots)*modMult('helperSpeed')*moraleMult(),cap=6+2*Math.floor(S.up.bag/2);
+  const sp=165*(1+0.08*S.up.boots)*modMult('helperSpeed')*moraleMult()*skillField(i),cap=6+2*Math.floor(S.up.bag/2);
   if(modActive('helperOff')){hp.status='On strike';hp.target=null;hp.state='idle';const dx=HQ.x+((i%8)*26-90)+Math.floor(i/8)*8-hp.x,dy=HQ.y+95+Math.floor(i/8)*26-hp.y,l=Math.hypot(dx,dy);hp.moving=l>8;if(l>8){const st=Math.min(l,120*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);}hp.walk+=dt*10;return;}
+  if(!onDuty(i)){
+    hp.status='Off shift';hp.target=null;hp.state='idle';
+    const hx=HQ.x+((i%8)*26-90)+Math.floor(i/8)*8,hy=HQ.y+95+Math.floor(i/8)*26;
+    const dx=hx-hp.x,dy=hy-hp.y,l=Math.hypot(dx,dy);hp.moving=l>8;
+    if(l>8){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.walk+=dt*10;}
+    return;
+  }
   const slotPlan=S.crew.plan?S.crew.plan[slotOf(Math.floor(hourNow())%24)]:'auto';
   if(role==='safety'){
     const fires=S.plants.filter(p=>(p.fire||0)>0);
@@ -5237,7 +5298,7 @@ function updateHelper(hp,i,dt){
       hp.status='Fighting fire';hp.target=null;hp.state='idle';
       const dx=tgt.x+30-hp.x,dy=tgt.y+30-hp.y,l=Math.hypot(dx,dy);
       if(l>12&&dist(hp,tgt)>70){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.moving=true;hp.walk+=dt*10;hp.fireT=0;return;}
-      hp.fireT=(hp.fireT||0)+dt/3;if(tgt.fire!==undefined)tgt.fire=Math.max(0.01,tgt.fire-gdt*1.2);
+      hp.fireT=(hp.fireT||0)+dt/(3*skillSafeT(i));if(tgt.fire!==undefined)tgt.fire=Math.max(0.01,tgt.fire-gdt*1.2);
       if(tgt.fire!==undefined)tgt.fireC=Math.min(1,hp.fireT);else S.batFireC=Math.min(1,hp.fireT);
       if(hp.fireT>=1){hp.fireT=0;
         if(tgt.fire!==undefined){tgt.fireC=0;fireOut(tgt);}
@@ -5254,7 +5315,7 @@ function updateHelper(hp,i,dt){
         const dx=D.x+40-hp.x,dy=D.y+40-hp.y,l=Math.hypot(dx,dy);
         if(l>12&&dist(hp,D)>70){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.moving=true;hp.walk+=dt*10;hp.fixT=0;return;}
         hp.fixT=(hp.fixT||0)+dt;
-        if(hp.fixT>=2.5){const c=batFixCost();if(S.cash>=c)S.cash-=c;S.batFault=false;hp.fixT=0;sfx.fix();floatTxt(D.x,D.y,'-₵'+fmt(c));S.stats.fixSpend=(S.stats.fixSpend||0)+c;}
+        if(hp.fixT>=2.5*skillFixT(i)){const c=Math.round(batFixCost()*skillFixC(i));if(S.cash>=c)S.cash-=c;S.batFault=false;hp.fixT=0;sfx.fix();floatTxt(D.x,D.y,'-₵'+fmt(c));S.stats.fixSpend=(S.stats.fixSpend||0)+c;}
         return;}
     }
     const broken=S.plants.filter(p=>p.broken&&PLANT_TYPES[p.type]);
@@ -5264,8 +5325,8 @@ function updateHelper(hp,i,dt){
       hp.status='Repairing';hp.target=null;hp.state='idle';
       const dx=tp.x+30-hp.x,dy=tp.y+26-hp.y,l=Math.hypot(dx,dy);
       if(l>10&&dist(hp,tp)>60){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.moving=true;hp.walk+=dt*10;hp.fixT=0;return;}
-      const need=fixTime(tp,2);hp.fixT=(hp.fixT||0)+dt;tp.fix=Math.min(1,hp.fixT/need);
-      if(hp.fixT>=need){doRepair(tp,false);hp.fixT=0;trackOnce('crew-repair');}
+      const need=fixTime(tp,2)*skillFixT(i);hp.fixT=(hp.fixT||0)+dt;tp.fix=Math.min(1,hp.fixT/need);
+      if(hp.fixT>=need){const save=Math.round(repairCost(tp)*(1-skillFixC(i)));doRepair(tp,false);if(save>0)S.cash+=save;hp.fixT=0;trackOnce('crew-repair');}
       return;
     }
     hp.fixT=0;
@@ -6033,16 +6094,25 @@ function renderCrew(){
     <div class="role-desc">${L('Sell: empty hands and the battery into the city (never below your price). Store: fill the battery. Roles: each helper follows its own role.','Sat: elindekini ve bataryayı şehre boşalt (fiyatının altına asla). Depola: bataryayı doldur. Roller: her yardımcı kendi rolünü izler.')}</div></div>`;
   for(let i=0;i<S.up.helper;i++){
     const role=S.crew.roles[i]||'sell';
-    html+=`<div class="hrow"><div class="who">${L('Helper','Yardımcı')} ${i+1} · ${siteLabel(i)} → ${marketLabel(i)}<span id="hst${i}"></span></div>
+    const t=staffOf(i),sh=shiftOf(i),duty=onDuty(i);
+    const bad=(role==='fix'&&t.r<=2)||(role==='safety'&&t.s<=2)||((role==='sell'||role==='store'||role==='peak')&&t.f<=2);
+    html+=`<div class="hrow"><div class="who">${t.name}<span id="hst${i}"></span></div>
+      <div class="skills">⚡${stars(t.f)} 🔧${stars(t.r)} 🧯${stars(t.s)}</div>
       <div class="seg">${Object.keys(ROLES).map(k=>`<button data-h="${i}" data-r="${k}" class="${role===k?'on':''}" ${(!hasBat&&k!=='sell')?'disabled':''}>${tt(ROLES[k].name)}</button>`).join('')}</div>
       <div class="role-desc">${tt(ROLES[role].desc)}</div>
-      <div class="assign" style="grid-template-columns:1fr 1fr auto">
+      ${bad?`<div class="warn">${L('This role does not suit them — only '+ (role==='fix'?t.r:role==='safety'?t.s:t.f) +'★.','Bu iş ona göre değil — sadece '+(role==='fix'?t.r:role==='safety'?t.s:t.f)+'★.')}</div>`:''}
+      <div class="assign">
         <button data-a="site" data-h="${i}"><small>${L('Field','Saha')}</small><b>${siteLabel(i)}</b></button>
         <button data-a="mkt" data-h="${i}"><small>${L('Market','Pazar')}</small><b>${marketLabel(i)}</b></button>
+      </div>
+      <div class="assign" style="grid-template-columns:1fr auto">
+        <button data-a="shift" data-h="${i}" class="${duty?'duty':''}"><small>${L('Shift','Vardiya')} · ₵${fmt(dailyWage(i))}/${L('day','gün')}</small><b>${sh.icon} ${tt(sh.name)} ${sh.from}–${sh.to}</b></button>
         <button data-fire="${i}" style="padding:7px 10px">${L('Fire','Kov')}</button>
       </div></div>`;
   }
   if(!hasBat)html+=`<div class="note">${L('Store and Peak need the battery station.','Depola ve Zirve için batarya istasyonu gerekir.')}</div>`;
+  {const cnt=[0,0,0];for(let i=0;i<S.up.helper;i++)cnt[staffOf(i).sh||0]++;
+   html+=`<div class="note" style="background:#EEF1F6">${SHIFTS.map(x=>`${x.icon} ${tt(x.name)} ${cnt[x.id]}`).join(' · ')} — ${L('wages','ücret')} ₵${fmt(wageBill())}/${L('day','gün')}<br>${L('Nobody on shift means no crew work that hour — plants keep producing.','O saatte vardiyası olan yoksa ekip çalışmaz — santraller üretmeye devam eder.')}</div>`;}
   html+=`<div class="note">${L('A fixed field or market can be worse than Any/Nearest: the helper will wait at an empty plant.','Sabit saha veya pazar, otomatikten kötü olabilir: yardımcı boş santralin başında bekler.')}</div>`;
   if(moraleMult()<1)html+=`<div class="note" style="background:#FFE3E8">${L(`Morale is low after the firing: the crew works at ${Math.round(moraleMult()*100)}%.`,`Kovma sonrası moral düşük: ekip %${Math.round(moraleMult()*100)} verimle çalışıyor.`)}</div>`;
   html+=`<div class="note" id="crewStats"></div>`;
@@ -6066,12 +6136,16 @@ $('minAuto').onchange=e=>{S.crew.auto=e.target.checked;if(!S.crew.auto)S.crew.mi
 function fireHelper(i){
   if(S.up.helper<=0)return;
   const striking=modActive('helperOff');
+  const t=staffOf(i),sev=dailyWage(i)*3;                 // severance: three days' pay
+  S.cash=Math.max(0,S.cash-sev);S.stats.wageSpend=(S.stats.wageSpend||0)+sev;logLedger('severance',-sev,t.name);
   S.up.helper--;
   S.crew.roles.splice(i,1);S.crew.sites&&S.crew.sites.splice(i,1);S.crew.mkts&&S.crew.mkts.splice(i,1);
+  S.crew.staff&&S.crew.staff.splice(i,1);
   syncHelpers();
+  toast(L(`${t.name} left. Severance ₵${fmt(sev)}.`,`${t.name} ayrıldı. Kıdem tazminatı ₵${fmt(sev)}.`),'');
   if(striking){S.morale={until:gameNow()+MORALE_DAYS*24*HOUR};
     toast(L('Fired during the strike. New hires will drag their feet for days.','Grev sırasında kovdun. Yeni gelenler günlerce isteksiz çalışacak.'),'big');}
-  else toast(L('Helper let go.','Yardımcı işten çıkarıldı.'),'');
+
   trackOnce('helper-fired');save();renderCrew();
 }
 let fireArm=-1;
@@ -6083,7 +6157,8 @@ $('crewList').addEventListener('click',e=>{
     return;}
   const ab=e.target.closest('button[data-a]');
   if(ab){const i=+ab.dataset.h;
-    if(ab.dataset.a==='site'){const o=siteOptions(),cur=(S.crew.sites||[])[i]||'auto';S.crew.sites=S.crew.sites||[];S.crew.sites[i]=o[(o.indexOf(cur)+1+o.length)%o.length];}
+    if(ab.dataset.a==='shift'){const t=staffOf(i);t.sh=((t.sh||0)+1)%3;}
+    else if(ab.dataset.a==='site'){const o=siteOptions(),cur=(S.crew.sites||[])[i]||'auto';S.crew.sites=S.crew.sites||[];S.crew.sites[i]=o[(o.indexOf(cur)+1+o.length)%o.length];}
     else{const o=marketOptions(),cur=(S.crew.mkts||[])[i]||'auto';S.crew.mkts=S.crew.mkts||[];S.crew.mkts[i]=o[(o.indexOf(cur)+1+o.length)%o.length];}
     const h=helpers[i];if(h){h.target=null;h.state='idle';}
     sfx.pick();trackOnce('crew-assign');renderCrew();save();return;}
@@ -6369,6 +6444,7 @@ function openReport(page){
         ${line(L('Energy lost','Kaybolan enerji'),S.stats.wasted||0,U_CELL)}
         ${line(L('Wasted share','İsraf oranı'),(100-Math.round(efficiency()*100)),'%')}
         ${line(L('Repairs paid','Ödenen tamir'),fmt(S.stats.fixSpend||0),U_CASH)}
+        ${line(L('Crew wages paid','Ödenen ekip ücreti'),fmt(S.stats.wageSpend||0),U_CASH)}
         ${S.debt>0?line(L('Loan left','Kalan kredi'),fmt(S.debt),U_CASH):''}
         ${S.contract?line(L('Open deal','Açık anlaşma'),`${S.contract.delivered}/${S.contract.need}`,U_CELL):''}
         ${S.contract?line(L('Deal price','Anlaşma fiyatı'),S.contract.price,U_PRICE):''}
@@ -6415,6 +6491,14 @@ $('repPrev').onclick=()=>openReport(1);
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.33',t:['Shifts and skills','Vardiya ve yetenek'],l:[
+   ['Helpers now have names and three skills — ⚡ field, 🔧 repair, 🧯 safety. A 5★ mechanic repairs in half the time and 30% cheaper.','Yardımcıların artık adı ve üç yeteneği var — ⚡ saha, 🔧 tamir, 🧯 afet. 5★ bir tamirci yarı sürede ve %30 ucuza onarır.'],
+   ['Each helper works one shift: day, evening or night. Off shift they rest at the yard, so nobody on shift means no crew work that hour.','Her yardımcı tek vardiyada çalışır: gündüz, akşam ya da gece. Vardiya dışında merkezde dinlenir; o saatte kimse yoksa ekip çalışmaz.'],
+   ['Crew wages are charged daily and night pays 50% more. Firing costs three days of severance.','Ekip ücreti günlük kesiliyor, gece %50 fazla. Kovmanın bedeli üç günlük kıdem tazminatı.'],
+   ['The panel warns when a role does not suit a helper’s skills.','Rol, yardımcının yeteneğine uymuyorsa panel uyarıyor.']]},
+ {v:'0.32',t:['Turkish letters look right','Türkçe harfler düzeldi'],l:[
+   ['The headline font had no ğ, ş or İ, so those letters fell back to another font and looked broken. Every panel now uses a font with full Turkish support.','Başlık fontunda ğ, ş ve İ yoktu; bu harfler başka bir fonta düşüp bozuk görünüyordu. Tüm paneller artık Türkçeyi tam destekleyen bir font kullanıyor.'],
+   ['The Megawatt Mogul logo keeps its original chunky font.','Megawatt Mogul logosu orijinal kalın fontunu koruyor.']]},
  {v:'0.31.3',t:['A name for everyone','Herkese bir ad'],l:[
    ['No nickname? The game gives you one like “Güneş Tilki BS” — always the same for you, and you can rename any time.','Takma ad girmediysen oyun sana “Güneş Tilki BS” gibi bir ad veriyor — hep aynı kalır, istediğin zaman değiştirebilirsin.']]},
  {v:'0.31.2',t:['Everyone who signs in is listed','Giriş yapan herkes listede'],l:[
@@ -6517,6 +6601,7 @@ const TIPS=[
  {id:'life',icon:'♻️',ok:()=>S.plants.some(p=>plantAge(p)>plantLife(p)*0.6),lock:['Unlocks as your plants age.','Santralleriniz yaşlandıkça açılır.'],t:['Repower ageing plants','Yaşlı santralleri yenile'],d:['After its lifetime a plant loses 1% output per day and breaks more often. Stand next to it and pay 60% of the build cost to rebuild it with 10% more output.','Ömrü dolan santral günde %1 üretim kaybeder ve daha sık bozulur. Yanında durup inşa bedelinin %60\'ını ödersen %10 fazla üretimle yenilenir.']},
  {id:'batlife',icon:'🔋',ok:()=>built('bat')&&(S.batCycles||0)>20,lock:['Unlocks after 20 battery cycles.','20 batarya çevriminden sonra açılır.'],t:['Batteries wear out','Batarya yorulur'],d:['Every full charge counts as a cycle and each cycle takes 0.02% off capacity. Refurbish at the main station to reset health to 100%.','Her tam dolum bir çevrim sayılır ve her çevrim kapasiteden %0,02 alır. Ana istasyonda yenileyerek sağlığı %100\'e döndür.']},
  {id:'fixcost',icon:'🧰',ok:()=>!!S.stats.fixSpend,lock:['Unlocks after your first repair.','İlk tamirinden sonra açılır.'],t:['Repairs cost spare parts','Tamir yedek parça yer'],d:['A repair costs about 1% of the plant\'s build cost, never more than 15% of a day\'s income. The periodic service halves it; postponing doubles it.','Tamir, santralin inşa bedelinin yaklaşık %1\'i kadardır ve günlük kazancının %15\'ini asla geçmez. Dönemsel bakım bunu yarıya indirir, ertelemek iki katına çıkarır.']},
+ {id:'shift',icon:'🕗',ok:()=>S.up.helper>0,lock:['Unlocks with your first helper.','İlk yardımcınla açılır.'],t:['Shifts and skills','Vardiya ve yetenek'],d:['Each helper works one shift only and is paid daily — night costs 50% more. Nobody on shift means no crew work that hour, so the night crew fills the battery and the evening crew empties it at the peak. Skills matter: ⚡ field speed, 🔧 repair, 🧯 safety. A bad hire can be let go, but severance is three days of pay.','Her yardımcı tek vardiyada çalışır ve günlük ücret alır — gece %50 pahalı. O saatte vardiyası olan yoksa ekip çalışmaz; bu yüzden gece ekibi bataryayı doldurur, akşam ekibi zirvede boşaltır. Yetenekler önemli: ⚡ saha hızı, 🔧 tamir, 🧯 afet. Kötü çıkan eleman kovulabilir ama kıdem tazminatı üç günlük ücrettir.']},
  {id:'fire',icon:'🧯',ok:()=>!!S.stats.fires||true,lock:['',''],t:['Fires spread','Yangın yayılır'],d:['Lightning and worn gear can start a fire. A burning site makes nothing, and after about 30 seconds the fire jumps once to the nearest site — never more than two fires at a time. Stand next to it with the extinguisher (2 s), or give a helper the Safety role. Once it is out, the site still needs a repair.','Yıldırım ve yıpranmış ekipman yangın çıkarabilir. Yanan tesis üretmez ve yaklaşık 30 saniye sonra en yakın tesise bir kez sıçrar — aynı anda en fazla iki yangın olur. Yanına git ve söndür (2 sn) ya da bir yardımcıya Afet rolü ver. Söndükten sonra tesis onarım bekler.']},
  {id:'storm',icon:'⛈️',ok:()=>!!S.hints.broke,lock:['Unlocks after your first breakdown.','İlk arızadan sonra açılır.'],t:['Storm days','Fırtınalı günler'],d:['Turbines break 3× more often in storms. Stay close to them, or buy lightning rods and insurance when the cards offer them.','Fırtınada türbinler 3 kat sık bozulur. Yakınlarında kal ya da kart teklif ettiğinde paratoner ve sigorta al.']},
  {id:'snow',icon:'🌨️',ok:()=>S.plants.some(p=>PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='solar'),lock:['Unlocks with your first solar panel.','İlk güneş panelinle açılır.'],t:['Sweep the snow off','Karı süpür'],d:['On snowy days panels get covered and lose up to 70% of their output. Stand next to a panel to sweep it clean; sunshine melts the rest.','Karlı günlerde paneller kaplanır ve üretimin %70\'ine kadarını kaybeder. Yanında durup süpür; kalanı güneş eritir.']},
@@ -6907,7 +6992,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.31.3';
+const GAME_VERSION='0.33';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
