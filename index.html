@@ -8,7 +8,7 @@
 <title>Megawatt Mogul</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lilita+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root{ color-scheme:light only; --ink:#1D2433; --soft:#5C6780; --panel:rgba(255,255,255,.95); --peak:#E8364F; --cheap:#23B26D; --bat:#6A5CFF; --gold:#FFC83D;
   --disp:'Fredoka','Nunito','Arial Rounded MT Bold','Trebuchet MS',sans-serif; --body:'Nunito','Segoe UI',system-ui,sans-serif; }
@@ -24,38 +24,38 @@ html,body{height:100%;overflow:hidden;background:#3B7A4A;font-family:var(--body)
 #gl{position:fixed;inset:0;width:100vw;height:100vh;display:block}
 #labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .lb{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;will-change:transform;text-align:center}
-.tag{font-family:var(--disp);font-size:14px;color:#fff;background:rgba(29,36,51,.88);border-radius:9px;padding:1px 8px 2px;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.tag{font-family:var(--disp);font-size:14px;color:#fff;background:rgba(29,36,51,.88);border-radius:9px;padding:1px 8px 2px;box-shadow:0 2px 0 rgba(0,0,0,.25);font-weight:600}
 .tag.bad{background:#E8364F;color:#fff}
 .tag.ok{background:#1D2433}.tag.no{background:rgba(29,36,51,.55)}
 .tag.peak{background:var(--peak)}.tag.cheap{background:var(--cheap)}.tag.norm{background:#5C6B84}
 .nm{font-family:var(--body);font-weight:800;font-size:11px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7),0 0 4px rgba(0,0,0,.4)}
-.cnt{font-family:var(--disp);font-size:13px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+.cnt{font-family:var(--disp);font-size:13px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);font-weight:600}
 .cnt.full{color:#FFD84D}
-.big{font-family:var(--disp);font-size:22px;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.6)}
+.big{font-family:var(--disp);font-size:22px;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.6);font-weight:600}
 .fl.lost{color:#FF6B6B;text-shadow:0 2px 0 #5A0F1A,0 0 6px rgba(0,0,0,.4);font-size:16px}
-.fl{font-family:var(--disp);font-size:20px;color:var(--gold);text-shadow:0 2px 0 #7A4A00,0 0 6px rgba(0,0,0,.4)}
+.fl{font-family:var(--disp);font-size:20px;color:var(--gold);text-shadow:0 2px 0 #7A4A00,0 0 6px rgba(0,0,0,.4);font-weight:600}
 .wrench.fire{background:#E8364F;color:#fff;border-radius:10px;padding:0 6px}
-.code{font-family:var(--disp);font-size:11px;color:#fff;background:rgba(29,36,51,.55);border-radius:6px;padding:0 4px}
+.code{font-family:var(--disp);font-size:11px;color:#fff;background:rgba(29,36,51,.55);border-radius:6px;padding:0 4px;font-weight:600}
 .code.worn{background:rgba(232,54,79,.8)}
 .wrench{font-size:22px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
 .hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 10px 0;display:flex;flex-direction:column;gap:6px;pointer-events:none;max-width:520px;margin:0 auto}
 .bar{display:flex;gap:6px;align-items:flex-start}
 .bar>.box{min-height:62px}
 .box{background:var(--panel);color:#1D2433;border-radius:16px;padding:6px 10px;box-shadow:0 3px 0 rgba(0,0,0,.18)}
-.cash{font-family:var(--disp);font-size:26px;line-height:1.05;display:flex;align-items:center;gap:4px;min-width:84px}
+.cash{font-family:var(--disp);font-size:26px;line-height:1.05;display:flex;align-items:center;gap:4px;min-width:84px;font-weight:600}
 .coin{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFE58A,#FFB300 60%,#C77F00);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);flex:0 0 auto}
 .wic{font-size:18px;line-height:1}
-.wealth{font-family:var(--disp);font-size:15px;color:#7A5A00;display:flex;gap:4px;align-items:center;line-height:1.1}
+.wealth{font-family:var(--disp);font-size:15px;color:#7A5A00;display:flex;gap:4px;align-items:center;line-height:1.1;font-weight:600}
 .wealth b{font-weight:600}
 .carry{font-size:12px;color:var(--soft);font-weight:800}
 .carry b{color:var(--ink)}
 .lossc{font-size:11px;font-weight:800;color:#fff;background:#E8364F;border-radius:7px;padding:0 6px;margin-top:2px;display:inline-block}
 .market{flex:1;min-width:0;display:flex;gap:6px;align-items:center;justify-content:space-between}
-.pnow{font-family:var(--disp);font-size:21px;line-height:1}
+.pnow{font-family:var(--disp);font-size:21px;line-height:1;font-weight:600}
 .pnow small{display:none;font-family:var(--body);font-size:10px;color:var(--soft);font-weight:800}
 .lvl{display:inline-block;border-radius:7px;padding:0 7px;font-size:11px;font-weight:800;color:#fff;margin-top:2px}
 #spark{width:54px;height:32px;display:block;flex:0 1 auto;min-width:36px}
-.clock{font-family:var(--disp);font-size:16px;text-align:right;line-height:1.1;flex:0 0 auto}
+.clock{font-family:var(--disp);font-size:16px;text-align:right;line-height:1.1;flex:0 0 auto;font-weight:600}
 .clock small{display:block;white-space:nowrap;font-family:var(--body);font-weight:800;font-size:11px;color:var(--soft)}
 .side{display:flex;flex-direction:column;gap:6px}
 .rb{pointer-events:auto;width:40px;height:40px;border-radius:13px;background:var(--panel);color:#1D2433;font-size:19px;box-shadow:0 3px 0 rgba(0,0,0,.18);display:grid;place-items:center;position:relative}
@@ -64,7 +64,7 @@ html,body{height:100%;overflow:hidden;background:#3B7A4A;font-family:var(--body)
 .rb .badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:var(--peak);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 4px}
 .goal{align-self:center;background:#FFF3C9;color:#1D2433;border:2px solid #F2CF62;border-radius:999px;padding:4px 14px;font-weight:800;font-size:14px;box-shadow:0 3px 0 rgba(0,0,0,.15);text-align:center;max-width:100%}
 .goal small{color:#9A6B00;margin-left:6px}
-.banner{align-self:center;border-radius:12px;padding:5px 14px;font-family:var(--disp);font-size:16px;color:#fff;background:var(--peak);box-shadow:0 3px 0 rgba(0,0,0,.2);text-align:center}
+.banner{align-self:center;border-radius:12px;padding:5px 14px;font-family:var(--disp);font-size:16px;color:#fff;background:var(--peak);box-shadow:0 3px 0 rgba(0,0,0,.2);text-align:center;font-weight:600}
 .banner.cheap{background:var(--cheap)}
 .banner.news{background:#2F3A57}
 .dealc{font-size:11px;font-weight:800;color:#fff;background:#6A5CFF;border-radius:7px;padding:0 6px;margin-top:2px;display:inline-block}
@@ -81,13 +81,13 @@ body.title #mini{visibility:hidden}
 @keyframes tin{from{transform:translateY(10px);opacity:0}}
 #joy{position:fixed;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.6);pointer-events:none;display:none}
 #knob{position:absolute;left:31px;top:31px;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.9);box-shadow:0 3px 0 rgba(0,0,0,.2)}
-.help{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 22px);color:#fff;font-family:var(--disp);font-size:18px;text-shadow:0 2px 3px rgba(0,0,0,.5);pointer-events:none;text-align:center;width:90%}
+.help{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 22px);color:#fff;font-family:var(--disp);font-size:18px;text-shadow:0 2px 3px rgba(0,0,0,.5);pointer-events:none;text-align:center;width:90%;font-weight:600}
 .modal{position:fixed;inset:0;background:rgba(10,16,30,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:30}
 .modal.on{display:flex}
 .sheet{background:#fff;color:#1D2433;border-radius:22px;padding:18px;width:min(420px,100%);max-height:92vh;overflow:auto;text-align:center;box-shadow:0 6px 0 rgba(0,0,0,.2)}
 .sheet h2{font-family:var(--disp);font-size:26px;font-weight:700;margin-bottom:4px;color:#1D2433}
 .sheet p{color:#4A5568;font-size:14px;margin:4px 0}
-.sheet .amt{font-family:var(--disp);font-size:36px;margin:8px 0}
+.sheet .amt{font-family:var(--disp);font-size:36px;margin:8px 0;font-weight:600}
 .btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .btns button{padding:12px;border-radius:14px;font-weight:800;background:#EEF1F6;color:#1D2433;box-shadow:0 3px 0 rgba(0,0,0,.12)}
 .btns .pri{background:#1D2433;color:#fff}
@@ -107,7 +107,7 @@ body.title #mini{visibility:hidden}
 .tut-card{width:min(480px,100%);display:flex;gap:10px;align-items:flex-end}
 .tut-img{width:92px;height:92px;flex:0 0 auto;border-radius:50%;background:#EEF1F6;border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.2);object-fit:cover}
 .tut-body{flex:1;background:#fff;color:#1D2433;border-radius:18px 18px 18px 4px;padding:12px 14px;box-shadow:0 4px 0 rgba(0,0,0,.18);position:relative}
-.tut-name{font-family:var(--disp);font-size:15px;color:#6A5CFF}
+.tut-name{font-family:var(--disp);font-size:15px;color:#6A5CFF;font-weight:600}
 .tut-text{font-size:15px;font-weight:600;margin:4px 0 8px;line-height:1.4}
 .tut-foot{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:12px;color:var(--soft);font-weight:800}
 .tut-btns{display:flex;gap:6px}
@@ -128,12 +128,12 @@ body.title #mini{visibility:hidden}
 .tip b{display:block;font-size:15px}.tip span{display:block;font-size:13.5px;color:var(--ink);margin-top:3px;line-height:1.4}
 .tip.new{background:#FFF6DA;border:2px solid #F2CF62}
 .tip.locked{opacity:.55}.tip.locked span{color:var(--soft)}
-.adbox{height:110px;border-radius:14px;background:repeating-linear-gradient(45deg,#EEF1F6,#EEF1F6 10px,#E3E8EF 10px,#E3E8EF 20px);display:grid;place-items:center;font-family:var(--disp);font-size:32px;margin:10px 0}
+.adbox{height:110px;border-radius:14px;background:repeating-linear-gradient(45deg,#EEF1F6,#EEF1F6 10px,#E3E8EF 10px,#E3E8EF 20px);display:grid;place-items:center;font-family:var(--disp);font-size:32px;margin:10px 0;font-weight:600}
 /* crew */
 .crew{text-align:left}
 .rule{background:#F4F6FA;color:#1D2433;border-radius:14px;padding:10px 12px;margin:10px 0}
 .rule .row1{display:flex;justify-content:space-between;align-items:center;font-weight:800}
-.rule .val{font-family:var(--disp);font-size:22px}
+.rule .val{font-family:var(--disp);font-size:22px;font-weight:600}
 .rule input[type=range]{width:100%;margin:8px 0 2px;accent-color:var(--bat)}
 .rule label{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:600}
 .rule .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--soft);font-weight:700}
@@ -173,9 +173,9 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   -webkit-text-stroke:3px #1D2433;paint-order:stroke fill;text-shadow:0 6px 0 #1D2433}
 .t-name span:first-child{font-size:clamp(52px,15vw,84px);transform:rotate(-3deg)}
 .t-name span:last-child{font-size:clamp(64px,19vw,104px);color:#fff;transform:rotate(-3deg) translateX(12px)}
-.t-sub{margin-top:10px;background:#1D2433;color:#fff;font-family:var(--disp);font-size:18px;padding:3px 14px;border-radius:10px;transform:rotate(-3deg)}
+.t-sub{margin-top:10px;background:#1D2433;color:#fff;font-family:var(--disp);font-size:18px;padding:3px 14px;border-radius:10px;transform:rotate(-3deg);font-weight:600}
 .t-line{margin-top:14px;color:#fff;font-weight:800;font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.35);max-width:280px}
-.t-play{pointer-events:auto;margin-top:26px;min-width:220px;padding:16px 26px;border-radius:18px;background:#FFD23F!important;color:#1D2433!important;font-family:var(--disp);font-size:26px;box-shadow:0 6px 0 #B7861B;transition:transform .08s}
+.t-play{pointer-events:auto;margin-top:26px;min-width:220px;padding:16px 26px;border-radius:18px;background:#FFD23F!important;color:#1D2433!important;font-family:var(--disp);font-size:26px;box-shadow:0 6px 0 #B7861B;transition:transform .08s;font-weight:600}
 .t-play:active{transform:translateY(4px);box-shadow:0 2px 0 #B7861B}
 .t-play:disabled{background:#E9EEF3;color:#5C6780;box-shadow:0 6px 0 #AAB4C0;font-size:20px}
 .t-play:not(:disabled){animation:pulse 1.6s ease-in-out infinite}
@@ -200,7 +200,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .t-status{color:#fff;font-weight:700;font-size:13px;min-height:18px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
 #diag{font-family:monospace;font-size:12px;max-width:88vw;text-align:left;white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.45);color:#fff;padding:8px 10px;border-radius:10px}
 @media (max-height:700px){#tChar{width:104px;height:104px}.t-char{bottom:4%;left:5%;right:auto}.t-bubble{bottom:34px;font-size:12.5px;max-width:min(200px,50vw)}.t-turb{width:78px;right:5%;left:auto}}
-.t-ver{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 30px);color:rgba(255,255,255,.85);font-family:var(--disp);font-size:14px;letter-spacing:.5px}
+.t-ver{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 30px);color:rgba(255,255,255,.85);font-family:var(--disp);font-size:14px;letter-spacing:.5px;font-weight:600}
 .t-credit{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 14px);color:rgba(255,255,255,.85);font-size:11px;font-weight:700}
 @media (prefers-reduced-motion: reduce){.t-rot,.t-play{animation:none}}
 @media (prefers-reduced-motion: reduce){ .toast{animation:none} }
@@ -227,7 +227,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.33</div>
+  <div class="t-ver" id="tVer">v0.33.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -405,7 +405,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.33 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.33.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -6491,6 +6491,8 @@ $('repPrev').onclick=()=>openReport(1);
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.33.1',t:['One weight everywhere','Her yerde tek kalınlık'],l:[
+   ['Some panels were drawing the headline font at a weight the game never loaded, so they looked thinner than the rest. Every display style now states its own weight.','Bazı paneller başlık fontunu, oyunun hiç yüklemediği bir kalınlıkta çiziyordu ve diğerlerinden ince görünüyordu. Artık her başlık kendi kalınlığını belirtiyor.']]},
  {v:'0.33',t:['Shifts and skills','Vardiya ve yetenek'],l:[
    ['Helpers now have names and three skills — ⚡ field, 🔧 repair, 🧯 safety. A 5★ mechanic repairs in half the time and 30% cheaper.','Yardımcıların artık adı ve üç yeteneği var — ⚡ saha, 🔧 tamir, 🧯 afet. 5★ bir tamirci yarı sürede ve %30 ucuza onarır.'],
    ['Each helper works one shift: day, evening or night. Off shift they rest at the yard, so nobody on shift means no crew work that hour.','Her yardımcı tek vardiyada çalışır: gündüz, akşam ya da gece. Vardiya dışında merkezde dinlenir; o saatte kimse yoksa ekip çalışmaz.'],
@@ -6992,7 +6994,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.33';
+const GAME_VERSION='0.33.1';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
