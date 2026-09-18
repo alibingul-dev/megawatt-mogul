@@ -227,7 +227,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.33.5</div>
+  <div class="t-ver" id="tVer">v0.33.7</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -405,7 +405,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.33.5 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.33.7 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -6494,6 +6494,8 @@ $('repPrev').onclick=()=>openReport(1);
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.33.7',t:['Cloud save really sticks now','Bulut kaydı artık gerçekten kalıyor'],l:[['Picking the cloud save wrote it to the device, but the page reload immediately wrote the old device save back over it, so the question returned on every launch. Nothing is written once a reload has started.','Bulut kaydını seçtiğinde kayıt cihaza yazılıyor, ama sayfa yenilenirken eski cihaz kaydı hemen üstüne geri yazılıyordu; bu yüzden soru her açılışta geri geliyordu. Artık yenileme başladıktan sonra hiçbir şey yazılmıyor.']]},
+ {v:'0.33.6',t:['Cloud save loop fixed','Bulut kaydı döngüsü düzeldi'],l:[['Picking the cloud save could silently fail when device storage was full, so the same question came back on every launch. The cloud save is now written first and verified, and you get a clear message if it cannot be stored.','Bulut kaydını seçtiğinde cihaz deposu doluysa yazma sessizce başarısız oluyor ve aynı soru her açılışta geri geliyordu. Artık bulut kaydı önce yazılıp doğrulanıyor, yazılamazsa net bir uyarı çıkıyor.']]},
  {v:'0.33.5',t:['Hiring unblocked','Yardımcı alımı düzeldi'],l:[['Money already paid toward a helper is no longer lost when you fire one — it now carries over and buys the next helpers.','Bir yardımcı için ödediğin para, birini kovduğunda artık kaybolmuyor; sonraki yardımcılara sayılıyor.']]},
  {v:'0.33.4',t:['Lightest headings','En ince başlık'],l:[['Display text dropped to the lightest Fredoka weight.','Başlık yazıları Fredoka\'nın en ince ağırlığına indi.']]},
  {v:'0.33.3',t:['Lighter headings','Daha ince başlıklar'],l:[['Display text is one weight lighter, so Turkish letters like ğ and ş read cleanly.','Başlık ve sayı yazıları bir kademe inceldi; ğ ve ş gibi harfler daha temiz görünüyor.']]},
@@ -6847,8 +6849,10 @@ $('mMap').addEventListener('pointerdown',()=>$('mMap').classList.remove('on'));
 const SAVE_SCHEMA=4;           // bump + add a step in migrate() whenever the save shape changes
 const SAVE_PREV=SAVE_KEY+'_prev', SAVE_BACKUP=SAVE_KEY+'_backup';
 function validSave(o){return o&&typeof o==='object'&&Array.isArray(o.plants)&&isFinite(o.cash)&&o.built&&typeof o.built==='object';}
+let RELOADING=false;                       // set while the page is on its way to reload
 function save(){
   try{
+    if(RELOADING)return;
     if(!validSave(S))return;
     S.lastSave=Date.now();S.schema=SAVE_SCHEMA;
     const prev=localStorage.getItem(SAVE_KEY);
@@ -7001,7 +7005,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.33.5';
+const GAME_VERSION='0.33.7';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
@@ -7057,15 +7061,26 @@ async function afterSignIn(){
   if(!S.nick)askNick();
 }
 function pullCloud(cloud){
-  try{
-    try{if(S.earned>0||S.day>0)localStorage.setItem(SAVE_KEY+'_rescue',JSON.stringify(S));}catch(e){}
-    localStorage.setItem(SAVE_BACKUP,JSON.stringify(S));
-    cloud.syncBase=cloud.lastSave||Date.now();cloud.dev=DEV_ID;
-    localStorage.setItem(SAVE_KEY,JSON.stringify(cloud));
-    removeEventListener('pagehide',save);
-    toast(L('Loading your cloud save…','Bulut kaydın yükleniyor…'),'good');
-    setTimeout(()=>location.reload(),400);
-  }catch(e){}
+  RELOADING=true;
+  cloud.syncBase=cloud.lastSave||Date.now();cloud.dev=DEV_ID;
+  const txt=JSON.stringify(cloud);
+  let old=null;try{old=localStorage.getItem(SAVE_KEY);}catch(e){}
+  const put=()=>{try{localStorage.setItem(SAVE_KEY,txt);return localStorage.getItem(SAVE_KEY)===txt;}catch(e){return false;}};
+  let ok=put();
+  if(!ok){                                   // storage full: drop the spare copies, then retry
+    for(const k of [SAVE_PREV,SAVE_BACKUP,SAVE_KEY+'_rescue'])try{localStorage.removeItem(k);}catch(e){}
+    ok=put();
+  }
+  if(!ok){                                   // still no room: put the old save back and say so
+    try{if(old)localStorage.setItem(SAVE_KEY,old);}catch(e){}
+    toast(L('This device has no room to store the cloud save. Clear site data and try again.','Bu cihazda bulut kaydı için yer yok. Site verisini temizleyip tekrar dene.'),'big');
+    return;
+  }
+  if(old){try{localStorage.setItem(SAVE_KEY+'_rescue',old);}catch(e){}   // spares are best-effort only
+          try{localStorage.setItem(SAVE_BACKUP,old);}catch(e){}}
+  removeEventListener('pagehide',save);
+  toast(L('Loading your cloud save…','Bulut kaydın yükleniyor…'),'good');
+  setTimeout(()=>location.reload(),400);
 }
 function askWhichSave(cloud,mine,theirs){
   $('cloTitle').textContent=L('Two saves found','İki kayıt bulundu');
@@ -7081,7 +7096,7 @@ function askWhichSave(cloud,mine,theirs){
 }
 const DEV_ID=(()=>{try{let d=localStorage.getItem('mwmogul_dev');if(!d){d=Math.random().toString(36).slice(2,10);localStorage.setItem('mwmogul_dev',d);}return d;}catch(e){return 'dev';}})();
 async function cloudSave(force){
-  if(!fbUser||!fbDb||cloudBusy)return;
+  if(!fbUser||!fbDb||cloudBusy||RELOADING)return;
   const now=Date.now();if(!force&&now-lastCloud<5*60*1000)return;
   cloudBusy=true;lastCloud=now;
   try{
@@ -7507,14 +7522,14 @@ $('sRestore').onclick=()=>{
   $('cloOpts').innerHTML=opts.map((x,i)=>`<button data-r="${i}"><b>${x.label}</b><small>${L('Earned','Kazanç')} ₵${fmt(x.o.earned||0)} · ${L('day','gün')} ${(x.o.day||0)+1}</small></button>`).join('');
   $('cloOpts').onclick=e=>{const b=e.target.closest('button[data-r]');if(!b)return;
     const x=opts[+b.dataset.r];if(!x)return;
-    try{localStorage.setItem(SAVE_KEY,JSON.stringify(x.o));removeEventListener('pagehide',save);trackOnce('save-restored');location.reload();}catch(err){}};
+    try{RELOADING=true;localStorage.setItem(SAVE_KEY,JSON.stringify(x.o));removeEventListener('pagehide',save);trackOnce('save-restored');location.reload();}catch(err){}};
   $('mCloud').classList.add('on');
 };
 $('sImport').onclick=()=>{
   $('mSet').classList.remove('on');
   $('codeTitle').textContent='Load a save code';$('codeHelp').textContent='Paste a code. Your current progress is kept as a backup.';
   $('codeBox').value='';$('codeBox').readOnly=false;$('codeMsg').textContent='';$('codeGo').textContent='Load';
-  $('codeGo').onclick=()=>{try{importCode($('codeBox').value);trackOnce('save-imported');removeEventListener('pagehide',save);location.reload();}catch(e){$('codeMsg').textContent=e.message;}};
+  $('codeGo').onclick=()=>{try{importCode($('codeBox').value);trackOnce('save-imported');RELOADING=true;removeEventListener('pagehide',save);location.reload();}catch(e){$('codeMsg').textContent=e.message;}};
   $('mCode').classList.add('on');
 };
 $('codeClose').onclick=()=>$('mCode').classList.remove('on');
