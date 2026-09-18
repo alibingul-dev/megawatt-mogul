@@ -227,7 +227,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.33.4</div>
+  <div class="t-ver" id="tVer">v0.33.5</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -405,7 +405,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.33.4 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.33.5 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4974,7 +4974,7 @@ function level(p){const a=P0*AVG_D;if(p>=a*1.5)return[L('Peak','Zirve'),'peak','
 /* ======================= UTIL ======================= */
 const $=id=>document.getElementById(id);
 const SUF=['','K','M','B','T','Qa'];
-function fmt(n){if(n<1000)return n<10&&n%1?n.toFixed(1):Math.floor(n).toString();let i=0;while(n>=1000&&i<SUF.length-1){n/=1000;i++;}return(n<10?n.toFixed(2):n<100?n.toFixed(1):Math.floor(n))+SUF[i];}
+function fmt(n){if(n<0)return '-'+fmt(-n);if(n<1000)return n<10&&n%1?n.toFixed(1):Math.floor(n).toString();let i=0;while(n>=1000&&i<SUF.length-1){n/=1000;i++;}return(n<10?n.toFixed(2):n<100?n.toFixed(1):Math.floor(n))+SUF[i];}
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 function toast(m,c=''){const e=document.createElement('div');e.className='toast '+c;e.textContent=m;$('toasts').appendChild(e);setTimeout(()=>e.remove(),c==='big'?4000:2800);while($('toasts').children.length>3)$('toasts').firstChild.remove();}
 function hint(k,m,c){if(S.hints[k])return;S.hints[k]=1;toast(m,c);}
@@ -5149,7 +5149,9 @@ function update(dt){
   if(on!==standPad){standPad=on;standT=0;}
   if(padLock&&(!on||on.id!==padLock))padLock=null;
   if(on&&on.id!==padLock){
-    standT+=dt;const cost=padCost(on),paid=S.paid[on.id]||0,need=cost-paid;
+    standT+=dt;
+    let _g=0;while(!padDone(on)&&(S.paid[on.id]||0)>=padCost(on)-0.001&&_g++<30)completePad(on);
+    const cost=padCost(on),paid=S.paid[on.id]||0,need=cost-paid;
     if(standT>0.3&&S.cash>0.0001&&need>0){
       const pay=Math.min(S.cash,need,Math.max(cost/1.1,15)*dt);S.cash-=pay;S.paid[on.id]=paid+pay;
       if(Math.random()<0.45){flyers.push({x:S.px,y:S.py,h0:2,tx:()=>on.x,ty:()=>on.y,h1:0.2,life:0,kind:'coin'});sfx.coin();}
@@ -5239,7 +5241,8 @@ function onHour(h){
   if(h===18&&built('bat'))toast('Peak hours. Take energy from the battery and sell it.');
 }
 function completePad(p){
-  sfx.build();S.paid[p.id]=0;padLock=p.id;
+  const _c=padCost(p);
+  sfx.build();S.paid[p.id]=Math.max(0,(S.paid[p.id]||0)-_c);padLock=p.id;
   trackOnce('built-'+p.id+(p.kind==='upg'?'-lv'+(S.up[p.key]+1):''));
   if(p.kind==='build'){
     S.built[p.id]=true;logLedger('build',-padCost(p),p.id);
@@ -5988,7 +5991,7 @@ function render(dt,now){
     const cost=padCost(p),paid=S.paid[p.id]||0,f=Math.min(1,paid/cost),ud=o.userData;
     ud.fill.scale.set(1,Math.max(0.001,f),1);ud.fill.position.z=(ud.h-0.5)*(1-f)/2;ud.fill.visible=f>0;
     const pp=pops[p.id]||0;o.scale.setScalar(1+Math.sin(pp*Math.PI)*0.2);
-    const done=padDone(p),left=Math.ceil(cost-paid);
+    const done=padDone(p),left=Math.max(0,Math.ceil(cost-paid));
     let name=p.kind==='build'?(p.type==='town'?L('Town market','Kasaba pazarı'):p.type==='battery'?(p.id==='bat'?L('Battery station','Batarya istasyonu'):L('Field depot','Saha deposu')):tt(PLANT_TYPES[p.type].name)):p.kind==='upg'?`${tt(p.label)}${S.up[p.key]?' '+L('lv','sv')+(S.up[p.key]+1):''}`:tt(p.label);
     if(p.key==='helper')name=`${L('Hire helper','Yardımcı al')} ${S.up.helper+1}/15`;
     place('pn'+p.id,'nm',p.x,p.y,0.1,name,p.kind==='gate'?-44:-40);
@@ -6491,6 +6494,7 @@ $('repPrev').onclick=()=>openReport(1);
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.33.5',t:['Hiring unblocked','Yardımcı alımı düzeldi'],l:[['Money already paid toward a helper is no longer lost when you fire one — it now carries over and buys the next helpers.','Bir yardımcı için ödediğin para, birini kovduğunda artık kaybolmuyor; sonraki yardımcılara sayılıyor.']]},
  {v:'0.33.4',t:['Lightest headings','En ince başlık'],l:[['Display text dropped to the lightest Fredoka weight.','Başlık yazıları Fredoka\'nın en ince ağırlığına indi.']]},
  {v:'0.33.3',t:['Lighter headings','Daha ince başlıklar'],l:[['Display text is one weight lighter, so Turkish letters like ğ and ş read cleanly.','Başlık ve sayı yazıları bir kademe inceldi; ğ ve ş gibi harfler daha temiz görünüyor.']]},
  {v:'0.33.2',t:['Same font in every banner','Tüm bildirimlerde aynı font'],l:[['Event and toast banners now use the display font like the rest of the UI.','Olay ve bildirim şeritleri de arayüzün geri kalanıyla aynı fontu kullanıyor.']]},
@@ -6997,7 +7001,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.33.4';
+const GAME_VERSION='0.33.5';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
