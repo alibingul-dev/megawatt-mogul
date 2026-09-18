@@ -75,7 +75,7 @@ body.title #mini{visibility:hidden}
 #mMap canvas{max-width:92vw;max-height:84vh;border-radius:18px;border:3px solid #fff}
 #flashOv{position:fixed;inset:0;background:#EAF2FF;opacity:0;pointer-events:none;z-index:3;transition:opacity .08s linear}
 #toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 150px);width:min(440px,calc(100% - 24px));display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:5}
-.toast{background:rgba(29,36,51,.94);color:#fff;border-radius:14px;padding:9px 13px;font-size:14px;font-weight:600;text-align:center;animation:tin .25s ease-out}
+.toast{background:rgba(29,36,51,.94);color:#fff;border-radius:14px;padding:9px 13px;font-family:var(--disp);font-size:14px;font-weight:600;text-align:center;animation:tin .25s ease-out}
 .toast.good{background:rgba(24,140,86,.96)}
 .toast.big{background:rgba(232,54,79,.97);font-family:var(--disp);font-size:18px;font-weight:600}
 @keyframes tin{from{transform:translateY(10px);opacity:0}}
@@ -227,7 +227,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.33.1</div>
+  <div class="t-ver" id="tVer">v0.33.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -405,7 +405,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.33.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.33.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -6491,6 +6491,7 @@ $('repPrev').onclick=()=>openReport(1);
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.33.2',t:['Same font in every banner','Tüm bildirimlerde aynı font'],l:[['Event and toast banners now use the display font like the rest of the UI.','Olay ve bildirim şeritleri de arayüzün geri kalanıyla aynı fontu kullanıyor.']]},
  {v:'0.33.1',t:['One weight everywhere','Her yerde tek kalınlık'],l:[
    ['Some panels were drawing the headline font at a weight the game never loaded, so they looked thinner than the rest. Every display style now states its own weight.','Bazı paneller başlık fontunu, oyunun hiç yüklemediği bir kalınlıkta çiziyordu ve diğerlerinden ince görünüyordu. Artık her başlık kendi kalınlığını belirtiyor.']]},
  {v:'0.33',t:['Shifts and skills','Vardiya ve yetenek'],l:[
@@ -6994,7 +6995,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.33.1';
+const GAME_VERSION='0.33.2';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
