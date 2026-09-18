@@ -222,7 +222,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.27.1</div>
+  <div class="t-ver" id="tVer">v0.27.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -398,7 +398,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.27.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.27.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4927,7 +4927,9 @@ const glc=$('gl');
 glc.addEventListener('pointerdown',e=>{joy.on=true;joy.id=e.pointerId;joy.ox=joy.x=e.clientX;joy.oy=joy.y=e.clientY;glc.setPointerCapture(e.pointerId);audioInit();$('help').hidden=true;});
 glc.addEventListener('pointermove',e=>{if(joy.on&&e.pointerId===joy.id){joy.x=e.clientX;joy.y=e.clientY;}});
 const endJoy=e=>{if(e.pointerId===joy.id)joy.on=false;};
-glc.addEventListener('pointerup',endJoy);glc.addEventListener('pointercancel',endJoy);
+addEventListener('blur',()=>{joy.on=false;for(const k in keys)keys[k]=false;});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){joy.on=false;for(const k in keys)keys[k]=false;}});
+addEventListener('pointerup',endJoy);glc.addEventListener('pointercancel',endJoy);
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;audioInit();$('help').hidden=true;});
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 function inputVec(){
@@ -4946,7 +4948,7 @@ function syncHelpers(){
 }
 let clearT=0,repT=0,batFixT=0,refurbT=0,padLock=null,standPad=null,standT=0,fixT=0,cellTick=0,sellTick=0,batTick=0,gridTick=0;
 function update(dt){
-  const tscale=tutOpen?0:S.speed;
+  const tscale=(tutOpen||cardOpen)?0:S.speed;
   const t0=hourNow();S.t+=dt*tscale;
   if(S.t>=DAY_SEC){S.t-=DAY_SEC;S.day++;DAY=makeDay(S.day);onNewDay();save();}
   const t=hourNow(),h=Math.floor(t)%24;if(Math.floor(t0)%24!==h)onHour(h);
@@ -6322,6 +6324,9 @@ $('repPrev').onclick=()=>openReport(1);
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.27.2',t:['Freeze fix','Donma düzeltmesi'],l:[
+   ['A decision card now stops the clock only — you can always walk.','Karar kartı artık sadece saati durduruyor — her zaman yürüyebilirsin.'],
+   ['If a window closes unexpectedly the game unlocks itself.','Bir pencere beklenmedik şekilde kapanırsa oyun kendini açıyor.']]},
  {v:'0.27.1',t:['Patch notes','Sürüm notları'],l:[
    ['New 📣 button: every patch is listed here, with a dot when something is new.','Yeni 📣 butonu: her yama burada listeleniyor, yenilik varsa noktayla belirtiliyor.']]},
  {v:'0.27',t:['Storage pays off','Batarya kazandırıyor'],l:[
@@ -6773,7 +6778,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.27.1';
+const GAME_VERSION='0.27.2';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
@@ -7176,7 +7181,9 @@ setTimeout(()=>{if(!started){console.warn('asset load timeout');start(null);}},8
 loadKit().then(start).catch(e=>{console.error('asset load failed',e);start(null);});
 function frame(ts){
   if(!last)last=ts;const dt=Math.min(0.05,(ts-last)/1000);last=ts;
-  frameDt=dt;if(playing&&!cardOpen){update(dt);}render(dt,ts);if(playing){hud(dt);updateMini(dt);checkTips(dt);}
+  if(cardOpen&&!$('mCard').classList.contains('on'))cardOpen=false;      // never stay locked
+  if(tutOpen&&$('tut').hidden)tutOpen=false;
+  frameDt=dt;if(playing){update(dt);}render(dt,ts);if(playing){hud(dt);updateMini(dt);checkTips(dt);}
   const J=$('joy');if(joy.on){J.style.display='block';J.style.left=joy.ox+'px';J.style.top=joy.oy+'px';const dx=joy.x-joy.ox,dy=joy.y-joy.oy,l=Math.hypot(dx,dy),m=Math.min(l,50);$('knob').style.transform=`translate(${l?dx/l*m:0}px,${l?dy/l*m:0}px)`;}else J.style.display='none';
   requestAnimationFrame(frame);
 }
