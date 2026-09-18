@@ -222,7 +222,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.26.3</div>
+  <div class="t-ver" id="tVer">v0.27.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -250,6 +250,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div class="banner" id="banner" hidden></div>
 </div>
 <div id="sideCol">
+      <button class="rb" id="newsBtn" aria-label="What's new">📣<span class="badge" id="newsDot" hidden>!</span></button>
       <button class="rb" id="leadBtn" aria-label="Leaderboard">🏆</button>
       <button class="rb" id="repBtn" aria-label="Finance report">📊</button>
       <button class="rb" id="infoBtn" aria-label="Tips">ℹ️<span class="badge" id="infoDot" hidden>!</span></button>
@@ -342,6 +343,12 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div class="btns" style="grid-template-columns:1fr 1fr"><button id="repPrev" hidden>‹</button><button id="repNext" hidden>›</button></div>
   <div class="btns"><button class="pri" id="repClose" data-i18n="close">Close</button></div>
 </div></div>
+<div class="modal" id="mNews"><div class="sheet tips">
+  <h2 id="newsTitle">What's new</h2>
+  <p id="newsSub"></p>
+  <div id="newsList"></div>
+  <div class="btns"><button class="pri" id="newsClose" data-i18n="close">Close</button></div>
+</div></div>
 <div class="modal" id="mTips"><div class="sheet tips">
   <h2 id="tipsTitle">Tips</h2>
   <p id="tipsSub"></p>
@@ -391,7 +398,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.26.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.27.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4552,7 +4559,7 @@ const ASSETS={"forest":{"Tree_1_A":{"asset":{"generator":"Khronos glTF Blender I
 /* ======================= CONFIG ======================= */
 const WORLD={w:1400,h:2000}, U=1/20;
 const DAY_SEC=480, HOUR=DAY_SEC/24, P0=10; // 1 game hour = 20 s
-const DEMAND=[0.6,0.57,0.55,0.55,0.57,0.65,0.8,0.95,1.0,0.98,0.92,0.86,0.82,0.82,0.86,0.95,1.1,1.5,2.0,2.6,2.6,2.0,1.3,0.85];
+const DEMAND=[0.45,0.42,0.40,0.40,0.43,0.52,0.72,0.95,1.0,0.95,0.86,0.78,0.72,0.72,0.80,0.95,1.2,1.8,2.6,3.3,3.2,2.3,1.4,0.8];
 const AVG_D=DEMAND.reduce((a,b)=>a+b,0)/24;
 const PEAK_H=[18,19,20,21];
 const SAVE_KEY='mwmogul_3d_v3';
@@ -4568,7 +4575,7 @@ function marketSat(m){return m.id==='city'?S.sat:((S.satT&&S.satT[m.id])||0);}
 function priceAt(m){
   if(m.id==='city')return priceNow();
   const t=hourNow(),ev=eventNow();
-  return Math.max(0.5,basePrice(Math.floor(t)%24,t)*m.mult/(1+0.5*marketSat(m)*(ev&&ev.sat||1)));
+  return Math.max(1,basePrice(Math.floor(t)%24,t)*m.mult/(1+0.5*marketSat(m)*(ev&&ev.sat||1)));
 }
 function nearestMarket(o){return markets().sort((a,b)=>dist(o,a)-dist(o,b))[0];}
 const HQ={x:280,y:620};
@@ -4599,7 +4606,7 @@ const PADS=[
   {id:'t5',kind:'build',type:'turbine',x:680,y:1040,cost:600,req:'s3'},
   {id:'s4',kind:'build',type:'solar',x:800,y:1040,cost:900,req:'t5'},
   {id:'helper',kind:'upg',key:'helper',label:['Hire helper','Yardımcı al'],icon:'👷',x:370,y:800,base:450,growth:1.55,max:15,req:'bat'},
-  {id:'batcap',kind:'upg',key:'batcap',label:['Bigger battery','Büyük batarya'],icon:'🔋',x:1040,y:900,base:500,growth:2.1,max:6,req:'bat'},
+  {id:'batcap',kind:'upg',key:'batcap',label:['Bigger battery','Büyük batarya'],icon:'🔋',x:1040,y:900,base:500,growth:1.8,max:10,req:'bat'},
   {id:'grid',kind:'upg',key:'grid',label:['Grid link','Şebeke bağlantısı'],icon:'🔌',x:1150,y:900,base:3000,growth:1,max:1,req:'batcap'},
   {id:'ridge',kind:'gate',region:'ridge',label:['Open the windy ridge','Rüzgârlı sırtı aç'],icon:'🚧',x:700,y:1180,cost:1500,req:'bat'},
   {id:'batridge',kind:'build',type:'battery',x:950,y:1580,cost:3500,req:'ridge'},
@@ -4700,8 +4707,8 @@ function fresh(){
     built:{t1:true},paid:{},up:{bag:0,boots:0,helper:0,batcap:0,grid:0},regions:{},
     battery:0,sat:0,day:0,t:8*HOUR,daySec:DAY_SEC,goal:0,soldCells:0,
     crew:{auto:true,min:10,roles:[],plan:['auto','auto','auto','auto'],sites:[],mkts:[]},
-    satT:{},snow:0,batFire:0,batFireT:0,batCycles:0,batCharge:0,batFault:false,mods:[],contract:null,event:null,nextEvent:null,cardHour:null,cardDay:-1,dayEarned:0,lastDayEarned:0,
-    lang:'en',tutDone:false,tipsSeen:{},nick:'',ref:'',guest:false,ledger:[],cardPrefs:{},cardHist:[],dayLog:[],debt:0,
+    satT:{},snow:0,batFire:0,batFireT:0,batCycles:0,batCharge:0,batFault:false,mods:[],contract:null,event:null,nextEvent:null,cardHour:null,cardHour2:null,cardSoon:0,cardDay:-1,dayEarned:0,lastDayEarned:0,
+    lang:'en',tutDone:false,tipsSeen:{},seenVer:'',nick:'',ref:'',guest:false,syncBase:0,dev:'',ledger:[],cardPrefs:{},cardHist:[],dayLog:[],debt:0,
     stats:{stored:0,peakCells:0,planned:0,crewCells:0,crewRev:0,byMkt:{},fixSpend:0},hints:{},muted:false,shadows:true,lowFlash:false,speed:1,lastSave:Date.now()};
 }
 const built=id=>!!S.built[id];
@@ -4710,7 +4717,7 @@ const upCost=p=>Math.round(p.base*Math.pow(p.growth,S.up[p.key]));
 const carryCap=()=>8+4*S.up.bag;
 const speed=()=>230*(1+0.12*S.up.boots)*modMult('playerSpeed');
 const batHealth=()=>Math.max(0.5,1-0.0002*(S.batCycles||0));
-const batCap=()=>built('bat')?Math.max(1,Math.round(30*(1+S.up.batcap)*batHealth())):0;
+const batCap=()=>built('bat')?Math.max(1,Math.round(60*(1+S.up.batcap)*batHealth())):0;
 const batUsable=()=>built('bat')&&!S.batFault;
 /* short codes above each asset: W1 W2 · WX1 · S1 · SX1 · B1 · T1 */
 const CODE_PREFIX={turbine:'W',bigwind:'WX',solar:'S',solarfarm:'SX',battery:'B',town:'T'};
@@ -4794,7 +4801,7 @@ function snowPanel(p){return Math.max(0,Math.min(1,p.snow||0));}
 function snowMult(p){return 1-0.7*snowPanel(p);}
 function batCharged(n){
   S.batCharge=(S.batCharge||0)+n;
-  const cap=Math.max(1,30*(1+S.up.batcap));
+  const cap=Math.max(1,60*(1+S.up.batcap));
   while(S.batCharge>=cap){S.batCharge-=cap;S.batCycles=(S.batCycles||0)+1;}
 }
 function batFixCost(){const pd=pad('bat');return Math.max(5,Math.round((pd&&pd.cost?pd.cost:250)*0.02*modMult('fixCost')));}
@@ -4877,7 +4884,7 @@ function basePrice(h,t){
     if(d>=0&&d<len)p*=sh.mult;else if(d===-1||d===len)p*=1+(sh.mult-1)*0.35;}
   const so=solarOut(t===undefined?h+0.5:t);p*=1-0.5*so/(so+1.5);return p;
 }
-function priceNow(){const t=hourNow();const ev=eventNow();return Math.max(0.5,basePrice(Math.floor(t)%24,t)/(1+0.5*S.sat*(ev&&ev.sat||1)));}
+function priceNow(){const t=hourNow();const ev=eventNow();return Math.max(1,basePrice(Math.floor(t)%24,t)/(1+0.5*S.sat*(ev&&ev.sat||1)));}
 function todayCurve(){const v=[];for(let i=0;i<24;i++)v.push(basePrice(i,i+0.5));return v;}
 function todayAvg(){const v=todayCurve();return v.reduce((a,b)=>a+b,0)/24;}
 function minPrice(){return S.crew.auto?todayAvg():S.crew.min;}
@@ -4963,8 +4970,8 @@ function update(dt){
     p.spin=(p.spin||0)+gdt*(0.6+cf*6);
     if(S.goal>=4&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):0.6)){p.broken=true;p.brokenAt=gameNow();const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
-  S.sat=Math.max(0,S.sat-0.12*dt);
-  if(S.satT)for(const k in S.satT)S.satT[k]=Math.max(0,S.satT[k]-0.16*dt);
+  S.sat=Math.max(0,S.sat-Math.max(0.12,S.sat*0.35)*dt);
+  if(S.satT)for(const k in S.satT)S.satT[k]=Math.max(0,S.satT[k]-Math.max(0.16,S.satT[k]*0.4)*dt);
   // player
   const[vx,vy,m]=inputVec();const sp=speed()*m;
   let nx=S.px+vx*sp*dt,ny=S.py+vy*sp*dt;
@@ -5027,15 +5034,15 @@ function update(dt){
   if(br&&!S.moving){const need=fixTime(br,1.2);fixT+=dt;br.fix=fixT/need;if(fixT>=need){doRepair(br,true);fixT=0;}}
   else{fixT=0;S.plants.forEach(p=>p.fix=0);}
   sellTick-=dt;
-  if(S.carry>0&&sellTick<=0){const m=markets().find(m=>dist(P,m)<m.r);if(m){sellCell(S.px,S.py,true,false,m);carryTake(S);sellTick=0.06;}}
+  if(S.carry>0&&sellTick<=0){const m=markets().find(m=>dist(P,m)<m.r);if(m){const fs=(S.carryStore||0)>0;sellCell(S.px,S.py,true,false,m,fs);if(fs)S.carryStore--;carryTake(S);sellTick=0.06;}}
   batTick-=dt;
   if(built('bat')&&batTick<=0){
     for(const D of depotsOn()){
       if(dist(P,D.store)<48&&S.carry>0&&S.battery<batCap()&&batUsable()){carryTake(S);S.battery++;S.stats.stored++;batCharged(1);batTick=0.07;sfx.pick();flyers.push({x:S.px,y:S.py,h0:2.2,tx:()=>D.x,ty:()=>D.y,h1:1,life:0,kind:'cell'});break;}
-      if(dist(P,D.take)<48&&S.battery>=1&&S.carry<carryCap()&&batUsable()){S.battery--;carryAdd(S);batTick=0.07;sfx.pick();flyers.push({x:D.x,y:D.y,h0:1,tx:()=>S.px,ty:()=>S.py,h1:2.2+S.carry*0.3,life:0,kind:'cell'});break;}
+      if(dist(P,D.take)<48&&S.battery>=1&&S.carry<carryCap()&&batUsable()){S.battery--;carryAdd(S);S.carryStore=(S.carryStore||0)+1;batTick=0.07;sfx.pick();flyers.push({x:D.x,y:D.y,h0:1,tx:()=>S.px,ty:()=>S.py,h1:2.2+S.carry*0.3,life:0,kind:'cell'});break;}
     }
   }
-  if(S.up.grid&&S.battery>=1&&PEAK_H.includes(h)&&batUsable()){gridTick-=gdt;if(gridTick<=0){S.battery--;sellCell(BAT.x,BAT.y,false,false,nearestMarket(BAT));gridTick=0.5;}}
+  if(S.up.grid&&S.battery>=1&&PEAK_H.includes(h)&&batUsable()){gridTick-=gdt;if(gridTick<=0){S.battery--;sellCell(BAT.x,BAT.y,false,false,nearestMarket(BAT),true);gridTick=0.5;}}
   let on=null;
   for(const p of PADS){if(padVisible(p)&&!padDone(p)&&Math.abs(S.px-p.x)<40&&Math.abs(S.py-p.y)<40){on=p;break;}}
   if(on!==standPad){standPad=on;standT=0;}
@@ -5062,14 +5069,15 @@ function update(dt){
 }
 let floatSeq=0;
 function floatTxt(x,y,txt,cls){floats.push({x,y,txt,life:1,rise:0,id:++floatSeq,cls:cls||''});}
-function sellCell(x,y,byPlayer,crew,mk){
+function sellCell(x,y,byPlayer,crew,mk,fromStore){
   const m=mk||{id:'city',mult:1,sat:0.035};
   let p=priceAt(m);const ct=S.contract;
+  if(fromStore)p*=1.15;                       // dispatchable energy pays 15% more
   if(ct&&ct.delivered<ct.need&&gameNow()<ct.until){ct.delivered++;p=ct.price;if(ct.delivered===ct.need){toast(`Deal complete: ${ct.need} cells delivered.`,'good');trackOnce('deal-complete');S.contract=null;}}
   p*=modMult('income')*(byPlayer?modMult('playerPrice'):1);
   if(S.debt>0){const r=Math.min(S.debt,p*0.25);S.debt-=r;p-=r;if(S.debt<=0.01){S.debt=0;toast(L('Loan fully repaid.','Kredi tamamen ödendi.'),'good');}}
   S.cash+=p;S.earned+=p;S.dayEarned=(S.dayEarned||0)+p;S.soldCells++;
-  if(m.id==='city')S.sat+=m.sat;else{S.satT=S.satT||{};S.satT[m.id]=(S.satT[m.id]||0)+m.sat;}
+  if(m.id==='city')S.sat=Math.min(4,S.sat+m.sat);else{S.satT=S.satT||{};S.satT[m.id]=Math.min(5,(S.satT[m.id]||0)+m.sat);}
   S.stats.byMkt=S.stats.byMkt||{};const bm=S.stats.byMkt[m.id]=S.stats.byMkt[m.id]||{cells:0,rev:0};bm.cells++;bm.rev+=p;
   if(PEAK_H.includes(Math.floor(hourNow())%24)&&byPlayer)S.stats.peakCells++;
   if(crew){S.stats.crewCells++;S.stats.crewRev+=p;}
@@ -5099,11 +5107,18 @@ function onNewDay(quiet){
     }
   }
   // decision card for today
-  S.cardHour=null;
-  if(S.day>=5&&S.cardDay!==S.day){if(hrand(S.seed,S.day,977)<0.45)S.cardHour=9+Math.floor(hrand(S.seed,S.day,978)*8);}
+  S.cardHour=null;S.cardHour2=null;
+  const veteran=S.tutDone||S.day>=3||S.soldCells>=20;
+  const startDay=veteran?1:3;
+  if(S.day>=startDay&&S.cardDay!==S.day){
+    if(hrand(S.seed,S.day,977)<0.7)S.cardHour=6+Math.floor(hrand(S.seed,S.day,978)*12);
+    if(hrand(S.seed,S.day,979)<0.5)S.cardHour2=(S.cardHour||6)+4+Math.floor(hrand(S.seed,S.day,980)*6);
+  }
 }
 function onHour(h){
-  if(S.cardHour!==null&&h>=S.cardHour&&S.cardDay!==S.day&&!cardOpen){S.cardDay=S.day;S.cardHour=null;if(isActive())openCard();else{const r=autoCard();if(r)toast('📋 '+r,'');}}
+  if(S.cardHour!==null&&h>=S.cardHour&&!cardOpen){S.cardHour=null;S.cardDay=S.day;
+    if(isActive())openCard();else{const r=autoCard();if(r)toast('📋 '+r,'');}}
+  else if(S.cardHour2!==null&&h>=S.cardHour2&&!cardOpen&&isActive()){S.cardHour2=null;openCard();}
   if(DAY.shock&&h===DAY.shock.hour-1&&(DAY.shock.type==='cap'||DAY.shock.type==='floor')){sfx.warn();const sh=DAY.shock;toast(sh.type==='cap'?L(`🔺 Cap price series for the next ${sh.len} hours (×${sh.mult.toFixed(1)}). Sell everything you can.`,`🔺 Önümüzdeki ${sh.len} saat tavan fiyat serisi (×${sh.mult.toFixed(1)}). Satabildiğin her şeyi sat.`):L(`🔻 Floor price series for the next ${sh.len} hours. Store, don't sell.`,`🔻 Önümüzdeki ${sh.len} saat taban fiyat serisi. Satma, depola.`),'big');}
   else if(DAY.shock&&h===DAY.shock.hour-1){sfx.warn();toast(DAY.shock.type==='spike'?L(`⚡ Price spike at ${DAY.shock.hour}:00 (×${DAY.shock.mult.toFixed(1)})! Bring energy to the city.`,`⚡ ${DAY.shock.hour}:00'da fiyat sıçraması (×${DAY.shock.mult.toFixed(1)})! Enerjiyi şehre taşı.`):L(`Price crash at ${DAY.shock.hour}:00. Store energy instead.`,`${DAY.shock.hour}:00'da fiyat çöküşü. Enerjiyi depola.`),'big');}
   {const cw=curtailWindow(S.day);
@@ -5217,6 +5232,8 @@ function updateHelper(hp,i,dt){
     if(role==='sell'){ if(okPrice) return 'city'; return hasBat&&S.battery<batCap()?'store':'wait'; }
     if(role==='store'){ if(hasBat&&S.battery<batCap()) return 'store'; return okPrice?'city':'wait'; }
     if(role==='peak'){ if(hasBat&&S.battery<batCap()) return 'store'; return okPrice?'city':'wait'; }
+    if(okPrice) return 'city';                       // fix / safety fall back to selling
+    return hasBat&&S.battery<batCap()?'store':'wait';
   };
   if(hp.state==='idle'){
     hp.status='Looking for work';
@@ -5244,7 +5261,7 @@ function updateHelper(hp,i,dt){
       const M=M0;
       if(go(M.x+(i-2)*22,M.y+(M.id==='city'?36:0))||dist(hp,M)<M.r-6){
         if(priceAt(M)<minPrice()){hp.state='idle';return;}
-        if(hp.tick<=0&&hp.carry>0){carryTake(hp);sellCell(hp.x,hp.y,false,true,M);hp.tick=0.12;}
+        if(hp.tick<=0&&hp.carry>0){const fs=(hp.store||0)>0;carryTake(hp);sellCell(hp.x,hp.y,false,true,M,fs);if(fs)hp.store--;hp.tick=0.12;}
         if(hp.carry<=0)hp.state='idle';
       }
     }else if(d==='store'){hp.status='Storing';
@@ -5263,7 +5280,7 @@ function updateHelper(hp,i,dt){
     if(!okPrice||S.battery<1){hp.state=hp.carry>0?'deliver':'idle';return;}
     const DT=depotsOn().sort((a,b)=>dist(hp,a.take)-dist(hp,b.take))[0]||BAT;
     if(go(DT.take.x+(i-2)*10,DT.take.y)){
-      if(hp.tick<=0&&S.battery>=1&&hp.carry<cap&&batUsable()){S.battery--;carryAdd(hp);hp.tick=0.1;flyers.push({x:DT.x,y:DT.y,h0:1,tx:()=>hp.x,ty:()=>hp.y,h1:1.9+hp.carry*0.28,life:0,kind:'cell'});}
+      if(hp.tick<=0&&S.battery>=1&&hp.carry<cap&&batUsable()){S.battery--;carryAdd(hp);hp.store=(hp.store||0)+1;hp.tick=0.1;flyers.push({x:DT.x,y:DT.y,h0:1,tx:()=>hp.x,ty:()=>hp.y,h1:1.9+hp.carry*0.28,life:0,kind:'cell'});}
       if(hp.carry>=cap||S.battery<1)hp.state='sellStored';
     }
   }
@@ -6302,6 +6319,56 @@ $('repClose').onclick=()=>$('mRep').classList.remove('on');
 $('repNext').onclick=()=>openReport(2);
 $('repPrev').onclick=()=>openReport(1);
 
+
+/* ======================= PATCH NOTES ======================= */
+const CHANGELOG=[
+ {v:'0.27.1',t:['Patch notes','Sürüm notları'],l:[
+   ['New 📣 button: every patch is listed here, with a dot when something is new.','Yeni 📣 butonu: her yama burada listeleniyor, yenilik varsa noktayla belirtiliyor.']]},
+ {v:'0.27',t:['Storage pays off','Batarya kazandırıyor'],l:[
+   ['Night and peak prices are much further apart; energy taken out of a battery pays 15% more.','Gece ve zirve fiyatları arasındaki fark büyüdü; bataryadan çıkan enerji %15 fazla öder.'],
+   ['Battery capacity doubled and can be upgraded ten times.','Batarya kapasitesi iki katına çıktı, on kez yükseltilebiliyor.'],
+   ['Fixed: heavy selling could pin a market at zero for good.','Düzeltildi: çok satınca fiyat kalıcı olarak sıfıra iniyordu.'],
+   ['Fix and Safety helpers now sell when there is nothing to repair.','Tamir ve Afet rolündeki yardımcılar onaracak iş yokken satış yapıyor.'],
+   ['Decision cards arrive sooner and more often while you play.','Karar kartları daha erken ve oynarken daha sık geliyor.']]},
+ {v:'0.26',t:['Friends','Arkadaşlar'],l:[
+   ['Friend codes, requests and a Friends tab on the leaderboard.','Arkadaş kodu, istekler ve liderlik tablosunda Arkadaşlar sekmesi.'],
+   ['Up to 15 helpers; field depots moved away from the plants.','15 yardımcıya kadar; saha depoları santrallerden uzaklaştırıldı.'],
+   ['Energy no longer flies across the map when it is sold.','Satışta enerji artık haritanın öbür ucuna uçmuyor.']]},
+ {v:'0.25',t:['Fire','Yangın'],l:[
+   ['Lightning and worn gear can set a site on fire; it spreads once if nobody reacts.','Yıldırım ve yıpranma yangın çıkarabiliyor; müdahale edilmezse bir kez sıçrıyor.'],
+   ['New Safety crew role with an extinguisher.','Yangın tüpüyle koşan yeni Afet rolü.']]},
+ {v:'0.24',t:['Storms and snow','Fırtına ve kar'],l:[
+   ['Lightning flashes cast real shadows; you can reduce the flashes in settings.','Şimşek yerde gerçek gölge düşürüyor; ayarlardan parlamalar azaltılabiliyor.'],
+   ['Winter snow covers the ground and the panels — sweep them clean.','Kışın kar zemini ve panelleri kaplıyor — süpürerek temizle.']]},
+ {v:'0.23',t:['Cloud save','Bulut kayıt'],l:[
+   ['Google sign-in, cloud save and the leaderboard.','Google girişi, bulut kayıt ve liderlik tablosu.'],
+   ['Share your company and invite friends with a link.','Şirketini paylaş, bağlantıyla arkadaş davet et.']]},
+ {v:'0.21',t:['Wear and tear','Yıpranma'],l:[
+   ['Plants age: after their lifetime output drops — repower them for +10%.','Santraller yaşlanıyor: ömrü dolunca üretim düşüyor — yenileyerek +%10 al.'],
+   ['Batteries count cycles and lose health; refurbish at the main station.','Batarya çevrim sayıyor ve sağlık kaybediyor; ana istasyonda yenile.'],
+   ['Every asset has a short code (W1, WX2, S3, B1, T1).','Her varlığın kısa kodu var (W1, WX2, S3, B1, T1).']]},
+ {v:'0.20',t:['Finance report','Finansal rapor'],l:[
+   ['New 📊 report: wallet, wealth, market breakdown, daily earnings chart.','Yeni 📊 rapor: cüzdan, zenginlik, pazar kırılımı, günlük kazanç grafiği.'],
+   ['Second page shows the health of every plant and battery.','İkinci sayfa her santral ve bataryanın sağlığını gösteriyor.']]},
+ {v:'0.18',t:['Crew orders','Ekip emirleri'],l:[
+   ['Assign each helper a field and a market, by asset code.','Her yardımcıya varlık koduyla saha ve pazar ata.'],
+   ['Town markets in the far regions; field depots keep energy fresh.','Uzak bölgelerde kasaba pazarları; saha depoları enerjiyi taze tutuyor.']]},
+];
+function openNews(){
+  $('newsTitle').textContent=L("What's new",'Yenilikler');
+  $('newsSub').textContent=L(`You are on v${GAME_VERSION}.`,`Sürümün: v${GAME_VERSION}.`);
+  const seen=S.seenVer||'';
+  $('newsList').innerHTML=CHANGELOG.map(c=>{
+    const fresh=cmpVer(c.v,seen)>0;
+    return `<div class="tip ${fresh?'new':''}"><b>v${c.v} · ${tt(c.t)}</b>`+
+      c.l.map(x=>`<span>• ${tt(x)}</span>`).join('')+`</div>`;}).join('');
+  S.seenVer=GAME_VERSION;$('newsDot').hidden=true;save();
+  $('mNews').classList.add('on');trackOnce('news-opened');
+}
+function newsCheck(){$('newsDot').hidden=!(cmpVer(GAME_VERSION,S.seenVer||'')>0);}
+$('newsBtn').onclick=openNews;
+$('newsClose').onclick=()=>$('mNews').classList.remove('on');
+
 /* ======================= TIPS (unlock as you play) ======================= */
 const TIPS=[
  {id:'peak',icon:'🌆',ok:()=>true,lock:['',''],t:['Sell in the evening','Akşam sat'],d:['Prices are highest between 18:00 and 22:00. Look at the small price chart at the top before you sell.','Fiyatlar 18:00–22:00 arası en yüksek. Satmadan önce üstteki küçük fiyat grafiğine bak.']},
@@ -6706,7 +6773,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.26.3';
+const GAME_VERSION='0.27.1';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
@@ -6745,13 +6812,28 @@ async function afterSignIn(){
     const doc=await fbDb.collection('users').doc(fbUser.uid).get();
     if(doc.exists&&doc.data().save){
       const cloud=JSON.parse(doc.data().save);
-      const mine=saveSize(S),theirs=saveSize(cloud);
-      const same=Math.abs(mine-theirs)<1&&cloud.day===S.day&&Math.abs((cloud.cash||0)-S.cash)<1;
-      if(same){await cloudSave(true);}
-      else askWhichSave(cloud,mine,theirs);   // both directions, always your call
+      const base=S.syncBase||0, cs=cloud.lastSave||0, ls=S.lastSave||0;
+      const cloudMoved=cs>base+2000||(cloud.dev&&cloud.dev!==DEV_ID&&cs>ls+30000), localMoved=ls>base+2000;
+      if(cloudMoved&&localMoved&&Math.abs(saveSize(cloud)-saveSize(S))>Math.max(200,saveSize(cloud)*0.05)){
+        askWhichSave(cloud,saveSize(S),saveSize(cloud));      // both sides really moved: your call
+      }else if(cloudMoved&&!localMoved){
+        pullCloud(cloud);                                      // this device was just behind
+      }else{
+        await cloudSave(true);                                 // this device is the newer one
+      }
     }else await cloudSave(true);
   }catch(e){console.warn('cloud read',e);toast(L('Could not read the cloud save.','Bulut kaydı okunamadı.'),'big');}
   if(!S.nick)askNick();
+}
+function pullCloud(cloud){
+  try{
+    localStorage.setItem(SAVE_BACKUP,JSON.stringify(S));
+    cloud.syncBase=cloud.lastSave||Date.now();cloud.dev=DEV_ID;
+    localStorage.setItem(SAVE_KEY,JSON.stringify(cloud));
+    removeEventListener('pagehide',save);
+    toast(L('Loading your cloud save…','Bulut kaydın yükleniyor…'),'good');
+    setTimeout(()=>location.reload(),400);
+  }catch(e){}
 }
 function askWhichSave(cloud,mine,theirs){
   $('cloTitle').textContent=L('Two saves found','İki kayıt bulundu');
@@ -6761,16 +6843,29 @@ function askWhichSave(cloud,mine,theirs){
     `<button data-c="local"><b>${L('This device','Bu cihaz')}</b><small>${L('Earned','Kazanç')} ₵${fmt(mine)} · ${dateLabel(S.day)}</small></button>`;
   $('cloOpts').onclick=async e=>{const b=e.target.closest('button[data-c]');if(!b)return;
     $('mCloud').classList.remove('on');
-    if(b.dataset.c==='cloud'){try{localStorage.setItem(SAVE_BACKUP,JSON.stringify(S));localStorage.setItem(SAVE_KEY,JSON.stringify(cloud));removeEventListener('pagehide',save);location.reload();}catch(err){}}
-    else await cloudSave(true);};
+    if(b.dataset.c==='cloud'){pullCloud(cloud);}
+    else{await cloudSave(true);}};
   $('mCloud').classList.add('on');
 }
+const DEV_ID=(()=>{try{let d=localStorage.getItem('mwmogul_dev');if(!d){d=Math.random().toString(36).slice(2,10);localStorage.setItem('mwmogul_dev',d);}return d;}catch(e){return 'dev';}})();
 async function cloudSave(force){
   if(!fbUser||!fbDb||cloudBusy)return;
   const now=Date.now();if(!force&&now-lastCloud<5*60*1000)return;
   cloudBusy=true;lastCloud=now;
   try{
     save();
+    // who wrote last? if another device is ahead and this one has been idle, take theirs instead
+    const doc=await fbDb.collection('users').doc(fbUser.uid).get();
+    if(doc.exists&&doc.data().save){
+      const cloud=JSON.parse(doc.data().save);
+      const cs=cloud.lastSave||0, base=S.syncBase||0, ls=S.lastSave||0;
+      const otherDevice=(cloud.dev&&cloud.dev!==DEV_ID);
+      const cloudAhead=cs>base+2000;
+      const iMoved=ls>base+2000&&saveSize(S)>saveSize(cloud);
+      if(otherDevice&&cloudAhead&&!iMoved){cloudBusy=false;pullCloud(cloud);return;}
+      if(otherDevice&&cloudAhead&&iMoved&&!askedSave){askedSave=true;cloudBusy=false;askWhichSave(cloud,saveSize(S),saveSize(cloud));return;}
+    }
+    S.syncBase=S.lastSave;S.dev=DEV_ID;
     await fbDb.collection('users').doc(fbUser.uid).set({save:JSON.stringify(S),schema:SAVE_SCHEMA,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
     if(S.nick){await fbDb.collection('leaderboard').doc(fbUser.uid).set({name:S.nick,wealth:wealth(),wallet:Math.round(S.cash),assets:assetsValue(),day:S.day+1,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
       await publishProfile();}
@@ -6945,7 +7040,7 @@ $('sPush').onclick=async()=>{
   await cloudSave(true);toast(L('This device is now the cloud save.','Bu cihazdaki kayıt buluta yazıldı.'),'good');
 };
 $('leadBtn').onclick=openLead;
-if(CLOUD_ON){setTimeout(initCloud,1500);setInterval(()=>cloudSave(false),60*1000);
+if(CLOUD_ON){setTimeout(initCloud,1500);setInterval(()=>{if(!document.hidden)cloudSave(false);},60*1000);
   addEventListener('visibilitychange',()=>{if(document.hidden)cloudSave(true);});}
 /* invite link: remember who sent us here (reward comes with the server phase) */
 try{const ref=new URLSearchParams(location.search).get('ref');if(ref&&!S.ref){S.ref=ref.slice(0,12);save();trackOnce('came-from-invite');}}catch(e){}
@@ -7066,7 +7161,10 @@ function startFlow(){
 }
 function beginPlay(){
   if(playing)return;playing=true;audioInit();sfx.goal();stopWave();
-  sessionStart=Date.now();trackSessionStart();
+  sessionStart=Date.now();trackSessionStart();newsCheck();
+  if((S.tutDone||S.day>=3||S.soldCells>=20)&&S.cardHour===null&&S.cardHour2===null&&!S.cardSoon){
+    S.cardSoon=1;setTimeout(()=>{if(playing&&!cardOpen&&isActive())openCard();},45000);   // first card ~45 s in
+  }
   const LD=$('loading');LD.classList.add('out');document.body.classList.remove('title');setTimeout(()=>LD.remove(),500);
   last=0;
   const wantTut=$('tutChk').checked;
