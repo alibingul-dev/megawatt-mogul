@@ -222,7 +222,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.27.2</div>
+  <div class="t-ver" id="tVer">v0.27.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -398,7 +398,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.27.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.27.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -5763,12 +5763,12 @@ function updateRain(dt,cx,cz){
   rainGeo.attributes.position.needsUpdate=true;
 }
 /* lightning on storm days: a bright flash from one side, shadows swing, thunder follows */
-const flash=new THREE.DirectionalLight(0xEAF2FF,0);flash.castShadow=true;
-flash.shadow.mapSize.set(1024,1024);Object.assign(flash.shadow.camera,{left:-40,right:40,top:40,bottom:-40,near:1,far:200});
+const flash=new THREE.DirectionalLight(0xEAF2FF,0);flash.castShadow=false;   // one shadow map only: mobile GPUs choke on two
 scene.add(flash);scene.add(flash.target);
+let sunHome=null,sunSwing=0;
 let boltT=0,boltNext=6,flashV=0;
 function updateBolts(dt,cx,cz){
-  if(DAY.weather!=='stormy'||!playing){flash.intensity=0;$('flashOv').style.opacity=0;return;}
+  if(DAY.weather!=='stormy'||!playing){flash.intensity=0;$('flashOv').style.opacity=0;if(sunHome&&sunSwing<=0)sun.position.copy(sunHome);return;}
   boltT+=dt;
   if(boltT>=boltNext){
     boltT=0;boltNext=5+Math.random()*12;
@@ -5776,6 +5776,9 @@ function updateBolts(dt,cx,cz){
     const a=Math.random()*Math.PI*2,d=26+Math.random()*16;
     flash.position.set(cx+Math.cos(a)*d,34,cz+Math.sin(a)*d);
     flash.target.position.set(cx,0,cz);flash.target.updateMatrixWorld();
+    // swing the sun for a moment so the shadows on the ground jump with the bolt
+    if(!sunHome)sunHome=sun.position.clone();
+    sun.position.set(sunHome.x+Math.cos(a)*26,sunHome.y*0.8,sunHome.z+Math.sin(a)*26);sunSwing=0.45;
     sfx.thunder&&sfx.thunder();
     // it can hit a turbine
     const wp=S.plants.filter(q=>PLANT_TYPES[q.type]&&PLANT_TYPES[q.type].kind==='wind'&&!q.broken);
@@ -5784,6 +5787,7 @@ function updateBolts(dt,cx,cz){
       else{q.broken=true;q.brokenAt=gameNow();sfx.warn();toast(L(`⚡ Lightning hit ${codeOf(q.id)}. It needs a repair.`,`⚡ Yıldırım ${codeOf(q.id)} türbinine düştü. Onarım gerekiyor.`),'big');}}
     if(built('bat')&&!S.batFire&&Math.random()<0.06*modMult('breakage'))startBatFire(L('lightning','yıldırım'));
   }
+  if(sunSwing>0){sunSwing-=dt;if(sunSwing<=0&&sunHome)sun.position.copy(sunHome);}
   flashV=Math.max(0,flashV-dt*(S.lowFlash?1.6:3.4));
   const k=S.lowFlash?0.35:1;
   flash.intensity=flashV*flashV*2.6*k;
@@ -6324,6 +6328,10 @@ $('repPrev').onclick=()=>openReport(1);
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.27.3',t:['Phone freeze fixed','Telefonda donma düzeltildi'],l:[
+   ['Lightning used a second shadow map that some phones could not handle; the sun now swings instead.','Şimşek ikinci bir gölge haritası kullanıyordu, bazı telefonlar bunu kaldıramıyordu; artık güneş savruluyor.'],
+   ['If the graphics context is ever lost the game reloads itself instead of freezing.','Grafik bağlamı kaybolursa oyun donmak yerine kendini yeniliyor.'],
+   ['Errors inside one frame no longer stop the whole game.','Tek bir karedeki hata artık oyunu durdurmuyor.']]},
  {v:'0.27.2',t:['Freeze fix','Donma düzeltmesi'],l:[
    ['A decision card now stops the clock only — you can always walk.','Karar kartı artık sadece saati durduruyor — her zaman yürüyebilirsin.'],
    ['If a window closes unexpectedly the game unlocks itself.','Bir pencere beklenmedik şekilde kapanırsa oyun kendini açıyor.']]},
@@ -6778,7 +6786,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.27.2';
+const GAME_VERSION='0.27.3';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
@@ -7179,11 +7187,30 @@ function beginPlay(){
 }
 setTimeout(()=>{if(!started){console.warn('asset load timeout');start(null);}},8000);
 loadKit().then(start).catch(e=>{console.error('asset load failed',e);start(null);});
+let errCount=0,errShown='';
+function frameErr(where,e){
+  errCount++;
+  const msg=where+': '+((e&&e.message)||e);
+  if(msg!==errShown){errShown=msg;
+    try{window.__diag&&window.__diag(msg,true);}catch(_){}
+    try{const d=$('diag');if(d){d.hidden=false;d.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99;background:rgba(232,54,79,.95);color:#fff;font:12px/1.35 monospace;padding:8px;border-radius:10px;max-height:38vh;overflow:auto;white-space:pre-wrap';}}catch(_){}
+    try{console.error(where,e);}catch(_){}
+  }
+  if(errCount>400){errCount=0;}   // keep going, never stop the loop
+}
+try{
+  const _c=$('gl');
+  _c.addEventListener('webglcontextlost',e=>{e.preventDefault();window.__diag&&window.__diag('WebGL context lost — reloading',true);setTimeout(()=>location.reload(),600);});
+  _c.addEventListener('webglcontextrestored',()=>{window.__diag&&window.__diag('WebGL context restored',false);});
+}catch(e){}
 function frame(ts){
   if(!last)last=ts;const dt=Math.min(0.05,(ts-last)/1000);last=ts;
   if(cardOpen&&!$('mCard').classList.contains('on'))cardOpen=false;      // never stay locked
   if(tutOpen&&$('tut').hidden)tutOpen=false;
-  frameDt=dt;if(playing){update(dt);}render(dt,ts);if(playing){hud(dt);updateMini(dt);checkTips(dt);}
+  frameDt=dt;
+  try{ if(playing){update(dt);} }catch(e){ frameErr('update',e); }
+  try{ render(dt,ts); }catch(e){ frameErr('render',e); }
+  try{ if(playing){hud(dt);updateMini(dt);checkTips(dt);} }catch(e){ frameErr('hud',e); }
   const J=$('joy');if(joy.on){J.style.display='block';J.style.left=joy.ox+'px';J.style.top=joy.oy+'px';const dx=joy.x-joy.ox,dy=joy.y-joy.oy,l=Math.hypot(dx,dy),m=Math.min(l,50);$('knob').style.transform=`translate(${l?dx/l*m:0}px,${l?dy/l*m:0}px)`;}else J.style.display='none';
   requestAnimationFrame(frame);
 }
