@@ -157,6 +157,21 @@ body.title #mini{visibility:hidden}
 .warn{font-size:12px;color:var(--peak);font-weight:800;margin-top:4px}
 .assign button.duty{background:#E1F4EA;border:2px solid #23B26D}
 .role-desc{font-size:12.5px;color:var(--soft);margin-top:5px;min-height:18px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.chip{background:#ECEAFF;color:#3B30C4;border:2px solid #C9C2FF;border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:800}
+.chip span{color:#6A5CFF}
+.chip.empty{background:#F2F4FA;color:var(--soft);border-color:#DCE3EC}
+.addbtn{width:100%;margin-top:7px;background:#EEF1F6;color:#1D2433;border-radius:12px;padding:8px;font-weight:800;font-size:13px}
+.picklist{margin-top:6px;max-height:34vh;overflow:auto;display:flex;flex-direction:column;gap:5px}
+.picklist button{text-align:left;background:#fff;border:2px solid #DCE3EC;border-radius:12px;padding:7px 10px;color:#1D2433}
+.picklist button.good{background:#E1F4EA;border-color:#23B26D}
+.picklist button.good b{color:#146B44}
+.picklist button.weak{opacity:.6}
+.boxhead{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;background:transparent;color:#1D2433;font-weight:800;font-size:14px;text-align:left;padding:2px 0}
+.boxhead .bw{font-size:12px;color:var(--soft);font-weight:800;flex:0 0 auto}
+.boxdel{background:#FFE3E8!important;color:#E8364F!important;font-weight:800}
+.picklist button b{display:block;font-size:13.5px}
+.picklist button small{display:block;font-size:11px;color:var(--soft);font-weight:800}
 .note{font-size:12.5px;color:var(--soft);background:#FFF6DA;border-radius:10px;padding:7px 10px;margin-top:6px}
 
 #loading{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow:hidden;
@@ -227,7 +242,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.33.7</div>
+  <div class="t-ver" id="tVer">v0.34.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -261,7 +276,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
       <button class="rb" id="infoBtn" aria-label="Tips">ℹ️<span class="badge" id="infoDot" hidden>!</span></button>
       <button class="rb zb" id="zIn" aria-label="Zoom in">＋</button>
       <button class="rb zb" id="zOut" aria-label="Zoom out">－</button>
-  <button class="rb crewb" id="crewBtn" aria-label="Crew plan" hidden><span>👷</span><span class="cnum" id="crewN">1/5</span><span class="badge" id="crewAlert" hidden>!</span></button>
+  <button class="rb crewb" id="crewBtn" aria-label="Crew plan" hidden><span>👷</span><span class="cnum" id="crewN">1/45</span><span class="badge" id="crewAlert" hidden>!</span></button>
 </div>
 <canvas id="mini" width="90" height="128" aria-label="Mini map. Tap to enlarge."></canvas>
 <div class="modal" id="mMap"><canvas id="bigmap" aria-label="Map"></canvas></div>
@@ -405,7 +420,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.33.7 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.34.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4612,7 +4627,7 @@ const PADS=[
   {id:'s3',kind:'build',type:'solar',x:560,y:1040,cost:400,req:'t4'},
   {id:'t5',kind:'build',type:'turbine',x:680,y:1040,cost:600,req:'s3'},
   {id:'s4',kind:'build',type:'solar',x:800,y:1040,cost:900,req:'t5'},
-  {id:'helper',kind:'upg',key:'helper',label:['Hire helper','Yardımcı al'],icon:'👷',x:370,y:800,base:450,growth:1.55,max:15,req:'bat'},
+  {id:'helper',kind:'upg',key:'helper',label:['Hire helper','Yardımcı al'],icon:'👷',x:370,y:800,base:450,growth:1.17,max:45,req:'bat'},
   {id:'batcap',kind:'upg',key:'batcap',label:['Battery capacity','Batarya kapasitesi'],icon:'🔋',x:990,y:880,base:500,growth:1.8,max:10,req:'bat'},
   {id:'bateff',kind:'upg',key:'bateff',label:['Battery upgrade','Batarya geliştirme'],icon:'⚙️',x:1190,y:880,base:900,growth:1.7,max:5,req:'bat'},
   {id:'batcapR',kind:'upg',key:'batcap',label:['Battery capacity','Batarya kapasitesi'],icon:'🔋',x:870,y:1600,base:500,growth:1.8,max:10,req:'batridge'},
@@ -4722,7 +4737,7 @@ const NAMES_TR=['Kerem','Selin','Emre','Deniz','Burak','Ela','Mert','Zeynep','On
 const NAMES_EN=['Kerem','Mia','Alex','Robin','Jonas','Ella','Marco','Nina','Owen','Sam','Ivy','Theo','Eve','Felix','Ada','Kai','Nora','Leo','Dana','Max'];
 const SHIFTS=[{id:0,name:['Day','Gündüz'],icon:'🌅',from:6,to:14,pay:1},
               {id:1,name:['Evening','Akşam'],icon:'🌇',from:14,to:22,pay:1.1},
-              {id:2,name:['Night','Gece'],icon:'🌙',from:22,to:6,pay:1.5}];
+              {id:2,name:['Night','Gece'],icon:'🌙',from:22,to:6,pay:1.35}];
 function rollSkill(){const v=Math.random();return v<0.08?1:v<0.40?2:v<0.75?3:v<0.94?4:5;}   // mostly 2-3, a 5 is rare
 function makeStaff(){
   const pool=S.lang==='tr'?NAMES_TR:NAMES_EN;
@@ -4748,7 +4763,7 @@ function onDuty(i){const sh=shiftOf(i),h=Math.floor(hourNow())%24;
   return sh.from<sh.to ? (h>=sh.from&&h<sh.to) : (h>=sh.from||h<sh.to);}
 function dailyWage(i){
   const t=staffOf(i),st=(t.f+t.r+t.s)/9;                // 9 stars = an average crew member
-  const base=Math.max(6,dayIncome()*0.02);
+  const base=Math.max(4,dayIncome()*0.007);            // 3 shifts: ~1/3 of the crew works at any hour
   return Math.round(base*Math.max(0.6,Math.min(1.7,st))*shiftOf(i).pay);
 }
 function wageBill(){let w=0;for(let i=0;i<S.up.helper;i++)w+=dailyWage(i);return w;}
@@ -5253,14 +5268,16 @@ function completePad(p){
     if(p.type==='battery')hint('bat',L('Drop energy on the green pad while it is cheap. Take it from the red pad at the peak.','Ucuzken enerjiyi yeşil alana bırak. Zirvede kırmızı alandan al.'));
   }else if(p.kind==='upg'){
     logLedger('upg',-padCost(p),p.id);S.up[p.key]++;pops[p.id]=1;
-    if(p.key==='helper'){syncHelpers();hint('crew',L('Tap 👷 at the top to tell your helpers when to sell.','Yardımcılarına ne zaman satacaklarını söylemek için üstteki 👷 butonuna dokun.'),'big');}
+    if(p.key==='helper'){syncHelpers();
+      if(!boxes().length){const b=newBox();b.m=[0];boxes().push(b);applyBoxes();}   // first hire gets a starter box
+      else toast(L('New helper is on the bench. Open 👷 and put them in a task box.','Yeni yardımcı boşta. 👷 ile bir görev kutusuna koy.'),'big');hint('crew',L('Tap 👷 at the top to tell your helpers when to sell.','Yardımcılarına ne zaman satacaklarını söylemek için üstteki 👷 butonuna dokun.'),'big');}
     toast({bag:L(`Backpack holds ${carryCap()}`,`Sırt çantası ${carryCap()} taşır`),boots:L('You walk faster','Daha hızlı yürüyorsun'),helper:L('A helper joined your crew','Ekibine bir yardımcı katıldı'),batcap:L(`Battery holds ${batCap()}`,`Batarya ${batCap()} tutar`),bateff:L(`Battery upgraded: +${Math.round((batBonus()-1)*100)}% on stored energy, slower wear, fewer faults`,`Batarya geliştirildi: depodan satışta +%${Math.round((batBonus()-1)*100)}, daha yavaş yıpranma, daha az arıza`),grid:L('Grid link: the battery sells by itself at the peak','Şebeke bağlantısı: batarya zirvede kendi satar')}[p.key],'good');
   }else{S.regions[p.region]=true;toast(`${tt(REGIONS.find(r=>r.id===p.region).name)} ${L('is open','açıldı')}`,'big');}
   save();
 }
 /* ---- helper AI with roles ---- */
 const SLOTS=[{id:'night',name:['Night','Gece'],range:'22–06'},{id:'morning',name:['Morning','Sabah'],range:'06–12'},{id:'midday',name:['Midday','Öğle'],range:'12–17'},{id:'evening',name:['Evening','Akşam'],range:'17–22'}];
-const ST_TR={'Off shift':'Vardiya dışı','Fighting fire':'Yangına müdahale','Waiting for output':'Üretim bekliyor','Collecting':'Topluyor','Repairing':'Onarıyor','On strike':'Grevde','Looking for work':'İş arıyor','Collecting':'Topluyor','Selling':'Satıyor','Storing':'Depoluyor','Emptying battery':'Bataryayı boşaltıyor','Selling stored energy':'Depodakini satıyor'};
+const ST_TR={'Off shift':'Vardiya dışı','No job':'Görev yok','Fighting fire':'Yangına müdahale','Waiting for output':'Üretim bekliyor','Collecting':'Topluyor','Repairing':'Onarıyor','On strike':'Grevde','Looking for work':'İş arıyor','Collecting':'Topluyor','Selling':'Satıyor','Storing':'Depoluyor','Emptying battery':'Bataryayı boşaltıyor','Selling stored energy':'Depodakini satıyor'};
 function stTr(st){if(!st)return '';if(S.lang!=='tr')return st;if(st.startsWith('Waiting for output'))return 'Üretim bekliyor '+st.slice(18);
   if(st.startsWith('Waiting for'))return st.replace('Waiting for','Bekliyor:');
   if(st.startsWith('Collecting '))return 'Topluyor '+st.slice(11);
@@ -5272,11 +5289,51 @@ function siteGroup(i){const id=(S.crew.sites||[])[i];return GROUP_TYPE[id]||null
 function siteOf(i){const id=(S.crew.sites||[])[i];if(!id||id==='auto'||GROUP_TYPE[id])return null;return S.plants.find(p=>p.id===id&&PLANT_TYPES[p.type])||null;}
 function mCode(id){return id==='city'?L('City','Şehir'):(codeOf(id)||id);}
 function marketOf(i){const id=(S.crew.mkts||[])[i];if(!id||id==='auto')return null;return markets().find(m=>m.id===id)||null;}
+function siteLabelId(id){if(!id||id==='auto')return L('Any','Farketmez');
+  if(GROUP_TYPE[id])return L('Any ','Tüm ')+({turbine:'W',bigwind:'WX',solar:'S',solarfarm:'SX'})[GROUP_TYPE[id]];
+  const p=S.plants.find(x=>x.id===id);return p?codeOf(p.id):L('Any','Farketmez');}
+function marketLabelId(id){if(!id||id==='auto')return L('Nearest','En yakın');if(id==='city')return L('City','Şehir');
+  const t=TOWNS.find(x=>x.id===id);return t?codeOf(t.id):L('Nearest','En yakın');}
+function dutyNow(sh){const x=SHIFTS[sh]||SHIFTS[0],h=Math.floor(hourNow())%24;return x.from<x.to?(h>=x.from&&h<x.to):(h>=x.from||h<x.to);}
+function hh(n){return String(n).padStart(2,'0');}
+function roleIcon(role){return role==='fix'?'🔧':role==='safety'?'🧯':'⚡';}
+function skillFor(role,i){const t=staffOf(i);return role==='fix'?t.r:role==='safety'?t.s:t.f;}
+let pickFor=null,boxShut={};
 function siteLabel(i){const id=(S.crew.sites||[])[i];
   if(!id||id==='auto')return L('Any','Hepsi');
   if(GROUP_TYPE[id])return L('Any ','Tüm ')+CODE_PREFIX[GROUP_TYPE[id]];
   const p=S.plants.find(x=>x.id===id);return p?codeOf(p.id):L('Any','Hepsi');}
 function marketLabel(i){const id=(S.crew.mkts||[])[i];if(!id||id==='auto')return L('Nearest','En yakın');if(id==='city')return L('City','Şehir');const t=TOWNS.find(x=>x.id===id);return t?codeOf(t.id)+' '+(t.id==='town1'?L('Ridge','Sırt'):L('Desert','Çöl')):L('Nearest','En yakın');}
+/* ---- task boxes: one card per job, names dropped into it ---- */
+function boxes(){S.crew.boxes=S.crew.boxes||[];return S.crew.boxes;}
+function boxOf(i){for(const b of boxes())if(b.m&&b.m.indexOf(i)>=0)return b;return null;}
+function newBox(){return {id:'b'+Date.now().toString(36)+Math.floor(Math.random()*1000),role:'sell',site:'auto',mkt:'auto',sh:0,m:[]};}
+function findBox(id){return boxes().find(b=>b.id===id)||null;}
+function applyBoxes(){                                   // boxes are the plan; the per-helper arrays stay the runtime truth
+  S.crew.sites=S.crew.sites||[];S.crew.mkts=S.crew.mkts||[];S.crew.roles=S.crew.roles||[];
+  const seen={};
+  for(const b of boxes()){
+    b.m=(b.m||[]).filter(i=>i<S.up.helper&&!seen[i]&&(seen[i]=true));
+    for(const i of b.m){S.crew.roles[i]=b.role;S.crew.sites[i]=b.site;S.crew.mkts[i]=b.mkt;staffOf(i).sh=b.sh;}
+  }
+}
+function benchList(){const o=[];for(let i=0;i<S.up.helper;i++)if(!boxOf(i))o.push(i);return o;}
+function boxWage(b){let w=0;for(const i of (b.m||[]))w+=dailyWage(i);return w;}
+function migrateBoxes(){                                 // first run: one example box holding everyone
+  if(S.crew.boxes)return;
+  S.crew.boxes=[];
+  if(S.up.helper<=0)return;
+  const b=newBox();
+  b.role=(S.crew.roles||[])[0]||'sell';
+  b.site=(S.crew.sites||[])[0]||'auto';
+  b.mkt=(S.crew.mkts||[])[0]||'auto';
+  b.sh=staffOf(0).sh||0;
+  for(let i=0;i<S.up.helper;i++)b.m.push(i);
+  S.crew.boxes.push(b);
+}
+function dropFromBoxes(i){                               // a helper left: drop them and shift every higher index down
+  for(const b of boxes()){b.m=(b.m||[]).filter(x=>x!==i).map(x=>x>i?x-1:x);}
+}
 function siteOptions(){
   const groups=['turbine','bigwind','solar','solarfarm'].filter(t=>S.plants.some(p=>p.type===t)).map(t=>'grp:'+t);
   return ['auto'].concat(groups,S.plants.filter(p=>PLANT_TYPES[p.type]).map(p=>p.id));}
@@ -5285,8 +5342,8 @@ function updateHelper(hp,i,dt){
   const role=S.crew.roles[i]||'sell';
   const sp=165*(1+0.08*S.up.boots)*modMult('helperSpeed')*moraleMult()*skillField(i),cap=6+2*Math.floor(S.up.bag/2);
   if(modActive('helperOff')){hp.status='On strike';hp.target=null;hp.state='idle';const dx=HQ.x+((i%8)*26-90)+Math.floor(i/8)*8-hp.x,dy=HQ.y+95+Math.floor(i/8)*26-hp.y,l=Math.hypot(dx,dy);hp.moving=l>8;if(l>8){const st=Math.min(l,120*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);}hp.walk+=dt*10;return;}
-  if(!onDuty(i)){
-    hp.status='Off shift';hp.target=null;hp.state='idle';
+  if(!boxOf(i)||!onDuty(i)){
+    hp.status=boxOf(i)?'Off shift':'No job';hp.target=null;hp.state='idle';
     const hx=HQ.x+((i%8)*26-90)+Math.floor(i/8)*8,hy=HQ.y+95+Math.floor(i/8)*26;
     const dx=hx-hp.x,dy=hy-hp.y,l=Math.hypot(dx,dy);hp.moving=l>8;
     if(l>8){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.walk+=dt*10;}
@@ -5993,7 +6050,7 @@ function render(dt,now){
     const pp=pops[p.id]||0;o.scale.setScalar(1+Math.sin(pp*Math.PI)*0.2);
     const done=padDone(p),left=Math.max(0,Math.ceil(cost-paid));
     let name=p.kind==='build'?(p.type==='town'?L('Town market','Kasaba pazarı'):p.type==='battery'?(p.id==='bat'?L('Battery station','Batarya istasyonu'):L('Field depot','Saha deposu')):tt(PLANT_TYPES[p.type].name)):p.kind==='upg'?`${tt(p.label)}${S.up[p.key]?' '+L('lv','sv')+(S.up[p.key]+1):''}`:tt(p.label);
-    if(p.key==='helper')name=`${L('Hire helper','Yardımcı al')} ${S.up.helper+1}/15`;
+    if(p.key==='helper')name=`${L('Hire helper','Yardımcı al')} ${S.up.helper+1}/45`;
     place('pn'+p.id,'nm',p.x,p.y,0.1,name,p.kind==='gate'?-44:-40);
     place('pc'+p.id,'tag '+(done?'ok':S.cash>=left?'ok':'no'),p.x,p.y,0.1,done?L('MAX','MAKS'):'₵'+fmt(left),p.kind==='gate'?34:34);
   }
@@ -6062,8 +6119,8 @@ function hud(dt){
   $('pnow').textContent='₵'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
   const G=GOALS[S.goal];$('goal').innerHTML=G?`🎯 ${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.');
-  $('crewBtn').hidden=S.up.helper<1;$('crewN').textContent=`${S.up.helper}/15`;
-  const alertOn=helpers.some(h=>(h.waitT||0)>15);$('crewAlert').hidden=!alertOn;$('crewBtn').setAttribute('aria-label',alertOn?'Crew plan: a helper is stuck waiting':'Crew plan');
+  $('crewBtn').hidden=S.up.helper<1;$('crewN').textContent=`${S.up.helper}/45`;
+  const alertOn=helpers.some(h=>(h.waitT||0)>15)||(S.up.helper>0&&benchList().length>0);$('crewAlert').hidden=!alertOn;$('crewBtn').setAttribute('aria-label',alertOn?'Crew plan: a helper is stuck waiting':'Crew plan');
   const bn=$('banner');
   if(curtailNow()){const cw=curtailWindow(S.day);bn.hidden=false;bn.className='banner cheap';bn.textContent=L(`📋 Dispatch order until ${cw[1]}:00 · store, don't sell`,`📋 ${cw[1]}:00'e kadar yük atma talimatı · satma, depola`);}
   else if(DAY.shock&&h>=DAY.shock.hour-1&&h<DAY.shock.hour+(DAY.shock.len||1)){bn.hidden=false;bn.className='banner'+((DAY.shock.type==='glut'||DAY.shock.type==='floor')?' cheap':'');{const sh=DAY.shock,len=sh.len||1,end=(sh.hour+len)%24;
@@ -6095,26 +6152,40 @@ function renderCrew(){
   html+=`<div class="rule"><div class="row1"><span>${L('Crew schedule','Ekip çizelgesi')}</span><span style="font-size:12px;color:var(--soft)">${L('tap to change','değiştirmek için dokun')}</span></div>
     <div class="slots">${SLOTS.map((sl,k)=>{const v=(S.crew.plan||[])[k]||'auto';return `<button data-slot="${k}" class="sl ${v}" ${(!hasBat&&v==='store')?'':''}><b>${tt(sl.name)}</b><small>${sl.range}</small><span>${PL[v]}</span></button>`;}).join('')}</div>
     <div class="role-desc">${L('Sell: empty hands and the battery into the city (never below your price). Store: fill the battery. Roles: each helper follows its own role.','Sat: elindekini ve bataryayı şehre boşalt (fiyatının altına asla). Depola: bataryayı doldur. Roller: her yardımcı kendi rolünü izler.')}</div></div>`;
-  for(let i=0;i<S.up.helper;i++){
-    const role=S.crew.roles[i]||'sell';
-    const t=staffOf(i),sh=shiftOf(i),duty=onDuty(i);
-    const bad=(role==='fix'&&t.r<=2)||(role==='safety'&&t.s<=2)||((role==='sell'||role==='store'||role==='peak')&&t.f<=2);
-    html+=`<div class="hrow"><div class="who">${t.name}<span id="hst${i}"></span></div>
-      <div class="skills">⚡${stars(t.f)} 🔧${stars(t.r)} 🧯${stars(t.s)}</div>
-      <div class="seg">${Object.keys(ROLES).map(k=>`<button data-h="${i}" data-r="${k}" class="${role===k?'on':''}" ${(!hasBat&&k!=='sell')?'disabled':''}>${tt(ROLES[k].name)}</button>`).join('')}</div>
-      <div class="role-desc">${tt(ROLES[role].desc)}</div>
-      ${bad?`<div class="warn">${L('This role does not suit them — only '+ (role==='fix'?t.r:role==='safety'?t.s:t.f) +'★.','Bu iş ona göre değil — sadece '+(role==='fix'?t.r:role==='safety'?t.s:t.f)+'★.')}</div>`:''}
+  migrateBoxes();applyBoxes();
+  const shName=k=>`${SHIFTS[k].icon} ${tt(SHIFTS[k].name)} ${SHIFTS[k].from}–${SHIFTS[k].to}`;
+  html+=`<div class="row1" style="margin-top:12px;font-weight:800"><span>${L('Task boxes','Görev kutuları')}</span><button id="boxAdd" style="background:#1D2433;color:#fff;border-radius:10px;padding:5px 12px;font-weight:800;font-size:13px">+ ${L('New box','Yeni kutu')}</button></div>`;
+  for(const b of boxes()){
+    const mem=b.m||[];
+    html+=`<div class="rule">
+      <button class="boxhead" data-btog="${b.id}"><span>${boxShut[b.id]?'▸':'▾'} ${tt(ROLES[b.role].name)} · ${SHIFTS[b.sh].icon} ${hh(SHIFTS[b.sh].from)}–${hh(SHIFTS[b.sh].to)} · ${mem.length} ${L('person','kişi')}</span><span class="bw">₵${fmt(boxWage(b))}/${L('day','gün')}</span></button>
+      ${boxShut[b.id]?'':`
+      <div class="seg">${Object.keys(ROLES).map(k=>`<button data-brole="${b.id}" data-r="${k}" class="${b.role===k?'on':''}" ${(!hasBat&&k!=='sell')?'disabled':''}>${tt(ROLES[k].name)}</button>`).join('')}</div>
+      <div class="role-desc">${tt(ROLES[b.role].desc)}</div>
       <div class="assign">
-        <button data-a="site" data-h="${i}"><small>${L('Field','Saha')}</small><b>${siteLabel(i)}</b></button>
-        <button data-a="mkt" data-h="${i}"><small>${L('Market','Pazar')}</small><b>${marketLabel(i)}</b></button>
+        <button data-bset="site" data-b="${b.id}"><small>${L('Field','Saha')}</small><b>${siteLabelId(b.site)}</b></button>
+        <button data-bset="mkt" data-b="${b.id}"><small>${L('Market','Pazar')}</small><b>${marketLabelId(b.mkt)}</b></button>
       </div>
       <div class="assign" style="grid-template-columns:1fr auto">
-        <button data-a="shift" data-h="${i}" class="${duty?'duty':''}"><small>${L('Shift','Vardiya')} · ₵${fmt(dailyWage(i))}/${L('day','gün')}</small><b>${sh.icon} ${tt(sh.name)} ${sh.from}–${sh.to}</b></button>
-        <button data-fire="${i}" style="padding:7px 10px">${L('Fire','Kov')}</button>
-      </div></div>`;
+        <button data-bset="shift" data-b="${b.id}" class="${dutyNow(b.sh)?'duty':''}"><small>${L('Shift','Vardiya')}</small><b>${shName(b.sh)}</b></button>
+        <button data-bdel="${b.id}" class="boxdel" style="padding:7px 10px">🗑 ${L('Delete box','Kutuyu sil')}</button>
+      </div>
+      <div class="chips">${mem.map(i=>{const t=staffOf(i);return `<button class="chip" data-rm="${b.id}:${i}">${t.name} <span>${skillFor(b.role,i)}★</span> ✕</button>`;}).join('')||`<span class="chip empty">${L('No one assigned','Kimse atanmadı')}</span>`}</div>
+      <button class="addbtn" data-badd="${b.id}">+ ${L('Add someone','Kişi ekle')}</button>
+      ${pickFor===b.id?`<div class="picklist">${benchList().length?benchList().slice().sort((x,y)=>skillFor(b.role,y)-skillFor(b.role,x)).map(i=>{const t=staffOf(i),sk=skillFor(b.role,i);return `<button data-pick="${b.id}:${i}" class="${sk>=4?'good':sk<=2?'weak':''}"><b>${t.name} ${roleIcon(b.role)}${sk}★</b><small>⚡${stars(t.f)} 🔧${stars(t.r)} 🧯${stars(t.s)} · ₵${fmt(dailyWage(i))}/${L('day','gün')}</small></button>`;}).join(''):`<div class="role-desc">${L('Everyone already has a job.','Herkesin görevi var.')}</div>`}</div>`:''}`}
+    </div>`;
+  }
+  if(!boxes().length)html+=`<div class="note">${L('No task boxes yet. Make one, then drop names into it.','Henüz görev kutusu yok. Bir tane aç, sonra içine isim at.')}</div>`;
+  {const bl=benchList();
+   html+=`<div class="row1" style="margin-top:12px;font-weight:800"><span>${L('Bench','Boştakiler')} · ${bl.length}</span><span style="font-size:12px;color:var(--soft)">${L('paid, not working','maaş alıyor, çalışmıyor')}</span></div>`;
+   if(!bl.length)html+=`<div class="note">${L('Everyone has a job.','Herkesin görevi var.')}</div>`;
+   for(const i of bl){const t=staffOf(i);
+     html+=`<div class="hrow"><div class="who">${t.name}<span style="font-size:12px;color:var(--soft)">₵${fmt(dailyWage(i))}/${L('day','gün')}</span></div>
+       <div class="skills">⚡${stars(t.f)} 🔧${stars(t.r)} 🧯${stars(t.s)}</div>
+       <div class="assign" style="grid-template-columns:1fr auto"><span class="role-desc">${L('Waiting for a task box.','Görev kutusu bekliyor.')}</span><button data-fire="${i}" style="padding:7px 10px">${L('Fire','Kov')}</button></div></div>`;}
   }
   if(!hasBat)html+=`<div class="note">${L('Store and Peak need the battery station.','Depola ve Zirve için batarya istasyonu gerekir.')}</div>`;
-  {const cnt=[0,0,0];for(let i=0;i<S.up.helper;i++)cnt[staffOf(i).sh||0]++;
+  {const cnt=[0,0,0];for(const b of boxes())for(const i of (b.m||[]))cnt[b.sh||0]++;
    html+=`<div class="note" style="background:#EEF1F6">${SHIFTS.map(x=>`${x.icon} ${tt(x.name)} ${cnt[x.id]}`).join(' · ')} — ${L('wages','ücret')} ₵${fmt(wageBill())}/${L('day','gün')}<br>${L('Nobody on shift means no crew work that hour — plants keep producing.','O saatte vardiyası olan yoksa ekip çalışmaz — santraller üretmeye devam eder.')}</div>`;}
   html+=`<div class="note">${L('A fixed field or market can be worse than Any/Nearest: the helper will wait at an empty plant.','Sabit saha veya pazar, otomatikten kötü olabilir: yardımcı boş santralin başında bekler.')}</div>`;
   if(moraleMult()<1)html+=`<div class="note" style="background:#FFE3E8">${L(`Morale is low after the firing: the crew works at ${Math.round(moraleMult()*100)}%.`,`Kovma sonrası moral düşük: ekip %${Math.round(moraleMult()*100)} verimle çalışıyor.`)}</div>`;
@@ -6142,6 +6213,7 @@ function fireHelper(i){
   const t=staffOf(i),sev=dailyWage(i)*3;                 // severance: three days' pay
   S.cash=Math.max(0,S.cash-sev);S.stats.wageSpend=(S.stats.wageSpend||0)+sev;logLedger('severance',-sev,t.name);
   S.up.helper--;
+  dropFromBoxes(i);
   S.crew.roles.splice(i,1);S.crew.sites&&S.crew.sites.splice(i,1);S.crew.mkts&&S.crew.mkts.splice(i,1);
   S.crew.staff&&S.crew.staff.splice(i,1);
   syncHelpers();
@@ -6153,19 +6225,34 @@ function fireHelper(i){
 }
 let fireArm=-1;
 $('crewList').addEventListener('click',e=>{
+  const touch=()=>{S.stats.planned++;sfx.pick();applyBoxes();for(const h of helpers){h.target=null;h.state='idle';}renderCrew();save();};
   const fb=e.target.closest('button[data-fire]');
   if(fb){const i=+fb.dataset.fire;
     if(fireArm===i){fireArm=-1;fireHelper(i);}
     else{fireArm=i;fb.textContent=L('Sure?','Emin misin?');fb.style.background='#E8364F';fb.style.color='#fff';setTimeout(()=>{if(fireArm===i){fireArm=-1;renderCrew();}},3000);}
     return;}
-  const ab=e.target.closest('button[data-a]');
-  if(ab){const i=+ab.dataset.h;
-    if(ab.dataset.a==='shift'){const t=staffOf(i);t.sh=((t.sh||0)+1)%3;}
-    else if(ab.dataset.a==='site'){const o=siteOptions(),cur=(S.crew.sites||[])[i]||'auto';S.crew.sites=S.crew.sites||[];S.crew.sites[i]=o[(o.indexOf(cur)+1+o.length)%o.length];}
-    else{const o=marketOptions(),cur=(S.crew.mkts||[])[i]||'auto';S.crew.mkts=S.crew.mkts||[];S.crew.mkts[i]=o[(o.indexOf(cur)+1+o.length)%o.length];}
-    const h=helpers[i];if(h){h.target=null;h.state='idle';}
-    sfx.pick();trackOnce('crew-assign');renderCrew();save();return;}
-  const sb=e.target.closest('button[data-slot]');if(sb){const k=+sb.dataset.slot;S.crew.plan=S.crew.plan||['auto','auto','auto','auto'];const order=built('bat')?['auto','sell','store']:['auto','sell'];S.crew.plan[k]=order[(order.indexOf(S.crew.plan[k])+1)%order.length];S.stats.planned++;trackOnce('crew-schedule-used');sfx.pick();renderCrew();save();return;}const b=e.target.closest('button[data-r]');if(!b||b.disabled)return;S.crew.roles[+b.dataset.h]=b.dataset.r;S.stats.planned++;helpers[+b.dataset.h].state='idle';sfx.pick();renderCrew();save();});
+  const bt=e.target.closest('button[data-btog]');
+  if(bt){const id=bt.dataset.btog;boxShut[id]=!boxShut[id];if(boxShut[id]&&pickFor===id)pickFor=null;sfx.pick();renderCrew();return;}
+  if(e.target.closest('#boxAdd')){boxes().push(newBox());trackOnce('crew-box-new');touch();return;}
+  const bd=e.target.closest('button[data-bdel]');
+  if(bd){S.crew.boxes=boxes().filter(b=>b.id!==bd.dataset.bdel);if(pickFor===bd.dataset.bdel)pickFor=null;touch();return;}
+  const br=e.target.closest('button[data-brole]');
+  if(br&&!br.disabled){const b=findBox(br.dataset.brole);if(b)b.role=br.dataset.r;touch();return;}
+  const bs=e.target.closest('button[data-bset]');
+  if(bs){const b=findBox(bs.dataset.b);if(b){
+      if(bs.dataset.bset==='shift')b.sh=((b.sh||0)+1)%3;
+      else if(bs.dataset.bset==='site'){const o=siteOptions();b.site=o[(o.indexOf(b.site)+1+o.length)%o.length];}
+      else{const o=marketOptions();b.mkt=o[(o.indexOf(b.mkt)+1+o.length)%o.length];}}
+    trackOnce('crew-assign');touch();return;}
+  const ba=e.target.closest('button[data-badd]');
+  if(ba){pickFor=pickFor===ba.dataset.badd?null:ba.dataset.badd;sfx.pick();renderCrew();return;}
+  const pk=e.target.closest('button[data-pick]');
+  if(pk){const [id,i]=pk.dataset.pick.split(':');const b=findBox(id);if(b)b.m.push(+i);trackOnce('crew-box-fill');touch();return;}
+  const rm=e.target.closest('button[data-rm]');
+  if(rm){const [id,i]=rm.dataset.rm.split(':');const b=findBox(id);if(b)b.m=b.m.filter(x=>x!==+i);touch();return;}
+  const sb=e.target.closest('button[data-slot]');
+  if(sb){const k=+sb.dataset.slot;S.crew.plan=S.crew.plan||['auto','auto','auto','auto'];const order=built('bat')?['auto','sell','store']:['auto','sell'];S.crew.plan[k]=order[(order.indexOf(S.crew.plan[k])+1)%order.length];trackOnce('crew-schedule-used');touch();return;}
+});
 
 
 /* ======================= ANALYTICS (GoatCounter, no cookies, public build only) ======================= */
@@ -6413,6 +6500,56 @@ $('sTut').onclick=()=>{$('mSet').classList.remove('on');openLangPick(startTutori
 
 
 /* ======================= FINANCE REPORT ======================= */
+function crewAdvice(){                                   // one concrete move, the most valuable one
+  const R=r=>tt(ROLES[r].name), N=i=>staffOf(i).name;
+  const HRS=k=>hh(SHIFTS[k].from)+'–'+hh(SHIFTS[k].to);
+  const bx=boxes().filter(b=>b.m);
+  if(!S.up.helper)return L('Hire your first helper at HQ, then give them a task box.','Merkezden ilk yardımcını al, sonra ona bir görev kutusu ver.');
+  const cov=[0,0,0];for(const b of bx)for(const i of b.m)cov[b.sh||0]++;
+  const bench=benchList();
+  const bestRoleOf=i=>{const t=staffOf(i);return t.r>=t.f&&t.r>=t.s?'fix':t.s>=t.f?'safety':'sell';};
+
+  // 1) an empty shift is the biggest hole: fill it
+  const gap=[0,1,2].find(k=>!cov[k]);
+  if(gap!=null){
+    if(bench.length){const i=bench.slice().sort((a,b)=>staffOf(b).f-staffOf(a).f)[0];
+      return L(`Open a Sell box on ${HRS(gap)} and put ${N(i)} in it — nobody works those hours.`,
+               `${HRS(gap)} için bir Sat kutusu aç ve ${N(i)}'i içine koy — o saatlerde kimse çalışmıyor.`);}
+    const from=bx.filter(b=>b.m.length>1).sort((a,b)=>b.m.length-a.m.length)[0];
+    if(from){const i=from.m.slice().sort((a,b)=>skillFor(from.role,a)-skillFor(from.role,b))[0];
+      return L(`Move ${N(i)} to ${HRS(gap)} — that shift is empty while ${HRS(from.sh)} has ${from.m.length} people.`,
+               `${N(i)}'i ${HRS(gap)} vardiyasına al — o vardiya boşken ${HRS(from.sh)} vardiyasında ${from.m.length} kişi var.`);}
+  }
+  // 2) somebody is paid to sit: place the best fit
+  if(bench.length&&bx.length){
+    let best=null;
+    for(const i of bench)for(const b of bx){const v=skillFor(b.role,i);if(!best||v>best.v)best={i,b,v};}
+    if(best)return L(`Put ${N(best.i)} in the ${R(best.b.role)} box on ${HRS(best.b.sh)} — ${best.v}★ for that job, and they are drawing wages for nothing.`,
+                     `${N(best.i)}'i ${HRS(best.b.sh)} ${R(best.b.role)} kutusuna koy — o iş için ${best.v}★ ve boş boş maaş alıyor.`);
+  }
+  if(bench.length)return L(`Make a task box, then drop ${N(bench[0])} into it — the bench earns you nothing.`,
+                          `Bir görev kutusu aç ve ${N(bench[0])}'i içine at — boştakiler sana hiçbir şey kazandırmıyor.`);
+  // 3) the worst person-in-the-wrong-role, when a better-fitting box exists
+  let move=null;
+  for(const b of bx)for(const i of b.m){const cur=skillFor(b.role,i);
+    for(const c of bx){if(c===b)continue;const v=skillFor(c.role,i);
+      if(v-cur>=2&&(!move||v-cur>move.g))move={i,from:b,to:c,g:v-cur,v};}}
+  if(move)return L(`Move ${N(move.i)} to the ${R(move.to.role)} box on ${HRS(move.to.sh)} — ${move.v}★ there against ${move.v-move.g}★ where they are now.`,
+                   `${N(move.i)}'i ${HRS(move.to.sh)} ${R(move.to.role)} kutusuna taşı — orada ${move.v}★, şu anki işinde ${move.v-move.g}★.`);
+  // 4) a whole box in the wrong hands
+  let weak=null;
+  for(const b of bx){if(!b.m.length)continue;const avg=b.m.reduce((a,i)=>a+skillFor(b.role,i),0)/b.m.length;
+    if(avg<3&&(!weak||avg<weak.avg))weak={b,avg};}
+  if(weak){const i=weak.b.m.slice().sort((a,b2)=>skillFor(weak.b.role,a)-skillFor(weak.b.role,b2))[0];
+    return L(`${N(i)} is a poor fit for ${R(weak.b.role)} (${skillFor(weak.b.role,i)}★). Their strength is ${R(bestRoleOf(i))} — build a box for that on ${HRS(weak.b.sh)}.`,
+             `${N(i)} ${R(weak.b.role)} işine uygun değil (${skillFor(weak.b.role,i)}★). Güçlü olduğu iş ${R(bestRoleOf(i))} — ${HRS(weak.b.sh)} için öyle bir kutu kur.`);}
+  // 5) balanced: point at the next lever
+  if(built('bat')&&!bx.some(b=>b.role==='peak'||b.role==='store'))
+    return L('Everyone fits their job. Next lever: a Store or Peak box on the cheap hours so the battery is full before the peak.','Herkes işine uygun. Sıradaki kaldıraç: ucuz saatlerde bir Depola ya da Zirve kutusu — zirveden önce batarya dolsun.');
+  const thin=[0,1,2].sort((a,b)=>cov[a]-cov[b])[0];
+  return L(`The crew is well set. The thinnest shift is ${HRS(thin)} with ${cov[thin]} — hire there next.`,
+           `Kadro iyi kurulmuş. En zayıf vardiya ${HRS(thin)}, ${cov[thin]} kişi — bir sonraki alımı oraya yap.`);
+}
 let repPage=1;
 function openReport(page){
   repPage=page||1;
@@ -6423,7 +6560,7 @@ function openReport(page){
   const line=(k,v,u)=>`<tr><td>${k}</td><td>${v}</td><td>${u||''}</td></tr>`;
   const cards=(list)=>list.map(([k,v])=>`<div class="mcard"><small>${k}</small><b>${v}</b></div>`).join('');
   if(repPage===1){
-    $('repTitle').textContent=L('Finance report','Finansal rapor')+' · 1/2';
+    $('repTitle').textContent=L('Finance report','Finansal rapor')+' · 1/3';
     $('repCards').innerHTML=cards([
       [L('Wallet','Cüzdan'),'👛 ₵'+fmt(S.cash)],
       [L('Wealth','Zenginlik'),'🏛️ ₵'+fmt(wealth())],
@@ -6456,10 +6593,10 @@ function openReport(page){
       </table>`;
     $('repPrev').hidden=true;$('repNext').hidden=false;
     $('repNext').textContent=L('Health ›','Sağlık ›');
-  }else{
+  }else if(repPage===2){
     const pls=S.plants.filter(p=>PLANT_TYPES[p.type]);
     const worn=pls.filter(p=>plantEff(p)<1).length,due=pls.filter(p=>canRepower(p)).length;
-    $('repTitle').textContent=L('Asset health','Varlık sağlığı')+' · 2/2';
+    $('repTitle').textContent=L('Asset health','Varlık sağlığı')+' · 2/3';
     $('repCards').innerHTML=cards([
       [L('Plants','Santral'),pls.length],
       [L('Broken now','Bozuk'),pls.filter(p=>p.broken).length],
@@ -6481,19 +6618,67 @@ function openReport(page){
       (rows?`<table class="rtab"><tr><th>${L('Asset','Varlık')}</th><th>${L('Age','Yaş')}</th><th>${L('Output','Üretim')}</th><th>${L('Status','Durum')}</th></tr>${rows}</table>`:`<p style="text-align:center">${L('No plants yet.','Henüz santral yok.')}</p>`)
       +(bats?`<table class="rtab"><tr><th>${L('Storage','Depolama')}</th><th>${L('Cycles','Çevrim')}</th><th>${L('Health','Sağlık')}</th><th>${L('Status','Durum')}</th></tr>${bats}</table>`:'')
       +`<p style="font-size:12.5px">${L('Repower a plant by standing next to it; refurbish the battery at the main station.','Santrali yanında durarak yenile; bataryayı ana istasyonda yenile.')}</p>`;
-    $('repPrev').hidden=false;$('repNext').hidden=true;
+    $('repPrev').hidden=false;$('repNext').hidden=false;
     $('repPrev').textContent=L('‹ Finance','‹ Finans');
+    $('repNext').textContent=L('Crew ›','Ekip ›');
+  }else{
+    migrateBoxes();applyBoxes();
+    const total=S.up.helper,assigned=total-benchList().length,bench=benchList().length;
+    const cov=[0,0,0];for(const b of boxes())for(const i of (b.m||[]))cov[b.sh||0]++;
+    const shiftsCovered=cov.filter(x=>x>0).length;
+    let fitSum=0,fitN=0;
+    for(const b of boxes())for(const i of (b.m||[])){fitSum+=skillFor(b.role,i);fitN++;}
+    const fit=fitN?fitSum/fitN/5:0;
+    const util=total?assigned/total:0;
+    const score=Math.round(100*(0.4*(shiftsCovered/3)+0.4*fit+0.2*util));
+    const wage=wageBill(),crewRev=S.stats.crewRev||0,crewCells=S.stats.crewCells||0;
+    $('repTitle').textContent=L('Crew schedule','Çalışan çizelgesi')+' · 3/3';
+    $('repCards').innerHTML=cards([
+      [L('Crew','Kadro'),total+' / 45'],
+      [L('Efficiency','Verim'),score+'%'],
+      [L('On a task','Görevli'),assigned],
+      [L('Bench','Boşta'),bench],
+      [L('Shifts covered','Dolu vardiya'),shiftsCovered+' / 3'],
+      [L('Skill fit','Yetenek uyumu'),fitN?Math.round(fit*100)+'%':'—'],
+      [L('Wages','Ücret'),'₵'+fmt(wage)+'/'+L('day','gün')],
+      [L('Crew sales','Ekip satışı'),'₵'+fmt(crewRev)],
+    ]);
+    $('repChart').hidden=true;
+    const shRows=SHIFTS.map(x=>`<tr><td>${x.icon} ${tt(x.name)}</td><td>${hh(x.from)}–${hh(x.to)}</td><td>${cov[x.id]}</td><td>${cov[x.id]?L('ok','iyi'):'⚠️ '+L('empty','boş')}</td></tr>`).join('');
+    const bxRows=boxes().map(b=>{const n=(b.m||[]).length;
+      const f=n?Math.round((b.m.reduce((a,i)=>a+skillFor(b.role,i),0)/n)/5*100):0;
+      return `<tr><td>${tt(ROLES[b.role].name)} ${roleIcon(b.role)}</td><td>${SHIFTS[b.sh].icon} ${hh(SHIFTS[b.sh].from)}–${hh(SHIFTS[b.sh].to)}</td><td>${n}</td><td>${n?f+'%':'—'}</td><td>₵${fmt(boxWage(b))}</td></tr>`;}).join('');
+    const tips=[];
+    for(const x of SHIFTS)if(!cov[x.id])tips.push(L(`Nobody works ${x.from}:00–${x.to}:00 — plants keep producing but nobody collects.`,`${hh(x.from)}:00–${hh(x.to)}:00 arası kimse çalışmıyor — santraller üretiyor ama toplayan yok.`));
+    if(bench)tips.push(L(`${bench} on the bench draw ₵${fmt(benchList().reduce((a,i)=>a+dailyWage(i),0))}/day and produce nothing.`,`Boştaki ${bench} kişi günde ₵${fmt(benchList().reduce((a,i)=>a+dailyWage(i),0))} alıyor ve hiçbir şey üretmiyor.`));
+    for(const b of boxes()){const n=(b.m||[]).length;if(!n)continue;
+      const avg=b.m.reduce((a,i)=>a+skillFor(b.role,i),0)/n;
+      if(avg<2.5)tips.push(L(`${tt(ROLES[b.role].name)} box averages ${avg.toFixed(1)}★ — swap in stronger people or change the role.`,`${tt(ROLES[b.role].name)} kutusunun ortalaması ${avg.toFixed(1)}★ — daha güçlü kişiler koy ya da rolü değiştir.`));}
+    if(crewCells&&wage>0){const per=crewRev/Math.max(1,crewCells);
+      tips.push(L(`Crew has sold ${crewCells} MWh at ₵${per.toFixed(1)} on average.`,`Ekip ${crewCells} MWh sattı, ortalama ₵${per.toFixed(1)}.`));}
+    if(!total)tips.push(L('No helpers yet. Hire one at HQ.','Henüz yardımcı yok. Merkezden birini işe al.'));
+    $('repBody').innerHTML=
+      `<table class="rtab"><tr><th>${L('Shift','Vardiya')}</th><th>${L('Hours','Saat')}</th><th>${L('People','Kişi')}</th><th>${L('Status','Durum')}</th></tr>${shRows}</table>`
+      +(bxRows?`<table class="rtab"><tr><th>${L('Task box','Görev kutusu')}</th><th>${L('Shift','Vardiya')}</th><th>${L('People','Kişi')}</th><th>${L('Fit','Uyum')}</th><th>${L('Wage','Ücret')}</th></tr>${bxRows}</table>`:`<p style="text-align:center">${L('No task boxes yet.','Henüz görev kutusu yok.')}</p>`)
+      +`<div class="note" style="background:#E1F4EA;border:2px solid #23B26D"><b>💡 ${L('Do this next','Şunu yap')}</b><br>${crewAdvice()}</div>`
+      +(tips.length?`<div class="note">${tips.map(t=>'• '+t).join('<br>')}</div>`:'')
+      +`<p style="font-size:12.5px">${L('Efficiency = 40% shift coverage + 40% skill fit + 20% of the crew actually on a task.','Verim = %40 vardiya kapsaması + %40 yetenek uyumu + %20 görevde olan kadro oranı.')}</p>`;
+    $('repPrev').hidden=false;$('repNext').hidden=true;
+    $('repPrev').textContent=L('‹ Health','‹ Sağlık');
   }
   $('mRep').classList.add('on');trackOnce('report-opened');
 }
 $('repBtn').onclick=openReport;
 $('repClose').onclick=()=>$('mRep').classList.remove('on');
-$('repNext').onclick=()=>openReport(2);
-$('repPrev').onclick=()=>openReport(1);
+$('repNext').onclick=()=>openReport(Math.min(3,repPage+1));
+$('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.34.2',t:['One move to make next','Sıradaki tek hamle'],l:[['The crew page ends with a single concrete instruction — who to move, to which shift, for which job — picked as the most valuable change available right now.','Ekip sayfası tek somut talimatla bitiyor: kimi, hangi vardiyaya, hangi iş için taşıyacaksın — şu an yapılabilecek en değerli değişiklik seçiliyor.']]},
+ {v:'0.34.1',t:['Crew schedule in the report','Raporda çalışan çizelgesi'],l:[['The finance report has a third page: shift coverage, per-box skill fit, bench cost and an efficiency score, with a line for each thing dragging it down.','Finansal raporda üçüncü sayfa var: vardiya kapsaması, kutu bazlı yetenek uyumu, boştakilerin maliyeti ve bir verim skoru — skoru düşüren her şey için bir satır.'],]},
+ {v:'0.34.0',t:['Task boxes · crew up to 45','Görev kutuları · 45 kişilik ekip'],l:[['Helpers now work three shifts, so the crew cap went from 15 to 45 — that is 15 on duty at any hour, the same as the old round-the-clock 15.','Yardımcılar üç vardiya çalışıyor, bu yüzden ekip tavanı 15\'ten 45\'e çıktı — her saatte 15 kişi görevde, eski 24 saat çalışan 15 kişinin karşılığı.'],['Hiring is much cheaper: the cost curve dropped from ×1.55 to ×1.17 per helper. The 15th helper costs ₵4K instead of ₵208K, and a full 45-strong crew is an endgame goal at about ₵3.1M total.','İşe alım çok ucuzladı: maliyet katsayısı kişi başı ×1.55\'ten ×1.35\'e indi. 11. yardımcı ₵36K yerine ₵9K.'],['You no longer set orders person by person. A task box holds a job — role, field, market, shift — and you drop names into it. Your crew starts in one example box; add more boxes yourself. Anyone without a box waits at HQ and still draws wages.','Artık tek tek kişi ayarlamıyorsun. Görev kutusu bir işi tutar — rol, saha, pazar, vardiya — içine isim atarsın. Ekibin tek bir örnek kutuda başlar; yeni kutuları sen açarsın. Kutusu olmayan merkezde bekler ama maaşını alır.'],['Daily wages rescaled for three shifts: base share of daily income 2% → 0.7%, night premium ×1.5 → ×1.35.','Günlük ücretler üç vardiyaya göre yeniden ölçeklendi: günlük gelir payı %2 → %0.7, gece primi ×1.5 → ×1.35.'],['The add-someone list is sorted best-first for that box\'s role, and strong candidates (4★ and up) are shown on green.','Kişi ekleme listesi o kutunun rolüne göre en iyiden sıralanıyor; güçlü adaylar (4★ ve üzeri) yeşil zeminde görünüyor.'],['Tap a box header to fold it away — handy once you run many boxes.','Kutu başlığına dokununca kutu katlanıyor — çok kutuyla çalışırken işe yarıyor.']]},
  {v:'0.33.7',t:['Cloud save really sticks now','Bulut kaydı artık gerçekten kalıyor'],l:[['Picking the cloud save wrote it to the device, but the page reload immediately wrote the old device save back over it, so the question returned on every launch. Nothing is written once a reload has started.','Bulut kaydını seçtiğinde kayıt cihaza yazılıyor, ama sayfa yenilenirken eski cihaz kaydı hemen üstüne geri yazılıyordu; bu yüzden soru her açılışta geri geliyordu. Artık yenileme başladıktan sonra hiçbir şey yazılmıyor.']]},
  {v:'0.33.6',t:['Cloud save loop fixed','Bulut kaydı döngüsü düzeldi'],l:[['Picking the cloud save could silently fail when device storage was full, so the same question came back on every launch. The cloud save is now written first and verified, and you get a clear message if it cannot be stored.','Bulut kaydını seçtiğinde cihaz deposu doluysa yazma sessizce başarısız oluyor ve aynı soru her açılışta geri geliyordu. Artık bulut kaydı önce yazılıp doğrulanıyor, yazılamazsa net bir uyarı çıkıyor.']]},
  {v:'0.33.5',t:['Hiring unblocked','Yardımcı alımı düzeldi'],l:[['Money already paid toward a helper is no longer lost when you fire one — it now carries over and buys the next helpers.','Bir yardımcı için ödediğin para, birini kovduğunda artık kaybolmuyor; sonraki yardımcılara sayılıyor.']]},
@@ -6889,6 +7074,7 @@ function load(){
     S.stats=Object.assign(fresh().stats,o.stats||{});
     S.crew=Object.assign(fresh().crew,o.crew||{});
     if(!Array.isArray(S.crew.roles))S.crew.roles=[];
+    migrateBoxes();applyBoxes();
     S.plants.forEach(p=>{if(!p.born)p.born=gameNow();if(!p.gen)p.gen=1;});
     if(!S.bat||typeof S.bat!=='object'){S.bat={};}
     if(S.battery>0&&!Object.keys(S.bat).length){S.bat.bat=S.battery;}   // old single tank -> main station
@@ -7005,7 +7191,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.33.7';
+const GAME_VERSION='0.34.2';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
