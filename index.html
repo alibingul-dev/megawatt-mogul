@@ -222,7 +222,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.31.1</div>
+  <div class="t-ver" id="tVer">v0.31.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -400,7 +400,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.31.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.31.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -6415,6 +6415,11 @@ $('repPrev').onclick=()=>openReport(1);
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.31.3',t:['A name for everyone','Herkese bir ad'],l:[
+   ['No nickname? The game gives you one like “Güneş Tilki BS” — always the same for you, and you can rename any time.','Takma ad girmediysen oyun sana “Güneş Tilki BS” gibi bir ad veriyor — hep aynı kalır, istediğin zaman değiştirebilirsin.']]},
+ {v:'0.31.2',t:['Everyone who signs in is listed','Giriş yapan herkes listede'],l:[
+   ['Fixed: a player who skipped the nickname never appeared on the board. They are listed now and can rename any time.','Düzeltildi: takma ad girmeyen oyuncu tabloda hiç görünmüyordu. Artık listede ve adını istediği zaman değiştirebilir.'],
+   ['The board says how many players have signed in.','Tablo kaç oyuncunun giriş yaptığını yazıyor.']]},
  {v:'0.31.1',t:['Sign-in never wipes a game','Giriş oyununu silmez'],l:[
    ['Signing in can no longer replace a save that has progress — it asks you which one to keep.','Giriş yapmak artık ilerlemesi olan bir kaydı değiştiremiyor — hangisini tutacağını soruyor.'],
    ['A rescue copy is kept right before any cloud load: Settings → “Restore a backup”.','Her bulut yüklemesinden hemen önce bir kurtarma kopyası saklanıyor: Ayarlar → “Yedeği geri yükle”.']]},
@@ -6902,7 +6907,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.31.1';
+const GAME_VERSION='0.31.3';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
@@ -7002,7 +7007,7 @@ async function cloudSave(force){
     }
     S.syncBase=S.lastSave;S.dev=DEV_ID;
     await fbDb.collection('users').doc(fbUser.uid).set({save:JSON.stringify(S),schema:SAVE_SCHEMA,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
-    if(S.nick){await fbDb.collection('leaderboard').doc(fbUser.uid).set({name:S.nick,wealth:wealth(),wallet:Math.round(S.cash),assets:assetsValue(),day:S.day+1,recent:recentEarn(),day1:earn24(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    {await fbDb.collection('leaderboard').doc(fbUser.uid).set({name:boardName(),wealth:wealth(),wallet:Math.round(S.cash),assets:assetsValue(),day:S.day+1,recent:recentEarn(),day1:earn24(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
       await publishProfile();}
   }catch(e){console.warn('cloud save',e);}
   cloudBusy=false;
@@ -7018,12 +7023,27 @@ $('nickOk').onclick=async()=>{const v=$('nickIn').value.trim();
   if(v.length<2||v.length>16){$('nickMsg').textContent=L('2 to 16 characters.','2–16 karakter olmalı.');return;}
   S.nick=v;save();$('mNick').classList.remove('on');cloudUI();await cloudSave(true);toast(L('Nickname saved.','Takma ad kaydedildi.'),'good');};
 $('nickSkip').onclick=()=>$('mNick').classList.remove('on');
+/* no nickname? give them a stable, friendly one derived from their own id */
+const NICK_ADJ={en:['Volt','Amp','Watt','Peak','Wind','Solar','Spark','Grid'],
+                tr:['Volt','Amper','Watt','Zirve','Rüzgâr','Güneş','Şimşek','Enerji']};
+const NICK_NOUN={en:['Fox','Wolf','Hawk','Lynx','Owl','Eagle','Otter','Bear'],
+                 tr:['Tilki','Kurt','Şahin','Vaşak','Ceylan','Panter','Baykuş','Kartal']};
+function autoNick(){
+  const id=(fbUser&&fbUser.uid)||'guest';
+  let h=2166136261;for(let i=0;i<id.length;i++){h^=id.charCodeAt(i);h=Math.imul(h,16777619);}
+  h=h>>>0;
+  const lg=S.lang==='tr'?'tr':'en';
+  const a=NICK_ADJ[lg][h%8],n=NICK_NOUN[lg][(h>>>3)%8];
+  const sfx=((h>>>6)%1296).toString(36).toUpperCase().padStart(2,'0');   // 1296 suffixes: collisions stay rare
+  return `${a} ${n} ${sfx}`.slice(0,16);
+}
+function boardName(){const n=(S.nick||'').trim();return n.length>=2?n.slice(0,16):autoNick();}
 function myCode(){return fbUser?fbUser.uid.slice(0,6).toUpperCase():'';}
 async function publishProfile(){
   if(!fbUser||!fbDb)return;
   try{
     await fbDb.collection('profiles').doc(fbUser.uid).set({
-      name:S.nick||'?',code:myCode(),wealth:wealth(),wallet:Math.round(S.cash),assets:assetsValue(),
+      name:boardName(),code:myCode(),wealth:wealth(),wallet:Math.round(S.cash),assets:assetsValue(),
       day:S.day+1,plants:S.plants.filter(p=>PLANT_TYPES[p.type]).length,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
     await fbDb.collection('codes').doc(myCode()).set({uid:fbUser.uid});   // create-only by the rules
   }catch(e){/* the code may already belong to someone else */}
@@ -7099,7 +7119,7 @@ async function renderGroup(kind){
     const profs=[];
     for(const u of ids.slice(0,25)){try{const d=await fbDb.collection('profiles').doc(u).get();if(d.exists)profs.push({uid:u,...d.data()});}catch(e){}}
     // your own row is always in the list
-    profs.push({uid:fbUser.uid,name:S.nick||'?',wealth:wealth(),recent:recentEarn(),day1:earn24(),day:S.day+1,me:1});
+    profs.push({uid:fbUser.uid,name:boardName(),wealth:wealth(),recent:recentEarn(),day1:earn24(),day:S.day+1,me:1});
     profs.sort((a,b)=>(b[field]||0)-(a[field]||0));
     let html='';
     if(kind==='fr'&&pend.length)html+=`<p style="font-weight:800;margin-top:8px">${L('Requests','İstekler')}</p>`+pend.map(f=>
@@ -7214,10 +7234,12 @@ async function openLead(){
         :st==='blocked'?`<span style="color:#E8364F;font-size:11px">${L('blocked','engelli')}</span>`
         :fbUser?`<button data-req="${v.uid}" data-n="${(v.name||'').slice(0,16)}" style="background:#1D2433;color:#fff;border-radius:9px;padding:2px 9px;font-weight:800">+</button>`:'';
       rows+=`<tr${me?' style="font-weight:800;background:#FFF6DA"':''}><td>${i}</td><td>${(v.name||'?').slice(0,16)}</td><td>₵${fmt(val)}</td><td>${v.day||0}</td><td>${act}</td></tr>`;});
+    const cnt=list.length;
     $('leadSub').textContent=byDay
       ?L('Earned in the last 24 real hours — a brand-new player can win this one.','Son 24 gerçek saatte kazanılan — yeni başlayan da kazanabilir.')
       :byWeek?L('Earnings of the last 7 game days — the same race for everyone.','Son 7 oyun gününün kazancı — herkes için aynı yarış.')
       :L('Ranked by wealth (cash + 70% of what you built).','Zenginliğe göre sıralanır (nakit + yatırımların %70\'i).');
+    $('leadSub').textContent+=L(` · ${cnt} players signed in.`,` · ${cnt} oyuncu giriş yapmış.`);
     $('leadBody').innerHTML=(rows?`<table class="rtab"><tr><th>#</th><th>${L('Player','Oyuncu')}</th><th>${byDay?L('24 h','24 saat'):byWeek?L('7-day','7 gün'):L('All time','Tüm zamanlar')}</th><th>${L('Day','Gün')}</th><th></th></tr>${rows}</table>`:`<p style="text-align:center">${L('No entries yet.','Henüz kayıt yok.')}</p>`)+prizeHTML();
   }catch(e){$('leadBody').innerHTML=`<p style="text-align:center">${L('Could not load the board.','Tablo yüklenemedi.')}</p>`;}
 }
