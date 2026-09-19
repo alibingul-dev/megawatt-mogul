@@ -41,6 +41,7 @@ html,body{height:100%;overflow:hidden;background:#3B7A4A;font-family:var(--body)
 .hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 10px 0;display:flex;flex-direction:column;gap:6px;pointer-events:none;max-width:520px;margin:0 auto}
 .bar{display:flex;gap:6px;align-items:flex-start}
 .bar>.box{min-height:62px}
+.bar>.box:first-child{max-width:52%}          /* the wallet card must never squeeze the price chart */
 .box{background:var(--panel);color:#1D2433;border-radius:16px;padding:6px 10px;box-shadow:0 3px 0 rgba(0,0,0,.18)}
 .cash{font-family:var(--disp);font-size:26px;line-height:1.05;display:flex;align-items:center;gap:4px;min-width:84px;font-weight:400}
 .coin{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFE58A,#FFB300 60%,#C77F00);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);flex:0 0 auto}
@@ -67,7 +68,7 @@ html,body{height:100%;overflow:hidden;background:#3B7A4A;font-family:var(--body)
 .banner{align-self:center;border-radius:12px;padding:5px 14px;font-family:var(--disp);font-size:16px;color:#fff;background:var(--peak);box-shadow:0 3px 0 rgba(0,0,0,.2);text-align:center;font-weight:400}
 .banner.cheap{background:var(--cheap)}
 .banner.news{background:#2F3A57}
-.dealc{font-size:11px;font-weight:800;color:#fff;background:#6A5CFF;border-radius:7px;padding:0 6px;margin-top:2px;display:inline-block}
+.dealc{font-size:11px;font-weight:800;color:#fff;background:#6A5CFF;border-radius:7px;padding:0 6px;margin-top:3px;display:block;width:max-content;max-width:100%}
 #sideCol{position:fixed;right:10px;top:150px;display:flex;flex-direction:column;gap:6px;z-index:4}
 body.title #sideCol{visibility:hidden}
 #mini{position:fixed;left:10px;top:150px;width:74px;height:106px;border-radius:12px;box-shadow:0 4px 10px rgba(10,20,10,.35);pointer-events:auto;z-index:4;background:transparent}
@@ -167,6 +168,17 @@ body.title #mini{visibility:hidden}
 .picklist button.good{background:#E1F4EA;border-color:#23B26D}
 .picklist button.good b{color:#146B44}
 .picklist button.weak{opacity:.6}
+.lvlchip{background:#ECEAFF;color:#3B30C4;border-radius:999px;padding:1px 9px;font-weight:800;font-size:13px}
+.goal.lvlup{background:#E1F4EA;border-color:#23B26D;animation:lvlp 1.4s ease-in-out infinite}
+.goal.lvlup .lvlchip{background:#23B26D;color:#fff}
+@keyframes lvlp{50%{box-shadow:0 0 0 4px rgba(35,178,109,.35),0 3px 0 rgba(0,0,0,.15)}}
+@media (prefers-reduced-motion: reduce){.goal.lvlup{animation:none}}
+.cat{text-align:left;padding:13px 14px!important;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cat b{font-size:15px;font-weight:800}
+.cat small{font-size:11.5px;color:var(--soft);font-weight:800;text-align:right;flex:1 1 auto}
+.cat::after{content:'›';font-size:20px;color:var(--soft);flex:0 0 auto}
+.lvlbig{font-family:var(--disp);font-weight:400;font-size:64px;line-height:1;color:#6A5CFF;margin-bottom:2px}
+.lvlbig small{display:block;font-family:var(--body);font-size:12px;font-weight:800;color:var(--soft);letter-spacing:1px}
 .mktcard{background:#F4F6FA;border:2px solid #E3E8EF;border-radius:16px;padding:10px 12px;margin-top:8px}
 .mktcard.best{background:#E1F4EA;border-color:#23B26D}
 .mkhead{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14px}
@@ -251,7 +263,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.35.1</div>
+  <div class="t-ver" id="tVer">v0.37.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -275,7 +287,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     </div>
     <button class="rb" id="gear" aria-label="Settings">⚙️</button>
   </div>
-  <div class="goal" id="goal"></div>
+  <div class="goal" id="goal" style="pointer-events:auto;cursor:pointer"></div>
   <div class="banner" id="banner" hidden></div>
 </div>
 <div id="sideCol">
@@ -371,6 +383,14 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div id="mktBody"></div>
   <div class="btns"><button class="pri" id="mktClose" data-i18n="close">Close</button></div>
 </div></div>
+<div class="modal" id="mLvl"><div class="sheet">
+  <div class="lvlbig" id="lvlNum">1</div>
+  <h2 id="lvlTitle"></h2>
+  <p id="lvlWhat"></p>
+  <div class="tip new" id="lvlDo" hidden></div>
+  <p id="lvlCur" style="font-size:12.5px;color:var(--soft);margin-top:8px"></p>
+  <div class="btns"><button class="pri" id="lvlGo" hidden>Level up</button><button id="lvlSkip">Not now</button></div>
+</div></div>
 <div class="modal" id="mRep"><div class="sheet tips">
   <h2 id="repTitle">Finance report</h2>
   <div class="mgrid" id="repCards"></div>
@@ -416,26 +436,42 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 </div></div>
 <div class="modal" id="mAd"><div class="sheet"><h2>Ad</h2><p>A rewarded video plays here in the store version.</p><div class="adbox" id="adCount">3</div></div></div>
 <div class="modal" id="mSet"><div class="sheet">
-  <h2 data-i18n="settings">Settings</h2>
-  <div class="btns">
+  <h2 id="setTitle" data-i18n="settings">Settings</h2>
+  <div class="btns" id="setHome">
+    <button class="cat" data-cat="game"><b>🎮 <span>Game</span></b><small></small></button>
+    <button class="cat" data-cat="acc"><b>👤 <span>Account</span></b><small></small></button>
+    <button class="cat" data-cat="disp"><b>🖥️ <span>Display</span></b><small></small></button>
+    <button class="cat" data-cat="data"><b>💾 <span>Save data</span></b><small></small></button>
+    <button class="pri" id="sClose" data-i18n="close">Close</button>
+  </div>
+  <div class="btns setsec" id="setGame" hidden>
     <div class="langpick" style="display:flex;gap:6px;justify-content:center"><button data-lang="en" style="color:#fff">ENG</button><button data-lang="tr" style="color:#fff">TR</button></div>
     <button id="sLook" data-i18n="sLook">Change your look</button>
     <button id="sTut" data-i18n="sTut">Replay the tutorial</button>
+    <button id="sSpeed">Time speed: normal</button>
+    <button class="pri setback">‹ Back</button>
+  </div>
+  <div class="btns setsec" id="setAcc" hidden>
     <button id="sCloud" hidden>Sign in with Google</button>
     <button id="sCloudOut" hidden>Sign out</button>
     <button id="sPull" hidden>Load from cloud</button>
     <button id="sPush" hidden>Save to cloud</button>
-    <button id="sExport" data-i18n="sExport">Copy save code</button>
-    <button id="sImport" data-i18n="sImport">Load a save code</button>
-    <button id="sRestore">Restore a backup</button>
+    <button class="pri setback">‹ Back</button>
+  </div>
+  <div class="btns setsec" id="setDisp" hidden>
     <button id="sSound">Sound: on</button>
     <button id="sShadow">Shadows: on</button>
     <button id="sFlash">Flashes: on</button>
-    <button id="sSpeed">Time speed: normal</button>
-    <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
-    <button class="pri" id="sClose" data-i18n="close">Close</button>
+    <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.35.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <div class="btns setsec" id="setData" hidden>
+    <button id="sExport" data-i18n="sExport">Copy save code</button>
+    <button id="sImport" data-i18n="sImport">Load a save code</button>
+    <button id="sRestore">Restore a backup</button>
+    <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
+    <button class="pri setback">‹ Back</button>
+  </div>
+  <p style="margin-top:10px">Megawatt Mogul v0.37.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4746,7 +4782,66 @@ const GOALS=[
   {t:['Open the windy ridge','Rüzgârlı sırtı aç'],ok:()=>S.regions.ridge,at:()=>pad('ridge'),r:500},
   {t:['Build a big turbine','Büyük bir türbin kur'],ok:()=>built('w1'),at:()=>pad('w1'),r:800},
   {t:['Open the solar desert','Güneş çölünü aç'],ok:()=>S.regions.desert,at:()=>pad('desert'),r:5000},
+  {t:['Grow the crew to 10','Ekibi 10 kişiye çıkar'],ok:()=>S.up.helper>=10,at:()=>pad('helper'),r:3000},
+  {t:['Repower an ageing plant','Yaşlanan bir santrali yenile'],ok:()=>(S.stats.repowered||0)>0,at:()=>S.plants.find(x=>needsWork(x))||null,r:4000},
+  {t:['Reach ₵100K in wealth','₵100K servete ulaş'],ok:()=>wealth()>=100000,at:()=>null,r:8000},
+  {t:['Grow the crew to 25','Ekibi 25 kişiye çıkar'],ok:()=>S.up.helper>=25,at:()=>pad('helper'),r:20000},
+  {t:['Reach ₵1M in wealth','₵1M servete ulaş'],ok:()=>wealth()>=1000000,at:()=>null,r:50000},
 ];
+/* ---- levels: opt-in. Wealth unlocks the offer, the player decides when to take it.
+       Every level opens one system (often harder) and grants one permanent perk. ---- */
+const OPENTXT={
+  price:[['Price levels','Fiyat seviyeleri'],['The price box is up top. Cheap, Normal, Peak — sell on Peak.','Üstte fiyat kutusu var. Ucuz, Normal, Zirve — Zirvede sat.']],
+  build:[['Building','İnşaat'],['Stand on a blue pad to pay for it a little at a time.','Mavi alanın üstünde dur, azar azar ödeyerek kur.']],
+  codes:[['Plant codes','Santral kodları'],['Every plant carries a code like W1 or S1. You will need them later.','Her santralin W1, S1 gibi bir kodu var. İleride lazım olacak.']],
+  upgrades:[['Upgrades','Yükseltmeler'],['Backpack and boots pads at HQ, and the tips button.','Merkezde sırt çantası ve bot alanları, bir de taktikler butonu.']],
+  battery:[['The battery','Batarya'],['Drop energy on the green pad while it is cheap, take it from the red pad at the peak.','Ucuzken enerjiyi yeşil alana bırak, zirvede kırmızı alandan al.']],
+  markets:[['Markets','Pazarlar'],['Tap the price box to compare every market at once.','Fiyat kutusuna dokun, tüm pazarları bir arada karşılaştır.']],
+  cards:[['Events and cards','Olaylar ve kartlar'],['The market gets good days and bad days, and decisions to make.','Piyasanın iyi ve kötü günleri olur, bir de vereceğin kararlar.']],
+  crew:[['Helpers','Yardımcılar'],['Hire at HQ, then tap the crew button to tell them when to sell.','Merkezden al, sonra ekip butonuyla ne zaman satacağını söyle.']],
+  roles:[['Roles and the report','Roller ve rapor'],['Helpers can store and chase the peak. The report shows where the money went.','Yardımcılar depolayabilir ve zirveyi kovalar. Rapor paranın nereye gittiğini gösterir.']],
+  regions:[['New regions','Yeni bölgeler'],['Far fields, town markets and field depots.','Uzak sahalar, kasaba pazarları ve saha depoları.']],
+  repair:[['Breakdowns','Arızalar'],['Plants can break. The Fix role and the asset-health page open.','Santraller bozulabilir. Tamir rolü ve varlık sağlığı sayfası açılır.']],
+  fire:[['Fire','Yangın'],['Fires can start. The Safety role opens.','Yangın çıkabilir. Afet rolü açılır.']],
+  shifts:[['Shifts','Vardiyalar'],['Three shifts, task boxes, and the crew-schedule page.','Üç vardiya, görev kutuları ve çalışan çizelgesi sayfası.']],
+  ageing:[['Ageing','Yaşlanma'],['Plants wear out. Repower them, rebuild when the ceiling drops too low.','Santraller yıpranır. Yenile, tavan çok düşünce söküp yeniden kur.']],
+  board:[['Leaderboard','Liderlik tablosu'],['See where you stand and add friends by code.','Nerede olduğunu gör, kodla arkadaş ekle.']],
+  skills:[['Skills and wages','Yetenek ve ücret'],['Helpers have star ratings and cost a daily wage.','Yardımcıların yıldızları var ve günlük ücret alıyorlar.']],
+  grid:[['Grid link','Şebeke bağlantısı'],['The battery can sell by itself at the peak.','Batarya zirvede kendi başına satabilir.']],
+};
+const LEVELS=[null,
+ {need:0,      t:['Hauler','Hamal'],              open:null,      hard:null, perk:null},
+ {need:150,    t:['Price reader','Fiyat okuru'],  open:'price',   hard:null, perk:{price:0.03}},
+ {need:500,    t:['Builder','İnşaatçı'],          open:'build',   hard:null, perk:{build:-0.05}},
+ {need:1500,   t:['Fleet','Filo'],                open:'codes',   hard:null, perk:{carry:2}},
+ {need:4000,   t:['Outfitter','Teçhizat'],        open:'upgrades',hard:null, perk:{speed:0.08}},
+ {need:10000,  t:['Storage','Depolama'],          open:'battery', hard:null, perk:{price:0.03}},
+ {need:20000,  t:['Trader','Tüccar'],             open:'markets', hard:null, perk:{build:-0.05}},
+ {need:35000,  t:['Exposed','Piyasaya açık'],     open:'cards',   hard:['Events and decision cards','Olaylar ve karar kartları'], perk:{carry:2}},
+ {need:60000,  t:['Employer','İşveren'],          open:'crew',    hard:null, perk:{speed:0.08}},
+ {need:100000, t:['Manager','Yönetici'],          open:'roles',   hard:null, perk:{price:0.04}},
+ {need:175000, t:['Regional','Bölgesel'],         open:'regions', hard:null, perk:{build:-0.05}},
+ {need:300000, t:['Maintainer','Bakımcı'],        open:'repair',  hard:['Plants break down and repairs cost money','Santraller bozulur, tamir para götürür'], perk:{carry:3}},
+ {need:500000, t:['Responder','Müdahaleci'],      open:'fire',    hard:['Lightning and wear start fires','Yıldırım ve yıpranma yangın çıkarır'], perk:{speed:0.08}},
+ {need:800000, t:['Shift boss','Vardiya amiri'],  open:'shifts',  hard:['Crew works three shifts — only a third is on duty at any hour','Ekip üç vardiya çalışır — her saatte sadece üçte biri görevde'], perk:{price:0.05}},
+ {need:1300000,t:['Asset owner','Varlık sahibi'], open:'ageing',  hard:['Plants wear out and need repowering','Santraller yıpranır, yenileme ister'], perk:{build:-0.10}},
+ {need:2000000,t:['Public','Halka açık'],         open:'board',   hard:null, perk:{carry:3}},
+ {need:3200000,t:['HR','İnsan kaynakları'],       open:'skills',  hard:['Helpers draw a daily wage and severance','Yardımcılar günlük ücret ve kıdem alır'], perk:{price:0.06}},
+ {need:5000000,t:['Grid player','Şebeke oyuncusu'],open:'grid',   hard:null, perk:{speed:0.10}},
+];
+const MAXLVL=LEVELS.length-1;
+function lvl(){return Math.max(1,Math.min(MAXLVL,S.lvl||1));}
+function nextLvl(){return lvl()<MAXLVL?LEVELS[lvl()+1]:null;}
+function canLevel(){const n=nextLvl();return !!n&&wealth()>=n.need;}
+const UNLOCK={};for(let i=1;i<LEVELS.length;i++)if(LEVELS[i].open)UNLOCK[LEVELS[i].open]=i;
+UNLOCK.tips=UNLOCK.upgrades;UNLOCK.report=UNLOCK.roles;UNLOCK.report2=UNLOCK.repair;UNLOCK.report3=UNLOCK.shifts;
+function has(k){return lvl()>=(UNLOCK[k]||0);}
+function perk(kind){
+  let v=kind==='carry'?0:1;
+  for(let i=2;i<=lvl();i++){const P=LEVELS[i]&&LEVELS[i].perk;if(!P)continue;
+    if(kind==='carry'){if(P.carry)v+=P.carry;}
+    else if(P[kind]!=null)v*=(1+P[kind]);}
+  return v;}
 const MORALE_DAYS=3;
 /* every helper is a person: a name, three skills (1-5) and a shift */
 const NAMES_TR=['Kerem','Selin','Emre','Deniz','Burak','Ela','Mert','Zeynep','Onur','Cem','Aslı','Tuna','Ece','Barış','Ayşe','Kaan','Nil','Serkan','Derya','Umut'];
@@ -4775,7 +4870,7 @@ const skillFixC  =i=>1.1-(staffOf(i).r-1)*0.1;          // 1★ 1.10 … 5★ 0.
 const skillSafeT =i=>1.4-(staffOf(i).s-1)*0.2;
 function bestSafety(){let b=0;for(let i=0;i<S.up.helper;i++){if(S.crew.roles[i]==='safety'&&onDuty(i))b=Math.max(b,staffOf(i).s);}return b;}
 function shiftOf(i){return SHIFTS[staffOf(i).sh||0];}
-function onDuty(i){const sh=shiftOf(i),h=Math.floor(hourNow())%24;
+function onDuty(i){if(!has('shifts'))return true;const sh=shiftOf(i),h=Math.floor(hourNow())%24;
   return sh.from<sh.to ? (h>=sh.from&&h<sh.to) : (h>=sh.from||h<sh.to);}
 function dailyWage(i){
   const t=staffOf(i),st=(t.f+t.r+t.s)/9;                // 9 stars = an average crew member
@@ -4805,14 +4900,14 @@ function fresh(){
     battery:0,sat:0,day:0,t:8*HOUR,daySec:DAY_SEC,goal:0,soldCells:0,
     crew:{auto:true,min:10,roles:[],plan:['auto','auto','auto','auto'],sites:[],mkts:[],staff:[],fixEff:0.7,tab:'all'},
     satT:{},snow:0,bat:{},batFire:0,batFireT:0,batCycles:0,batCharge:0,batFault:false,morale:null,mods:[],contract:null,event:null,nextEvent:null,cardHour:null,cardHour2:null,cardSoon:0,cardDay:-1,dayEarned:0,lastDayEarned:0,
-    lang:'en',tutDone:false,tipsSeen:{},seenVer:'',claimed:{},badges:[],earnLog:[],group:[],nick:'',ref:'',guest:false,syncBase:0,dev:'',ledger:[],cardPrefs:{},cardHist:[],dayLog:[],debt:0,
+    lang:'en',lvl:1,tutDone:false,tipsSeen:{},seenVer:'',claimed:{},badges:[],earnLog:[],group:[],nick:'',ref:'',guest:false,syncBase:0,dev:'',ledger:[],cardPrefs:{},cardHist:[],dayLog:[],debt:0,
     stats:{stored:0,peakCells:0,planned:0,crewCells:0,crewRev:0,byMkt:{},fixSpend:0},hints:{},muted:false,shadows:true,lowFlash:false,speed:1,lastSave:Date.now()};
 }
 const built=id=>!!S.built[id];
 const pad=id=>PADS.find(p=>p.id===id);
 const upCost=p=>Math.round(p.base*Math.pow(p.growth,S.up[p.key]));
-const carryCap=()=>8+4*S.up.bag;
-const speed=()=>230*(1+0.12*S.up.boots)*modMult('playerSpeed');
+const carryCap=()=>8+4*S.up.bag+perk('carry');
+const speed=()=>230*(1+0.12*S.up.boots)*modMult('playerSpeed')*perk('speed');
 const batWear=()=>0.0002*(1-0.15*(S.up.bateff||0));
 const batHealth=()=>Math.max(0.5,1-batWear()*(S.batCycles||0));
 const batBonus=()=>1.15+0.03*(S.up.bateff||0);
@@ -4838,7 +4933,7 @@ const codeOf=id=>ASSET_CODE[id]||'';
 const LIFE={turbine:120,solar:150,bigwind:140,solarfarm:180};
 function plantAge(p){return Math.max(0,(gameNow()-(p.born||0))/DAY_SEC);}
 function plantLife(p){return LIFE[p.type]||140;}
-function plantEff(p){const over=plantAge(p)-plantLife(p);return over<=0?1:Math.max(0.5,1-over*0.005);}   // half the old wear rate
+function plantEff(p){if(!has('ageing'))return 1;const over=plantAge(p)-plantLife(p);return over<=0?1:Math.max(0.5,1-over*0.005);}   // half the old wear rate
 function plantCap(p){return Math.min(1,p.gen==null?1:p.gen);}      // condition ceiling: every repower costs 5 points
 function plantGen(p){return plantCap(p)*plantEff(p);}
 function repowerCost(p){const pd=pad(p.id);return Math.round((pd&&pd.cost?pd.cost:100)*0.6);}
@@ -4963,6 +5058,32 @@ const EVENTS={
   holiday:{name:['Holiday lull','Bayram durgunluğu'],icon:'🏖️',text:['Offices are closed. Demand and prices sag.','Ofisler kapalı. Talep ve fiyatlar düşük.'],days:[1,2],price:h=>0.55,season:null},
   shortage:{name:['Capacity shortage','Kapasite darlığı'],icon:'🚨',text:['Several plants are offline across the region. Prices are high all day.','Bölgede birçok santral devre dışı. Fiyatlar gün boyu yüksek.'],days:[1,2],price:h=>1.9,season:null},
   grid:{name:['New grid rule','Yeni şebeke kuralı'],icon:'📜',text:['The market absorbs sales more slowly today.','Piyasa bugün satışları daha yavaş emiyor.'],days:[1,1],price:h=>1.0,sat:1.6,season:null}};
+function evHead(E){
+  const v=[];for(let h=0;h<24;h++)v.push(Math.round(E.price(h)*100)/100);
+  const hi=Math.max(...v),lo=Math.min(...v);
+  if(hi===lo)return hi===1?(E.sat?L(`saturation ×${E.sat}`,`doygunluk ×${E.sat}`):L('no price change','fiyat değişmez')):L(`price ×${hi}`,`fiyat ×${hi}`);
+  return L(`price ×${hi} at the peak`,`zirvede fiyat ×${hi}`);
+}
+function evEffect(E,days){
+  const v=[];for(let h=0;h<24;h++)v.push(Math.round(E.price(h)*100)/100);
+  const hi=Math.max(...v),lo=Math.min(...v),parts=[];
+  const say=x=>x===1?L('unchanged','değişmez'):x>1?L(`×${x} higher`,`×${x} yüksek`):L(`×${x} lower`,`×${x} düşük`);
+  if(hi===lo){if(hi!==1)parts.push(L(`Price ${say(hi)} all day`,`Fiyat gün boyu ${say(hi)}`));}
+  else{
+    const rs=[];let st=-1;
+    for(let h=0;h<=24;h++){const on=h<24&&v[h]===hi;
+      if(on&&st<0)st=h;
+      if(!on&&st>=0){rs.push(`${h2(st)}–${h2(h)}`);st=-1;}}
+    parts.push(L(`Price ${say(hi)} between ${rs.join(', ')}, ${say(lo)} otherwise`,
+                 `Fiyat ${rs.join(', ')} arası ${say(hi)}, diğer saatler ${say(lo)}`));
+  }
+  if(E.solar)parts.push(L(`solar output ×${E.solar}`,`güneş üretimi ×${E.solar}`));
+  if(E.wind)parts.push(L(`wind output ×${E.wind}`,`rüzgâr üretimi ×${E.wind}`));
+  if(E.sat)parts.push(L(`the market saturates ×${E.sat} faster`,`piyasa ×${E.sat} daha hızlı doyar`));
+  const d=days||E.days[0];
+  parts.push(d===1?L('1 day','1 gün'):L(`${d} days`,`${d} gün`));
+  return parts.join(' · ');
+}
 function eventNow(){const e=S.event;if(!e)return null;return(S.day>=e.start&&S.day<e.start+e.days)?EVENTS[e.id]:null;}
 function eventOnDay(d){const e=S.event;if(e&&d>=e.start&&d<e.start+e.days)return EVENTS[e.id];const n=S.nextEvent;if(n&&d>=n.start&&d<n.start+n.days)return EVENTS[n.id];return null;}
 /* timed modifiers from decision cards */
@@ -5020,13 +5141,20 @@ function dur(s){s=Math.floor(s);if(s<3600)return Math.floor(s/60)+'m';return Mat
 function regionAt(y){return REGIONS.find(r=>y>=r.y0&&y<r.y1);}
 function regionLocked(y){const r=regionAt(y);return r&&!S.regions[r.id];}
 function padVisible(p){
+  if(p.kind==='upg'&&(p.key==='bag'||p.key==='boots')&&!has('upgrades'))return false;
+  if(p.kind==='upg'&&p.key==='helper'&&!has('crew'))return false;
+  if(p.kind==='upg'&&(p.key==='batcap'||p.key==='bateff')&&!has('battery'))return false;
+  if(p.kind==='upg'&&p.key==='grid'&&!has('grid'))return false;
+  if(p.kind==='build'&&p.type==='battery'&&!has('battery'))return false;
+  if(p.kind==='build'&&p.type==='town'&&!has('regions'))return false;
+  if(p.kind==='gate'&&!has('regions'))return false;
   if(p.kind==='build'&&built(p.id))return false;
   if(p.kind==='gate'&&S.regions[p.region])return false;
   if(p.req&&!(built(p.req)||S.regions[p.req]||(pad(p.req)&&pad(p.req).kind==='upg'&&S.up[pad(p.req).key]>0)))return false;
   if(regionLocked(p.y)&&p.kind!=='gate')return false;
   return true;
 }
-const padCost=p=>p.kind==='upg'?upCost(p):p.cost;
+const padCost=p=>Math.max(1,Math.round((p.kind==='upg'?upCost(p):p.cost)*perk('build')));
 const padDone=p=>p.kind==='upg'&&S.up[p.key]>=p.max;
 
 /* ======================= AUDIO ======================= */
@@ -5095,7 +5223,7 @@ function update(dt){
   // battery can fail: hotter days and heavy cycling make it likelier
   if(built('bat')&&!S.batFault){
     const hot=(DAY.weather==='sunny'&&seasonOf(S.day).name[0]==='Summer')?2:1;
-    if(Math.random()<0.00022*gdt*hot*modMult('breakage')*(1+(S.batCycles||0)/400)*(1-0.15*(S.up.bateff||0))){
+    if(has('repair')&&Math.random()<0.00022*gdt*hot*modMult('breakage')*(1+(S.batCycles||0)/400)*(1-0.15*(S.up.bateff||0))){
       S.batFault=true;sfx.warn();toast(L('🔋 The battery system tripped. Stand at a station to fix it.','🔋 Batarya sistemi arızalandı. Onarmak için istasyonda dur.'),'big');
     }
   }
@@ -5106,7 +5234,7 @@ function update(dt){
     const cf=T.kind==='wind'?windCF(t):solarShape(t)*solarMult()*sheepBonus(p)*snowMult(p);
     p.acc+=T.rate*plantGen(p)*cf*gdt;while(p.acc>=1){p.acc-=1;if(p.pile<T.max)pileAdd(p);else logLoss(1);}
     p.spin=(p.spin||0)+gdt*(0.6+cf*6);
-    if(S.goal>=4&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):0.6)){p.broken=true;p.brokenAt=gameNow();const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
+    if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):0.6)){p.broken=true;p.brokenAt=gameNow();const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
   S.sat=Math.max(0,S.sat-Math.max(0.12,S.sat*0.35)*dt);
   if(S.satT)for(const k in S.satT)S.satT[k]=Math.max(0,S.satT[k]-Math.max(0.16,S.satT[k]*0.4)*dt);
@@ -5156,7 +5284,7 @@ function update(dt){
      if(S.batFireT>=1){S.batFire=0;S.batFireT=0;sfx.fix();floatTxt(D0.x,D0.y,L('Fire out','Yangın söndü'));toast(L('Battery fire is out. The system needs a repair.','Batarya yangını söndü. Sistem onarım bekliyor.'),'good');}}
    else{S.plants.forEach(p=>{if(p.fire)p.fireT=0;});if(S.batFire)S.batFireT=0;}}
   // random ignition: worn plants, hot days, tired batteries
-  {const hot=(DAY.weather==='sunny'&&SEASONS.indexOf(seasonOf(S.day))===1)?2.2:1;
+  if(has('fire')){const hot=(DAY.weather==='sunny'&&SEASONS.indexOf(seasonOf(S.day))===1)?2.2:1;
    for(const p of S.plants){const T=PLANT_TYPES[p.type];if(!T||p.fire||p.broken)continue;
      const wear=Math.max(0,plantAge(p)-plantLife(p));
      if(wear>0&&Math.random()<0.00004*gdt*hot*wear*0.02*modMult('breakage'))startFire(p,L('worn out','yıpranma'));}
@@ -5170,7 +5298,7 @@ function update(dt){
       if(full){rp.gen=1;logLedger('rebuild',-c,codeOf(rp.id));floatTxt(rp.x,rp.y,L('Rebuilt · 100%','Yeniden kuruldu · %100'));
         toast(L(`${codeOf(rp.id)} torn down and rebuilt for ₵${fmt(c)}. Back to 100%.`,`${codeOf(rp.id)} söküldü ve ₵${fmt(c)} karşılığında yeniden kuruldu. Tekrar %100.`),'good');trackOnce('rebuilt');}
       else{rp.gen=Math.max(0,plantCap(rp)-0.05);logLedger('repower',-c,codeOf(rp.id));floatTxt(rp.x,rp.y,L(`Repowered · ${Math.round(plantCap(rp)*100)}%`,`Yenilendi · %${Math.round(plantCap(rp)*100)}`));
-        toast(L(`${codeOf(rp.id)} repowered for ₵${fmt(c)}. Ceiling now ${Math.round(plantCap(rp)*100)}%.`,`${codeOf(rp.id)} ₵${fmt(c)} karşılığında yenilendi. Tavanı artık %${Math.round(plantCap(rp)*100)}.`),'good');trackOnce('repowered');}}
+        toast(L(`${codeOf(rp.id)} repowered for ₵${fmt(c)}. Ceiling now ${Math.round(plantCap(rp)*100)}%.`,`${codeOf(rp.id)} ₵${fmt(c)} karşılığında yenilendi. Tavanı artık %${Math.round(plantCap(rp)*100)}.`),'good');trackOnce('repowered');S.stats.repowered=(S.stats.repowered||0)+1;}}
   } else {repT=0;S.plants.forEach(p=>p.rep=0);}
   const br=S.plants.find(p=>p.broken&&dist(P,p)<80);
   if(br&&!S.moving){const need=fixTime(br,1.2);fixT+=dt;br.fix=fixT/need;if(fixT>=need){doRepair(br,true);fixT=0;}}
@@ -5218,7 +5346,7 @@ function sellCell(x,y,byPlayer,crew,mk,fromStore){
   let p=priceAt(m);const ct=S.contract;
   if(fromStore)p*=batBonus();                 // dispatchable energy pays a premium
   if(ct&&ct.delivered<ct.need&&gameNow()<ct.until){ct.delivered++;p=ct.price;if(ct.delivered===ct.need){toast(`Deal complete: ${ct.need} cells delivered.`,'good');trackOnce('deal-complete');S.contract=null;}}
-  p*=modMult('income')*(byPlayer?modMult('playerPrice'):1);
+  p*=modMult('income')*(byPlayer?modMult('playerPrice'):1)*perk('price');
   if(S.debt>0){const r=Math.min(S.debt,p*0.25);S.debt-=r;p-=r;if(S.debt<=0.01){S.debt=0;toast(L('Loan fully repaid.','Kredi tamamen ödendi.'),'good');}}
   S.cash+=p;S.earned+=p;S.dayEarned=(S.dayEarned||0)+p;logEarn(p);S.soldCells++;
   if(m.id==='city')S.sat=Math.min(4,S.sat+m.sat);else{S.satT=S.satT||{};S.satT[m.id]=Math.min(5,(S.satT[m.id]||0)+m.sat);}
@@ -5231,7 +5359,7 @@ function sellCell(x,y,byPlayer,crew,mk,fromStore){
   S.saleAcc=(S.saleAcc||0)+p;S.saleT=0.4;sfx.sell();
 }
 function chargeWages(){
-  if(S.up.helper<=0)return 0;
+  if(S.up.helper<=0||!has('skills'))return 0;
   const w=wageBill();if(w<=0)return 0;
   S.cash=Math.max(0,S.cash-w);
   S.stats.wageSpend=(S.stats.wageSpend||0)+w;
@@ -5247,8 +5375,8 @@ function onNewDay(quiet){
   else toast(`${dateLabel(S.day)} · ${w.icon} ${tt(w.name)}`);}
   // expire / start market events
   if(S.event&&S.day>=S.event.start+S.event.days)S.event=null;
-  if(!S.event&&S.nextEvent&&S.day>=S.nextEvent.start){S.event=S.nextEvent;S.nextEvent=null;const E=EVENTS[S.event.id];if(!quiet){sfx.warn();toast(`${E.icon} ${tt(E.name)}: ${tt(E.text)}`,'big');}trackOnce('event-'+S.event.id);}
-  if(!S.event&&!S.nextEvent&&S.day>=5){
+  if(!S.event&&S.nextEvent&&S.day>=S.nextEvent.start){S.event=S.nextEvent;S.nextEvent=null;const E=EVENTS[S.event.id];if(!quiet){sfx.warn();toast(`${E.icon} ${tt(E.name)}`,'big');toast(evEffect(E,S.event.days),'');}trackOnce('event-'+S.event.id);}
+  if(!S.event&&!S.nextEvent&&S.day>=5&&has('cards')){
     let rc=0;const r=()=>hrand(S.seed,S.day,131,rc++);
     if(r()<0.35){
       const pool=Object.keys(EVENTS).filter(k=>{const E=EVENTS[k];return E.season===null||E.season===SEASONS.indexOf(seasonOf(S.day+1));});
@@ -5256,7 +5384,7 @@ function onNewDay(quiet){
       for(let i=0;i<pool.length;i++){pick-=wts[i];if(pick<=0){id=pool[i];break;}}
       const E=EVENTS[id];
       S.nextEvent={id,start:S.day+1,days:E.days[0]+Math.floor(r()*(E.days[1]-E.days[0]+1))};
-      if(!quiet)toast(`📰 ${L('Tomorrow','Yarın')}: ${tt(E.name)}. ${tt(E.text)}`,'big');
+      if(!quiet){toast(`📰 ${L('Tomorrow','Yarın')}: ${E.icon} ${tt(E.name)}`,'big');toast(evEffect(E,S.nextEvent.days),'');}
     }
   }
   // decision card for today
@@ -5417,7 +5545,7 @@ function updateHelper(hp,i,dt){
       if(hp.fixT>=need){const c=Math.round(repowerCost(tp)*skillFixC(i));
         if(S.cash>=c){S.cash-=c;tp.born=gameNow();tp.gen=Math.max(0,plantCap(tp)-0.05);
           S.stats.fixSpend=(S.stats.fixSpend||0)+c;logLedger('repower',-c,codeOf(tp.id));
-          floatTxt(tp.x,tp.y,'-₵'+fmt(c));sfx.build();trackOnce('crew-repowered');}
+          floatTxt(tp.x,tp.y,'-₵'+fmt(c));sfx.build();trackOnce('crew-repowered');S.stats.repowered=(S.stats.repowered||0)+1;}
         tp.rep=0;hp.fixT=0;}
       return;
     }
@@ -6077,7 +6205,7 @@ function render(dt,now){
     setPile(o,p.pile,p);
     if(p.pile>0)place('pile'+p.id,'cnt'+(p.pile>=T.max?' full':''),p.x+(p.type==='solarfarm'?80:36),p.y+24,Math.min(p.pile,24)/2*CELL_STEP+0.9,p.pile>=T.max?L('FULL','DOLU'):String(p.pile));
     if(p.broken)place('br'+p.id,'wrench',p.x,p.y,T.kind==='wind'?7*T.scale:2.4,p.fix>0?`🔧 ${Math.round(p.fix*100)}%`:'🔧');
-    {const eff=plantEff(p),old=eff<1;
+    if(has('codes')){const eff=plantEff(p),old=eff<1;
      place('cd'+p.id,'code'+(old?' worn':''),p.x-(p.type==='solarfarm'?70:30),p.y+22,0.9,codeOf(p.id)+(old?` ${Math.round(eff*100)}%`:''));}
     if(p.fire>0){const fl=0.8+Math.sin(performance.now()/90)*0.2;
       const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y,(T.kind==='wind'?7*T.scale:2.6)*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
@@ -6166,8 +6294,12 @@ function hud(dt){
   $('cash').textContent=fmt(S.cash);$('wealth').textContent=fmt(wealth());{const c=S.contract,d=$('dealC');d.hidden=!c;if(c){const hl=Math.max(0,Math.ceil((c.until-gameNow())/HOUR));d.textContent=`🤝 ${c.delivered}/${c.need} · ${hl}h`;}}{const L=lossLastHour(),e=$('lossC');e.hidden=L<1;if(L>=1)e.textContent=`−${L} ⚡ · ${Math.round(efficiency()*100)}%`;e.title=L>=1?(S.lang==='tr'?'Son bir saatte kaybolan enerji · verimlilik':'Energy lost in the last hour · efficiency'):'';}$('carry').textContent=`${S.carry}/${carryCap()}`;
   $('pnow').textContent='₵'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
-  const G=GOALS[S.goal];$('goal').innerHTML=G?`🎯 ${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.');
-  $('crewBtn').hidden=S.up.helper<1;$('crewN').textContent=`${S.up.helper}/45`;
+  const G=GOALS[S.goal];const up=canLevel();$('goal').className='goal'+(up?' lvlup':'');$('goal').innerHTML=(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${L('Lv','Sv')}${lvl()}</b> · `)+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
+  $('leadBtn').hidden=!has('board');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
+  $('zIn').hidden=$('zOut').hidden=!has('build');
+  $('mini').style.display=has('build')?'':'none';
+  document.querySelector('.market').style.visibility=has('price')?'':'hidden';
+  $('crewBtn').hidden=S.up.helper<1||!has('crew');$('crewN').textContent=`${S.up.helper}/45`;
   const alertOn=helpers.some(h=>(h.waitT||0)>15)||(S.up.helper>0&&benchList().length>0);$('crewAlert').hidden=!alertOn;$('crewBtn').setAttribute('aria-label',alertOn?'Crew plan: a helper is stuck waiting':'Crew plan');
   const bn=$('banner');
   if(curtailNow()){const cw=curtailWindow(S.day);bn.hidden=false;bn.className='banner cheap';bn.textContent=L(`📋 Dispatch order until ${cw[1]}:00 · store, don't sell`,`📋 ${cw[1]}:00'e kadar yük atma talimatı · satma, depola`);}
@@ -6175,7 +6307,7 @@ function hud(dt){
    if(sh.type==='cap')bn.textContent=L(`🔺 Cap price series · ${len}h · ×${sh.mult.toFixed(1)}`,`🔺 Tavan fiyat serisi · ${len} saat · ×${sh.mult.toFixed(1)}`);
    else if(sh.type==='floor')bn.textContent=L(`🔻 Floor price series · ${len}h · store, don't sell`,`🔻 Taban fiyat serisi · ${len} saat · satma, depola`);
    else bn.textContent=sh.type==='spike'?L(`⚡ Price spike ${sh.hour}:00–${end}:00 · ×${sh.mult.toFixed(1)}. Sell now!`,`⚡ ${sh.hour}:00–${end}:00 fiyat sıçraması · ×${sh.mult.toFixed(1)}. Şimdi sat!`):L(`Price crash ${sh.hour}:00–${end}:00. Store, don't sell`,`${sh.hour}:00–${end}:00 fiyat çöküşü. Satma, depola`);}}
-  else if(eventNow()){const E=eventNow(),left=S.event.start+S.event.days-S.day;bn.hidden=false;bn.className='banner news';bn.textContent=`${E.icon} ${tt(E.name)} · ${L(left+' day'+(left>1?'s':'')+' left',left+' gün kaldı')}`;}
+  else if(eventNow()){const E=eventNow(),left=S.event.start+S.event.days-S.day;bn.hidden=false;bn.className='banner news';bn.textContent=`${E.icon} ${tt(E.name)} · ${evHead(E)} · ${L(left+' day'+(left>1?'s':'')+' left',left+' gün kaldı')}`;}
   else if(PEAK_H.includes(h)){bn.hidden=false;bn.className='banner';bn.textContent=L(`Peak hours until 22:00 · prices ×${(pr/(P0*AVG_D)).toFixed(1)}`,`22:00'ye kadar zirve · fiyatlar ×${(pr/(P0*AVG_D)).toFixed(1)}`);}
   else bn.hidden=true;
   const dpr=Math.min(2,devicePixelRatio||1),w=spark.clientWidth,hg=spark.clientHeight;
@@ -6203,8 +6335,9 @@ function renderCrew(){
   migrateBoxes();applyBoxes();
   const shName=k=>`${SHIFTS[k].icon} ${tt(SHIFTS[k].name)} ${h2(SHIFTS[k].from)}–${h2(SHIFTS[k].to)}`;
   const tab=S.crew.tab||'all';
-  const TABS=[['all','📋',L('All','Tümü')]].concat(Object.keys(ROLES).map(k=>[k,roleIcon(k),tt(ROLES[k].name)]));
-  html+=`<div class="seg" style="grid-template-columns:repeat(6,1fr);margin-top:12px">${TABS.map(([k,ic,nm])=>{
+  const ROLEKEYS=Object.keys(ROLES).filter(k=>k==='sell'||(has('roles')&&(k==='store'||k==='peak'))||(k==='fix'&&has('repair'))||(k==='safety'&&has('fire')));
+  const TABS=[['all','📋',L('All','Tümü')]].concat(ROLEKEYS.map(k=>[k,roleIcon(k),tt(ROLES[k].name)]));
+  html+=`<div class="seg" style="grid-template-columns:repeat(${TABS.length},1fr);margin-top:12px"${has('roles')?'':' hidden'}>${TABS.map(([k,ic,nm])=>{
       const n=k==='all'?boxes().length:boxes().filter(b=>b.role===k).length;
       return `<button data-tab="${k}" class="${tab===k?'on':''}">${ic}<br><span style="font-size:10px">${nm}${n?' '+n:''}</span></button>`;}).join('')}</div>`;
   if(tab==='fix'){
@@ -6224,7 +6357,7 @@ function renderCrew(){
     html+=`<div class="rule">
       <button class="boxhead" data-btog="${b.id}"><span>${boxShut[b.id]?'▸':'▾'} ${tt(ROLES[b.role].name)} · ${SHIFTS[b.sh].icon} ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)} · ${mem.length} ${L('person','kişi')}</span><span class="bw">₵${fmt(boxWage(b))}/${L('day','gün')}</span></button>
       ${boxShut[b.id]?'':`
-      <div class="seg">${Object.keys(ROLES).map(k=>`<button data-brole="${b.id}" data-r="${k}" class="${b.role===k?'on':''}" ${(!hasBat&&k!=='sell')?'disabled':''}>${tt(ROLES[k].name)}</button>`).join('')}</div>
+      <div class="seg" style="grid-template-columns:repeat(${ROLEKEYS.length},1fr)">${ROLEKEYS.map(k=>`<button data-brole="${b.id}" data-r="${k}" class="${b.role===k?'on':''}" ${(!hasBat&&k!=='sell')?'disabled':''}>${tt(ROLES[k].name)}</button>`).join('')}</div>
       <div class="role-desc">${tt(ROLES[b.role].desc)}</div>
       <div class="assign">
         <button data-bset="site" data-b="${b.id}"><small>${L('Field','Saha')}</small><b>${siteLabelId(b.site)}</b></button>
@@ -6491,6 +6624,7 @@ const CARDS=[
   opts:()=>{const x=Math.round(DI()*0.4);return[O('Slow the turbines','Türbinleri yavaşlat','Wind −20% for 2 days.','Rüzgâr 2 gün −%20.',0,()=>addMod('wind',0.8,48)),O(`Pay compensation (₵${fmt(x)})`,`Tazminat öde (₵${fmt(x)})`,'Output stays.','Üretim sürer.',x,()=>pay(x))];},safe:0},
 ];
 function pickCard(){
+  if(!has('cards'))return null;
   const recent=new Set((S.cardHist||[]).slice(-20));
   let pool=CARDS.filter(c=>c.ok()&&!recent.has(c.id));
   if(!pool.length){const ok=CARDS.filter(c=>c.ok());if(!ok.length)return null;const hist=S.cardHist||[];ok.sort((a,b)=>hist.lastIndexOf(a.id)-hist.lastIndexOf(b.id));pool=[ok[0]];}
@@ -6628,7 +6762,7 @@ function openReport(page){
   const line=(k,v,u)=>`<tr><td>${k}</td><td>${v}</td><td>${u||''}</td></tr>`;
   const cards=(list)=>list.map(([k,v])=>`<div class="mcard"><small>${k}</small><b>${v}</b></div>`).join('');
   if(repPage===1){
-    $('repTitle').textContent=L('Finance report','Finansal rapor')+' · 1/3';
+    $('repTitle').textContent=L('Finance report','Finansal rapor')+` · 1/${repMax()}`;
     $('repCards').innerHTML=cards([
       [L('Wallet','Cüzdan'),'👛 ₵'+fmt(S.cash)],
       [L('Wealth','Zenginlik'),'🏛️ ₵'+fmt(wealth())],
@@ -6659,12 +6793,12 @@ function openReport(page){
         ${line(L('Plants','Santral'),S.plants.length,U_PL)}
         ${line(L('Company age','Şirket yaşı'),S.day+1,U_DAY)}
       </table>`;
-    $('repPrev').hidden=true;$('repNext').hidden=false;
+    $('repPrev').hidden=true;$('repNext').hidden=repMax()<2;
     $('repNext').textContent=L('Health ›','Sağlık ›');
   }else if(repPage===2){
     const pls=S.plants.filter(p=>PLANT_TYPES[p.type]);
     const worn=pls.filter(p=>plantEff(p)<1).length,due=pls.filter(p=>canRepower(p)).length;
-    $('repTitle').textContent=L('Asset health','Varlık sağlığı')+' · 2/3';
+    $('repTitle').textContent=L('Asset health','Varlık sağlığı')+` · 2/${repMax()}`;
     $('repCards').innerHTML=cards([
       [L('Plants','Santral'),pls.length],
       [L('Broken now','Bozuk'),pls.filter(p=>p.broken).length],
@@ -6686,7 +6820,7 @@ function openReport(page){
       (rows?`<table class="rtab"><tr><th>${L('Asset','Varlık')}</th><th>${L('Age','Yaş')}</th><th>${L('Output','Üretim')}</th><th>${L('Status','Durum')}</th></tr>${rows}</table>`:`<p style="text-align:center">${L('No plants yet.','Henüz santral yok.')}</p>`)
       +(bats?`<table class="rtab"><tr><th>${L('Storage','Depolama')}</th><th>${L('Cycles','Çevrim')}</th><th>${L('Health','Sağlık')}</th><th>${L('Status','Durum')}</th></tr>${bats}</table>`:'')
       +`<p style="font-size:12.5px">${L('Repower a plant by standing next to it; refurbish the battery at the main station.','Santrali yanında durarak yenile; bataryayı ana istasyonda yenile.')}</p>`;
-    $('repPrev').hidden=false;$('repNext').hidden=false;
+    $('repPrev').hidden=false;$('repNext').hidden=repMax()<3;
     $('repPrev').textContent=L('‹ Finance','‹ Finans');
     $('repNext').textContent=L('Crew ›','Ekip ›');
   }else{
@@ -6700,7 +6834,7 @@ function openReport(page){
     const util=total?assigned/total:0;
     const score=Math.round(100*(0.4*(shiftsCovered/3)+0.4*fit+0.2*util));
     const wage=wageBill(),crewRev=S.stats.crewRev||0,crewCells=S.stats.crewCells||0;
-    $('repTitle').textContent=L('Crew schedule','Çalışan çizelgesi')+' · 3/3';
+    $('repTitle').textContent=L('Crew schedule','Çalışan çizelgesi')+` · 3/${repMax()}`;
     $('repCards').innerHTML=cards([
       [L('Crew','Kadro'),total+' / 45'],
       [L('Efficiency','Verim'),score+'%'],
@@ -6736,6 +6870,53 @@ function openReport(page){
   }
   $('mRep').classList.add('on');trackOnce('report-opened');
 }
+function fmtPerk(P){
+  if(!P)return '';
+  if(P.carry)return L(`Carry +${P.carry}`,`Taşıma +${P.carry}`);
+  if(P.price!=null)return L(`Sale price +${Math.round(P.price*100)}%`,`Satış fiyatı +%${Math.round(P.price*100)}`);
+  if(P.build!=null)return L(`Build cost ${Math.round(P.build*100)}%`,`İnşaat maliyeti %${Math.round(P.build*100)}`);
+  if(P.speed!=null)return L(`Walk speed +${Math.round(P.speed*100)}%`,`Yürüme hızı +%${Math.round(P.speed*100)}`);
+  return '';}
+function openLevel(){
+  const cur=LEVELS[lvl()],n=nextLvl(),ok=canLevel();
+  $('lvlNum').innerHTML=`${lvl()}<small>${L('LEVEL','SEVİYE')} · ${tt(cur.t)}</small>`;
+  const now=[L(`Carry +${perk('carry')}`,`Taşıma +${perk('carry')}`),
+             L(`Sale price +${Math.round((perk('price')-1)*100)}%`,`Satış fiyatı +%${Math.round((perk('price')-1)*100)}`),
+             L(`Build cost −${Math.round((1-perk('build'))*100)}%`,`İnşaat maliyeti −%${Math.round((1-perk('build'))*100)}`),
+             L(`Walk speed +${Math.round((perk('speed')-1)*100)}%`,`Yürüme hızı +%${Math.round((perk('speed')-1)*100)}`)];
+  if(!n){
+    $('lvlTitle').textContent=L('Top level','En üst seviye');
+    $('lvlWhat').textContent=now.join(' · ');
+    $('lvlDo').hidden=true;$('lvlGo').hidden=true;$('lvlSkip').textContent=L('Close','Kapat');
+  }else{
+    const o=n.open&&OPENTXT[n.open];
+    $('lvlTitle').textContent=`${L('Level','Seviye')} ${lvl()+1} · ${tt(n.t)}`;
+    $('lvlWhat').innerHTML=
+      `<b>${L('Opens','Açılan')}</b><br>${o?tt(o[0])+' — '+tt(o[1]):'—'}<br><br>`+
+      `<b>${L('Gets harder','Zorlaşan')}</b><br>${n.hard?tt(n.hard):L('Nothing new.','Yeni bir zorluk yok.')}<br><br>`+
+      `<b>${L('You gain','Kazandığın')}</b><br>${fmtPerk(n.perk)||'—'}`;
+    $('lvlDo').hidden=false;
+    $('lvlDo').innerHTML=ok
+      ? `<b>${L('Ready','Hazır')}</b><span>${L(`Wealth ₵${fmt(wealth())} of ₵${fmt(n.need)}.`,`Servet ₵${fmt(wealth())} / ₵${fmt(n.need)}.`)}</span>`
+      : `<b>${L('Not yet','Henüz değil')}</b><span>${L(`Wealth ₵${fmt(wealth())} of ₵${fmt(n.need)} needed.`,`Servet ₵${fmt(wealth())}, gereken ₵${fmt(n.need)}.`)}</span>`;
+    $('lvlGo').hidden=!ok;$('lvlGo').textContent=`${L('Level up','Seviye atla')} →`;
+    $('lvlSkip').textContent=ok?L('Not now','Şimdi değil'):L('Close','Kapat');
+  }
+  $('lvlCur').textContent=L('Now: ','Şu an: ')+now.join(' · ');
+  $('mLvl').classList.add('on');trackOnce('level-panel');
+}
+function doLevelUp(){
+  if(!canLevel())return;
+  S.lvl=lvl()+1;save();sfx.goal();
+  const n=LEVELS[lvl()],o=n.open&&OPENTXT[n.open];
+  toast(L(`Level ${lvl()} · ${tt(n.t)}`,`Seviye ${lvl()} · ${tt(n.t)}`),'big');
+  if(o)toast(tt(o[1]),'good');
+  trackOnce('level-up-'+lvl());
+  openLevel();
+}
+$('goal').onclick=()=>{if(!document.body.classList.contains('title'))openLevel();};
+$('lvlGo').onclick=doLevelUp;
+$('lvlSkip').onclick=()=>$('mLvl').classList.remove('on');
 function openMarkets(){
   const avg=todayAvg(),h=Math.floor(hourNow())%24,t=hourNow(),P={x:S.px,y:S.py};
   const rows=markets().map(m=>{
@@ -6771,15 +6952,20 @@ function openMarkets(){
   $('mMkt').classList.add('on');trackOnce('markets-opened');
 }
 $('mktClose').onclick=()=>$('mMkt').classList.remove('on');
-$('mktBox').onclick=()=>{if(!document.body.classList.contains('title'))openMarkets();};
+$('mktBox').onclick=()=>{if(!document.body.classList.contains('title')&&has('markets'))openMarkets();};
 $('repBtn').onclick=openReport;
 $('repClose').onclick=()=>$('mRep').classList.remove('on');
-$('repNext').onclick=()=>openReport(Math.min(3,repPage+1));
+const repMax=()=>has('report3')?3:has('report2')?2:1;
+$('repNext').onclick=()=>openReport(Math.min(repMax(),repPage+1));
 $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.37.1',t:['Events state their numbers','Olaylar sayısını söylüyor'],l:[['An event announcement now spells out exactly what it does: which way the price moves, by how much, in which hours, what happens to solar or wind output, and how many days it lasts. The line is generated from the event\'s own numbers, so it can never drift from what actually happens.','Olay duyurusu artık ne yaptığını tam olarak yazıyor: fiyat hangi yöne, ne kadar, hangi saatlerde, güneş veya rüzgâr üretimine ne oluyor ve kaç gün sürüyor. Satır olayın kendi sayılarından üretiliyor, yani gerçekte olanla asla ayrışamaz.'],['The banner during the event carries the headline effect instead of just a countdown.','Olay sürerken şerit sadece geri sayım değil, ana etkiyi de taşıyor.']]},
+ {v:'0.37.0',t:['Levels are yours to take','Seviyeyi sen alırsın'],l:[['Levels no longer happen to you. Total wealth unlocks the offer; the banner starts glowing and you decide when to take it.','Seviye artık kendiliğinden atlanmıyor. Toplam servet teklifi açar; hedef şeridi yanıp söner ve ne zaman alacağına sen karar verirsin.'],['Every level card states three things before you accept: what opens, what gets harder, and what you gain.','Her seviye kartı kabul etmeden önce üç şeyi yazar: ne açılıyor, ne zorlaşıyor, ne kazanıyorsun.'],['Hard systems are opt-in: events at 8, breakdowns at 12, fire at 13, shifts at 14, ageing at 15, wages at 17. Stay where you are as long as you like.','Zor sistemler senin tercihin: olaylar 8, arızalar 12, yangın 13, vardiyalar 14, yaşlanma 15, ücretler 17. İstediğin kadar bulunduğun seviyede kal.'],['Each level pays a permanent perk — sale price, build cost, carry capacity or walk speed. At level 18 that is +23% price, −23% build cost, +10 carry and +39% speed.','Her seviye kalıcı bir avantaj verir — satış fiyatı, inşaat maliyeti, taşıma kapasitesi veya yürüme hızı. 18. seviyede toplam +%23 fiyat, −%23 inşaat, +10 taşıma ve +%39 hız.'],['Tap the goal banner any time to see your level, your perks and what the next one costs.','Hedef şeridine istediğin an dokun: seviyen, avantajların ve bir sonrakinin bedeli.']]},
+ {v:'0.36.0',t:['Levels','Seviyeler'],l:[['The goal chain is now a level track with 18 levels, and every level opens exactly one thing. Everything not yet opened is hidden, so a new player sees one wallet, one price box and one goal instead of every system at once.','Hedef zinciri artık 18 seviyelik bir ilerleme; her seviye tam olarak bir şey açıyor. Açılmamış hiçbir şey ekranda görünmüyor — yeni oyuncu her sistemi birden değil, tek cüzdan, tek fiyat kutusu ve tek hedef görüyor.'],['Level-up shows a card: the level, what opened and what to do next.','Seviye atlayınca kart çıkıyor: seviye, ne açıldı ve sırada ne var.'],['Anyone already playing keeps every feature — the gates only apply to a brand-new game.','Hâlihazırda oynayan herkes tüm özellikleri korur — kapılar yalnızca sıfırdan başlayan oyuna uygulanır.'],['Settings is two levels deep now: Game, Account, Display and Save data on the first screen, the details one tap in.','Ayarlar artık iki kat: ilk ekranda Oyun, Hesap, Görüntü ve Kayıt verisi, detaylar bir dokunuş içeride.']]},
+ {v:'0.35.2',t:['Deal chip on its own line','Anlaşma rozeti alt satırda'],l:[['The deal chip used to sit beside the energy-loss chip, which widened the wallet card and squeezed the price chart and the clock off the screen. It now sits on its own line and the wallet card is capped at half the bar.','Anlaşma rozeti enerji kaybı rozetinin yanında duruyor, cüzdan kartını genişletip fiyat grafiğini ve saati ekrandan taşırıyordu. Artık kendi satırında ve cüzdan kartı barın yarısını geçemiyor.']]},
  {v:'0.35.1',t:['Off-shift crew goes inside','Vardiyası olmayan içeri giriyor'],l:[['Helpers with no shift and helpers with no task box now walk into HQ and disappear until their hours start, instead of crowding the lawn. A 😴 count on the door shows how many are resting.','Vardiyası olmayan ve görev kutusu olmayan yardımcılar artık çimde yığılmak yerine merkeze girip saatleri gelene kadar gözden kayboluyor. Kapıdaki 😴 sayacı kaç kişinin dinlendiğini gösteriyor.']]},
  {v:'0.35.0',t:['Plants wear out honestly','Santraller dürüstçe yaşlanıyor'],l:[['A plant can no longer climb past 100%. Every repower now costs 5 points of its ceiling: 100 → 95 → 90 → 85 → 80. Below 80 it cannot be repowered any more — tear it down and rebuild it for the full price, and it returns to 100%.','Santral artık %100\'ün üstüne çıkamaz. Her yenileme tavanından 5 puan götürüyor: 100 → 95 → 90 → 85 → 80. %80 altına inince yenilenemez — söküp tam bedelle yeniden kurarsın, %100\'e döner.'],['Ageing is half as fast as before (0.5%/day past lifetime instead of 1%), the floor is 50% instead of 35%, and the renewal prompt appears at 90% of lifetime instead of 80%.','Yaşlanma eskinin yarısı hızda (ömür sonrası günde %0,5, eskiden %1), taban %35 yerine %50 ve yenileme uyarısı ömrün %80\'i yerine %90\'ında çıkıyor.'],['Fix helpers now repower too. Set the level in the crew panel: with nothing broken, they renew any plant that has fallen to it. A rebuild stays yours — helpers will not spend that much on their own.','Tamir yardımcıları artık yenileme de yapıyor. Seviyeyi ekip panelinden belirliyorsun: bozuk bir şey yoksa o seviyeye düşen santralleri yeniliyorlar. Söküp yeniden kurma sende kalıyor — yardımcılar o parayı kendi başına harcamaz.'],['The crew panel has a tab per job. The Fix tab also lists every worn plant with its output, its ceiling and what it will cost.','Ekip panelinde her iş için bir sekme var. Tamir sekmesi ayrıca yıpranmış tüm santralleri üretimi, tavanı ve maliyetiyle listeliyor.'],['Old saves: plants that had climbed to 110% or 133% come back to 100%.','Eski kayıtlar: %110 veya %133\'e çıkmış santraller %100\'e iniyor.']]},
  {v:'0.34.4',t:['A card per market','Her pazara bir kart'],l:[['The markets panel now repeats the top price card once per market — price, level, its own day curve, saturation and distance — and the best-paying one sits on green.','Pazarlar paneli üstteki fiyat kartını her pazar için çoğaltıyor — fiyat, seviye, kendi gün eğrisi, doygunluk ve mesafe — en çok ödeyen yeşil zeminde.']]},
@@ -7183,6 +7369,7 @@ function load(){
     S.crew=Object.assign(fresh().crew,o.crew||{});
     if(!Array.isArray(S.crew.roles))S.crew.roles=[];
     migrateBoxes();applyBoxes();
+    if(!S.lvl)S.lvl=((o.day||0)>=3||(o.earned||0)>1000||(o.goal||0)>0)?MAXLVL:1;   // anyone already playing keeps every feature
     S.plants.forEach(p=>{if(!p.born)p.born=gameNow();if(!p.gen)p.gen=1;if(p.gen>1)p.gen=1;});   // old repower bonus capped at 100%
     if(!S.bat||typeof S.bat!=='object'){S.bat={};}
     if(S.battery>0&&!Object.keys(S.bat).length){S.bat.bat=S.battery;}   // old single tank -> main station
@@ -7289,7 +7476,27 @@ function drawEarnChart(cv,pts){
 
 /* ======================= SETTINGS ======================= */
 function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));applyLang();}
-$('gear').onclick=()=>{syncSet();$('mSet').classList.add('on');};
+const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
+  acc:['setAcc',['👤','Account','Hesap'],['Google sign-in and cloud save','Google girişi ve bulut kaydı']],
+  disp:['setDisp',['🖥️','Display','Görüntü'],['Sound, shadows, flashes','Ses, gölge, parlama']],
+  data:['setData',['💾','Save data','Kayıt verisi'],['Save code, backup, delete','Kayıt kodu, yedek, silme']]};
+function setPage(k){
+  $('setHome').hidden=!!k;
+  for(const id of ['setGame','setAcc','setDisp','setData'])$(id).hidden=true;
+  if(k){$(SETPAGE[k][0]).hidden=false;$('setTitle').textContent=SETPAGE[k][1][0]+' '+L(SETPAGE[k][1][1],SETPAGE[k][1][2]);}
+  else $('setTitle').textContent=L('Settings','Ayarlar');
+}
+function syncSetCats(){
+  for(const k in SETPAGE){const b=document.querySelector(`.cat[data-cat="${k}"]`);if(!b)continue;
+    b.querySelector('b span').textContent=L(SETPAGE[k][1][1],SETPAGE[k][1][2]);
+    b.querySelector('small').textContent=L(SETPAGE[k][2][0],SETPAGE[k][2][1]);}
+  for(const b of document.querySelectorAll('.setback'))b.textContent='‹ '+L('Back','Geri');
+}
+document.addEventListener('click',e=>{
+  const c=e.target.closest('.cat');if(c){setPage(c.dataset.cat);sfx.pick();return;}
+  if(e.target.closest('.setback')){setPage(null);sfx.pick();}
+});
+$('gear').onclick=()=>{syncSet();syncSetCats();setPage(null);$('mSet').classList.add('on');};
 $('sClose').onclick=()=>$('mSet').classList.remove('on');
 $('sSound').onclick=()=>{S.muted=!S.muted;syncSet();};
 $('sFlash').onclick=()=>{S.lowFlash=!S.lowFlash;syncSet();save();};
@@ -7299,7 +7506,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.35.1';
+const GAME_VERSION='0.37.1';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
@@ -7323,7 +7530,7 @@ function cloudUI(){
   $('sPull').textContent=L('Load from cloud','Bulut kaydını yükle');$('sPush').textContent=L('Save to cloud','Buluta kaydet');
   $('sCloud').textContent=L('Sign in with Google','Google ile giriş yap');
   $('sCloudOut').textContent=fbUser?L('Sign out','Çıkış yap')+' · '+(S.nick||fbUser.displayName||''):L('Sign out','Çıkış yap');
-  $('leadBtn').hidden=false;
+  $('leadBtn').hidden=!has('board');
 }
 async function signInCloud(){
   await initCloud();if(!fbAuth)return toast(L('Cloud is only available on the public site.','Bulut sadece herkese açık sitede çalışır.'),'big');
