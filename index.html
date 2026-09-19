@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.41.1</div>
+  <div class="t-ver" id="tVer">v0.41.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -483,7 +483,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.41.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.41.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4696,20 +4696,38 @@ const PLANT_TYPES={
   river:{name:['Run-of-river','Akarsu santrali'],kind:'hydro',rate:1.35,max:18,scale:1},
   dam:{name:['Dam','Barajlı hidro'],kind:'dam',rate:3.6,max:40,scale:1},
 };
-/* hydro runs day and night; the season and the rain decide how much water there is */
-function waterCF(){const se=seasonOf(S.day),w=WEATHER[DAY.weather];
-  const sIdx=SEASONS.indexOf(se);
-  const seasonal=[1.25,0.70,1.00,1.15][sIdx]||1;          // spring melt, summer drought
-  return seasonal*(w.rain?1.15:0.95)*modMult('water');}
+/* Hydro runs day and night, but the catchment decides how much water there is, and a
+   catchment does not switch from wet to dry overnight. Two slow things drive it:
+   the snowmelt-to-drought swing over the year, and a store that rain fills and dry
+   days drain over about a day and a half. */
+let _swCache={d:-1,v:1};
+function seasonalWater(d){
+  if(_swCache.d===d)return _swCache.v;
+  const t=dateOf(d),y0=Date.UTC(t.getUTCFullYear(),0,1);
+  const doy=Math.floor((t.getTime()-y0)/86400000);
+  const v=0.95+0.32*Math.cos(2*Math.PI*(doy-100)/365);   // high at the spring melt, low by late summer
+  _swCache={d,v};return v;
+}
+/* the weather table carries no rain flag, so name the wet days here; snow falls but
+   does not run off the same day, so it counts for half */
+const RAINFALL={rainy:1,stormy:1,snowy:0.5};
+function rainNow(){return RAINFALL[DAY&&DAY.weather]||0;}
+function wetStore(){return S.wet==null?rainNow():S.wet;}
+function tickWet(dt){
+  const target=rainNow();
+  const k=Math.min(1,dt/(HOUR*34));                       // about a day and a half to turn over
+  S.wet=wetStore()+(target-wetStore())*k;
+}
+function waterCF(){return seasonalWater(S.day)*(0.88+0.30*wetStore())*modMult('water');}
 const DAM_FILL=0.28, DAM_OPEN=1.12;
 /* r2 sits below the wall: it runs on whatever the dam lets through */
 const TAILRACE={r2:1};
 function theDam(){return S.plants.find(q=>q.type==='dam'&&!q.broken&&!q.fire)||S.plants.find(q=>q.type==='dam');}
+function damRelease(d){return d?(d.open?1.35:(damGate(d)==='shut'?0.3:0.65)):1;}
 function flowMult(p){
   if(!TAILRACE[p.id])return 1;                 // upstream of everything: full river
   const d=theDam();if(!d)return 1;             // no wall yet: the river runs free
-  if(d.open)return 1.35;                       // the gates are open, the tailrace is full
-  return damGate(d)==='shut'?0.3:0.65;         // held back, or merely filling
+  return damRelease(d);
 }
 function damCap(p){return Math.round((PLANT_TYPES[p.type].rate||1)*70);}   // about half a day of inflow
 function damRes(p){return Math.min(damCap(p),p.res||0);}
@@ -4805,6 +4823,25 @@ function ribbonGeo(i0,i1,oA,yA,oB,yB){
 /* the reservoir is the same channel, only wider and standing higher; as it empties the
    shoreline pulls in and the level falls back towards the river that feeds it */
 let lakeMesh=null,lakeShown=-1;
+/* a dry catchment does not send a wide sheet down a wide bed: the river pulls into the
+   middle of its channel and leaves the banks bare. This is how much of the bed it covers. */
+function wetW(f){return Math.max(0.22,Math.min(1,0.30+0.58*f));}
+let riverUp=null,riverDown=null,upShown=-1,downShown=-1;
+function setRiverFlow(){
+  const [i0,i1]=lakeRange(),P=riverPts();
+  if(riverUp){
+    const k=wetW(waterCF());
+    if(Math.abs(k-upShown)>=0.025){upShown=k;const old=riverUp.geometry;
+      riverUp.geometry=ribbonGeo(0,i0,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);old.dispose();}
+  }
+  if(riverDown){
+    // below the wall the river only carries what the dam lets through
+    const rel=damRelease(theDam());
+    const k=wetW(waterCF()*rel);
+    if(Math.abs(k-downShown)>=0.025){downShown=k;const old=riverDown.geometry;
+      riverDown.geometry=ribbonGeo(i1,P.length-1,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);old.dispose();}
+  }
+}
 function setLakeLevel(f){
   if(!lakeMesh)return;
   f=Math.max(0.05,Math.min(1,f));
@@ -5409,6 +5446,7 @@ function update(dt){
     p.spin=(p.spin||0)+gdt*(0.6+cf*6);
     if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){p.broken=true;p.brokenAt=gameNow();const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
+  tickWet(gdt);setRiverFlow();            // the catchment fills and drains, and the river shows it
   S.sat=Math.max(0,S.sat-Math.max(0.12,S.sat*0.35)*dt);
   if(S.satT)for(const k in S.satT)S.satT[k]=Math.max(0,S.satT[k]-Math.max(0.16,S.satT[k]*0.4)*dt);
   // player
@@ -5882,8 +5920,8 @@ const groundMats=[];
     };
     banks(0,split,bankN,faceN);banks(split,last,bankD,faceD);
     // the running water, above and below the wall
-    add(ribbonGeo(0,lk0,L(half),riverY,R(half),riverY),water);
-    add(ribbonGeo(lk1,last,L(half),riverY,R(half),riverY),water);
+    riverUp  =add(ribbonGeo(0,lk0,L(half),riverY,R(half),riverY),water);
+    riverDown=add(ribbonGeo(lk1,last,L(half),riverY,R(half),riverY),water);
     // the held water: its own mesh so it can rise and fall
     lakeMesh=add(ribbonGeo(lk0,lk1,L(half),()=>LAKE_Y,R(half),()=>LAKE_Y),deep);lakeShown=1;
     // a few boulders where the water turns
@@ -7268,6 +7306,11 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.41.2',t:['The river shows its flow','Nehir debisini g\u00f6steriyor'],l:[
+  ['A dry catchment does not send a wide sheet down a wide bed. The water now covers as much of its channel as the flow fills: in the summer low it pulls into the middle and leaves bare bed on both banks, in the spring melt it fills the channel bank to bank. The bed and the banks do not move \u2014 only the water.','Kurak bir havza geni\u015f bir yata\u011fa yay\u0131lm\u0131\u015f su g\u00f6ndermez. Su art\u0131k kanal\u0131n\u0131n ne kadar\u0131n\u0131 dolduruyorsa o kadar\u0131n\u0131 kapl\u0131yor: yaz d\u00fc\u015f\u00fc\u015f\u00fcnde ortaya \u00e7ekilip iki yanda kuru yatak b\u0131rak\u0131yor, ilkbahar eriyi\u015finde kanal\u0131 k\u0131y\u0131dan k\u0131y\u0131ya dolduruyor. Yatak ve k\u0131y\u0131lar yerinde duruyor \u2014 sadece su de\u011fi\u015fiyor.'],
+  ['And it no longer flips between wet and dry overnight. The yearly swing is a curve now, not four steps: highest at the spring melt, lowest by late summer, and never moving more than half a percent in a day. Rain feeds a catchment store that fills and drains over about a day and a half, so a wet spell builds and fades instead of switching.','Ve art\u0131k bir gecede sulaktan kura\u011fa atlam\u0131yor. Y\u0131ll\u0131k sal\u0131n\u0131m d\u00f6rt basamak de\u011fil bir e\u011fri: en y\u00fcksek ilkbahar eriyi\u015finde, en d\u00fc\u015f\u00fck yaz sonunda, ve bir g\u00fcnde asla y\u00fczde yar\u0131mdan fazla oynam\u0131yor. Ya\u011fmur, yakla\u015f\u0131k bir bu\u00e7uk g\u00fcnde dolup bo\u015falan bir havza deposunu besliyor, b\u00f6ylece ya\u011f\u0131\u015fl\u0131 d\u00f6nem birikip s\u00f6n\u00fcyor.'],
+  ['Rain had never actually reached the water plants: the hydro code looked for a rain flag the weather table does not carry, so every day counted as dry. Rain, storms and snow now feed the catchment for real \u2014 snow at half weight, because it falls without running off the same day.','Ya\u011fmur asl\u0131nda su santrallerine hi\u00e7 ula\u015fm\u0131yordu: hidro kodu hava tablosunda bulunmayan bir ya\u011f\u0131\u015f i\u015faretini ar\u0131yordu, bu y\u00fczden her g\u00fcn kurak say\u0131l\u0131yordu. Ya\u011fmur, f\u0131rt\u0131na ve kar art\u0131k havzay\u0131 ger\u00e7ekten besliyor \u2014 kar yar\u0131m a\u011f\u0131rl\u0131kla, ayn\u0131 g\u00fcn akmad\u0131\u011f\u0131 i\u00e7in.'],
+  ['Below the dam the river carries what the wall lets through, and you can see it: shut the gate and the tailrace shrinks to under half its bed, open it and the channel fills. The station down there reads the same number on its badge.','Baraj\u0131n alt\u0131nda nehir duvar\u0131n b\u0131rakt\u0131\u011f\u0131n\u0131 ta\u015f\u0131yor ve bunu g\u00f6r\u00fcyorsun: kapa\u011f\u0131 kapat\u0131nca kuyruk suyu yata\u011f\u0131n\u0131n yar\u0131s\u0131n\u0131n alt\u0131na d\u00fc\u015f\u00fcyor, a\u00e7\u0131nca kanal doluyor. A\u015fa\u011f\u0131daki santralin rozetinde ayn\u0131 say\u0131 yaz\u0131yor.']]},
  {v:'0.41.1',t:['The lake is part of the river now','G\u00f6l art\u0131k nehrin bir par\u00e7as\u0131'],l:[
   ['The reservoir was a box of water sitting 30 pixels above the river that fed it, with square earth shoulders either side \u2014 so a ridge seemed to cut across the mouth of it. It is gone. The lake is drawn from the same path as the river, with the same bed and the same banks: the valley just widens, bulges where a drowned valley would, and closes at the wall.','Hazne, kendisini besleyen nehrin 30 piksel \u00fcst\u00fcnde duran bir su kutusuydu ve iki yan\u0131nda kare toprak omuzlar\u0131 vard\u0131 \u2014 bu y\u00fczden giri\u015finde bir s\u0131rt varm\u0131\u015f gibi duruyordu. Gitti. G\u00f6l art\u0131k nehirle ayn\u0131 yoldan, ayn\u0131 yatak ve ayn\u0131 k\u0131y\u0131larla \u00e7iziliyor: vadi geni\u015fliyor, sular alt\u0131nda kalm\u0131\u015f bir vadinin \u015fi\u015fece\u011fi yerde \u015fi\u015fiyor ve duvarda kapan\u0131yor.'],
   ['The wall does back the water up, though: the surface rises gradually over the reach above the dam and drops again below it, the way a river behind a dam actually stands. No step, no cliff of water.','Duvar suyu ger\u00e7ekten de kabart\u0131yor: y\u00fczey baraj\u0131n \u00fcst\u00fcndeki kesitte kademeli y\u00fckseliyor ve alt\u0131nda tekrar d\u00fc\u015f\u00fcyor \u2014 baraj arkas\u0131ndaki bir nehir ger\u00e7ekte nas\u0131l duruyorsa \u00f6yle. Basamak da yok, su duvar\u0131 da.'],
@@ -7843,7 +7886,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.41.1';
+const GAME_VERSION='0.41.2';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
