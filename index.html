@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.41.0</div>
+  <div class="t-ver" id="tVer">v0.41.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -483,7 +483,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.41.0 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.41.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4738,9 +4738,10 @@ const RIVER=[
   {x:1318,y:1250,w:48},
   {x:1288,y:1340,w:52},                 // the run-of-river weir, on a straight reach
   {x:1272,y:1425,w:66},
-  {x:1266,y:1482,w:116},                // the valley opens out
-  {x:1266,y:1510,w:172,lake:true},      // from here to the wall the water is the reservoir
-  {x:1266,y:1660,w:172},                // the dam closes the valley
+  {x:1264,y:1484,w:118},                // the valley opens out
+  {x:1256,y:1522,w:160,lake:true},      // from here to the wall the water is the reservoir
+  {x:1270,y:1580,w:184,lake:true},      // it is a drowned valley, so it bulges where the valley did
+  {x:1268,y:1650,w:170},                // and closes again at the wall
   {x:1274,y:1704,w:44},                 // the river picks up again below it
   {x:1302,y:1795,w:46},
   {x:1268,y:1885,w:49},                 // the tailrace weir
@@ -4777,6 +4778,42 @@ function lakeRange(){
   const P=riverPts();let i0=-1,i1=-1;
   for(let i=0;i<P.length;i++){if(P[i].lake){if(i0<0)i0=i;i1=i;}}
   return [Math.max(0,i0),Math.min(P.length-1,i1+1)];
+}
+/* The wall backs the river up, so the water stands higher from the weir reach down to
+   the dam and drops again below it. The rise is spread over the reach, not stepped. */
+const LAKE_Y=0.26, RIV_Y=0.075, BACK0=1400, BACK1=1522, WALLY=1656;
+function riverY(q){
+  if(q.y<=BACK0||q.y>WALLY)return RIV_Y;
+  if(q.y>=BACK1)return LAKE_Y;
+  return RIV_Y+(LAKE_Y-RIV_Y)*((q.y-BACK0)/(BACK1-BACK0));
+}
+/* one quad strip along the path; the two edges may sit at different offsets and heights */
+function ribbonGeo(i0,i1,oA,yA,oB,yB){
+  const P=riverPts(),pos=[],idx=[];
+  for(let i=i0;i<=i1;i++){
+    const a=P[Math.max(i0,i-1)],b=P[Math.min(i1,i+1)],q=P[i];
+    let nx=b.y-a.y,nz=-(b.x-a.x);const L=Math.hypot(nx,nz)||1;nx/=L;nz/=L;
+    const wa=oA(q),wb=oB(q);
+    pos.push((q.x+nx*wa)*U,yA(q),(q.y+nz*wa)*U);
+    pos.push((q.x+nx*wb)*U,yB(q),(q.y+nz*wb)*U);
+  }
+  for(let i=0;i<i1-i0;i++){const k=i*2;idx.push(k,k+1,k+3,k,k+3,k+2);}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setIndex(idx);g.computeVertexNormals();return g;
+}
+/* the reservoir is the same channel, only wider and standing higher; as it empties the
+   shoreline pulls in and the level falls back towards the river that feeds it */
+let lakeMesh=null,lakeShown=-1;
+function setLakeLevel(f){
+  if(!lakeMesh)return;
+  f=Math.max(0.05,Math.min(1,f));
+  if(Math.abs(f-lakeShown)<0.03)return;
+  lakeShown=f;
+  const [i0,i1]=lakeRange(),k=0.34+0.66*f,yy=RIV_Y+(LAKE_Y-RIV_Y)*f;
+  const old=lakeMesh.geometry;
+  lakeMesh.geometry=ribbonGeo(i0,i1,q=>-q.w/2*k,()=>yy,q=>q.w/2*k,()=>yy);
+  old.dispose();
 }
 /* how far a point sits from the middle of the channel */
 function offRiver(x,y){return Math.abs(x-riverAt(y).x);}
@@ -5819,52 +5856,41 @@ const groundMats=[];
   const r1=mesh(new THREE.PlaneGeometry(2.4,79),road,35,0.02,16.5+39.5,false);r1.rotation.x=-Math.PI/2;scene.add(r1);
   const r2=mesh(new THREE.PlaneGeometry(43,2.4),road,34.5,0.02,35,false);r2.rotation.x=-Math.PI/2;scene.add(r2);
   for(let z=21;z<95;z+=2.2){const d=mesh(new THREE.PlaneGeometry(0.18,1),dash,35,0.03,z,false);d.rotation.x=-Math.PI/2;scene.add(d);}
-  // the river: one continuous channel, its banks following the water's own width
+  // the river: one continuous channel, bed and banks following the water's own width,
+  // straight through the reservoir — the lake is a reach of this river, not a box on top of it
   {
     const P=riverPts(),[lk0,lk1]=lakeRange(),last=P.length-1;
     const DS=THREE.DoubleSide;
     const water=M(0x3E8FD0,{emissive:0x0d3a6b,emissiveIntensity:0.3,side:DS}),
+          deep =M(0x2F7BC0,{emissive:0x0a2f58,emissiveIntensity:0.32,side:DS}),
           bed=M(0x7C6B4F,{side:DS}),
           bankN=M(0x6F8A43,{side:DS}),bankD=M(0xC7A468,{side:DS}),
           faceN=M(0x5C7538,{side:DS}),faceD=M(0xB08F55,{side:DS});
-    // one quad strip along the path; the two edges may sit at different offsets and heights
-    const ribbon=(i0,i1,oA,yA,oB,yB,mat)=>{
-      if(i1-i0<1)return null;
-      const pos=[],idx=[];
-      for(let i=i0;i<=i1;i++){
-        const a=P[Math.max(i0,i-1)],b=P[Math.min(i1,i+1)],q=P[i];
-        let nx=b.y-a.y,nz=-(b.x-a.x);const L=Math.hypot(nx,nz)||1;nx/=L;nz/=L;
-        const wa=oA(q),wb=oB(q);
-        pos.push((q.x+nx*wa)*U,yA,(q.y+nz*wa)*U);
-        pos.push((q.x+nx*wb)*U,yB,(q.y+nz*wb)*U);
-      }
-      for(let i=0;i<i1-i0;i++){const k=i*2;idx.push(k,k+1,k+3,k,k+3,k+2);}
-      const g=new THREE.BufferGeometry();
-      g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-      g.setIndex(idx);g.computeVertexNormals();
-      const m=new THREE.Mesh(g,mat);m.receiveShadow=true;m.castShadow=false;scene.add(m);return m;
-    };
+    const add=(g,mat)=>{const m=new THREE.Mesh(g,mat);m.receiveShadow=true;m.castShadow=false;scene.add(m);return m;};
     const half=q=>q.w/2, L=f=>q=>-f(q), R=f=>q=>f(q);
-    const reaches=[[0,lk0],[lk1,last]];      // the reservoir is drawn by the dam itself
-    for(const [a0,a1] of reaches){
-      if(a1-a0<1)continue;
-      // the desert starts partway down, so the banks change colour where the ground does
-      let split=a1;for(let i=a0;i<=a1;i++)if(P[i].y>=1620){split=i;break;}
-      ribbon(a0,a1,L(q=>half(q)+11),0.03,R(q=>half(q)+11),0.03,bed);
-      ribbon(a0,a1,L(half),0.075,R(half),0.075,water);
-      const banks=(b0,b1,top,face)=>{
-        if(b1-b0<1)return;
-        ribbon(b0,b1,L(q=>half(q)+7),0.34,L(q=>half(q)+30),0.30,top);
-        ribbon(b0,b1,L(q=>half(q)+7),0.34,L(q=>half(q)+7),0.0,face);
-        ribbon(b0,b1,R(q=>half(q)+7),0.34,R(q=>half(q)+30),0.30,top);
-        ribbon(b0,b1,R(q=>half(q)+7),0.34,R(q=>half(q)+7),0.0,face);
-      };
-      banks(a0,Math.min(split,a1),bankN,faceN);
-      banks(Math.max(a0,split),a1,bankD,faceD);
-    }
+    const bankY=q=>riverY(q)+0.27, bankOut=q=>riverY(q)+0.23;
+    // the bed runs the whole way, so a drawn-down reservoir shows its mud
+    add(ribbonGeo(0,last,L(q=>half(q)+11),()=>RIV_Y-0.045,R(q=>half(q)+11),()=>RIV_Y-0.045),bed);  // the valley floor stays put while the water rises off it
+    // banks, following the channel through the lake as well; the ground changes colour at the desert
+    let split=last;for(let i=0;i<=last;i++)if(P[i].y>=1620){split=i;break;}
+    const banks=(b0,b1,top,face)=>{
+      if(b1-b0<1)return;
+      add(ribbonGeo(b0,b1,L(q=>half(q)+7),bankY,L(q=>half(q)+30),bankOut),top);
+      add(ribbonGeo(b0,b1,L(q=>half(q)+7),bankY,L(q=>half(q)+7),()=>0.0),face);
+      add(ribbonGeo(b0,b1,R(q=>half(q)+7),bankY,R(q=>half(q)+30),bankOut),top);
+      add(ribbonGeo(b0,b1,R(q=>half(q)+7),bankY,R(q=>half(q)+7),()=>0.0),face);
+    };
+    banks(0,split,bankN,faceN);banks(split,last,bankD,faceD);
+    // the running water, above and below the wall
+    add(ribbonGeo(0,lk0,L(half),riverY,R(half),riverY),water);
+    add(ribbonGeo(lk1,last,L(half),riverY,R(half),riverY),water);
+    // the held water: its own mesh so it can rise and fall
+    lakeMesh=add(ribbonGeo(lk0,lk1,L(half),()=>LAKE_Y,R(half),()=>LAKE_Y),deep);lakeShown=1;
     // a few boulders where the water turns
     const stone=M(0x8B96A2);
-    for(let i=2;i<lk0;i+=5){const q=P[i],a=P[i-1],b=P[i+1];
+    for(let i=2;i<last-1;i+=5){
+      if(i>lk0-2&&i<lk1+2)continue;
+      const q=P[i],a=P[i-1],b=P[i+1];
       let nx=b.y-a.y,nz=-(b.x-a.x);const L2=Math.hypot(nx,nz)||1;nx/=L2;nz/=L2;
       const o=(q.w/2+34)*((i%10===2)?1:-1);
       scene.add(mesh(new THREE.IcosahedronGeometry(0.4+((i*7)%5)*0.06,0),stone,(q.x+nx*o)*U,0.24,(q.y+nz*o)*U));}
@@ -6074,13 +6100,9 @@ function makeRiver(ch){
 function makeDam(){
   // the wall across the narrows; the water it holds is the river, backed up
   const g=new THREE.Group();
-  const water=M(0x2F7BC0,{emissive:0x0a2f58,emissiveIntensity:0.32}),conc=M(0xB4BCC6),crest=M(0x98A3AE),
-        dark=M(0x6A7783),roof=M(0x5C6B84),wall=M(0xF0E7D6),rock=M(0x8B96A2),mud=M(0x8A7A5E);
+  const conc=M(0xB4BCC6),crest=M(0x98A3AE),
+        dark=M(0x6A7783),roof=M(0x5C6B84),wall=M(0xF0E7D6),rock=M(0x8B96A2);
   // the drowned valley behind the wall
-  g.add(mesh(new THREE.BoxGeometry(10.2,1.6,7.6),mud,0,-0.62,-4.1));       // the drowned valley floor
-  g.add(mesh(new THREE.BoxGeometry(0.9,1.0,7.6),mud,-5.15,0.32,-4.1));     // shoulders level with the river banks
-  g.add(mesh(new THREE.BoxGeometry(0.9,1.0,7.6),mud, 5.15,0.32,-4.1));
-  const w=mesh(new THREE.BoxGeometry(8.6,1.5,7.5),water,0,0.75,-4.05);g.add(w);
   // the wall, battered: wide at the foot, narrow at the crest
   g.add(mesh(new THREE.BoxGeometry(9.0,1.5,2.0),conc,0,0.55,-0.1));
   g.add(mesh(new THREE.BoxGeometry(9.0,1.3,1.2),conc,0,1.9,-0.3));
@@ -6092,7 +6114,7 @@ function makeDam(){
   g.add(mesh(new THREE.CylinderGeometry(0.28,0.28,2.2,8),dark,2.1,1.0,1.3)); // penstock
   g.add(mesh(new THREE.BoxGeometry(1.5,2.4,2.6),rock,-5.15,1.2,-0.5));      // abutments into the hillside
   g.add(mesh(new THREE.BoxGeometry(1.5,2.4,2.6),rock, 5.15,1.2,-0.5));
-  g.userData.water=w;return g;
+  return g;
 }
 /* energy cell: extruded lightning bolt lying flat; colour shows age */
 const CELL_STEP=0.2;
@@ -6441,9 +6463,8 @@ function render(dt,now){
      place('cd'+p.id,'code'+(old?' worn':''),p.x-(p.type==='solarfarm'?70:30),p.y+22,0.9,codeOf(p.id)+(old?` ${Math.round(eff*100)}%`:''));}
     if(T.kind==='hydro'&&TAILRACE[p.id]&&theDam()){const fm=flowMult(p);
       place('tr'+p.id,'cnt'+(fm<1?' full':''),p.x,p.y-26,2.2,`\ud83c\udf0a ${Math.round(fm*100)}%`);}
-    if(T.kind==='dam'){const full=damRes(p)>=damCap(p),wm=o.userData.model.userData.water;
-      if(wm){const f=Math.max(0.06,damCap(p)?damRes(p)/damCap(p):0);
-        wm.scale.set(0.86+0.14*f,f,0.92+0.08*f);wm.position.y=0.02+0.73*f;}
+    if(T.kind==='dam'){const full=damRes(p)>=damCap(p);
+      setLakeLevel(damCap(p)?damRes(p)/damCap(p):0);
       place('dm'+p.id,'cnt'+(full?' full':''),p.x,p.y-34,3.9,`💧 ${Math.round(damRes(p))}/${damCap(p)}${p.open?' \u26a1':full?' !':''}`);}
     if(p.fire>0){const fl=0.8+Math.sin(performance.now()/90)*0.2;
       const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y,(T.kind==='wind'?7*T.scale:2.6)*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
@@ -7247,6 +7268,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.41.1',t:['The lake is part of the river now','G\u00f6l art\u0131k nehrin bir par\u00e7as\u0131'],l:[
+  ['The reservoir was a box of water sitting 30 pixels above the river that fed it, with square earth shoulders either side \u2014 so a ridge seemed to cut across the mouth of it. It is gone. The lake is drawn from the same path as the river, with the same bed and the same banks: the valley just widens, bulges where a drowned valley would, and closes at the wall.','Hazne, kendisini besleyen nehrin 30 piksel \u00fcst\u00fcnde duran bir su kutusuydu ve iki yan\u0131nda kare toprak omuzlar\u0131 vard\u0131 \u2014 bu y\u00fczden giri\u015finde bir s\u0131rt varm\u0131\u015f gibi duruyordu. Gitti. G\u00f6l art\u0131k nehirle ayn\u0131 yoldan, ayn\u0131 yatak ve ayn\u0131 k\u0131y\u0131larla \u00e7iziliyor: vadi geni\u015fliyor, sular alt\u0131nda kalm\u0131\u015f bir vadinin \u015fi\u015fece\u011fi yerde \u015fi\u015fiyor ve duvarda kapan\u0131yor.'],
+  ['The wall does back the water up, though: the surface rises gradually over the reach above the dam and drops again below it, the way a river behind a dam actually stands. No step, no cliff of water.','Duvar suyu ger\u00e7ekten de kabart\u0131yor: y\u00fczey baraj\u0131n \u00fcst\u00fcndeki kesitte kademeli y\u00fckseliyor ve alt\u0131nda tekrar d\u00fc\u015f\u00fcyor \u2014 baraj arkas\u0131ndaki bir nehir ger\u00e7ekte nas\u0131l duruyorsa \u00f6yle. Basamak da yok, su duvar\u0131 da.'],
+  ['Drawing the dam down now uncovers the valley floor: the shoreline pulls in, the level falls back towards the river, and at the bottom only a narrow channel runs through the mud to the wall.','Baraj\u0131 bo\u015faltmak art\u0131k vadi taban\u0131n\u0131 a\u00e7\u0131\u011fa \u00e7\u0131kar\u0131yor: k\u0131y\u0131 geri \u00e7ekiliyor, seviye nehre do\u011fru iniyor ve dipte \u00e7amurun i\u00e7inden duvara dar bir kanal ak\u0131yor.']]},
  {v:'0.41.0',t:['The river bends now','Nehir art\u0131k k\u0131vr\u0131l\u0131yor'],l:[
   ['The channel was built out of straight boxes of fixed width, so it read as an irrigation canal: a step at every joint and no bends. It is one continuous surface now, drawn along a spline, and the banks follow the water\u2019s own width \u2014 so it narrows in the hills, swings across the field and opens out into the valley without a single seam.','Kanal sabit geni\u015flikte d\u00fcz kutulardan yap\u0131l\u0131yd\u0131, o y\u00fczden sulama kanal\u0131 gibi duruyordu: her ekte basamak, hi\u00e7 k\u0131vr\u0131m yok. Art\u0131k tek par\u00e7a bir y\u00fczey, bir e\u011fri boyunca \u00e7iziliyor ve k\u0131y\u0131lar suyun kendi geni\u015fli\u011fini izliyor \u2014 tepelerde daral\u0131yor, ovada savruluyor ve vadide tek dikis olmadan a\u00e7\u0131l\u0131yor.'],
   ['The reservoir is now exactly as wide as the channel that feeds it, so the river runs into it instead of ending at a wall of water. As the dam empties, the shoreline pulls back as well as the level dropping.','Hazne art\u0131k kendisini besleyen kanalla tam ayn\u0131 geni\u015flikte, yani nehir onun i\u00e7ine ak\u0131yor, bir su duvar\u0131nda bitmiyor. Baraj bo\u015fald\u0131k\u00e7a sadece seviye d\u00fc\u015fm\u00fcyor, k\u0131y\u0131 da geri \u00e7ekiliyor.'],
@@ -7818,7 +7843,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.41.0';
+const GAME_VERSION='0.41.1';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
