@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.41.3</div>
+  <div class="t-ver" id="tVer">v0.41.4</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -483,7 +483,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.41.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.41.4 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4733,12 +4733,21 @@ function damCap(p){return Math.round((PLANT_TYPES[p.type].rate||1)*70);}   // ab
 function damRes(p){return Math.min(damCap(p),p.res||0);}
 function damInflow(p){return (PLANT_TYPES[p.type].rate||1)*DAM_FILL*waterCF();}
 function damGate(p){return p.gate||'auto';}
+const DAM_KEEP=0.96, DAM_MINRUN=1.5, DAM_START=0.30;   // keeps running down to this, for at least this long,
+                                                       // and will not start again on less than this much water
 function damOpen(p){
   const g=damGate(p);
   if(g==='shut')return false;
   if(g==='open')return true;
-  if(damRes(p)>=damCap(p))return true;          // full: let it run rather than spill
-  return priceNow()>=todayAvg()*DAM_OPEN;       // otherwise wait for the peak
+  const cap=damCap(p),res=damRes(p),a=todayAvg(),price=priceNow();
+  if(p.open){                                   // already running: a lower bar to keep going, and a minimum run
+    if(res<1)return false;
+    if(p.openUntil&&gameNow()<p.openUntil)return true;
+    return price>=a*DAM_KEEP||res>=cap*0.92;
+  }
+  if(res<cap*DAM_START)return false;            // too little behind the wall to be worth opening
+  if(res>=cap)return true;                      // full: let it run rather than spill
+  return price>=a*DAM_OPEN;                     // otherwise wait for the peak
 }
 /* ======================= THE RIVER =======================
    One river, born in the northern hills and running south down the east side.
@@ -4826,7 +4835,7 @@ let lakeMesh=null,lakeShown=-1;
 /* a dry catchment does not send a wide sheet down a wide bed: the river pulls into the
    middle of its channel and leaves the banks bare. This is how much of the bed it covers. */
 function wetW(f){return Math.max(0.30,Math.min(1,0.22+0.72*f));}
-let riverUp=null,riverDown=null,upShown=-1,downShown=-1;
+let riverUp=null,riverDown=null,upShown=-1,downShown=-1,tailRel=1;
 function setRiverFlow(){
   const [i0,i1]=lakeRange(),P=riverPts();
   if(riverUp){
@@ -4835,9 +4844,12 @@ function setRiverFlow(){
       riverUp.geometry=ribbonGeo(0,i0,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);old.dispose();}
   }
   if(riverDown){
-    // below the wall the river only carries what the dam lets through
-    const rel=damRelease(theDam());
-    const k=wetW(waterCF()*rel);
+    // below the wall the river only carries what the dam lets through, and it takes a
+    // moment to swell or fall back rather than jumping the instant the gate moves
+    const want=damRelease(theDam());
+    tailRel+=(want-tailRel)*0.04;
+    if(Math.abs(want-tailRel)<0.01)tailRel=want;
+    const k=wetW(waterCF()*tailRel);
     if(Math.abs(k-downShown)>=0.025){downShown=k;const old=riverDown.geometry;
       riverDown.geometry=ribbonGeo(i1,P.length-1,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);old.dispose();}
   }
@@ -5434,7 +5446,10 @@ function update(dt){
     else if(T.kind==='hydro')cf=waterCF()*flowMult(p);
     else if(T.kind==='dam'){
       p.res=Math.min(damCap(p),(p.res||0)+damInflow(p)*gdt);
-      p.open=damOpen(p)&&p.res>=1;cf=p.open?1:0;
+      const was=!!p.open;
+      p.open=damOpen(p)&&p.res>=1;
+      if(p.open&&!was)p.openUntil=gameNow()+HOUR*DAM_MINRUN;
+      cf=p.open?1:0;
     }
     else cf=solarShape(t)*solarMult()*sheepBonus(p)*snowMult(p);
     p.acc+=T.rate*plantGen(p)*cf*gdt;
@@ -7309,6 +7324,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.41.4',t:['The dam stops twitching','Baraj art\u0131k titremiyor'],l:[
+  ['The gate was deciding from scratch every frame against a price that never stops moving, so it opened and shut 158 times a game day \u2014 about once every three seconds. The river below it swung with every one of them, which is the shaking you saw, and the station down there was producing on the same stutter.','Kapak her karede s\u0131f\u0131rdan karar veriyordu ve kar\u015f\u0131s\u0131ndaki fiyat hi\u00e7 durmuyordu, bu y\u00fczden bir oyun g\u00fcn\u00fcnde 158 kez a\u00e7\u0131l\u0131p kapan\u0131yordu \u2014 yakla\u015f\u0131k \u00fc\u00e7 saniyede bir. Alt\u0131ndaki nehir her seferinde oynuyordu, g\u00f6rd\u00fc\u011f\u00fcn titreme buydu, ve a\u015fa\u011f\u0131daki santral de ayn\u0131 kekemelikle \u00fcretiyordu.'],
+  ['It behaves like a dam now: once it opens it runs for at least an hour and a half and keeps running until the price falls below the day average, and it will not open at all on less than a third of a reservoir. Four or five runs a game day instead of seventy-nine, and it still generates slightly more than before.','Art\u0131k baraj gibi davran\u0131yor: bir kez a\u00e7\u0131ld\u0131 m\u0131 en az bir bu\u00e7uk saat \u00e7al\u0131\u015f\u0131yor ve fiyat g\u00fcn ortalamas\u0131n\u0131n alt\u0131na d\u00fc\u015fene kadar devam ediyor, haznenin \u00fc\u00e7te birinden az\u0131yla hi\u00e7 a\u00e7\u0131lm\u0131yor. G\u00fcnde yetmi\u015f dokuz yerine d\u00f6rt be\u015f \u00e7al\u0131\u015fma, ve \u00fcretimi eskisinden biraz daha fazla.'],
+  ['And the tailrace swells and falls back over a second or so when the gate moves, instead of jumping the instant it does.','Kapak hareket etti\u011finde kuyruk suyu da an\u0131nda z\u0131plamak yerine bir saniye kadar i\u00e7inde kabar\u0131p \u00e7ekiliyor.']]},
  {v:'0.41.3',t:['The banks stop flickering','K\u0131y\u0131lar art\u0131k yan\u0131p s\u00f6nm\u00fcyor'],l:[
   ['The water sat 0.045 units above its bed \u2014 close enough that a phone could not decide which was in front, so the edges flickered. The water now stands well clear of the bed, and both are told explicitly which goes in front.','Su yata\u011f\u0131n\u0131n 0,045 birim \u00fcst\u00fcndeydi \u2014 telefonun hangisinin \u00f6nde oldu\u011funa karar veremeyece\u011fi kadar yak\u0131n, o y\u00fczden kenarlar yan\u0131p s\u00f6n\u00fcyordu. Su art\u0131k yataktan a\u00e7\u0131k\u00e7a y\u00fckseldi ve ikisine de hangisinin \u00f6nde \u00e7izilece\u011fi a\u00e7\u0131k\u00e7a s\u00f6yleniyor.'],
   ['The dry margin was too wide and brown everywhere. The bed is narrower now and takes the colour of the ground it cuts through \u2014 grey shingle in the meadow, sand in the desert \u2014 and at ordinary flow the water covers almost all of it, so what is left reads as a shore rather than a drought.','Kuru bant fazla geni\u015f ve her yerde kahverengiydi. Yatak art\u0131k daha dar ve i\u00e7inden ge\u00e7ti\u011fi zeminin rengini al\u0131yor \u2014 \u00e7ay\u0131rda gri \u00e7ak\u0131l, \u00e7\u00f6lde kum \u2014 ve normal debide su neredeyse tamam\u0131n\u0131 kapl\u0131yor, geri kalan\u0131 kurakl\u0131k de\u011fil k\u0131y\u0131 gibi okunuyor.'],
@@ -7893,7 +7912,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.41.3';
+const GAME_VERSION='0.41.4';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
