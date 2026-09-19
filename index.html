@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.41.2</div>
+  <div class="t-ver" id="tVer">v0.41.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -483,7 +483,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.41.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.41.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4799,7 +4799,7 @@ function lakeRange(){
 }
 /* The wall backs the river up, so the water stands higher from the weir reach down to
    the dam and drops again below it. The rise is spread over the reach, not stepped. */
-const LAKE_Y=0.26, RIV_Y=0.075, BACK0=1400, BACK1=1522, WALLY=1656;
+const LAKE_Y=0.34, RIV_Y=0.20, BACK0=1400, BACK1=1522, WALLY=1656;
 function riverY(q){
   if(q.y<=BACK0||q.y>WALLY)return RIV_Y;
   if(q.y>=BACK1)return LAKE_Y;
@@ -4825,7 +4825,7 @@ function ribbonGeo(i0,i1,oA,yA,oB,yB){
 let lakeMesh=null,lakeShown=-1;
 /* a dry catchment does not send a wide sheet down a wide bed: the river pulls into the
    middle of its channel and leaves the banks bare. This is how much of the bed it covers. */
-function wetW(f){return Math.max(0.22,Math.min(1,0.30+0.58*f));}
+function wetW(f){return Math.max(0.30,Math.min(1,0.22+0.72*f));}
 let riverUp=null,riverDown=null,upShown=-1,downShown=-1;
 function setRiverFlow(){
   const [i0,i1]=lakeRange(),P=riverPts();
@@ -4847,7 +4847,7 @@ function setLakeLevel(f){
   f=Math.max(0.05,Math.min(1,f));
   if(Math.abs(f-lakeShown)<0.03)return;
   lakeShown=f;
-  const [i0,i1]=lakeRange(),k=0.34+0.66*f,yy=RIV_Y+(LAKE_Y-RIV_Y)*f;
+  const [i0,i1]=lakeRange(),k=0.52+0.48*f,yy=RIV_Y+(LAKE_Y-RIV_Y)*f;
   const old=lakeMesh.geometry;
   lakeMesh.geometry=ribbonGeo(i0,i1,q=>-q.w/2*k,()=>yy,q=>q.w/2*k,()=>yy);
   old.dispose();
@@ -5899,18 +5899,21 @@ const groundMats=[];
   {
     const P=riverPts(),[lk0,lk1]=lakeRange(),last=P.length-1;
     const DS=THREE.DoubleSide;
-    const water=M(0x3E8FD0,{emissive:0x0d3a6b,emissiveIntensity:0.3,side:DS}),
-          deep =M(0x2F7BC0,{emissive:0x0a2f58,emissiveIntensity:0.32,side:DS}),
-          bed=M(0x7C6B4F,{side:DS}),
+    const OFF={polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3};
+    const water=M(0x3E8FD0,Object.assign({emissive:0x0d3a6b,emissiveIntensity:0.3,side:DS},OFF)),
+          deep =M(0x2F7BC0,Object.assign({emissive:0x0a2f58,emissiveIntensity:0.32,side:DS},OFF)),
+          bedN=M(0x8C8660,{side:DS,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),
+          bedD=M(0xC2A36C,{side:DS,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),
           bankN=M(0x6F8A43,{side:DS}),bankD=M(0xC7A468,{side:DS}),
           faceN=M(0x5C7538,{side:DS}),faceD=M(0xB08F55,{side:DS});
     const add=(g,mat)=>{const m=new THREE.Mesh(g,mat);m.receiveShadow=true;m.castShadow=false;scene.add(m);return m;};
     const half=q=>q.w/2, L=f=>q=>-f(q), R=f=>q=>f(q);
     const bankY=q=>riverY(q)+0.27, bankOut=q=>riverY(q)+0.23;
-    // the bed runs the whole way, so a drawn-down reservoir shows its mud
-    add(ribbonGeo(0,last,L(q=>half(q)+11),()=>RIV_Y-0.045,R(q=>half(q)+11),()=>RIV_Y-0.045),bed);  // the valley floor stays put while the water rises off it
-    // banks, following the channel through the lake as well; the ground changes colour at the desert
+    // banks and bed change colour where the ground does
     let split=last;for(let i=0;i<=last;i++)if(P[i].y>=1620){split=i;break;}
+    // the bed runs the whole way and stays put while the water rises and falls off it
+    add(ribbonGeo(0,split,L(q=>half(q)+6),()=>0.06,R(q=>half(q)+6),()=>0.06),bedN);
+    add(ribbonGeo(split,last,L(q=>half(q)+6),()=>0.06,R(q=>half(q)+6),()=>0.06),bedD);
     const banks=(b0,b1,top,face)=>{
       if(b1-b0<1)return;
       add(ribbonGeo(b0,b1,L(q=>half(q)+7),bankY,L(q=>half(q)+30),bankOut),top);
@@ -7306,6 +7309,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.41.3',t:['The banks stop flickering','K\u0131y\u0131lar art\u0131k yan\u0131p s\u00f6nm\u00fcyor'],l:[
+  ['The water sat 0.045 units above its bed \u2014 close enough that a phone could not decide which was in front, so the edges flickered. The water now stands well clear of the bed, and both are told explicitly which goes in front.','Su yata\u011f\u0131n\u0131n 0,045 birim \u00fcst\u00fcndeydi \u2014 telefonun hangisinin \u00f6nde oldu\u011funa karar veremeyece\u011fi kadar yak\u0131n, o y\u00fczden kenarlar yan\u0131p s\u00f6n\u00fcyordu. Su art\u0131k yataktan a\u00e7\u0131k\u00e7a y\u00fckseldi ve ikisine de hangisinin \u00f6nde \u00e7izilece\u011fi a\u00e7\u0131k\u00e7a s\u00f6yleniyor.'],
+  ['The dry margin was too wide and brown everywhere. The bed is narrower now and takes the colour of the ground it cuts through \u2014 grey shingle in the meadow, sand in the desert \u2014 and at ordinary flow the water covers almost all of it, so what is left reads as a shore rather than a drought.','Kuru bant fazla geni\u015f ve her yerde kahverengiydi. Yatak art\u0131k daha dar ve i\u00e7inden ge\u00e7ti\u011fi zeminin rengini al\u0131yor \u2014 \u00e7ay\u0131rda gri \u00e7ak\u0131l, \u00e7\u00f6lde kum \u2014 ve normal debide su neredeyse tamam\u0131n\u0131 kapl\u0131yor, geri kalan\u0131 kurakl\u0131k de\u011fil k\u0131y\u0131 gibi okunuyor.'],
+  ['A reservoir that is merely filling no longer looks like a mud pan: it keeps more than half its shore even when low, and only adrawdown bares the valley floor.','Sadece dolmakta olan bir hazne art\u0131k \u00e7amur tavas\u0131 gibi durmuyor: d\u00fc\u015f\u00fckken bile k\u0131y\u0131s\u0131n\u0131n yar\u0131s\u0131ndan fazlas\u0131n\u0131 koruyor, vadi taban\u0131n\u0131 ancak ger\u00e7ek bir bo\u015falma a\u00e7\u0131\u011fa \u00e7\u0131kar\u0131yor.']]},
  {v:'0.41.2',t:['The river shows its flow','Nehir debisini g\u00f6steriyor'],l:[
   ['A dry catchment does not send a wide sheet down a wide bed. The water now covers as much of its channel as the flow fills: in the summer low it pulls into the middle and leaves bare bed on both banks, in the spring melt it fills the channel bank to bank. The bed and the banks do not move \u2014 only the water.','Kurak bir havza geni\u015f bir yata\u011fa yay\u0131lm\u0131\u015f su g\u00f6ndermez. Su art\u0131k kanal\u0131n\u0131n ne kadar\u0131n\u0131 dolduruyorsa o kadar\u0131n\u0131 kapl\u0131yor: yaz d\u00fc\u015f\u00fc\u015f\u00fcnde ortaya \u00e7ekilip iki yanda kuru yatak b\u0131rak\u0131yor, ilkbahar eriyi\u015finde kanal\u0131 k\u0131y\u0131dan k\u0131y\u0131ya dolduruyor. Yatak ve k\u0131y\u0131lar yerinde duruyor \u2014 sadece su de\u011fi\u015fiyor.'],
   ['And it no longer flips between wet and dry overnight. The yearly swing is a curve now, not four steps: highest at the spring melt, lowest by late summer, and never moving more than half a percent in a day. Rain feeds a catchment store that fills and drains over about a day and a half, so a wet spell builds and fades instead of switching.','Ve art\u0131k bir gecede sulaktan kura\u011fa atlam\u0131yor. Y\u0131ll\u0131k sal\u0131n\u0131m d\u00f6rt basamak de\u011fil bir e\u011fri: en y\u00fcksek ilkbahar eriyi\u015finde, en d\u00fc\u015f\u00fck yaz sonunda, ve bir g\u00fcnde asla y\u00fczde yar\u0131mdan fazla oynam\u0131yor. Ya\u011fmur, yakla\u015f\u0131k bir bu\u00e7uk g\u00fcnde dolup bo\u015falan bir havza deposunu besliyor, b\u00f6ylece ya\u011f\u0131\u015fl\u0131 d\u00f6nem birikip s\u00f6n\u00fcyor.'],
@@ -7886,7 +7893,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.41.2';
+const GAME_VERSION='0.41.3';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
