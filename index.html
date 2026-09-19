@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.38.1</div>
+  <div class="t-ver" id="tVer">v0.38.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -297,6 +297,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 <div id="sideCol">
       <button class="rb" id="newsBtn" aria-label="What's new">📣<span class="badge" id="newsDot" hidden>!</span></button>
       <button class="rb" id="leadBtn" aria-label="Leaderboard">🏆</button>
+      <button class="rb" id="gridBtn" aria-label="Grid lines" hidden>🔌</button>
       <button class="rb" id="repBtn" aria-label="Finance report">📊</button>
       <button class="rb" id="infoBtn" aria-label="Tips">ℹ️<span class="badge" id="infoDot" hidden>!</span></button>
       <button class="rb zb" id="zIn" aria-label="Zoom in">＋</button>
@@ -395,6 +396,13 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <p id="lvlCur" style="font-size:12.5px;color:var(--soft);margin-top:8px"></p>
   <div class="btns"><button class="pri" id="lvlGo" hidden>Level up</button><button id="lvlSkip">Not now</button></div>
 </div></div>
+<div class="modal" id="mGrid"><div class="sheet tips">
+  <h2 id="gridTitle">Grid lines</h2>
+  <p id="gridSub"></p>
+  <div class="mgrid" id="gridCards"></div>
+  <div id="gridBody"></div>
+  <div class="btns"><button class="pri" id="gridClose" data-i18n="close">Close</button></div>
+</div></div>
 <div class="modal" id="mRep"><div class="sheet tips">
   <h2 id="repTitle">Finance report</h2>
   <div class="mgrid" id="repCards"></div>
@@ -475,7 +483,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.38.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.38.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -5326,15 +5334,6 @@ function update(dt){
       else{rp.gen=Math.max(0,plantCap(rp)-0.05);logLedger('repower',-c,codeOf(rp.id));floatTxt(rp.x,rp.y,L(`Repowered · ${Math.round(plantCap(rp)*100)}%`,`Yenilendi · %${Math.round(plantCap(rp)*100)}`));
         toast(L(`${codeOf(rp.id)} repowered for ₵${fmt(c)}. Ceiling now ${Math.round(plantCap(rp)*100)}%.`,`${codeOf(rp.id)} ₵${fmt(c)} karşılığında yenilendi. Tavanı artık %${Math.round(plantCap(rp)*100)}.`),'good');trackOnce('repowered');S.stats.repowered=(S.stats.repowered||0)+1;}}
   } else {repT=0;S.plants.forEach(p=>p.rep=0);}
-  {const gp=S.plants.find(p=>!p.broken&&!needsWork(p)&&canGrid(p)&&dist(P,p)<70);
-   if(gridLock&&(!gp||gp.id!==gridLock))gridLock=null;              // step away to buy the next level
-   if(gp&&gp.id!==gridLock&&!S.moving&&S.cash>=gridCost(gp)){
-     gridT=(gridT||0)+dt;gp.gT=gridT/2;
-     if(gridT>=2){const c=gridCost(gp);S.cash-=c;gp.grid=gridLvl(gp)+1;gp.gT=0;gridT=0;sfx.build();
-       logLedger('grid',-c,codeOf(gp.id));floatTxt(gp.x,gp.y,'-₵'+fmt(c));
-       toast(L(`${codeOf(gp.id)} grid line at level ${gridLvl(gp)}: ${Math.round(gridShare(gp)*100)}% of its output now sells itself.`,`${codeOf(gp.id)} şebeke hattı seviye ${gridLvl(gp)}: üretiminin %${Math.round(gridShare(gp)*100)}'i artık kendi satılıyor.`),'good');
-       gridLock=gp.id;trackOnce('gridline');}
-   } else {gridT=0;S.plants.forEach(p=>p.gT=0);}}
   const br=S.plants.find(p=>p.broken&&dist(P,p)<80);
   if(br&&!S.moving){const need=fixTime(br,1.2);fixT+=dt;br.fix=fixT/need;if(fixT>=need){doRepair(br,true);fixT=0;}}
   else{fixT=0;S.plants.forEach(p=>p.fix=0);}
@@ -6245,13 +6244,6 @@ function render(dt,now){
     if(p.fire>0){const fl=0.8+Math.sin(performance.now()/90)*0.2;
       const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y,(T.kind==='wind'?7*T.scale:2.6)*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
     if(snowPanel(p)>0.05)place('sn'+p.id,'wrench',p.x,p.y+6,1.6,p.clr>0?`🧹 ${Math.round(p.clr*100)}%`:`🌨️ ${Math.round(snowPanel(p)*100)}%`);
-    if(!p.broken&&!needsWork(p)&&has('gridline')){
-      const rt=gridLvl(p)>0?`<b class="gr" data-gr="${p.id}">${gridToIcon(p)}</b>`:'';
-      const txt=p.gT>0?`🔌 ${Math.round(p.gT*100)}%`
-        :canGrid(p)?`🔌 ${L('Lv','Sv')}${gridLvl(p)} · ₵${fmt(gridCost(p))} ${rt}`
-        :`🔌 ${Math.round(gridShare(p)*100)}% ${rt}`;
-      place('gl'+p.id,'wrench tapp',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,txt);
-    }
     if(!p.broken&&needsWork(p))place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,p.rep>0?`${canRebuild(p)?'🏗️':'♻️'} ${Math.round(p.rep*100)}%`:`${canRebuild(p)?'🏗️':'♻️'} ₵${fmt(canRebuild(p)?rebuildCost(p):repowerCost(p))}`);
   }
   // pads
@@ -6337,7 +6329,7 @@ function hud(dt){
   $('pnow').textContent='₵'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
   const G=GOALS[S.goal];const up=canLevel();$('goal').className='goal'+(up?' lvlup':'');$('goal').innerHTML=(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${L('Lv','Sv')}${lvl()}</b> · `)+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
-  $('leadBtn').hidden=!has('board');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
+  $('gridBtn').hidden=!has('gridline');$('leadBtn').hidden=!has('board');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
   document.querySelector('.market').style.visibility=has('price')?'':'hidden';
@@ -6956,17 +6948,49 @@ function doLevelUp(){
   trackOnce('level-up-'+lvl());
   openLevel();
 }
-document.getElementById('labels').addEventListener('click',e=>{
-  const g=e.target.closest('[data-gr]');if(!g)return;
-  const pl=S.plants.find(x=>x.id===g.dataset.gr);if(!pl)return;
-  pl.gto=gridTo(pl)==='bat'?'mkt':'bat';
-  if(pl.gto==='bat'&&!built('bat')){pl.gto='mkt';toast(L('Build the battery station first.','Önce batarya istasyonunu kur.'),'');return;}
-  sfx.pick();save();
-  toast(L(`${codeOf(pl.id)} line now goes to ${gridTo(pl)==='bat'?'the battery':'the nearest market'}.`,`${codeOf(pl.id)} hattı artık ${gridTo(pl)==='bat'?'bataryaya':'en yakın pazara'} gidiyor.`),'');
-});
+
 $('goal').onclick=()=>{if(!document.body.classList.contains('title'))openLevel();};
 $('lvlGo').onclick=doLevelUp;
 $('lvlSkip').onclick=()=>$('mLvl').classList.remove('on');
+function renderGrid(){
+  const pls=S.plants.filter(x=>PLANT_TYPES[x.type]);
+  const wired=pls.filter(x=>gridLvl(x)>0).length;
+  const avg=pls.length?pls.reduce((a,x)=>a+gridShare(x),0)/pls.length:0;
+  const toBat=pls.filter(x=>gridLvl(x)>0&&gridTo(x)==='bat').length;
+  $('gridTitle').textContent=L('Grid lines','Şebeke hatları');
+  $('gridSub').textContent=L('A line carries part of a plant\'s output by itself. Pick where it goes: straight to the market, or into the battery to wait for the peak.','Hat, santralin üretiminin bir kısmını kendi taşır. Nereye gideceğini sen seç: doğrudan pazara, ya da zirveyi beklemek için bataryaya.');
+  $('gridCards').innerHTML=[[L('Wired','Bağlı'),`${wired} / ${pls.length}`],
+    [L('Carried by line','Hatla taşınan'),`${Math.round(avg*100)}%`],
+    [L('To the battery','Bataryaya'),toBat],
+    [L('To a market','Pazara'),wired-toBat]]
+    .map(([k,v])=>`<div class="mcard"><small>${k}</small><b>${v}</b></div>`).join('');
+  $('gridBody').innerHTML=pls.map(x=>{
+    const T=PLANT_TYPES[x.type],lv=gridLvl(x),cost=gridCost(x),can=canGrid(x),afford=S.cash>=cost;
+    return `<div class="rule">
+      <div class="row1"><span>${codeOf(x.id)} ${tt(T.name)}</span><span class="val">${Math.round(gridShare(x)*100)}%</span></div>
+      <div class="scale"><span>${L('Line level','Hat seviyesi')} ${lv}/${GRIDMAX}</span><span>${L('of its output','üretiminin')}</span></div>
+      <div class="assign" style="grid-template-columns:1fr 1fr;margin-top:8px">
+        <button data-gto="${x.id}" class="${gridTo(x)==='bat'?'duty':''}"><small>${L('Sends to','Gönderdiği yer')}</small><b>${gridTo(x)==='bat'?'🔋 '+L('Battery','Batarya'):'🏙️ '+L('Nearest market','En yakın pazar')}</b></button>
+        <button data-gup="${x.id}" ${can&&afford?'':'disabled'}><small>${can?(afford?L('Upgrade','Yükselt'):L('Not enough cash','Para yetmiyor')):L('Maxed','Tamam')}</small><b>${can?'₵'+fmt(cost):L('Lv','Sv')+GRIDMAX}</b></button>
+      </div></div>`;}).join('')
+    ||`<p style="text-align:center">${L('No plants yet.','Henüz santral yok.')}</p>`;
+  $('gridBody').innerHTML+=`<div class="note">${L('A line sells at whatever the price is right then — it never fades and never waits, but it never catches the peak either. Sent to the battery it waits for you; if the tank is full it falls back to the market.','Hat o anki fiyattan satar — hiç sönmez, hiç beklemez, ama zirveyi de yakalamaz. Bataryaya giden seni bekler; tank doluysa pazara düşer.')}</div>`;
+}
+function openGridPanel(){renderGrid();$('mGrid').classList.add('on');trackOnce('grid-panel');}
+$('gridBtn').onclick=openGridPanel;
+$('gridClose').onclick=()=>$('mGrid').classList.remove('on');
+$('gridBody').addEventListener('click',e=>{
+  const t=e.target.closest('button[data-gto]');
+  if(t){const x=S.plants.find(q=>q.id===t.dataset.gto);if(!x)return;
+    if(gridTo(x)==='mkt'&&!built('bat')){toast(L('Build the battery station first.','Önce batarya istasyonunu kur.'),'');return;}
+    x.gto=gridTo(x)==='bat'?'mkt':'bat';sfx.pick();save();renderGrid();return;}
+  const u=e.target.closest('button[data-gup]');
+  if(u&&!u.disabled){const x=S.plants.find(q=>q.id===u.dataset.gup);if(!x||!canGrid(x))return;
+    const c=gridCost(x);if(S.cash<c)return;
+    S.cash-=c;x.grid=gridLvl(x)+1;sfx.build();logLedger('grid',-c,codeOf(x.id));
+    toast(L(`${codeOf(x.id)} line at level ${gridLvl(x)}: ${Math.round(gridShare(x)*100)}% of its output moves by itself.`,`${codeOf(x.id)} hattı seviye ${gridLvl(x)}: üretiminin %${Math.round(gridShare(x)*100)}'i kendi taşınıyor.`),'good');
+    trackOnce('gridline');save();renderGrid();}
+});
 function openMarkets(){
   const avg=todayAvg(),h=Math.floor(hourNow())%24,t=hourNow(),P={x:S.px,y:S.py};
   const rows=markets().map(m=>{
@@ -7012,6 +7036,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.38.2',t:['Grid lines get their own screen','Şebeke hatlarına kendi ekranı'],l:[['The floating label over each plant is gone. The 🔌 button opens a grid screen like the crew plan: every plant on one card with its line level, its share of output, where it sends and an upgrade button.','Santrallerin üstündeki etiket kalktı. 🔌 butonu ekip planı gibi bir şebeke ekranı açıyor: her santral tek kartta — hat seviyesi, üretimden aldığı pay, gönderdiği yer ve yükseltme butonu.'],['Upgrading no longer means standing next to the plant. Do it from the screen, for any plant, from anywhere.','Yükseltmek için artık santralin yanında beklemek gerekmiyor. Ekrandan, hangi santral olursa olsun, nerede olursan ol.']]},
  {v:'0.38.1',t:['Pick where the line goes','Hattın nereye gideceğini seç'],l:[['Each grid line now carries a destination chip next to it. Tap 🏙️ / 🔋 to switch that plant between selling into the nearest market and filling the nearest battery.','Her şebeke hattının yanında bir hedef rozeti var. 🏙️ / 🔋 rozetine dokunarak o santrali en yakın pazara satmak ile en yakın bataryayı doldurmak arasında değiştir.'],['Sent to the battery, the energy waits for the peak instead of selling at whatever the price is. If the tank is full it falls back to the market so nothing is lost.','Bataryaya giden enerji, o anki fiyattan satılmak yerine zirveyi bekler. Tank doluysa pazara düşer, hiçbir şey kaybolmaz.']]},
  {v:'0.38.0',t:['Grid line per plant','Santral başına şebeke hattı'],l:[['Every plant can now be wired to the grid. Stand next to it and hold: level 1, 2 and 3 each send 15% more of that plant\'s output straight to the nearest market, up to 45% — no carrying at all.','Artık her santral şebekeye bağlanabiliyor. Yanında dur ve bekle: 1., 2. ve 3. seviye o santralin üretiminin %15\'ini daha doğrudan en yakın pazara gönderiyor, toplamda %45\'e kadar — hiç taşımadan.'],['The line sells whenever energy is produced, at whatever the price is right then. It never fades and never waits, but it also never catches the peak — the rest of the output is still yours to time.','Hat, enerji üretildikçe o anki fiyattan satar. Hiç sönmez, hiç beklemez; ama zirveyi de hiç yakalamaz — üretimin geri kalanını zamanlamak yine sana kalıyor.'],['Cost doubles at each level and each level needs you to step away and come back.','Maliyet her seviyede ikiye katlanıyor ve her seviye için uzaklaşıp geri gelmen gerekiyor.']]},
  {v:'0.37.3',t:['Leaderboard is always open','Liderlik her zaman açık'],l:[['The leaderboard and the friend system no longer wait for a level — they are there from the first minute. Level 16 keeps its perk and opens nothing.','Liderlik tablosu ve arkadaş sistemi artık seviye beklemiyor, ilk dakikadan açık. 16. seviye avantajını koruyor ama bir şey açmıyor.']]},
@@ -7560,7 +7585,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.38.1';
+const GAME_VERSION='0.38.2';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
