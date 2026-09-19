@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.38.2</div>
+  <div class="t-ver" id="tVer">v0.39.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -483,7 +483,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.38.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.39.0 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4840,22 +4840,22 @@ const OPENTXT={
 const LEVELS=[null,
  {need:0,      t:['Hauler','Hamal'],              open:null,      hard:null, perk:null},
  {need:150,    t:['Price reader','Fiyat okuru'],  open:'price',   hard:null, perk:{price:0.03}},
- {need:500,    t:['Builder','İnşaatçı'],          open:'build',   hard:null, perk:{build:-0.05}},
- {need:1500,   t:['Fleet','Filo'],                open:'codes',   hard:null, perk:{carry:2}},
- {need:4000,   t:['Outfitter','Teçhizat'],        open:'upgrades',hard:null, perk:{speed:0.08}},
- {need:10000,  t:['Storage','Depolama'],          open:'battery', hard:null, perk:{price:0.03}},
- {need:20000,  t:['Trader','Tüccar'],             open:'markets', hard:null, perk:{build:-0.05}},
- {need:35000,  t:['Exposed','Piyasaya açık'],     open:'cards',   hard:['Events and decision cards','Olaylar ve karar kartları'], perk:{carry:2}},
- {need:60000,  t:['Employer','İşveren'],          open:'crew',    hard:null, perk:{speed:0.08}},
- {need:100000, t:['Manager','Yönetici'],          open:'roles',   hard:null, perk:{price:0.04}},
- {need:175000, t:['Regional','Bölgesel'],         open:'regions', hard:null, perk:{build:-0.05}},
- {need:300000, t:['Maintainer','Bakımcı'],        open:'repair',  hard:['Plants break down and repairs cost money','Santraller bozulur, tamir para götürür'], perk:{carry:3}},
- {need:500000, t:['Responder','Müdahaleci'],      open:'fire',    hard:['Lightning and wear start fires','Yıldırım ve yıpranma yangın çıkarır'], perk:{speed:0.08}},
- {need:800000, t:['Shift boss','Vardiya amiri'],  open:'shifts',  hard:['Crew works three shifts — only a third is on duty at any hour','Ekip üç vardiya çalışır — her saatte sadece üçte biri görevde'], perk:{price:0.05}},
- {need:1300000,t:['Asset owner','Varlık sahibi'], open:'ageing',  hard:['Plants wear out and need repowering','Santraller yıpranır, yenileme ister'], perk:{build:-0.10}},
- {need:2000000,t:['Investor','Yatırımcı'],        open:null,      hard:null, perk:{carry:3}},
- {need:3200000,t:['HR','İnsan kaynakları'],       open:'skills',  hard:['Helpers draw a daily wage and severance','Yardımcılar günlük ücret ve kıdem alır'], perk:{price:0.06}},
- {need:5000000,t:['Grid player','Şebeke oyuncusu'],open:'grid',   hard:null, perk:{speed:0.10}},
+ {need:400,    t:['Builder','İnşaatçı'],          open:'build',   hard:null, perk:{build:-0.05}},
+ {need:900,    t:['Fleet','Filo'],                open:'codes',   hard:null, perk:{carry:2}},
+ {need:1800,   t:['Outfitter','Teçhizat'],        open:'upgrades',hard:null, perk:{speed:0.08}},
+ {need:3200,   t:['Storage','Depolama'],          open:'battery', hard:null, perk:{price:0.03}},
+ {need:5000,   t:['Employer','İşveren'],          open:'crew',    hard:null, perk:{speed:0.08}},
+ {need:8000,   t:['Trader','Tüccar'],             open:'markets', hard:null, perk:{build:-0.05}},
+ {need:12000,  t:['Exposed','Piyasaya açık'],     open:'cards',   hard:['Events and decision cards','Olaylar ve karar kartları'], perk:{carry:2}},
+ {need:18000,  t:['Manager','Yönetici'],          open:'roles',   hard:null, perk:{price:0.04}},
+ {need:30000,  t:['Regional','Bölgesel'],         open:'regions', hard:null, perk:{build:-0.05}},
+ {need:55000,  t:['Maintainer','Bakımcı'],        open:'repair',  hard:['Plants break down and repairs cost money','Santraller bozulur, tamir para götürür'], perk:{carry:3}},
+ {need:90000,  t:['Responder','Müdahaleci'],      open:'fire',    hard:['Lightning and wear start fires','Yıldırım ve yıpranma yangın çıkarır'], perk:{speed:0.08}},
+ {need:150000, t:['Shift boss','Vardiya amiri'],  open:'shifts',  hard:['Crew works three shifts — only a third is on duty at any hour','Ekip üç vardiya çalışır — her saatte sadece üçte biri görevde'], perk:{price:0.05}},
+ {need:260000, t:['Asset owner','Varlık sahibi'], open:'ageing',  hard:['Plants wear out and need repowering','Santraller yıpranır, yenileme ister'], perk:{build:-0.10}},
+ {need:450000, t:['Investor','Yatırımcı'],        open:null,      hard:null, perk:{carry:3}},
+ {need:800000, t:['HR','İnsan kaynakları'],       open:'skills',  hard:['Helpers draw a daily wage and severance','Yardımcılar günlük ücret ve kıdem alır'], perk:{price:0.06}},
+ {need:1400000,t:['Grid player','Şebeke oyuncusu'],open:'grid',   hard:null, perk:{speed:0.10}},
 ];
 const MAXLVL=LEVELS.length-1;
 function lvl(){return Math.max(1,Math.min(MAXLVL,S.lvl||1));}
@@ -7036,6 +7036,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.39.0',t:['Levels come twice as fast','Seviyeler iki kat hızlı'],l:[['A simulated beginner showed the gaps doubling every level: level 2 at 1.7 minutes but the battery — the heart of the game — at 43 minutes, and helpers hours away. Thresholds are rebuilt so the battery lands around 18 minutes and helpers around 25.','Simüle edilmiş bir yeni oyuncu, aralıkların her seviyede ikiye katlandığını gösterdi: 2. seviye 1,7 dakikada ama oyunun kalbi olan batarya 43. dakikada, yardımcılar saatler sonra. Eşikler yeniden kuruldu: batarya ~18, yardımcılar ~25 dakikada.'],['Helpers moved ahead of markets and events, so automation arrives before the market gets complicated.','Yardımcılar pazarların ve olayların önüne alındı; otomasyon, piyasa karmaşıklaşmadan geliyor.']]},
  {v:'0.38.2',t:['Grid lines get their own screen','Şebeke hatlarına kendi ekranı'],l:[['The floating label over each plant is gone. The 🔌 button opens a grid screen like the crew plan: every plant on one card with its line level, its share of output, where it sends and an upgrade button.','Santrallerin üstündeki etiket kalktı. 🔌 butonu ekip planı gibi bir şebeke ekranı açıyor: her santral tek kartta — hat seviyesi, üretimden aldığı pay, gönderdiği yer ve yükseltme butonu.'],['Upgrading no longer means standing next to the plant. Do it from the screen, for any plant, from anywhere.','Yükseltmek için artık santralin yanında beklemek gerekmiyor. Ekrandan, hangi santral olursa olsun, nerede olursan ol.']]},
  {v:'0.38.1',t:['Pick where the line goes','Hattın nereye gideceğini seç'],l:[['Each grid line now carries a destination chip next to it. Tap 🏙️ / 🔋 to switch that plant between selling into the nearest market and filling the nearest battery.','Her şebeke hattının yanında bir hedef rozeti var. 🏙️ / 🔋 rozetine dokunarak o santrali en yakın pazara satmak ile en yakın bataryayı doldurmak arasında değiştir.'],['Sent to the battery, the energy waits for the peak instead of selling at whatever the price is. If the tank is full it falls back to the market so nothing is lost.','Bataryaya giden enerji, o anki fiyattan satılmak yerine zirveyi bekler. Tank doluysa pazara düşer, hiçbir şey kaybolmaz.']]},
  {v:'0.38.0',t:['Grid line per plant','Santral başına şebeke hattı'],l:[['Every plant can now be wired to the grid. Stand next to it and hold: level 1, 2 and 3 each send 15% more of that plant\'s output straight to the nearest market, up to 45% — no carrying at all.','Artık her santral şebekeye bağlanabiliyor. Yanında dur ve bekle: 1., 2. ve 3. seviye o santralin üretiminin %15\'ini daha doğrudan en yakın pazara gönderiyor, toplamda %45\'e kadar — hiç taşımadan.'],['The line sells whenever energy is produced, at whatever the price is right then. It never fades and never waits, but it also never catches the peak — the rest of the output is still yours to time.','Hat, enerji üretildikçe o anki fiyattan satar. Hiç sönmez, hiç beklemez; ama zirveyi de hiç yakalamaz — üretimin geri kalanını zamanlamak yine sana kalıyor.'],['Cost doubles at each level and each level needs you to step away and come back.','Maliyet her seviyede ikiye katlanıyor ve her seviye için uzaklaşıp geri gelmen gerekiyor.']]},
@@ -7585,7 +7586,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.38.2';
+const GAME_VERSION='0.39.0';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
