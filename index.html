@@ -73,7 +73,7 @@ html,body{height:100%;overflow:hidden;background:#3B7A4A;font-family:var(--body)
 body.title #sideCol{visibility:hidden}
 #mini{position:fixed;left:10px;top:150px;width:74px;height:106px;border-radius:12px;box-shadow:0 4px 10px rgba(10,20,10,.35);pointer-events:auto;z-index:4;background:transparent}
 body.title #mini{visibility:hidden}
-#mMap canvas{max-width:92vw;max-height:84vh;border-radius:18px;border:3px solid #fff}
+#mMap canvas{max-width:92vw;max-height:78vh;border-radius:18px;border:3px solid #fff}
 #flashOv{position:fixed;inset:0;background:#EAF2FF;opacity:0;pointer-events:none;z-index:3;transition:opacity .08s linear}
 #toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 150px);width:min(440px,calc(100% - 24px));display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:5}
 .toast{background:rgba(29,36,51,.94);color:#fff;border-radius:14px;padding:9px 13px;font-family:var(--disp);font-size:14px;font-weight:400;text-align:center;animation:tin .25s ease-out}
@@ -83,9 +83,11 @@ body.title #mini{visibility:hidden}
 #joy{position:fixed;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.6);pointer-events:none;display:none}
 #knob{position:absolute;left:31px;top:31px;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.9);box-shadow:0 3px 0 rgba(0,0,0,.2)}
 .help{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 22px);color:#fff;font-family:var(--disp);font-size:18px;text-shadow:0 2px 3px rgba(0,0,0,.5);pointer-events:none;text-align:center;width:90%;font-weight:400}
-.modal{position:fixed;inset:0;background:rgba(10,16,30,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:30}
+.modal{position:fixed;inset:0;background:rgba(10,16,30,.55);display:none;align-items:center;justify-content:center;z-index:30;padding:calc(12px + env(safe-area-inset-top)) 14px calc(12px + env(safe-area-inset-bottom));touch-action:pan-y;overscroll-behavior:contain}
 .modal.on{display:flex}
-.sheet{background:#fff;color:#1D2433;border-radius:22px;padding:18px;width:min(420px,100%);max-height:92vh;overflow:auto;text-align:center;box-shadow:0 6px 0 rgba(0,0,0,.2)}
+.sheet{background:#fff;color:#1D2433;border-radius:22px;padding:18px;width:min(420px,100%);max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;text-align:center;box-shadow:0 6px 0 rgba(0,0,0,.2)}
+@supports(height:100dvh){.sheet{max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
+.sheet>.btns:last-of-type{padding-bottom:2px}
 .sheet h2{font-family:var(--disp);font-size:26px;font-weight:400;margin-bottom:4px;color:#1D2433}
 .sheet p{color:#4A5568;font-size:14px;margin:4px 0}
 .sheet .amt{font-family:var(--disp);font-size:36px;margin:8px 0;font-weight:400}
@@ -263,7 +265,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.37.1</div>
+  <div class="t-ver" id="tVer">v0.37.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -471,7 +473,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.37.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.37.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4825,7 +4827,7 @@ const LEVELS=[null,
  {need:500000, t:['Responder','Müdahaleci'],      open:'fire',    hard:['Lightning and wear start fires','Yıldırım ve yıpranma yangın çıkarır'], perk:{speed:0.08}},
  {need:800000, t:['Shift boss','Vardiya amiri'],  open:'shifts',  hard:['Crew works three shifts — only a third is on duty at any hour','Ekip üç vardiya çalışır — her saatte sadece üçte biri görevde'], perk:{price:0.05}},
  {need:1300000,t:['Asset owner','Varlık sahibi'], open:'ageing',  hard:['Plants wear out and need repowering','Santraller yıpranır, yenileme ister'], perk:{build:-0.10}},
- {need:2000000,t:['Public','Halka açık'],         open:'board',   hard:null, perk:{carry:3}},
+ {need:2000000,t:['Investor','Yatırımcı'],        open:null,      hard:null, perk:{carry:3}},
  {need:3200000,t:['HR','İnsan kaynakları'],       open:'skills',  hard:['Helpers draw a daily wage and severance','Yardımcılar günlük ücret ve kıdem alır'], perk:{price:0.06}},
  {need:5000000,t:['Grid player','Şebeke oyuncusu'],open:'grid',   hard:null, perk:{speed:0.10}},
 ];
@@ -4835,6 +4837,7 @@ function nextLvl(){return lvl()<MAXLVL?LEVELS[lvl()+1]:null;}
 function canLevel(){const n=nextLvl();return !!n&&wealth()>=n.need;}
 const UNLOCK={};for(let i=1;i<LEVELS.length;i++)if(LEVELS[i].open)UNLOCK[LEVELS[i].open]=i;
 UNLOCK.tips=UNLOCK.upgrades;UNLOCK.report=UNLOCK.roles;UNLOCK.report2=UNLOCK.repair;UNLOCK.report3=UNLOCK.shifts;
+UNLOCK.board=0;                       // leaderboard and friends are never level-gated
 function has(k){return lvl()>=(UNLOCK[k]||0);}
 function perk(kind){
   let v=kind==='carry'?0:1;
@@ -6962,6 +6965,8 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.37.3',t:['Leaderboard is always open','Liderlik her zaman açık'],l:[['The leaderboard and the friend system no longer wait for a level — they are there from the first minute. Level 16 keeps its perk and opens nothing.','Liderlik tablosu ve arkadaş sistemi artık seviye beklemiyor, ilk dakikadan açık. 16. seviye avantajını koruyor ama bir şey açmıyor.']]},
+ {v:'0.37.2',t:['iPhone: panels scroll again','iPhone: paneller kayıyor'],l:[['On iPhone the bottom button of a long panel could not be reached: the page-wide touch-action rule was inherited by the panels, so they refused to scroll, and the 92vh height ignored Safari\'s bottom bar. Panels now scroll by touch, sit inside the safe area and are sized in dvh.','iPhone\'da uzun panellerin en alttaki butonuna ulaşılamıyordu: sayfa genelindeki dokunma kuralı panellere de miras kalıyor, panel kaymıyordu; ayrıca 92vh yüksekliği Safari\'nin alt çubuğunu saymıyordu. Paneller artık parmakla kayıyor, güvenli alanın içinde duruyor ve dvh ile ölçülüyor.']]},
  {v:'0.37.1',t:['Events state their numbers','Olaylar sayısını söylüyor'],l:[['An event announcement now spells out exactly what it does: which way the price moves, by how much, in which hours, what happens to solar or wind output, and how many days it lasts. The line is generated from the event\'s own numbers, so it can never drift from what actually happens.','Olay duyurusu artık ne yaptığını tam olarak yazıyor: fiyat hangi yöne, ne kadar, hangi saatlerde, güneş veya rüzgâr üretimine ne oluyor ve kaç gün sürüyor. Satır olayın kendi sayılarından üretiliyor, yani gerçekte olanla asla ayrışamaz.'],['The banner during the event carries the headline effect instead of just a countdown.','Olay sürerken şerit sadece geri sayım değil, ana etkiyi de taşıyor.']]},
  {v:'0.37.0',t:['Levels are yours to take','Seviyeyi sen alırsın'],l:[['Levels no longer happen to you. Total wealth unlocks the offer; the banner starts glowing and you decide when to take it.','Seviye artık kendiliğinden atlanmıyor. Toplam servet teklifi açar; hedef şeridi yanıp söner ve ne zaman alacağına sen karar verirsin.'],['Every level card states three things before you accept: what opens, what gets harder, and what you gain.','Her seviye kartı kabul etmeden önce üç şeyi yazar: ne açılıyor, ne zorlaşıyor, ne kazanıyorsun.'],['Hard systems are opt-in: events at 8, breakdowns at 12, fire at 13, shifts at 14, ageing at 15, wages at 17. Stay where you are as long as you like.','Zor sistemler senin tercihin: olaylar 8, arızalar 12, yangın 13, vardiyalar 14, yaşlanma 15, ücretler 17. İstediğin kadar bulunduğun seviyede kal.'],['Each level pays a permanent perk — sale price, build cost, carry capacity or walk speed. At level 18 that is +23% price, −23% build cost, +10 carry and +39% speed.','Her seviye kalıcı bir avantaj verir — satış fiyatı, inşaat maliyeti, taşıma kapasitesi veya yürüme hızı. 18. seviyede toplam +%23 fiyat, −%23 inşaat, +10 taşıma ve +%39 hız.'],['Tap the goal banner any time to see your level, your perks and what the next one costs.','Hedef şeridine istediğin an dokun: seviyen, avantajların ve bir sonrakinin bedeli.']]},
  {v:'0.36.0',t:['Levels','Seviyeler'],l:[['The goal chain is now a level track with 18 levels, and every level opens exactly one thing. Everything not yet opened is hidden, so a new player sees one wallet, one price box and one goal instead of every system at once.','Hedef zinciri artık 18 seviyelik bir ilerleme; her seviye tam olarak bir şey açıyor. Açılmamış hiçbir şey ekranda görünmüyor — yeni oyuncu her sistemi birden değil, tek cüzdan, tek fiyat kutusu ve tek hedef görüyor.'],['Level-up shows a card: the level, what opened and what to do next.','Seviye atlayınca kart çıkıyor: seviye, ne açıldı ve sırada ne var.'],['Anyone already playing keeps every feature — the gates only apply to a brand-new game.','Hâlihazırda oynayan herkes tüm özellikleri korur — kapılar yalnızca sıfırdan başlayan oyuna uygulanır.'],['Settings is two levels deep now: Game, Account, Display and Save data on the first screen, the details one tap in.','Ayarlar artık iki kat: ilk ekranda Oyun, Hesap, Görüntü ve Kayıt verisi, detaylar bir dokunuş içeride.']]},
@@ -7506,7 +7511,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.37.1';
+const GAME_VERSION='0.37.3';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
