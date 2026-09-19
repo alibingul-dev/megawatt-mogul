@@ -160,6 +160,8 @@ body.title #mini{visibility:hidden}
 .warn{font-size:12px;color:var(--peak);font-weight:800;margin-top:4px}
 .assign button.duty{background:#E1F4EA;border:2px solid #23B26D}
 .role-desc{font-size:12.5px;color:var(--soft);margin-top:5px;min-height:18px}
+.lb.tapp{pointer-events:auto}
+.gr{display:inline-block;background:#fff;color:#1D2433;border-radius:8px;padding:0 5px;margin-left:3px}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .chip{background:#ECEAFF;color:#3B30C4;border:2px solid #C9C2FF;border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:800}
 .chip span{color:#6A5CFF}
@@ -265,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.37.3</div>
+  <div class="t-ver" id="tVer">v0.38.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -473,7 +475,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.37.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.38.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4653,6 +4655,22 @@ function priceAt(m){
   return Math.max(1,basePrice(Math.floor(t)%24,t)*m.mult/(1+0.5*marketSat(m)*(ev&&ev.sat||1)));
 }
 function nearestMarket(o){return markets().sort((a,b)=>dist(o,a)-dist(o,b))[0];}
+/* ---- per-plant grid connection: a share of this plant's output goes straight to the
+       nearest market, no carrying. It sells at whatever the price is right then. ---- */
+const GRIDMAX=3, GRIDSHARE=0.15;                      // 15% of output per level
+function gridLvl(p){return Math.min(GRIDMAX,p.grid||0);}
+function gridShare(p){return gridLvl(p)*GRIDSHARE;}
+function gridCost(p){const pd=pad(p.id),base=(pd&&pd.cost?pd.cost:100);return Math.round(base*0.8*Math.pow(2.1,gridLvl(p)));}
+function canGrid(p){return has('gridline')&&gridLvl(p)<GRIDMAX;}
+function gridTo(p){return (p.gto==='bat'&&built('bat'))?'bat':'mkt';}
+function gridToIcon(p){return gridTo(p)==='bat'?'🔋':'🏙️';}
+function gridDeliver(p){                               // one cell down the line
+  if(gridTo(p)==='bat'){
+    const D=depotsOn().sort((a,b)=>dist(p,a)-dist(p,b))[0],each=batCapEach();
+    if(D&&batAt(D.id)<each){batSet(D.id,batAt(D.id)+1);S.stats.stored=(S.stats.stored||0)+1;return;}
+  }
+  sellCell(p.x,p.y,false,false,nearestMarket(p),false);
+}
 const HQ={x:280,y:620};
 const HQ_DOOR={x:HQ.x,y:HQ.y+34};                 // off-shift crew waits inside here
 const BAT={x:1090,y:640,store:{x:1020,y:775},take:{x:1160,y:775}};
@@ -4838,6 +4856,7 @@ function canLevel(){const n=nextLvl();return !!n&&wealth()>=n.need;}
 const UNLOCK={};for(let i=1;i<LEVELS.length;i++)if(LEVELS[i].open)UNLOCK[LEVELS[i].open]=i;
 UNLOCK.tips=UNLOCK.upgrades;UNLOCK.report=UNLOCK.roles;UNLOCK.report2=UNLOCK.repair;UNLOCK.report3=UNLOCK.shifts;
 UNLOCK.board=0;                       // leaderboard and friends are never level-gated
+UNLOCK.gridline=UNLOCK.regions;       // per-plant grid lines arrive with the far fields
 function has(k){return lvl()>=(UNLOCK[k]||0);}
 function perk(kind){
   let v=kind==='carry'?0:1;
@@ -5202,7 +5221,7 @@ function syncHelpers(){
   if(S.crew.sites)S.crew.sites.length=Math.min(S.crew.sites.length,S.up.helper);
   if(S.crew.mkts)S.crew.mkts.length=Math.min(S.crew.mkts.length,S.up.helper);
 }
-let clearT=0,repT=0,batFixT=0,refurbT=0,padLock=null,standPad=null,standT=0,fixT=0,cellTick=0,sellTick=0,batTick=0,gridTick=0;
+let clearT=0,repT=0,gridT=0,gridLock=null,batFixT=0,refurbT=0,padLock=null,standPad=null,standT=0,fixT=0,cellTick=0,sellTick=0,batTick=0,gridTick=0;
 function update(dt){
   const tscale=(tutOpen||cardOpen)?0:S.speed;
   const t0=hourNow();S.t+=dt*tscale;
@@ -5235,7 +5254,11 @@ function update(dt){
   for(const p of S.plants){
     const T=PLANT_TYPES[p.type];if(!T||p.broken||p.fire)continue;
     const cf=T.kind==='wind'?windCF(t):solarShape(t)*solarMult()*sheepBonus(p)*snowMult(p);
-    p.acc+=T.rate*plantGen(p)*cf*gdt;while(p.acc>=1){p.acc-=1;if(p.pile<T.max)pileAdd(p);else logLoss(1);}
+    p.acc+=T.rate*plantGen(p)*cf*gdt;
+    while(p.acc>=1){p.acc-=1;
+      if(gridLvl(p)>0){p.gacc=(p.gacc||0)+gridShare(p);
+        if(p.gacc>=1){p.gacc-=1;gridDeliver(p);continue;}}
+      if(p.pile<T.max)pileAdd(p);else logLoss(1);}
     p.spin=(p.spin||0)+gdt*(0.6+cf*6);
     if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):0.6)){p.broken=true;p.brokenAt=gameNow();const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
@@ -5303,6 +5326,15 @@ function update(dt){
       else{rp.gen=Math.max(0,plantCap(rp)-0.05);logLedger('repower',-c,codeOf(rp.id));floatTxt(rp.x,rp.y,L(`Repowered · ${Math.round(plantCap(rp)*100)}%`,`Yenilendi · %${Math.round(plantCap(rp)*100)}`));
         toast(L(`${codeOf(rp.id)} repowered for ₵${fmt(c)}. Ceiling now ${Math.round(plantCap(rp)*100)}%.`,`${codeOf(rp.id)} ₵${fmt(c)} karşılığında yenilendi. Tavanı artık %${Math.round(plantCap(rp)*100)}.`),'good');trackOnce('repowered');S.stats.repowered=(S.stats.repowered||0)+1;}}
   } else {repT=0;S.plants.forEach(p=>p.rep=0);}
+  {const gp=S.plants.find(p=>!p.broken&&!needsWork(p)&&canGrid(p)&&dist(P,p)<70);
+   if(gridLock&&(!gp||gp.id!==gridLock))gridLock=null;              // step away to buy the next level
+   if(gp&&gp.id!==gridLock&&!S.moving&&S.cash>=gridCost(gp)){
+     gridT=(gridT||0)+dt;gp.gT=gridT/2;
+     if(gridT>=2){const c=gridCost(gp);S.cash-=c;gp.grid=gridLvl(gp)+1;gp.gT=0;gridT=0;sfx.build();
+       logLedger('grid',-c,codeOf(gp.id));floatTxt(gp.x,gp.y,'-₵'+fmt(c));
+       toast(L(`${codeOf(gp.id)} grid line at level ${gridLvl(gp)}: ${Math.round(gridShare(gp)*100)}% of its output now sells itself.`,`${codeOf(gp.id)} şebeke hattı seviye ${gridLvl(gp)}: üretiminin %${Math.round(gridShare(gp)*100)}'i artık kendi satılıyor.`),'good');
+       gridLock=gp.id;trackOnce('gridline');}
+   } else {gridT=0;S.plants.forEach(p=>p.gT=0);}}
   const br=S.plants.find(p=>p.broken&&dist(P,p)<80);
   if(br&&!S.moving){const need=fixTime(br,1.2);fixT+=dt;br.fix=fixT/need;if(fixT>=need){doRepair(br,true);fixT=0;}}
   else{fixT=0;S.plants.forEach(p=>p.fix=0);}
@@ -6213,6 +6245,13 @@ function render(dt,now){
     if(p.fire>0){const fl=0.8+Math.sin(performance.now()/90)*0.2;
       const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y,(T.kind==='wind'?7*T.scale:2.6)*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
     if(snowPanel(p)>0.05)place('sn'+p.id,'wrench',p.x,p.y+6,1.6,p.clr>0?`🧹 ${Math.round(p.clr*100)}%`:`🌨️ ${Math.round(snowPanel(p)*100)}%`);
+    if(!p.broken&&!needsWork(p)&&has('gridline')){
+      const rt=gridLvl(p)>0?`<b class="gr" data-gr="${p.id}">${gridToIcon(p)}</b>`:'';
+      const txt=p.gT>0?`🔌 ${Math.round(p.gT*100)}%`
+        :canGrid(p)?`🔌 ${L('Lv','Sv')}${gridLvl(p)} · ₵${fmt(gridCost(p))} ${rt}`
+        :`🔌 ${Math.round(gridShare(p)*100)}% ${rt}`;
+      place('gl'+p.id,'wrench tapp',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,txt);
+    }
     if(!p.broken&&needsWork(p))place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,p.rep>0?`${canRebuild(p)?'🏗️':'♻️'} ${Math.round(p.rep*100)}%`:`${canRebuild(p)?'🏗️':'♻️'} ₵${fmt(canRebuild(p)?rebuildCost(p):repowerCost(p))}`);
   }
   // pads
@@ -6917,6 +6956,14 @@ function doLevelUp(){
   trackOnce('level-up-'+lvl());
   openLevel();
 }
+document.getElementById('labels').addEventListener('click',e=>{
+  const g=e.target.closest('[data-gr]');if(!g)return;
+  const pl=S.plants.find(x=>x.id===g.dataset.gr);if(!pl)return;
+  pl.gto=gridTo(pl)==='bat'?'mkt':'bat';
+  if(pl.gto==='bat'&&!built('bat')){pl.gto='mkt';toast(L('Build the battery station first.','Önce batarya istasyonunu kur.'),'');return;}
+  sfx.pick();save();
+  toast(L(`${codeOf(pl.id)} line now goes to ${gridTo(pl)==='bat'?'the battery':'the nearest market'}.`,`${codeOf(pl.id)} hattı artık ${gridTo(pl)==='bat'?'bataryaya':'en yakın pazara'} gidiyor.`),'');
+});
 $('goal').onclick=()=>{if(!document.body.classList.contains('title'))openLevel();};
 $('lvlGo').onclick=doLevelUp;
 $('lvlSkip').onclick=()=>$('mLvl').classList.remove('on');
@@ -6965,6 +7012,8 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.38.1',t:['Pick where the line goes','Hattın nereye gideceğini seç'],l:[['Each grid line now carries a destination chip next to it. Tap 🏙️ / 🔋 to switch that plant between selling into the nearest market and filling the nearest battery.','Her şebeke hattının yanında bir hedef rozeti var. 🏙️ / 🔋 rozetine dokunarak o santrali en yakın pazara satmak ile en yakın bataryayı doldurmak arasında değiştir.'],['Sent to the battery, the energy waits for the peak instead of selling at whatever the price is. If the tank is full it falls back to the market so nothing is lost.','Bataryaya giden enerji, o anki fiyattan satılmak yerine zirveyi bekler. Tank doluysa pazara düşer, hiçbir şey kaybolmaz.']]},
+ {v:'0.38.0',t:['Grid line per plant','Santral başına şebeke hattı'],l:[['Every plant can now be wired to the grid. Stand next to it and hold: level 1, 2 and 3 each send 15% more of that plant\'s output straight to the nearest market, up to 45% — no carrying at all.','Artık her santral şebekeye bağlanabiliyor. Yanında dur ve bekle: 1., 2. ve 3. seviye o santralin üretiminin %15\'ini daha doğrudan en yakın pazara gönderiyor, toplamda %45\'e kadar — hiç taşımadan.'],['The line sells whenever energy is produced, at whatever the price is right then. It never fades and never waits, but it also never catches the peak — the rest of the output is still yours to time.','Hat, enerji üretildikçe o anki fiyattan satar. Hiç sönmez, hiç beklemez; ama zirveyi de hiç yakalamaz — üretimin geri kalanını zamanlamak yine sana kalıyor.'],['Cost doubles at each level and each level needs you to step away and come back.','Maliyet her seviyede ikiye katlanıyor ve her seviye için uzaklaşıp geri gelmen gerekiyor.']]},
  {v:'0.37.3',t:['Leaderboard is always open','Liderlik her zaman açık'],l:[['The leaderboard and the friend system no longer wait for a level — they are there from the first minute. Level 16 keeps its perk and opens nothing.','Liderlik tablosu ve arkadaş sistemi artık seviye beklemiyor, ilk dakikadan açık. 16. seviye avantajını koruyor ama bir şey açmıyor.']]},
  {v:'0.37.2',t:['iPhone: panels scroll again','iPhone: paneller kayıyor'],l:[['On iPhone the bottom button of a long panel could not be reached: the page-wide touch-action rule was inherited by the panels, so they refused to scroll, and the 92vh height ignored Safari\'s bottom bar. Panels now scroll by touch, sit inside the safe area and are sized in dvh.','iPhone\'da uzun panellerin en alttaki butonuna ulaşılamıyordu: sayfa genelindeki dokunma kuralı panellere de miras kalıyor, panel kaymıyordu; ayrıca 92vh yüksekliği Safari\'nin alt çubuğunu saymıyordu. Paneller artık parmakla kayıyor, güvenli alanın içinde duruyor ve dvh ile ölçülüyor.']]},
  {v:'0.37.1',t:['Events state their numbers','Olaylar sayısını söylüyor'],l:[['An event announcement now spells out exactly what it does: which way the price moves, by how much, in which hours, what happens to solar or wind output, and how many days it lasts. The line is generated from the event\'s own numbers, so it can never drift from what actually happens.','Olay duyurusu artık ne yaptığını tam olarak yazıyor: fiyat hangi yöne, ne kadar, hangi saatlerde, güneş veya rüzgâr üretimine ne oluyor ve kaç gün sürüyor. Satır olayın kendi sayılarından üretiliyor, yani gerçekte olanla asla ayrışamaz.'],['The banner during the event carries the headline effect instead of just a countdown.','Olay sürerken şerit sadece geri sayım değil, ana etkiyi de taşıyor.']]},
@@ -7511,7 +7560,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.37.3';
+const GAME_VERSION='0.38.1';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
