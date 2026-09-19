@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.39.0</div>
+  <div class="t-ver" id="tVer">v0.40.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -483,7 +483,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.39.0 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.40.0 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4693,7 +4693,26 @@ const PLANT_TYPES={
   solar:{name:['Solar panel','Güneş paneli'],kind:'solar',rate:0.75,max:12,scale:1},
   bigwind:{name:['Big turbine','Büyük türbin'],kind:'wind',rate:2.2,max:24,scale:1.6},
   solarfarm:{name:['Solar farm','Güneş çiftliği'],kind:'solar',rate:4.5,max:36,scale:1},
+  river:{name:['Run-of-river','Akarsu santrali'],kind:'hydro',rate:1.35,max:18,scale:1},
+  dam:{name:['Dam','Barajlı hidro'],kind:'dam',rate:3.6,max:40,scale:1},
 };
+/* hydro runs day and night; the season and the rain decide how much water there is */
+function waterCF(){const se=seasonOf(S.day),w=WEATHER[DAY.weather];
+  const sIdx=SEASONS.indexOf(se);
+  const seasonal=[1.25,0.70,1.00,1.15][sIdx]||1;          // spring melt, summer drought
+  return seasonal*(w.rain?1.15:0.95)*modMult('water');}
+const DAM_FILL=0.28, DAM_OPEN=1.12;
+function damCap(p){return Math.round((PLANT_TYPES[p.type].rate||1)*70);}   // about half a day of inflow
+function damRes(p){return Math.min(damCap(p),p.res||0);}
+function damInflow(p){return (PLANT_TYPES[p.type].rate||1)*DAM_FILL*waterCF();}
+function damGate(p){return p.gate||'auto';}
+function damOpen(p){
+  const g=damGate(p);
+  if(g==='shut')return false;
+  if(g==='open')return true;
+  if(damRes(p)>=damCap(p))return true;          // full: let it run rather than spill
+  return priceNow()>=todayAvg()*DAM_OPEN;       // otherwise wait for the peak
+}
 const REGIONS=[{id:'ridge',name:['Windy ridge','Rüzgârlı sırt'],y0:1230,y1:1620,col:0x9FB35E},{id:'desert',name:['Solar desert','Güneş çölü'],y0:1620,y1:2000,col:0xE9C27A}];
 const PADS=[
   {id:'t2',kind:'build',type:'turbine',x:680,y:760,cost:12,req:null},
@@ -4722,14 +4741,17 @@ const PADS=[
   {id:'w2',kind:'build',type:'bigwind',x:560,y:1400,cost:4500,req:'w1'},
   {id:'w3',kind:'build',type:'bigwind',x:840,y:1340,cost:8000,req:'w2'},
   {id:'w4',kind:'build',type:'bigwind',x:1100,y:1400,cost:14000,req:'w3'},
+  {id:'r1',kind:'build',type:'river',x:1220,y:1270,cost:9000,req:'ridge'},
+  {id:'r2',kind:'build',type:'river',x:1220,y:1520,cost:17000,req:'r1'},
   {id:'desert',kind:'gate',region:'desert',label:['Open the solar desert','Güneş çölünü aç'],icon:'🚧',x:700,y:1570,cost:15000,req:'w2'},
   {id:'batdesert',kind:'build',type:'battery',x:520,y:1960,cost:18000,req:'desert'},
   {id:'town2',kind:'build',type:'town',x:1250,y:1690,cost:24000,req:'desert'},
   {id:'f1',kind:'build',type:'solarfarm',x:350,y:1790,cost:22000,req:'desert'},
   {id:'f2',kind:'build',type:'solarfarm',x:700,y:1820,cost:40000,req:'f1'},
   {id:'f3',kind:'build',type:'solarfarm',x:1050,y:1790,cost:70000,req:'f2'},
+  {id:'d1',kind:'build',type:'dam',x:230,y:1965,cost:55000,req:'desert'},
 ];
-const BUILD_ICON={turbine:'🌀',solar:'🔆',battery:'🔋',bigwind:'🌬️',solarfarm:'🌞'};
+const BUILD_ICON={turbine:'🌀',solar:'🔆',battery:'🔋',bigwind:'🌬️',solarfarm:'🌞',river:'🌊',dam:'🏞️'};
 /* ======================= LANGUAGE ======================= */
 function tt(x){if(Array.isArray(x))return (typeof S!=='undefined'&&S&&S.lang==='tr')?x[1]:x[0];return x;}
 function L(en,trs){return tt([en,trs]);}
@@ -4956,11 +4978,11 @@ function batFill(n,to){let left=n;const list=to?[to]:depotsOn().slice().sort((a,
 const batCap=()=>built('bat')?batCapTotal():0;
 const batUsable=()=>built('bat')&&!S.batFault;
 /* short codes above each asset: W1 W2 · WX1 · S1 · SX1 · B1 · T1 */
-const CODE_PREFIX={turbine:'W',bigwind:'WX',solar:'S',solarfarm:'SX',battery:'B',town:'T'};
+const CODE_PREFIX={turbine:'W',bigwind:'WX',solar:'S',solarfarm:'SX',battery:'B',town:'T',river:'R',dam:'D'};
 const ASSET_CODE=(()=>{const m={t1:'W1'},n={W:1};for(const q of PADS){if(q.kind!=='build')continue;const pre=CODE_PREFIX[q.type]||'X';n[pre]=(n[pre]||0)+1;m[q.id]=pre+n[pre];}return m;})();
 const codeOf=id=>ASSET_CODE[id]||'';
 /* plant lifetime: after it, output drifts down 1%/day and breakdowns rise */
-const LIFE={turbine:120,solar:150,bigwind:140,solarfarm:180};
+const LIFE={turbine:120,solar:150,bigwind:140,solarfarm:180,river:220,dam:300};
 function plantAge(p){return Math.max(0,(gameNow()-(p.born||0))/DAY_SEC);}
 function plantLife(p){return LIFE[p.type]||140;}
 function plantEff(p){if(!has('ageing'))return 1;const over=plantAge(p)-plantLife(p);return over<=0?1:Math.max(0.5,1-over*0.005);}   // half the old wear rate
@@ -5261,14 +5283,22 @@ function update(dt){
   if(S.contract&&gameNow()>=S.contract.until){const c=S.contract,miss=c.need-c.delivered,fine=Math.round(miss*c.penalty);S.cash=Math.max(0,S.cash-fine);toast(`Deal missed by ${miss} cells. Imbalance charge: ₵${fmt(fine)}.`,'big');trackOnce('deal-missed');S.contract=null;}
   for(const p of S.plants){
     const T=PLANT_TYPES[p.type];if(!T||p.broken||p.fire)continue;
-    const cf=T.kind==='wind'?windCF(t):solarShape(t)*solarMult()*sheepBonus(p)*snowMult(p);
+    let cf;
+    if(T.kind==='wind')cf=windCF(t);
+    else if(T.kind==='hydro')cf=waterCF();
+    else if(T.kind==='dam'){
+      p.res=Math.min(damCap(p),(p.res||0)+damInflow(p)*gdt);
+      p.open=damOpen(p)&&p.res>=1;cf=p.open?1:0;
+    }
+    else cf=solarShape(t)*solarMult()*sheepBonus(p)*snowMult(p);
     p.acc+=T.rate*plantGen(p)*cf*gdt;
     while(p.acc>=1){p.acc-=1;
+      if(T.kind==='dam'){if((p.res||0)<1){p.acc=0;break;}p.res-=1;}
       if(gridLvl(p)>0){p.gacc=(p.gacc||0)+gridShare(p);
         if(p.gacc>=1){p.gacc-=1;gridDeliver(p);continue;}}
       if(p.pile<T.max)pileAdd(p);else logLoss(1);}
     p.spin=(p.spin||0)+gdt*(0.6+cf*6);
-    if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):0.6)){p.broken=true;p.brokenAt=gameNow();const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
+    if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){p.broken=true;p.brokenAt=gameNow();const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
   S.sat=Math.max(0,S.sat-Math.max(0.12,S.sat*0.35)*dt);
   if(S.satT)for(const k in S.satT)S.satT[k]=Math.max(0,S.satT[k]-Math.max(0.16,S.satT[k]*0.4)*dt);
@@ -5472,7 +5502,7 @@ function stTr(st){if(!st)return '';if(S.lang!=='tr')return st;if(st.startsWith('
   if(st.startsWith('Selling '))return 'Satıyor '+st.slice(8);
   return ST_TR[st]||st;}
 function slotOf(h){return (h>=22||h<6)?0:h<12?1:h<17?2:3;}
-const GROUP_TYPE={'grp:turbine':'turbine','grp:bigwind':'bigwind','grp:solar':'solar','grp:solarfarm':'solarfarm'};
+const GROUP_TYPE={'grp:turbine':'turbine','grp:bigwind':'bigwind','grp:solar':'solar','grp:solarfarm':'solarfarm','grp:river':'river','grp:dam':'dam'};
 function siteGroup(i){const id=(S.crew.sites||[])[i];return GROUP_TYPE[id]||null;}
 function siteOf(i){const id=(S.crew.sites||[])[i];if(!id||id==='auto'||GROUP_TYPE[id])return null;return S.plants.find(p=>p.id===id&&PLANT_TYPES[p.type])||null;}
 function mCode(id){return id==='city'?L('City','Şehir'):(codeOf(id)||id);}
@@ -5899,6 +5929,50 @@ function makeSolar(cols,rows){
   }
   return g;
 }
+function makeRiver(){
+  const g=new THREE.Group();
+  const water=M(0x3E8FD0,{emissive:0x0d3a6b,emissiveIntensity:0.3}),conc=M(0xB4BCC6),dark=M(0x74828F),
+        roof=M(0xE8364F),wall=M(0xF0E7D6),bank=M(0x7E9148),mud=M(0x8A7A5E);
+  // the bed: an earth channel so the water sits inside something
+  g.add(mesh(new THREE.BoxGeometry(11,1.2,4.4),mud,0,-0.5,-1.4));
+  const w=mesh(new THREE.BoxGeometry(10.4,0.9,3.6),water,0,-0.22,-1.4);g.add(w);
+  // banks left and right of the channel
+  g.add(mesh(new THREE.BoxGeometry(11,0.8,1.1),bank,0,0.3,-3.9));
+  g.add(mesh(new THREE.BoxGeometry(3.4,0.8,1.1),bank,-3.8,0.3,0.85));
+  g.add(mesh(new THREE.BoxGeometry(3.4,0.8,1.1),bank,3.8,0.3,0.85));
+  // the weir across the stream, with spillway teeth
+  g.add(mesh(new THREE.BoxGeometry(10.4,1.5,0.8),conc,0,0.55,0.15));
+  g.add(mesh(new THREE.BoxGeometry(10.8,0.2,0.95),M(0xD6DDE4),0,1.32,0.15));
+  for(let i=-4;i<=4;i+=1.6)g.add(mesh(new THREE.BoxGeometry(0.75,1.0,0.22),dark,i,0.85,-0.3));
+  // powerhouse on the near bank
+  g.add(mesh(new THREE.BoxGeometry(2.3,1.5,1.7),wall,1.1,0.75,1.85));
+  g.add(mesh(new THREE.BoxGeometry(2.7,0.26,2.0),roof,1.1,1.62,1.85));
+  g.add(mesh(new THREE.CylinderGeometry(0.26,0.26,1.6,8),dark,0.1,0.75,1.1));
+  g.userData.water=w;return g;
+}
+function makeDam(){
+  const g=new THREE.Group();
+  const water=M(0x2F7BC0,{emissive:0x0a2f58,emissiveIntensity:0.32}),conc=M(0xB4BCC6),crest=M(0x98A3AE),
+        dark=M(0x6A7783),roof=M(0x5C6B84),wall=M(0xF0E7D6),rock=M(0x8B96A2),mud=M(0x8A7A5E);
+  // the basin: an earth bowl with the water sitting inside it, not a sheet in the air
+  g.add(mesh(new THREE.BoxGeometry(11,2.8,5.6),mud,0,-0.15,-3.7));
+  g.add(mesh(new THREE.BoxGeometry(11,1.1,0.9),mud,0,0.4,-6.25));
+  g.add(mesh(new THREE.BoxGeometry(0.9,1.1,5.6),mud,-5.05,0.4,-3.7));
+  g.add(mesh(new THREE.BoxGeometry(0.9,1.1,5.6),mud,5.05,0.4,-3.7));
+  const w=mesh(new THREE.BoxGeometry(10.3,1.9,5.0),water,0,2.15,-3.7);g.add(w);
+  // the wall, battered: wide at the foot, narrow at the crest
+  g.add(mesh(new THREE.BoxGeometry(10.6,1.8,2.2),conc,0,0.9,-0.1));
+  g.add(mesh(new THREE.BoxGeometry(10.6,1.7,1.3),conc,0,2.65,-0.35));
+  g.add(mesh(new THREE.BoxGeometry(11.2,0.3,1.8),crest,0,3.6,-0.35));
+  for(let i=-4.6;i<=4.6;i+=1.8)g.add(mesh(new THREE.BoxGeometry(0.22,0.6,0.22),dark,i,3.95,-1.05));
+  g.add(mesh(new THREE.BoxGeometry(2.0,0.5,2.4),dark,-2.2,2.2,0.5));            // spillway chute
+  g.add(mesh(new THREE.BoxGeometry(2.6,1.6,2.0),wall,3.5,0.8,2.2));             // powerhouse
+  g.add(mesh(new THREE.BoxGeometry(3.0,0.28,2.3),roof,3.5,1.72,2.2));
+  g.add(mesh(new THREE.CylinderGeometry(0.3,0.3,2.4,8),dark,2.4,1.3,1.2));
+  g.add(mesh(new THREE.BoxGeometry(1.7,3.0,3.0),rock,-6.1,1.5,-0.7));           // abutments
+  g.add(mesh(new THREE.BoxGeometry(1.7,3.0,3.0),rock,6.1,1.5,-0.7));
+  g.userData.water=w;return g;
+}
 /* energy cell: extruded lightning bolt lying flat; colour shows age */
 const CELL_STEP=0.2;
 const BOLT_GEO=(()=>{
@@ -6053,9 +6127,11 @@ function plantObj(p){
   if(plantObjs[p.id])return plantObjs[p.id];
   const T=PLANT_TYPES[p.type];let g;
   if(T.kind==='wind')g=makeTurbine(T.scale);
+  else if(T.kind==='hydro')g=makeRiver();
+  else if(T.kind==='dam')g=makeDam();
   else g=p.type==='solarfarm'?makeSolar(5,3):makeSolar(2,2);
   const root=new THREE.Group();root.add(g);const[X,Z]=W3(p.x,p.y);root.position.set(X,0,Z);
-  const pile=new THREE.Group();pile.position.set(p.type==='solarfarm'?4:1.8,0.16,1.2);root.add(pile);
+  const pile=new THREE.Group();pile.position.set(p.type==='dam'?6.2:p.type==='solarfarm'?4:p.type==='river'?5.2:1.8,0.16,p.type==='dam'?3.4:p.type==='river'?2.6:1.2);root.add(pile);
   root.userData={model:g,pile,cells:[]};scene.add(root);plantObjs[p.id]=root;return root;
 }
 function setPile(o,n,p){
@@ -6237,10 +6313,13 @@ function render(dt,now){
     if(o.userData.model.userData.rotor)o.userData.model.userData.rotor.rotation.z=-(p.spin||0)*(p.broken?0:1);
     const pp=pops[p.id]||0;o.scale.setScalar(1+Math.sin(pp*Math.PI)*0.35);
     setPile(o,p.pile,p);
-    if(p.pile>0)place('pile'+p.id,'cnt'+(p.pile>=T.max?' full':''),p.x+(p.type==='solarfarm'?80:36),p.y+24,Math.min(p.pile,24)/2*CELL_STEP+0.9,p.pile>=T.max?L('FULL','DOLU'):String(p.pile));
+    if(p.pile>0)place('pile'+p.id,'cnt'+(p.pile>=T.max?' full':''),p.x+(p.type==='dam'?110:p.type==='solarfarm'?80:p.type==='river'?92:36),p.y+24,Math.min(p.pile,24)/2*CELL_STEP+0.9,p.pile>=T.max?L('FULL','DOLU'):String(p.pile));
     if(p.broken)place('br'+p.id,'wrench',p.x,p.y,T.kind==='wind'?7*T.scale:2.4,p.fix>0?`🔧 ${Math.round(p.fix*100)}%`:'🔧');
     if(has('codes')){const eff=plantEff(p),old=eff<1;
      place('cd'+p.id,'code'+(old?' worn':''),p.x-(p.type==='solarfarm'?70:30),p.y+22,0.9,codeOf(p.id)+(old?` ${Math.round(eff*100)}%`:''));}
+    if(T.kind==='dam'){const full=damRes(p)>=damCap(p),wm=o.userData.model.userData.water;
+      if(wm){const f=Math.max(0.06,damCap(p)?damRes(p)/damCap(p):0);wm.scale.y=f;wm.position.y=1.2+0.95*f;}
+      place('dm'+p.id,'cnt'+(full?' full':''),p.x,p.y-34,3.9,`💧 ${Math.round(damRes(p))}/${damCap(p)}${p.open?' \u26a1':full?' !':''}`);}
     if(p.fire>0){const fl=0.8+Math.sin(performance.now()/90)*0.2;
       const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y,(T.kind==='wind'?7*T.scale:2.6)*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
     if(snowPanel(p)>0.05)place('sn'+p.id,'wrench',p.x,p.y+6,1.6,p.clr>0?`🧹 ${Math.round(p.clr*100)}%`:`🌨️ ${Math.round(snowPanel(p)*100)}%`);
@@ -6972,7 +7051,12 @@ function renderGrid(){
       <div class="assign" style="grid-template-columns:1fr 1fr;margin-top:8px">
         <button data-gto="${x.id}" class="${gridTo(x)==='bat'?'duty':''}"><small>${L('Sends to','Gönderdiği yer')}</small><b>${gridTo(x)==='bat'?'🔋 '+L('Battery','Batarya'):'🏙️ '+L('Nearest market','En yakın pazar')}</b></button>
         <button data-gup="${x.id}" ${can&&afford?'':'disabled'}><small>${can?(afford?L('Upgrade','Yükselt'):L('Not enough cash','Para yetmiyor')):L('Maxed','Tamam')}</small><b>${can?'₵'+fmt(cost):L('Lv','Sv')+GRIDMAX}</b></button>
-      </div></div>`;}).join('')
+      </div>${T.kind!=='dam'?'':`
+      <div class="scale" style="margin-top:10px"><span>💧 ${L('Reservoir','Hazne')} ${Math.round(damRes(x))}/${damCap(x)}</span><span>${x.open?L('releasing','bırakıyor'):L('filling','doluyor')}</span></div>
+      <div class="assign" style="grid-template-columns:1fr 1fr 1fr;margin-top:6px">
+        ${[['auto',L('Auto','Otomatik'),L('Peak only','Sadece zirve')],['open',L('Open','Açık'),L('Always run','Hep çalışsın')],['shut',L('Shut','Kapalı'),L('Store only','Sadece biriktir')]]
+          .map(([k,a,b])=>`<button data-dgate="${x.id}" data-gv="${k}" class="${damGate(x)===k?'duty':''}"><small>${b}</small><b>${a}</b></button>`).join('')}
+      </div>`}</div>`;}).join('')
     ||`<p style="text-align:center">${L('No plants yet.','Henüz santral yok.')}</p>`;
   $('gridBody').innerHTML+=`<div class="note">${L('A line sells at whatever the price is right then — it never fades and never waits, but it never catches the peak either. Sent to the battery it waits for you; if the tank is full it falls back to the market.','Hat o anki fiyattan satar — hiç sönmez, hiç beklemez, ama zirveyi de yakalamaz. Bataryaya giden seni bekler; tank doluysa pazara düşer.')}</div>`;
 }
@@ -6980,6 +7064,8 @@ function openGridPanel(){renderGrid();$('mGrid').classList.add('on');trackOnce('
 $('gridBtn').onclick=openGridPanel;
 $('gridClose').onclick=()=>$('mGrid').classList.remove('on');
 $('gridBody').addEventListener('click',e=>{
+  const dg=e.target.closest('button[data-dgate]');
+  if(dg){const x=S.plants.find(q=>q.id===dg.dataset.dgate);if(x){x.gate=dg.dataset.gv;sfx.tap&&sfx.tap();save();renderGrid();}return;}
   const t=e.target.closest('button[data-gto]');
   if(t){const x=S.plants.find(q=>q.id===t.dataset.gto);if(!x)return;
     if(gridTo(x)==='mkt'&&!built('bat')){toast(L('Build the battery station first.','Önce batarya istasyonunu kur.'),'');return;}
@@ -7036,6 +7122,11 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.40.0',t:['Water joins the grid','Su da şebekeye giriyor'],l:[
+  ['Two new plants. The run-of-river station (🌊, ridge, ₵9000) runs day and night — no sun, no wind needed — but spring melt and rain still swing it: spring +25%, summer −30%, a rainy day +15%.','İki yeni santral. Akarsu santrali (🌊, sırt, ₵9000) gece gündüz çalışır — güneş de rüzgâr da gerekmez — ama su rejimi yine oynar: ilkbahar +%25, yaz −%30, yağmurlu gün +%15.'],
+  ['The dam (🏞️, desert, ₵55000) does not produce as it fills. It stores water and then empties it at the peak — the battery logic, moved into a plant. It opens by itself when the price is 12% above today’s average, and always when the reservoir is full.','Baraj (🏞️, çöl, ₵55000) dolarken üretmez. Suyu biriktirir ve zirvede bırakır — batarya mantığının santral hali. Fiyat bugünün ortalamasının %12 üstüne çıkınca kendi açılır, hazne dolunca her halde açılır.'],
+  ['You can override that: the 🔌 grid screen now has Auto / Open / Shut for each dam, with its reservoir level next to it. Shut banks water for tomorrow’s peak; Open runs it flat out.','Bunu sen de kesebilirsin: 🔌 şebeke ekranında her baraj için Otomatik / Açık / Kapalı ve yanında hazne seviyesi var. Kapalı suyu yarının zirvesine saklar, Açık sonuna kadar çalıştırır.'],
+  ['Water plants break down less than wind: a river station is about a third as likely, a dam a little more.','Su santralleri rüzgârdan az bozulur: akarsu yaklaşık üçte bir, baraj biraz daha fazla.']]},
  {v:'0.39.0',t:['Levels come twice as fast','Seviyeler iki kat hızlı'],l:[['A simulated beginner showed the gaps doubling every level: level 2 at 1.7 minutes but the battery — the heart of the game — at 43 minutes, and helpers hours away. Thresholds are rebuilt so the battery lands around 18 minutes and helpers around 25.','Simüle edilmiş bir yeni oyuncu, aralıkların her seviyede ikiye katlandığını gösterdi: 2. seviye 1,7 dakikada ama oyunun kalbi olan batarya 43. dakikada, yardımcılar saatler sonra. Eşikler yeniden kuruldu: batarya ~18, yardımcılar ~25 dakikada.'],['Helpers moved ahead of markets and events, so automation arrives before the market gets complicated.','Yardımcılar pazarların ve olayların önüne alındı; otomasyon, piyasa karmaşıklaşmadan geliyor.']]},
  {v:'0.38.2',t:['Grid lines get their own screen','Şebeke hatlarına kendi ekranı'],l:[['The floating label over each plant is gone. The 🔌 button opens a grid screen like the crew plan: every plant on one card with its line level, its share of output, where it sends and an upgrade button.','Santrallerin üstündeki etiket kalktı. 🔌 butonu ekip planı gibi bir şebeke ekranı açıyor: her santral tek kartta — hat seviyesi, üretimden aldığı pay, gönderdiği yer ve yükseltme butonu.'],['Upgrading no longer means standing next to the plant. Do it from the screen, for any plant, from anywhere.','Yükseltmek için artık santralin yanında beklemek gerekmiyor. Ekrandan, hangi santral olursa olsun, nerede olursan ol.']]},
  {v:'0.38.1',t:['Pick where the line goes','Hattın nereye gideceğini seç'],l:[['Each grid line now carries a destination chip next to it. Tap 🏙️ / 🔋 to switch that plant between selling into the nearest market and filling the nearest battery.','Her şebeke hattının yanında bir hedef rozeti var. 🏙️ / 🔋 rozetine dokunarak o santrali en yakın pazara satmak ile en yakın bataryayı doldurmak arasında değiştir.'],['Sent to the battery, the energy waits for the peak instead of selling at whatever the price is. If the tank is full it falls back to the market so nothing is lost.','Bataryaya giden enerji, o anki fiyattan satılmak yerine zirveyi bekler. Tank doluysa pazara düşer, hiçbir şey kaybolmaz.']]},
@@ -7586,7 +7677,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.39.0';
+const GAME_VERSION='0.40.0';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
