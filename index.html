@@ -167,6 +167,15 @@ body.title #mini{visibility:hidden}
 .picklist button.good{background:#E1F4EA;border-color:#23B26D}
 .picklist button.good b{color:#146B44}
 .picklist button.weak{opacity:.6}
+.mktcard{background:#F4F6FA;border:2px solid #E3E8EF;border-radius:16px;padding:10px 12px;margin-top:8px}
+.mktcard.best{background:#E1F4EA;border-color:#23B26D}
+.mkhead{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14px}
+.mkbest{font-size:11px;font-weight:800;color:#fff;background:#23B26D;border-radius:7px;padding:1px 8px}
+.mkrow{display:flex;align-items:center;gap:10px;margin-top:6px}
+.mkrow>div:first-child{flex:0 0 auto;min-width:74px}
+.mkspark{flex:1 1 auto;height:38px;min-width:60px;display:block}
+.mkmeta{flex:0 0 auto;font-size:11.5px;color:var(--soft);font-weight:800;text-align:right;line-height:1.5}
+.mkmeta b{color:#1D2433}
 .boxhead{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;background:transparent;color:#1D2433;font-weight:800;font-size:14px;text-align:left;padding:2px 0}
 .boxhead .bw{font-size:12px;color:var(--soft);font-weight:800;flex:0 0 auto}
 .boxdel{background:#FFE3E8!important;color:#E8364F!important;font-weight:800}
@@ -242,7 +251,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.34.2</div>
+  <div class="t-ver" id="tVer">v0.35.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -259,7 +268,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
       <div class="lossc" id="lossC" hidden></div>
       <div class="dealc" id="dealC" hidden></div>
     </div>
-    <div class="box market">
+    <div class="box market" id="mktBox" style="pointer-events:auto;cursor:pointer">
       <div><div class="pnow"><span id="pnow">0</span> <small>per cell</small></div><span class="lvl" id="lvl">Normal</span></div>
       <canvas id="spark" aria-label="Today's prices"></canvas>
       <div class="clock"><span id="clock">08:00</span><small id="day">Day 1</small></div>
@@ -356,6 +365,12 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <p id="updSub"></p>
   <div class="btns"><button class="pri" id="updGo">Reload</button></div>
 </div></div>
+<div class="modal" id="mMkt"><div class="sheet tips">
+  <h2 id="mktTitle">Markets</h2>
+  <p id="mktSub"></p>
+  <div id="mktBody"></div>
+  <div class="btns"><button class="pri" id="mktClose" data-i18n="close">Close</button></div>
+</div></div>
 <div class="modal" id="mRep"><div class="sheet tips">
   <h2 id="repTitle">Finance report</h2>
   <div class="mgrid" id="repCards"></div>
@@ -420,7 +435,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.34.2 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.35.1 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4601,6 +4616,7 @@ function priceAt(m){
 }
 function nearestMarket(o){return markets().sort((a,b)=>dist(o,a)-dist(o,b))[0];}
 const HQ={x:280,y:620};
+const HQ_DOOR={x:HQ.x,y:HQ.y+34};                 // off-shift crew waits inside here
 const BAT={x:1090,y:640,store:{x:1020,y:775},take:{x:1160,y:775}};
 const DEPOTS=[
   {id:'bat',x:BAT.x,y:BAT.y,store:BAT.store,take:BAT.take},
@@ -4776,7 +4792,7 @@ const ROLES={
   sell:{name:['Sell','Sat'],desc:['Collects and sells in the city, but only at or above your price. Below it, stores in the battery or waits.','Toplar ve şehirde satar, ama sadece senin fiyatında veya üstünde. Altındaysa bataryaya koyar ya da bekler.']},
   store:{name:['Store','Depola'],desc:['Collects and fills the battery. Sells only when the battery is full and the price is right.','Toplar ve bataryayı doldurur. Sadece batarya dolu ve fiyat uygunsa satar.']},
   peak:{name:['Peak','Zirve'],desc:['Fills the battery while prices are low. When the price reaches your level, empties the battery into the city.','Fiyat düşükken bataryayı doldurur. Fiyat senin seviyene gelince bataryayı şehre boşaltır.']},
-  fix:{name:['Fix','Tamir'],desc:['Repairs broken plants first, wherever they are. With nothing to repair, works like Sell.','Önce bozuk santralleri onarır, nerede olursa olsun. Onaracak bir şey yoksa Sat gibi çalışır.']},
+  fix:{name:['Fix','Tamir'],desc:['Repairs broken plants first, then repowers worn ones down to the level you set. With nothing to do, works like Sell.','Önce bozuk santralleri onarır, sonra senin belirlediğin verim seviyesine düşmüş olanları yeniler. Yapacak bir şey yoksa Sat gibi çalışır.']},
   safety:{name:['Safety','Afet'],desc:['Runs to fires with an extinguisher. With nothing burning, works like Sell.','Yangına yangın tüpüyle koşar. Yanan bir şey yoksa Sat gibi çalışır.']},
 };
 
@@ -4787,7 +4803,7 @@ function fresh(){
     plants:[{id:'t1',type:'turbine',x:560,y:760,pile:4,acc:0,broken:false}],
     built:{t1:true},paid:{},up:{bag:0,boots:0,helper:0,batcap:0,bateff:0,grid:0},regions:{},
     battery:0,sat:0,day:0,t:8*HOUR,daySec:DAY_SEC,goal:0,soldCells:0,
-    crew:{auto:true,min:10,roles:[],plan:['auto','auto','auto','auto'],sites:[],mkts:[],staff:[]},
+    crew:{auto:true,min:10,roles:[],plan:['auto','auto','auto','auto'],sites:[],mkts:[],staff:[],fixEff:0.7,tab:'all'},
     satT:{},snow:0,bat:{},batFire:0,batFireT:0,batCycles:0,batCharge:0,batFault:false,morale:null,mods:[],contract:null,event:null,nextEvent:null,cardHour:null,cardHour2:null,cardSoon:0,cardDay:-1,dayEarned:0,lastDayEarned:0,
     lang:'en',tutDone:false,tipsSeen:{},seenVer:'',claimed:{},badges:[],earnLog:[],group:[],nick:'',ref:'',guest:false,syncBase:0,dev:'',ledger:[],cardPrefs:{},cardHist:[],dayLog:[],debt:0,
     stats:{stored:0,peakCells:0,planned:0,crewCells:0,crewRev:0,byMkt:{},fixSpend:0},hints:{},muted:false,shadows:true,lowFlash:false,speed:1,lastSave:Date.now()};
@@ -4822,10 +4838,16 @@ const codeOf=id=>ASSET_CODE[id]||'';
 const LIFE={turbine:120,solar:150,bigwind:140,solarfarm:180};
 function plantAge(p){return Math.max(0,(gameNow()-(p.born||0))/DAY_SEC);}
 function plantLife(p){return LIFE[p.type]||140;}
-function plantEff(p){const over=plantAge(p)-plantLife(p);return over<=0?1:Math.max(0.35,1-over*0.01);}
-function plantGen(p){return (p.gen||1)*plantEff(p);}
+function plantEff(p){const over=plantAge(p)-plantLife(p);return over<=0?1:Math.max(0.5,1-over*0.005);}   // half the old wear rate
+function plantCap(p){return Math.min(1,p.gen==null?1:p.gen);}      // condition ceiling: every repower costs 5 points
+function plantGen(p){return plantCap(p)*plantEff(p);}
 function repowerCost(p){const pd=pad(p.id);return Math.round((pd&&pd.cost?pd.cost:100)*0.6);}
-function canRepower(p){return plantAge(p)>plantLife(p)*0.8;}
+function rebuildCost(p){const pd=pad(p.id);return Math.round((pd&&pd.cost?pd.cost:100)*1.25);}
+const REBUILD_AT=0.80;                                              // below this ceiling a repower is no longer worth it
+function plantTired(p){return plantAge(p)>plantLife(p)*0.9;}
+function canRepower(p){return plantTired(p)&&plantCap(p)>REBUILD_AT-0.001;}
+function canRebuild(p){return plantTired(p)&&plantCap(p)<=REBUILD_AT-0.001;}
+function needsWork(p){return canRepower(p)||canRebuild(p);}
 /* --- energy decay: unsold cells at a plant vanish after DECAY_HOURS game hours (batteries and carried cells keep) --- */
 const DECAY_HOURS=1;
 const gameNow=()=>S.day*DAY_SEC+S.t;
@@ -5140,11 +5162,15 @@ function update(dt){
      if(wear>0&&Math.random()<0.00004*gdt*hot*wear*0.02*modMult('breakage'))startFire(p,L('worn out','yıpranma'));}
    if(built('bat')&&!S.batFire&&(S.batCycles||0)>250&&Math.random()<0.00003*gdt*hot*((S.batCycles||0)/250)*modMult('breakage')*(1-0.15*(S.up.bateff||0)))startBatFire(L('cell wear','hücre yorgunluğu'));}
   // repowering: stand next to an ageing plant and pay to rebuild it
-  const rp=S.plants.find(p=>!p.broken&&canRepower(p)&&dist(P,p)<70);
-  if(rp&&!S.moving&&S.cash>=repowerCost(rp)){
-    repT=(repT||0)+dt;rp.rep=repT/2.5;
-    if(repT>=2.5){const c=repowerCost(rp);S.cash-=c;rp.born=gameNow();rp.gen=(rp.gen||1)*1.1;rp.rep=0;repT=0;sfx.build();
-      logLedger('repower',-c,codeOf(rp.id));floatTxt(rp.x,rp.y,L('Repowered +10%','Yenilendi +%10'));toast(L(`${codeOf(rp.id)} repowered for ₵${fmt(c)}. Output +10%.`,`${codeOf(rp.id)} ₵${fmt(c)} karşılığında yenilendi. Üretim +%10.`),'good');trackOnce('repowered');}
+  const rp=S.plants.find(p=>!p.broken&&needsWork(p)&&dist(P,p)<70);
+  if(rp&&!S.moving&&S.cash>=(canRebuild(rp)?rebuildCost(rp):repowerCost(rp))){
+    const full=canRebuild(rp),need=full?4:2.5;
+    repT=(repT||0)+dt;rp.rep=repT/need;
+    if(repT>=need){const c=full?rebuildCost(rp):repowerCost(rp);S.cash-=c;rp.born=gameNow();rp.rep=0;repT=0;sfx.build();
+      if(full){rp.gen=1;logLedger('rebuild',-c,codeOf(rp.id));floatTxt(rp.x,rp.y,L('Rebuilt · 100%','Yeniden kuruldu · %100'));
+        toast(L(`${codeOf(rp.id)} torn down and rebuilt for ₵${fmt(c)}. Back to 100%.`,`${codeOf(rp.id)} söküldü ve ₵${fmt(c)} karşılığında yeniden kuruldu. Tekrar %100.`),'good');trackOnce('rebuilt');}
+      else{rp.gen=Math.max(0,plantCap(rp)-0.05);logLedger('repower',-c,codeOf(rp.id));floatTxt(rp.x,rp.y,L(`Repowered · ${Math.round(plantCap(rp)*100)}%`,`Yenilendi · %${Math.round(plantCap(rp)*100)}`));
+        toast(L(`${codeOf(rp.id)} repowered for ₵${fmt(c)}. Ceiling now ${Math.round(plantCap(rp)*100)}%.`,`${codeOf(rp.id)} ₵${fmt(c)} karşılığında yenilendi. Tavanı artık %${Math.round(plantCap(rp)*100)}.`),'good');trackOnce('repowered');}}
   } else {repT=0;S.plants.forEach(p=>p.rep=0);}
   const br=S.plants.find(p=>p.broken&&dist(P,p)<80);
   if(br&&!S.moving){const need=fixTime(br,1.2);fixT+=dt;br.fix=fixT/need;if(fixT>=need){doRepair(br,true);fixT=0;}}
@@ -5277,7 +5303,7 @@ function completePad(p){
 }
 /* ---- helper AI with roles ---- */
 const SLOTS=[{id:'night',name:['Night','Gece'],range:'22–06'},{id:'morning',name:['Morning','Sabah'],range:'06–12'},{id:'midday',name:['Midday','Öğle'],range:'12–17'},{id:'evening',name:['Evening','Akşam'],range:'17–22'}];
-const ST_TR={'Off shift':'Vardiya dışı','No job':'Görev yok','Fighting fire':'Yangına müdahale','Waiting for output':'Üretim bekliyor','Collecting':'Topluyor','Repairing':'Onarıyor','On strike':'Grevde','Looking for work':'İş arıyor','Collecting':'Topluyor','Selling':'Satıyor','Storing':'Depoluyor','Emptying battery':'Bataryayı boşaltıyor','Selling stored energy':'Depodakini satıyor'};
+const ST_TR={'Off shift':'Vardiya dışı','No job':'Görev yok','Repowering':'Yeniliyor','Fighting fire':'Yangına müdahale','Waiting for output':'Üretim bekliyor','Collecting':'Topluyor','Repairing':'Onarıyor','On strike':'Grevde','Looking for work':'İş arıyor','Collecting':'Topluyor','Selling':'Satıyor','Storing':'Depoluyor','Emptying battery':'Bataryayı boşaltıyor','Selling stored energy':'Depodakini satıyor'};
 function stTr(st){if(!st)return '';if(S.lang!=='tr')return st;if(st.startsWith('Waiting for output'))return 'Üretim bekliyor '+st.slice(18);
   if(st.startsWith('Waiting for'))return st.replace('Waiting for','Bekliyor:');
   if(st.startsWith('Collecting '))return 'Topluyor '+st.slice(11);
@@ -5295,7 +5321,8 @@ function siteLabelId(id){if(!id||id==='auto')return L('Any','Farketmez');
 function marketLabelId(id){if(!id||id==='auto')return L('Nearest','En yakın');if(id==='city')return L('City','Şehir');
   const t=TOWNS.find(x=>x.id===id);return t?codeOf(t.id):L('Nearest','En yakın');}
 function dutyNow(sh){const x=SHIFTS[sh]||SHIFTS[0],h=Math.floor(hourNow())%24;return x.from<x.to?(h>=x.from&&h<x.to):(h>=x.from||h<x.to);}
-function hh(n){return String(n).padStart(2,'0');}
+function h2(n){return String(n).padStart(2,'0');}
+function fixEffLimit(){const v=S.crew&&S.crew.fixEff;return v==null?0.7:v;}
 function roleIcon(role){return role==='fix'?'🔧':role==='safety'?'🧯':'⚡';}
 function skillFor(role,i){const t=staffOf(i);return role==='fix'?t.r:role==='safety'?t.s:t.f;}
 let pickFor=null,boxShut={};
@@ -5343,12 +5370,13 @@ function updateHelper(hp,i,dt){
   const sp=165*(1+0.08*S.up.boots)*modMult('helperSpeed')*moraleMult()*skillField(i),cap=6+2*Math.floor(S.up.bag/2);
   if(modActive('helperOff')){hp.status='On strike';hp.target=null;hp.state='idle';const dx=HQ.x+((i%8)*26-90)+Math.floor(i/8)*8-hp.x,dy=HQ.y+95+Math.floor(i/8)*26-hp.y,l=Math.hypot(dx,dy);hp.moving=l>8;if(l>8){const st=Math.min(l,120*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);}hp.walk+=dt*10;return;}
   if(!boxOf(i)||!onDuty(i)){
-    hp.status=boxOf(i)?'Off shift':'No job';hp.target=null;hp.state='idle';
-    const hx=HQ.x+((i%8)*26-90)+Math.floor(i/8)*8,hy=HQ.y+95+Math.floor(i/8)*26;
-    const dx=hx-hp.x,dy=hy-hp.y,l=Math.hypot(dx,dy);hp.moving=l>8;
-    if(l>8){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.walk+=dt*10;}
+    hp.status=boxOf(i)?'Off shift':'No job';hp.target=null;hp.state='idle';hp.carry=0;
+    const dx=HQ_DOOR.x-hp.x,dy=HQ_DOOR.y-hp.y,l=Math.hypot(dx,dy);
+    if(l>10){hp.inside=false;hp.moving=true;const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.walk+=dt*10;}
+    else{hp.inside=true;hp.moving=false;hp.x=HQ_DOOR.x;hp.y=HQ_DOOR.y;}   // through the door: out of sight until the shift starts
     return;
   }
+  if(hp.inside){hp.inside=false;hp.x=HQ_DOOR.x;hp.y=HQ_DOOR.y+14;}       // clocking on: step back out
   const slotPlan=S.crew.plan?S.crew.plan[slotOf(Math.floor(hourNow())%24)]:'auto';
   if(role==='safety'){
     const fires=S.plants.filter(p=>(p.fire||0)>0);
@@ -5377,6 +5405,21 @@ function updateHelper(hp,i,dt){
         hp.fixT=(hp.fixT||0)+dt;
         if(hp.fixT>=2.5*skillFixT(i)){const c=Math.round(batFixCost()*skillFixC(i));if(S.cash>=c)S.cash-=c;S.batFault=false;hp.fixT=0;sfx.fix();floatTxt(D.x,D.y,'-₵'+fmt(c));S.stats.fixSpend=(S.stats.fixSpend||0)+c;}
         return;}
+    }
+    const wear=S.plants.filter(p=>!p.broken&&PLANT_TYPES[p.type]&&canRepower(p)&&plantGen(p)<=fixEffLimit()&&S.cash>=repowerCost(p));
+    if(!S.plants.some(p=>p.broken)&&wear.length){                   // nothing broken: renew the most worn plant on the list
+      wear.sort((a,b)=>plantGen(a)-plantGen(b));
+      const tp=wear[0];
+      hp.status='Repowering';hp.target=null;hp.state='idle';
+      const dx=tp.x+30-hp.x,dy=tp.y+26-hp.y,l=Math.hypot(dx,dy);
+      if(l>10&&dist(hp,tp)>60){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.moving=true;hp.walk+=dt*10;hp.fixT=0;return;}
+      const need=2.5*skillFixT(i);hp.fixT=(hp.fixT||0)+dt;tp.rep=Math.min(1,hp.fixT/need);
+      if(hp.fixT>=need){const c=Math.round(repowerCost(tp)*skillFixC(i));
+        if(S.cash>=c){S.cash-=c;tp.born=gameNow();tp.gen=Math.max(0,plantCap(tp)-0.05);
+          S.stats.fixSpend=(S.stats.fixSpend||0)+c;logLedger('repower',-c,codeOf(tp.id));
+          floatTxt(tp.x,tp.y,'-₵'+fmt(c));sfx.build();trackOnce('crew-repowered');}
+        tp.rep=0;hp.fixT=0;}
+      return;
     }
     const broken=S.plants.filter(p=>p.broken&&PLANT_TYPES[p.type]);
     if(broken.length){
@@ -6039,7 +6082,7 @@ function render(dt,now){
     if(p.fire>0){const fl=0.8+Math.sin(performance.now()/90)*0.2;
       const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y,(T.kind==='wind'?7*T.scale:2.6)*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
     if(snowPanel(p)>0.05)place('sn'+p.id,'wrench',p.x,p.y+6,1.6,p.clr>0?`🧹 ${Math.round(p.clr*100)}%`:`🌨️ ${Math.round(snowPanel(p)*100)}%`);
-    if(!p.broken&&canRepower(p))place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,p.rep>0?`♻️ ${Math.round(p.rep*100)}%`:`♻️ ₵${fmt(repowerCost(p))}`);
+    if(!p.broken&&needsWork(p))place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,p.rep>0?`${canRebuild(p)?'🏗️':'♻️'} ${Math.round(p.rep*100)}%`:`${canRebuild(p)?'🏗️':'♻️'} ₵${fmt(canRebuild(p)?rebuildCost(p):repowerCost(p))}`);
   }
   // pads
   for(const p of PADS){
@@ -6064,6 +6107,8 @@ function render(dt,now){
      place('dep'+D.id,'tag'+(S.batFault?' bad':' ok'),D.x,D.y,3.2,S.batFault?(batFixT>0?`🔧 ${Math.round(batFixT/1.5*100)}%`:L('🔋 Fault · stand here','🔋 Arıza · burada dur')):`🔋 ${batAt(D.id)} / ${each}`);
      place('bc'+D.id,'code'+(batHealth()<0.9?' worn':''),D.x-42,D.y+26,0.9,`${codeOf(D.id)} ${Math.round(batHealth()*100)}%`);
      if(!S.batFault&&batHealth()<0.995&&D.id==='bat')place('rf'+D.id,'wrench',D.x,D.y-20,4.4,refurbT>0?`♻️ ${Math.round(refurbT/2.5*100)}%`:`♻️ ₵${fmt(refurbCost())}`);}}
+  {const n=helpers.filter(h=>h.inside).length;
+   if(n)place('hqrest','tag no',HQ_DOOR.x,HQ_DOOR.y-6,0.1,`😴 ${n}`);else if(LB['hqrest']){LB['hqrest'].el.remove();delete LB['hqrest'];}}
   // regions
   for(const r of REGIONS){fenceObjs[r.id].visible=!S.regions[r.id];if(!S.regions[r.id])place('rg'+r.id,'big',700,(r.y0+r.y1)/2,0.3,`🔒 ${tt(r.name)}`);}
   // city label
@@ -6082,7 +6127,10 @@ function render(dt,now){
   while(helperObjs.length<helpers.length){const o=makeChar(helperObjs.length+1);scene.add(o);helperObjs.push(o);}
   if(lookDirty){lookDirty=false;helperObjs.forEach((o,i)=>{scene.remove(o);const n=makeChar(i+1);n.position.copy(o.position);n.rotation.y=o.rotation.y;scene.add(n);helperObjs[i]=n;});}
   updateAnimals(dt);
-  helpers.forEach((hp,i)=>{const o=helperObjs[i];o.position.x=hp.x*U;o.position.z=hp.y*U;
+  helpers.forEach((hp,i)=>{const o=helperObjs[i];
+    if(hp.inside){if(o.visible){o.visible=false;}return;}
+    if(!o.visible)o.visible=true;
+    o.position.x=hp.x*U;o.position.z=hp.y*U;
     o.rotation.y+=((hp.face-o.rotation.y+Math.PI*3)%(Math.PI*2)-Math.PI)*Math.min(1,dt*10);
     animPerson(o,hp.moving,hp.walk);setStack(o,hp.carry,hp.carryAges);
     if(hp.status==='Repairing')place('hs'+i,'nm',hp.x,hp.y,2.4,'🔧 '+Math.round(Math.min(1,(hp.fixT||0)/2)*100)+'%');
@@ -6153,12 +6201,28 @@ function renderCrew(){
     <div class="slots">${SLOTS.map((sl,k)=>{const v=(S.crew.plan||[])[k]||'auto';return `<button data-slot="${k}" class="sl ${v}" ${(!hasBat&&v==='store')?'':''}><b>${tt(sl.name)}</b><small>${sl.range}</small><span>${PL[v]}</span></button>`;}).join('')}</div>
     <div class="role-desc">${L('Sell: empty hands and the battery into the city (never below your price). Store: fill the battery. Roles: each helper follows its own role.','Sat: elindekini ve bataryayı şehre boşalt (fiyatının altına asla). Depola: bataryayı doldur. Roller: her yardımcı kendi rolünü izler.')}</div></div>`;
   migrateBoxes();applyBoxes();
-  const shName=k=>`${SHIFTS[k].icon} ${tt(SHIFTS[k].name)} ${SHIFTS[k].from}–${SHIFTS[k].to}`;
-  html+=`<div class="row1" style="margin-top:12px;font-weight:800"><span>${L('Task boxes','Görev kutuları')}</span><button id="boxAdd" style="background:#1D2433;color:#fff;border-radius:10px;padding:5px 12px;font-weight:800;font-size:13px">+ ${L('New box','Yeni kutu')}</button></div>`;
-  for(const b of boxes()){
+  const shName=k=>`${SHIFTS[k].icon} ${tt(SHIFTS[k].name)} ${h2(SHIFTS[k].from)}–${h2(SHIFTS[k].to)}`;
+  const tab=S.crew.tab||'all';
+  const TABS=[['all','📋',L('All','Tümü')]].concat(Object.keys(ROLES).map(k=>[k,roleIcon(k),tt(ROLES[k].name)]));
+  html+=`<div class="seg" style="grid-template-columns:repeat(6,1fr);margin-top:12px">${TABS.map(([k,ic,nm])=>{
+      const n=k==='all'?boxes().length:boxes().filter(b=>b.role===k).length;
+      return `<button data-tab="${k}" class="${tab===k?'on':''}">${ic}<br><span style="font-size:10px">${nm}${n?' '+n:''}</span></button>`;}).join('')}</div>`;
+  if(tab==='fix'){
+    const lim=Math.round(fixEffLimit()*100);
+    html+=`<div class="rule"><div class="row1"><span>${L('Repower when output drops to','Şu verime düşünce yenile')}</span><span class="val">%${lim}</span></div>
+      <input type="range" id="fixRange" min="40" max="100" step="5" value="${lim}">
+      <div class="scale"><span>%40</span><span>%70</span><span>%100</span></div>
+      <div class="role-desc">${L('Fix helpers repair broken plants first. With nothing broken they repower any plant that has fallen to this level. Each repower costs 5 points of that plant\'s ceiling.','Tamir yardımcıları önce bozuk santralleri onarır. Bozuk yoksa bu seviyeye düşmüş santralleri yeniler. Her yenileme o santralin tavanından 5 puan götürür.')}</div></div>`;
+    const tired=S.plants.filter(x=>PLANT_TYPES[x.type]&&needsWork(x)).sort((a,b)=>plantGen(a)-plantGen(b));
+    if(tired.length)html+=`<table class="rtab"><tr><th>${L('Plant','Santral')}</th><th>${L('Output','Üretim')}</th><th>${L('Ceiling','Tavan')}</th><th>${L('Action','İşlem')}</th></tr>`+
+      tired.map(x=>`<tr><td>${codeOf(x.id)} ${tt(PLANT_TYPES[x.type].name)}</td><td>${Math.round(plantGen(x)*100)}%</td><td>${Math.round(plantCap(x)*100)}%</td><td>${canRebuild(x)?'🏗️ ₵'+fmt(rebuildCost(x)):'♻️ ₵'+fmt(repowerCost(x))}</td></tr>`).join('')+`</table>`;
+    if(S.plants.some(x=>canRebuild(x)))html+=`<div class="note" style="background:#FFE3E8">${L('🏗️ A plant at or below the 80% ceiling cannot be repowered any more — walk over and rebuild it yourself. Helpers will not spend that much on their own.','🏗️ Tavanı %80 ve altına inen santral artık yenilenemez — yanına gidip kendin yeniden kur. Yardımcılar bu kadar parayı kendi başına harcamaz.')}</div>`;
+  }
+  html+=`<div class="row1" style="margin-top:10px;font-weight:800"><span>${tab==='all'?L('Task boxes','Görev kutuları'):tt(ROLES[tab].name)+' '+L('boxes','kutuları')}</span><button id="boxAdd" style="background:#1D2433;color:#fff;border-radius:10px;padding:5px 12px;font-weight:800;font-size:13px">+ ${L('New box','Yeni kutu')}</button></div>`;
+  for(const b of boxes().filter(b=>tab==='all'||b.role===tab)){
     const mem=b.m||[];
     html+=`<div class="rule">
-      <button class="boxhead" data-btog="${b.id}"><span>${boxShut[b.id]?'▸':'▾'} ${tt(ROLES[b.role].name)} · ${SHIFTS[b.sh].icon} ${hh(SHIFTS[b.sh].from)}–${hh(SHIFTS[b.sh].to)} · ${mem.length} ${L('person','kişi')}</span><span class="bw">₵${fmt(boxWage(b))}/${L('day','gün')}</span></button>
+      <button class="boxhead" data-btog="${b.id}"><span>${boxShut[b.id]?'▸':'▾'} ${tt(ROLES[b.role].name)} · ${SHIFTS[b.sh].icon} ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)} · ${mem.length} ${L('person','kişi')}</span><span class="bw">₵${fmt(boxWage(b))}/${L('day','gün')}</span></button>
       ${boxShut[b.id]?'':`
       <div class="seg">${Object.keys(ROLES).map(k=>`<button data-brole="${b.id}" data-r="${k}" class="${b.role===k?'on':''}" ${(!hasBat&&k!=='sell')?'disabled':''}>${tt(ROLES[k].name)}</button>`).join('')}</div>
       <div class="role-desc">${tt(ROLES[b.role].desc)}</div>
@@ -6175,7 +6239,7 @@ function renderCrew(){
       ${pickFor===b.id?`<div class="picklist">${benchList().length?benchList().slice().sort((x,y)=>skillFor(b.role,y)-skillFor(b.role,x)).map(i=>{const t=staffOf(i),sk=skillFor(b.role,i);return `<button data-pick="${b.id}:${i}" class="${sk>=4?'good':sk<=2?'weak':''}"><b>${t.name} ${roleIcon(b.role)}${sk}★</b><small>⚡${stars(t.f)} 🔧${stars(t.r)} 🧯${stars(t.s)} · ₵${fmt(dailyWage(i))}/${L('day','gün')}</small></button>`;}).join(''):`<div class="role-desc">${L('Everyone already has a job.','Herkesin görevi var.')}</div>`}</div>`:''}`}
     </div>`;
   }
-  if(!boxes().length)html+=`<div class="note">${L('No task boxes yet. Make one, then drop names into it.','Henüz görev kutusu yok. Bir tane aç, sonra içine isim at.')}</div>`;
+  if(!boxes().filter(b=>tab==='all'||b.role===tab).length)html+=`<div class="note">${tab==='all'?L('No task boxes yet. Make one, then drop names into it.','Henüz görev kutusu yok. Bir tane aç, sonra içine isim at.'):L('No box for this job yet. Add one — it opens with this role already set.','Bu iş için kutu yok. Bir tane aç — bu rolle açılır.')}</div>`;
   {const bl=benchList();
    html+=`<div class="row1" style="margin-top:12px;font-weight:800"><span>${L('Bench','Boştakiler')} · ${bl.length}</span><span style="font-size:12px;color:var(--soft)">${L('paid, not working','maaş alıyor, çalışmıyor')}</span></div>`;
    if(!bl.length)html+=`<div class="note">${L('Everyone has a job.','Herkesin görevi var.')}</div>`;
@@ -6206,6 +6270,8 @@ let lastWheel=0;
 addEventListener('wheel',e=>{if(!playing||e.target.closest('.modal'))return;e.preventDefault();const now=performance.now();if(now-lastWheel<220||Math.abs(e.deltaY)<2)return;lastWheel=now;setZoom(e.deltaY>0?1:-1);},{passive:false});
 $('crewClose').onclick=()=>$('mCrew').classList.remove('on');
 $('minRange').oninput=e=>{S.crew.min=+e.target.value;S.stats.planned++;renderCrewLive();};
+$('crewList').addEventListener('input',e=>{const r=e.target.closest('#fixRange');if(!r)return;S.crew.fixEff=+r.value/100;
+  const v=r.closest('.rule').querySelector('.val');if(v)v.textContent='%'+r.value;save();});
 $('minAuto').onchange=e=>{S.crew.auto=e.target.checked;if(!S.crew.auto)S.crew.min=+todayAvg().toFixed(1);S.stats.planned++;renderCrew();};
 function fireHelper(i){
   if(S.up.helper<=0)return;
@@ -6233,7 +6299,9 @@ $('crewList').addEventListener('click',e=>{
     return;}
   const bt=e.target.closest('button[data-btog]');
   if(bt){const id=bt.dataset.btog;boxShut[id]=!boxShut[id];if(boxShut[id]&&pickFor===id)pickFor=null;sfx.pick();renderCrew();return;}
-  if(e.target.closest('#boxAdd')){boxes().push(newBox());trackOnce('crew-box-new');touch();return;}
+  const tb=e.target.closest('button[data-tab]');
+  if(tb){S.crew.tab=tb.dataset.tab;pickFor=null;sfx.pick();renderCrew();save();return;}
+  if(e.target.closest('#boxAdd')){const nb=newBox();const t=S.crew.tab||'all';if(t!=='all')nb.role=t;boxes().push(nb);trackOnce('crew-box-new');touch();return;}
   const bd=e.target.closest('button[data-bdel]');
   if(bd){S.crew.boxes=boxes().filter(b=>b.id!==bd.dataset.bdel);if(pickFor===bd.dataset.bdel)pickFor=null;touch();return;}
   const br=e.target.closest('button[data-brole]');
@@ -6502,7 +6570,7 @@ $('sTut').onclick=()=>{$('mSet').classList.remove('on');openLangPick(startTutori
 /* ======================= FINANCE REPORT ======================= */
 function crewAdvice(){                                   // one concrete move, the most valuable one
   const R=r=>tt(ROLES[r].name), N=i=>staffOf(i).name;
-  const HRS=k=>hh(SHIFTS[k].from)+'–'+hh(SHIFTS[k].to);
+  const HRS=k=>h2(SHIFTS[k].from)+'–'+h2(SHIFTS[k].to);
   const bx=boxes().filter(b=>b.m);
   if(!S.up.helper)return L('Hire your first helper at HQ, then give them a task box.','Merkezden ilk yardımcını al, sonra ona bir görev kutusu ver.');
   const cov=[0,0,0];for(const b of bx)for(const i of b.m)cov[b.sh||0]++;
@@ -6644,12 +6712,12 @@ function openReport(page){
       [L('Crew sales','Ekip satışı'),'₵'+fmt(crewRev)],
     ]);
     $('repChart').hidden=true;
-    const shRows=SHIFTS.map(x=>`<tr><td>${x.icon} ${tt(x.name)}</td><td>${hh(x.from)}–${hh(x.to)}</td><td>${cov[x.id]}</td><td>${cov[x.id]?L('ok','iyi'):'⚠️ '+L('empty','boş')}</td></tr>`).join('');
+    const shRows=SHIFTS.map(x=>`<tr><td>${x.icon} ${tt(x.name)}</td><td>${h2(x.from)}–${h2(x.to)}</td><td>${cov[x.id]}</td><td>${cov[x.id]?L('ok','iyi'):'⚠️ '+L('empty','boş')}</td></tr>`).join('');
     const bxRows=boxes().map(b=>{const n=(b.m||[]).length;
       const f=n?Math.round((b.m.reduce((a,i)=>a+skillFor(b.role,i),0)/n)/5*100):0;
-      return `<tr><td>${tt(ROLES[b.role].name)} ${roleIcon(b.role)}</td><td>${SHIFTS[b.sh].icon} ${hh(SHIFTS[b.sh].from)}–${hh(SHIFTS[b.sh].to)}</td><td>${n}</td><td>${n?f+'%':'—'}</td><td>₵${fmt(boxWage(b))}</td></tr>`;}).join('');
+      return `<tr><td>${tt(ROLES[b.role].name)} ${roleIcon(b.role)}</td><td>${SHIFTS[b.sh].icon} ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)}</td><td>${n}</td><td>${n?f+'%':'—'}</td><td>₵${fmt(boxWage(b))}</td></tr>`;}).join('');
     const tips=[];
-    for(const x of SHIFTS)if(!cov[x.id])tips.push(L(`Nobody works ${x.from}:00–${x.to}:00 — plants keep producing but nobody collects.`,`${hh(x.from)}:00–${hh(x.to)}:00 arası kimse çalışmıyor — santraller üretiyor ama toplayan yok.`));
+    for(const x of SHIFTS)if(!cov[x.id])tips.push(L(`Nobody works ${x.from}:00–${x.to}:00 — plants keep producing but nobody collects.`,`${h2(x.from)}:00–${h2(x.to)}:00 arası kimse çalışmıyor — santraller üretiyor ama toplayan yok.`));
     if(bench)tips.push(L(`${bench} on the bench draw ₵${fmt(benchList().reduce((a,i)=>a+dailyWage(i),0))}/day and produce nothing.`,`Boştaki ${bench} kişi günde ₵${fmt(benchList().reduce((a,i)=>a+dailyWage(i),0))} alıyor ve hiçbir şey üretmiyor.`));
     for(const b of boxes()){const n=(b.m||[]).length;if(!n)continue;
       const avg=b.m.reduce((a,i)=>a+skillFor(b.role,i),0)/n;
@@ -6668,6 +6736,42 @@ function openReport(page){
   }
   $('mRep').classList.add('on');trackOnce('report-opened');
 }
+function openMarkets(){
+  const avg=todayAvg(),h=Math.floor(hourNow())%24,t=hourNow(),P={x:S.px,y:S.py};
+  const rows=markets().map(m=>{
+    const pr=priceAt(m),sat=marketSat(m),cap=m.id==='city'?4:5;
+    const d=Math.round(Math.hypot(m.x-P.x,m.y-P.y));
+    const nm=m.id==='city'?L('City','Şehir'):m.id==='town1'?L('Ridge town','Sırt kasabası'):L('Desert town','Çöl kasabası');
+    return {m,pr,sat,cap,d,nm,lv:level(pr)};
+  }).sort((a,b)=>b.pr-a.pr);
+  $('mktTitle').textContent=L('Markets','Pazarlar');
+  $('mktSub').textContent=L(`Today's average is ₵${avg.toFixed(1)}. The greenest card pays most right now.`,`Bugünün ortalaması ₵${avg.toFixed(1)}. Yeşil kart şu an en çok ödeyen.`);
+  const locked=TOWNS.filter(x=>!built(x.id)).length;
+  $('mktBody').innerHTML=rows.map((r,k)=>`
+    <div class="mktcard${k===0&&rows.length>1?' best':''}">
+      <div class="mkhead"><span>${r.m.id==='city'?'🏙️':'🏘️'} ${r.nm}${r.m.id!=='city'?' '+codeOf(r.m.id):''}</span>${k===0&&rows.length>1?`<span class="mkbest">${L('best','en iyi')}</span>`:''}</div>
+      <div class="mkrow">
+        <div><div class="pnow">₵${r.pr.toFixed(1)}</div><span class="lvl ${r.lv[1]}" style="background:${r.lv[2]}">${r.lv[0]}</span></div>
+        <canvas class="mkspark" data-mk="${r.m.id}"></canvas>
+        <div class="mkmeta">${L('Saturation','Doygunluk')} <b>${Math.round(r.sat/r.cap*100)}%</b><br>${L('Distance','Mesafe')} <b>${r.d}</b></div>
+      </div>
+    </div>`).join('')
+    +(locked?`<div class="note">${L(`${locked} more town market can be built in the far regions — sell there instead of walking to the city.`,`Uzak bölgelerde kurulabilecek ${locked} kasaba pazarı daha var — şehre yürümek yerine orada sat.`)}</div>`:'')
+    +`<p style="font-size:12.5px">${L('Saturation is how much you have already dumped there; it drives that price down and recovers while you sell elsewhere.','Doygunluk oraya ne kadar yığdığındır; o pazarın fiyatını düşürür ve sen başka yerde sattıkça geri toparlar.')}</p>`;
+  for(const cv of $('mktBody').querySelectorAll('.mkspark')){
+    const m=markets().find(x=>x.id===cv.dataset.mk);if(!m)continue;
+    const dpr=Math.min(2,devicePixelRatio||1),w=cv.clientWidth||90,hg=cv.clientHeight||38;
+    cv.width=w*dpr;cv.height=hg*dpr;
+    const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,hg);
+    const vals=todayCurve().map(v=>v*m.mult),mx=Math.max(...vals);
+    for(let i=0;i<24;i++){const v=vals[i],bh=Math.max(2,(v/mx)*(hg-4));
+      c.fillStyle=i<h?'#CBD3DD':level(v)[2];c.fillRect(i*(w/24)+0.5,hg-bh,w/24-1,bh);}
+    c.fillStyle='#1D2433';c.fillRect((t/24)*w-1,0,2,hg);
+  }
+  $('mMkt').classList.add('on');trackOnce('markets-opened');
+}
+$('mktClose').onclick=()=>$('mMkt').classList.remove('on');
+$('mktBox').onclick=()=>{if(!document.body.classList.contains('title'))openMarkets();};
 $('repBtn').onclick=openReport;
 $('repClose').onclick=()=>$('mRep').classList.remove('on');
 $('repNext').onclick=()=>openReport(Math.min(3,repPage+1));
@@ -6676,6 +6780,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.35.1',t:['Off-shift crew goes inside','Vardiyası olmayan içeri giriyor'],l:[['Helpers with no shift and helpers with no task box now walk into HQ and disappear until their hours start, instead of crowding the lawn. A 😴 count on the door shows how many are resting.','Vardiyası olmayan ve görev kutusu olmayan yardımcılar artık çimde yığılmak yerine merkeze girip saatleri gelene kadar gözden kayboluyor. Kapıdaki 😴 sayacı kaç kişinin dinlendiğini gösteriyor.']]},
+ {v:'0.35.0',t:['Plants wear out honestly','Santraller dürüstçe yaşlanıyor'],l:[['A plant can no longer climb past 100%. Every repower now costs 5 points of its ceiling: 100 → 95 → 90 → 85 → 80. Below 80 it cannot be repowered any more — tear it down and rebuild it for the full price, and it returns to 100%.','Santral artık %100\'ün üstüne çıkamaz. Her yenileme tavanından 5 puan götürüyor: 100 → 95 → 90 → 85 → 80. %80 altına inince yenilenemez — söküp tam bedelle yeniden kurarsın, %100\'e döner.'],['Ageing is half as fast as before (0.5%/day past lifetime instead of 1%), the floor is 50% instead of 35%, and the renewal prompt appears at 90% of lifetime instead of 80%.','Yaşlanma eskinin yarısı hızda (ömür sonrası günde %0,5, eskiden %1), taban %35 yerine %50 ve yenileme uyarısı ömrün %80\'i yerine %90\'ında çıkıyor.'],['Fix helpers now repower too. Set the level in the crew panel: with nothing broken, they renew any plant that has fallen to it. A rebuild stays yours — helpers will not spend that much on their own.','Tamir yardımcıları artık yenileme de yapıyor. Seviyeyi ekip panelinden belirliyorsun: bozuk bir şey yoksa o seviyeye düşen santralleri yeniliyorlar. Söküp yeniden kurma sende kalıyor — yardımcılar o parayı kendi başına harcamaz.'],['The crew panel has a tab per job. The Fix tab also lists every worn plant with its output, its ceiling and what it will cost.','Ekip panelinde her iş için bir sekme var. Tamir sekmesi ayrıca yıpranmış tüm santralleri üretimi, tavanı ve maliyetiyle listeliyor.'],['Old saves: plants that had climbed to 110% or 133% come back to 100%.','Eski kayıtlar: %110 veya %133\'e çıkmış santraller %100\'e iniyor.']]},
+ {v:'0.34.4',t:['A card per market','Her pazara bir kart'],l:[['The markets panel now repeats the top price card once per market — price, level, its own day curve, saturation and distance — and the best-paying one sits on green.','Pazarlar paneli üstteki fiyat kartını her pazar için çoğaltıyor — fiyat, seviye, kendi gün eğrisi, doygunluk ve mesafe — en çok ödeyen yeşil zeminde.']]},
+ {v:'0.34.3',t:['Markets panel · clock fixed','Pazarlar paneli · saat düzeldi'],l:[['The clock printed a raw number instead of 21:00 — a helper added in 0.34.0 was overwriting the clock formatter.','Saat 21:00 yerine ham sayı yazıyordu — 0.34.0 ile eklenen bir yardımcı fonksiyon saat biçimlendiricisinin üstüne yazmış.'],['Tap the price box at the top to see every market at once.','Üstteki fiyat kutusuna dokun, tüm pazarları bir arada gör.']]},
  {v:'0.34.2',t:['One move to make next','Sıradaki tek hamle'],l:[['The crew page ends with a single concrete instruction — who to move, to which shift, for which job — picked as the most valuable change available right now.','Ekip sayfası tek somut talimatla bitiyor: kimi, hangi vardiyaya, hangi iş için taşıyacaksın — şu an yapılabilecek en değerli değişiklik seçiliyor.']]},
  {v:'0.34.1',t:['Crew schedule in the report','Raporda çalışan çizelgesi'],l:[['The finance report has a third page: shift coverage, per-box skill fit, bench cost and an efficiency score, with a line for each thing dragging it down.','Finansal raporda üçüncü sayfa var: vardiya kapsaması, kutu bazlı yetenek uyumu, boştakilerin maliyeti ve bir verim skoru — skoru düşüren her şey için bir satır.'],]},
  {v:'0.34.0',t:['Task boxes · crew up to 45','Görev kutuları · 45 kişilik ekip'],l:[['Helpers now work three shifts, so the crew cap went from 15 to 45 — that is 15 on duty at any hour, the same as the old round-the-clock 15.','Yardımcılar üç vardiya çalışıyor, bu yüzden ekip tavanı 15\'ten 45\'e çıktı — her saatte 15 kişi görevde, eski 24 saat çalışan 15 kişinin karşılığı.'],['Hiring is much cheaper: the cost curve dropped from ×1.55 to ×1.17 per helper. The 15th helper costs ₵4K instead of ₵208K, and a full 45-strong crew is an endgame goal at about ₵3.1M total.','İşe alım çok ucuzladı: maliyet katsayısı kişi başı ×1.55\'ten ×1.35\'e indi. 11. yardımcı ₵36K yerine ₵9K.'],['You no longer set orders person by person. A task box holds a job — role, field, market, shift — and you drop names into it. Your crew starts in one example box; add more boxes yourself. Anyone without a box waits at HQ and still draws wages.','Artık tek tek kişi ayarlamıyorsun. Görev kutusu bir işi tutar — rol, saha, pazar, vardiya — içine isim atarsın. Ekibin tek bir örnek kutuda başlar; yeni kutuları sen açarsın. Kutusu olmayan merkezde bekler ama maaşını alır.'],['Daily wages rescaled for three shifts: base share of daily income 2% → 0.7%, night premium ×1.5 → ×1.35.','Günlük ücretler üç vardiyaya göre yeniden ölçeklendi: günlük gelir payı %2 → %0.7, gece primi ×1.5 → ×1.35.'],['The add-someone list is sorted best-first for that box\'s role, and strong candidates (4★ and up) are shown on green.','Kişi ekleme listesi o kutunun rolüne göre en iyiden sıralanıyor; güçlü adaylar (4★ ve üzeri) yeşil zeminde görünüyor.'],['Tap a box header to fold it away — handy once you run many boxes.','Kutu başlığına dokununca kutu katlanıyor — çok kutuyla çalışırken işe yarıyor.']]},
@@ -7075,7 +7183,7 @@ function load(){
     S.crew=Object.assign(fresh().crew,o.crew||{});
     if(!Array.isArray(S.crew.roles))S.crew.roles=[];
     migrateBoxes();applyBoxes();
-    S.plants.forEach(p=>{if(!p.born)p.born=gameNow();if(!p.gen)p.gen=1;});
+    S.plants.forEach(p=>{if(!p.born)p.born=gameNow();if(!p.gen)p.gen=1;if(p.gen>1)p.gen=1;});   // old repower bonus capped at 100%
     if(!S.bat||typeof S.bat!=='object'){S.bat={};}
     if(S.battery>0&&!Object.keys(S.bat).length){S.bat.bat=S.battery;}   // old single tank -> main station
     if(src!=='main'){console.warn('save restored from',src);setTimeout(()=>toast('Your save was restored from a backup.','good'),1500);}
@@ -7191,7 +7299,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.34.2';
+const GAME_VERSION='0.35.1';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
