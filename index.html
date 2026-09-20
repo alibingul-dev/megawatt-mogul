@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.43.0</div>
+  <div class="t-ver" id="tVer">v0.44.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -488,7 +488,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.43.0 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.44.0 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4845,11 +4845,17 @@ let lakeMesh=null,lakeShown=-1;
 /* a dry catchment does not send a wide sheet down a wide bed: the river pulls into the
    middle of its channel and leaves the banks bare. This is how much of the bed it covers. */
 function wetW(f){return Math.max(0.30,Math.min(1,0.22+0.72*f));}
-let riverUp=null,riverDown=null,upShown=-1,downShown=-1,tailRel=1,lakeSeam=-1;
+let riverUp=null,riverDown=null,upShown=-1,downShown=-1,tailRel=1,lakeSeam=-1,lakeSeamD=-1;
 function rebuildRiverUp(k){
   if(!riverUp)return;
   upShown=k;const i0=lakeRange()[0],old=riverUp.geometry;
   riverUp.geometry=ribbonGeo(0,i0,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);
+  old.dispose();
+}
+function rebuildRiverDown(k){
+  if(!riverDown)return;
+  downShown=k;const i1=lakeRange()[1],P=riverPts(),old=riverDown.geometry;
+  riverDown.geometry=ribbonGeo(i1,P.length-1,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);
   old.dispose();
 }
 function setRiverFlow(){
@@ -4865,23 +4871,30 @@ function setRiverFlow(){
     tailRel+=(want-tailRel)*0.04;
     if(Math.abs(want-tailRel)<0.01)tailRel=want;
     const k=wetW(waterCF()*tailRel);
-    if(Math.abs(k-downShown)>=0.025){downShown=k;const old=riverDown.geometry;
-      riverDown.geometry=ribbonGeo(i1,P.length-1,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);old.dispose();}
+    if(Math.abs(k-downShown)>=0.025){rebuildRiverDown(k);lakeSeamD=-1;}   // the lake must meet it
+  }
+  if(!S.plants.some(q=>q.type==='dam')){
+    setLakeLevel(null);   // nothing holds it back yet
   }
 }
 const LAKE_BLEND=4;                              // points over which the river hands over to the lake
 function setLakeLevel(f){
   if(!lakeMesh)return;
-  f=Math.max(0.05,Math.min(1,f));
-  if(Math.abs(f-lakeShown)<0.03&&lakeSeam===upShown)return;
-  lakeShown=f;lakeSeam=upShown;
+  const nat=(f==null);                    // no wall: the basin is just a wide, slow reach
+  f=nat?0:Math.max(0.05,Math.min(1,f));
+  if(Math.abs(f-lakeShown)<0.03&&lakeSeam===upShown&&lakeSeamD===downShown)return;
+  lakeShown=f;lakeSeam=upShown;lakeSeamD=downShown;
   const [i0,i1]=lakeRange(),P=riverPts();
-  const kLake=0.52+0.48*f, kRiver=upShown>0?upShown:kLake, yy=RIV_Y+(LAKE_Y-RIV_Y)*f;
+  const kRiver=upShown>0?upShown:1, kDown=downShown>0?downShown:kRiver;
+  const kLake=nat?(kRiver+kDown)/2:0.52+0.48*f, yy=nat?RIV_Y:RIV_Y+(LAKE_Y-RIV_Y)*f;
   if(Math.abs(yy-lakeYNow)>0.004){lakeYNow=yy;                // the backwater follows it up and down
-    rebuildRiverUp(upShown>0?upShown:wetW(waterCF()));}       // rebuilt now, so the two never disagree
-  // at the join the lake is exactly as wide as the river arriving; it opens out from there
-  const mix=i=>Math.min(1,Math.max(0,(i-i0)/LAKE_BLEND));
-  const kAt=(q,i)=>kRiver+(kLake-kRiver)*mix(i);
+    rebuildRiverUp(upShown>0?upShown:wetW(waterCF()));        // rebuilt now, so the three never disagree
+    rebuildRiverDown(downShown>0?downShown:wetW(waterCF()*tailRel));}
+  // at both joins the lake is exactly as wide as the channel it meets - the river coming in
+  // above, the tailrace leaving below - and it opens out to its own width in between
+  const mixIn =i=>Math.min(1,Math.max(0,(i-i0)/LAKE_BLEND));
+  const mixOut=i=>Math.min(1,Math.max(0,(i1-i)/LAKE_BLEND));
+  const kAt=(q,i)=>kLake+(kRiver-kLake)*(1-mixIn(i))+(kDown-kLake)*(1-mixOut(i));
   const old=lakeMesh.geometry;
   lakeMesh.geometry=ribbonGeo(i0,i1,(q,i)=>-q.w/2*kAt(q,i),()=>yy,(q,i)=>q.w/2*kAt(q,i),()=>yy);
   old.dispose();
@@ -6345,13 +6358,21 @@ for(const r of REGIONS){
 /* pads */
 const padObjs={};
 const texCache={};
+/* the marker for a pad out on the river belongs on the surface; left on the bed at 0.06
+   it sits under the water and the player sees only a price tag floating on open water */
+function padY(p){
+  const T=p.kind==='build'&&PLANT_TYPES[p.type];
+  if(!T||(T.kind!=='hydro'&&T.kind!=='dam'))return 0.06;
+  const y=p.y<=BACK0||p.y>WALLY?RIV_Y:(p.y>=BACK1?LAKE_Y:RIV_Y+(LAKE_Y-RIV_Y)*((p.y-BACK0)/(BACK1-BACK0)));
+  return y+0.05;
+}
 function padObj(p){
   if(padObjs[p.id])return padObjs[p.id];
   const big=p.kind==='gate',color=p.kind==='gate'?'#E8364F':p.kind==='upg'?'#6A5CFF':'#FFFFFF';
   const icon=p.kind==='build'?BUILD_ICON[p.type]:p.icon;const key=color+icon+big;
   texCache[key]=texCache[key]||padTex(color,icon,big);
   const w=big?6:3.2,h=3.2;
-  const g=new THREE.Group();const[X,Z]=W3(p.x,p.y);g.position.set(X,0.06,Z);
+  const g=new THREE.Group();const[X,Z]=W3(p.x,p.y);g.position.set(X,padY(p),Z);
   const plane=mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:texCache[key],transparent:true,depthWrite:false}),0,0,0,false);plane.rotation.x=-Math.PI/2;g.add(plane);
   const fill=mesh(new THREE.PlaneGeometry(w-0.5,h-0.5),new THREE.MeshBasicMaterial({color:0xFFC83D,transparent:true,opacity:0.7,depthWrite:false}),0,-0.01,0,false);fill.rotation.x=-Math.PI/2;g.add(fill);
   if(big){const arm=mesh(new THREE.BoxGeometry(6,0.25,0.25),M(0xE8364F),0,1.1,-1.8);g.add(arm);g.add(mesh(new THREE.BoxGeometry(0.4,1.4,0.4),M(0x444B5E),-3.2,0.7,-1.8));
@@ -7376,6 +7397,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.44.0',t:['The river reads properly again','Nehir yeniden d\u00fczg\u00fcn okunuyor'],l:[
+  ['The run-of-river and dam plots now show their build pad on the water. They were drawn on the river bed, under the surface, so all you could see was a price tag floating on open water with nothing to tap.','Akarsu ve barajl\u0131 santral arsalar\u0131 art\u0131k in\u015faat zeminini suyun \u00fczerinde g\u00f6steriyor. Zemin nehir yata\u011f\u0131na, suyun alt\u0131na \u00e7iziliyordu; g\u00f6r\u00fclen tek \u015fey a\u00e7\u0131k suda duran bir fiyat etiketiydi.'],
+  ['Where the reservoir meets the tailrace below the wall, the two surfaces now line up exactly, as they already did where the river runs into the reservoir above it. A crack used to open across the water there whenever the gate moved or the catchment dried out.','Haznenin duvar\u0131n alt\u0131ndaki kuyruk suyuyla bulu\u015ftu\u011fu yerde iki y\u00fczey art\u0131k tam \u00f6rt\u00fc\u015f\u00fcyor \u2014 yukar\u0131da nehrin hazneye girdi\u011fi yerde zaten \u00f6yleydi. Kapak her hareket etti\u011finde ya da havza kurudu\u011funda orada suyun \u00fczerinde bir \u00e7atlak a\u00e7\u0131l\u0131yordu.'],
+  ['With no wall built yet there is no reservoir either: the water simply runs through the basin at river level instead of standing there as a pool that nothing holds back.','Hen\u00fcz duvar kurulmad\u0131ysa hazne de yok: su, kimsenin tutmad\u0131\u011f\u0131 bir g\u00f6l gibi durmak yerine havzadan nehir seviyesinde ak\u0131p ge\u00e7iyor.']]},
  {v:'0.43.0',t:['The game stays on your phone','Oyun telefonunda kal\u0131yor'],l:[
   ['Cloud saving is gone. There is no sign-in step, no Google account, no server: the game starts the moment you pick a mode, and everything you build lives in this browser on this phone. Nothing leaves it, so there is no personal data to process \u2014 the privacy notice and the consent tick are gone with it, because there is nothing left to consent to.','Bulut kayd\u0131 kald\u0131r\u0131ld\u0131. Giri\u015f ad\u0131m\u0131 yok, Google hesab\u0131 yok, sunucu yok: mod se\u00e7er se\u00e7mez oyun ba\u015fl\u0131yor ve kurdu\u011fun her \u015fey bu telefondaki bu taray\u0131c\u0131da duruyor. Hi\u00e7bir \u015fey d\u0131\u015far\u0131 \u00e7\u0131km\u0131yor, yani i\u015flenen ki\u015fisel veri de yok \u2014 ayd\u0131nlatma metni ve onay kutusu da onunla birlikte kalkt\u0131, \u00e7\u00fcnk\u00fc art\u0131k onay verilecek bir \u015fey kalmad\u0131.'],
   ['The leaderboard went with it, since it only ever existed on the server. Settings loses its Account section; Save data keeps the save code, so you can still carry a game to another phone by hand.','Liderlik tablosu da gitti, \u00e7\u00fcnk\u00fc sadece sunucuda vard\u0131. Ayarlar\u2019dan Hesap b\u00f6l\u00fcm\u00fc kalkt\u0131; Kay\u0131t verisi b\u00f6l\u00fcm\u00fcndeki kay\u0131t kodu duruyor, yani bir oyunu ba\u015fka telefona elle ta\u015f\u0131yabilirsin.'],
@@ -8062,7 +8087,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.43.0';
+const GAME_VERSION='0.44.0';
 /* The cloud is off: nothing leaves the phone, so there is no personal data to process,
    no notice to show and no consent to take. Flip this back to re-enable it. */
 const CLOUD_ON=false;
