@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.42.3</div>
+  <div class="t-ver" id="tVer">v0.43.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -455,7 +455,6 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <h2 id="setTitle" data-i18n="settings">Settings</h2>
   <div class="btns" id="setHome">
     <button class="cat" data-cat="game"><b>🎮 <span>Game</span></b><small></small></button>
-    <button class="cat" data-cat="acc"><b>👤 <span>Account</span></b><small></small></button>
     <button class="cat" data-cat="disp"><b>🖥️ <span>Display</span></b><small></small></button>
     <button class="cat" data-cat="data"><b>💾 <span>Save data</span></b><small></small></button>
     <button class="pri" id="sClose" data-i18n="close">Close</button>
@@ -474,8 +473,6 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="sCloudOut" hidden>Sign out</button>
     <button id="sPull" hidden>Load from cloud</button>
     <button id="sPush" hidden>Save to cloud</button>
-    <button id="sPrivacy">🔒 <span id="privLbl">What is stored</span></button>
-    <button class="danger" id="sWipe" hidden>🗑️ <span id="wipeLbl">Delete my cloud data</span></button>
     <button class="pri setback">‹ Back</button>
   </div>
   <div class="btns setsec" id="setDisp" hidden>
@@ -491,7 +488,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.42.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.43.0 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -6653,7 +6650,7 @@ function hud(dt){
   const G=GOALS[S.goal];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${L('Lv','Sv')}${lvl()}</b> · `);
   $('goal').innerHTML=chip+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
-  $('gridBtn').hidden=!has('gridline');$('leadBtn').hidden=!has('board');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
+  $('gridBtn').hidden=!has('gridline');$('leadBtn').hidden=!has('board')||!CLOUD_ON;$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
   document.querySelector('.market').style.visibility=has('price')?'':'hidden';
@@ -7379,6 +7376,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.43.0',t:['The game stays on your phone','Oyun telefonunda kal\u0131yor'],l:[
+  ['Cloud saving is gone. There is no sign-in step, no Google account, no server: the game starts the moment you pick a mode, and everything you build lives in this browser on this phone. Nothing leaves it, so there is no personal data to process \u2014 the privacy notice and the consent tick are gone with it, because there is nothing left to consent to.','Bulut kayd\u0131 kald\u0131r\u0131ld\u0131. Giri\u015f ad\u0131m\u0131 yok, Google hesab\u0131 yok, sunucu yok: mod se\u00e7er se\u00e7mez oyun ba\u015fl\u0131yor ve kurdu\u011fun her \u015fey bu telefondaki bu taray\u0131c\u0131da duruyor. Hi\u00e7bir \u015fey d\u0131\u015far\u0131 \u00e7\u0131km\u0131yor, yani i\u015flenen ki\u015fisel veri de yok \u2014 ayd\u0131nlatma metni ve onay kutusu da onunla birlikte kalkt\u0131, \u00e7\u00fcnk\u00fc art\u0131k onay verilecek bir \u015fey kalmad\u0131.'],
+  ['The leaderboard went with it, since it only ever existed on the server. Settings loses its Account section; Save data keeps the save code, so you can still carry a game to another phone by hand.','Liderlik tablosu da gitti, \u00e7\u00fcnk\u00fc sadece sunucuda vard\u0131. Ayarlar\u2019dan Hesap b\u00f6l\u00fcm\u00fc kalkt\u0131; Kay\u0131t verisi b\u00f6l\u00fcm\u00fcndeki kay\u0131t kodu duruyor, yani bir oyunu ba\u015fka telefona elle ta\u015f\u0131yabilirsin.'],
+  ['Saves already on your phone are untouched.','Telefonundaki mevcut kay\u0131tlara dokunulmad\u0131.']]},
  {v:'0.42.3',t:['Privacy notice and consent','Ayd\u0131nlatma metni ve onay'],l:[
   ['Signing in with Google now needs a tick, and the tick is next to a link to a full privacy notice written to Article 10 of Turkish data protection law: who the data controller is and how to reach him, exactly which fields are stored, what is never stored, the purpose, the legal basis, where it is held, who can see it, how long it is kept, and your rights under Article 11.','Google ile oturum a\u00e7mak art\u0131k bir onay kutusu gerektiriyor ve kutunun yan\u0131nda, KVKK\u2019n\u0131n 10. maddesine g\u00f6re yaz\u0131lm\u0131\u015f tam bir ayd\u0131nlatma metninin ba\u011flant\u0131s\u0131 var: veri sorumlusunun kim oldu\u011fu ve nas\u0131l ula\u015f\u0131laca\u011f\u0131, tam olarak hangi alanlar\u0131n sakland\u0131\u011f\u0131, nelerin asla saklanmad\u0131\u011f\u0131, ama\u00e7, hukuki sebep, nerede tutuldu\u011fu, kimin g\u00f6rebilece\u011fi, ne kadar sakland\u0131\u011f\u0131 ve 11. madde haklar\u0131n.'],
   ['Playing as a guest needs no consent and asks for none \u2014 nothing leaves your device that way. Anyone who signed in before the notice existed is asked once, and can decline, which turns the cloud off and keeps the game on their phone.','Misafir oynamak onay gerektirmiyor ve istemiyor \u2014 o yolda cihazdan hi\u00e7bir \u015fey \u00e7\u0131km\u0131yor. Metin yokken giri\u015f yapm\u0131\u015f olanlara bir kez soruluyor; reddedebilirler, o zaman bulut kapan\u0131r ve oyun telefonda devam eder.'],
@@ -7957,7 +7958,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('privLbl').textContent=L('What is stored','Neler saklanıyor');$('wipeLbl').textContent=L('Delete my cloud data','Bulut verilerimi sil');$('newsLbl').textContent=L("What's new",'Yenilikler');$('sWipe').hidden=!fbUser;applyLang();}
+function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   acc:['setAcc',['👤','Account','Hesap'],['Google sign-in and cloud save','Google girişi ve bulut kaydı']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Sound, shadows, flashes','Ses, gölge, parlama']],
@@ -8054,34 +8055,17 @@ function openKvkk(mode){
   $('mKvkk').classList.add('on');
 }
 /* anyone already signed in from before the notice existed is asked once */
-function kvkkCheck(){if(fbUser&&CLOUD_ON&&!(S.kvkk&&S.kvkk.v))openKvkk('consent');}
+function kvkkCheck(){}                       // nothing is stored off the phone, so nothing to consent to
 
 /* KVKK: say what is kept, and let anyone erase it without asking a human */
-$('sPrivacy').onclick=()=>{$('mSet').classList.remove('on');openKvkk('read');};
-
-$('sWipe').onclick=async()=>{
-  if(!fbUser||!fbDb)return;
-  if(!confirm(L('Delete your nickname, your figures and your cloud save? Your progress on this phone stays.','Takma ad\u0131n, rakamlar\u0131n ve bulut kayd\u0131n silinsin mi? Bu telefondaki ilerlemen kal\u0131r.')))return;
-  const uid=fbUser.uid;let ok=true;
-  const drop=async f=>{try{await f();}catch(e){ok=false;}};
-  await drop(()=>fbDb.collection('leaderboard').doc(uid).delete());
-  await drop(()=>fbDb.collection('profiles').doc(uid).delete());
-  await drop(()=>fbDb.collection('users').doc(uid).delete());
-  await drop(()=>fbDb.collection('codes').doc(myCode()).delete());
-  try{const snap=await fbDb.collection('friends').doc(uid).collection('list').limit(200).get();
-      for(const d of snap.docs){await drop(()=>d.ref.delete());
-        await drop(()=>fbDb.collection('friends').doc(d.id).collection('list').doc(uid).delete());}}catch(e){ok=false;}
-  toast(ok?L('Your cloud data is deleted.','Bulut verilerin silindi.')
-          :L('Some of it could not be deleted. Try again in a moment.','Bir k\u0131sm\u0131 silinemedi. Birazdan tekrar dene.'),ok?'good':'big');
-  S.syncBase=0;S.kvkk=null;save();              // deleting is also how consent is withdrawn
-};
-
 $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.removeItem(SAVE_KEY);}catch(e){}location.reload();}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.42.3';
-const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
+const GAME_VERSION='0.43.0';
+/* The cloud is off: nothing leaves the phone, so there is no personal data to process,
+   no notice to show and no consent to take. Flip this back to re-enable it. */
+const CLOUD_ON=false;
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
 let fbAuth=null,fbDb=null,fbUser=null,cloudBusy=false,lastCloud=0;
@@ -8104,8 +8088,8 @@ function cloudUI(){
   $('sPull').textContent=L('Load from cloud','Bulut kaydını yükle');$('sPush').textContent=L('Save to cloud','Buluta kaydet');
   $('sCloud').textContent=L('Sign in with Google','Google ile giriş yap');
   $('sCloudOut').textContent=fbUser?L('Sign out','Çıkış yap')+' · '+(S.nick||autoNick()):L('Sign out','Çıkış yap');
-  $('sWipe').hidden=!fbUser;
-  $('leadBtn').hidden=!has('board');
+  
+  $('leadBtn').hidden=!has('board')||!CLOUD_ON;
 }
 async function signInCloud(){
   await initCloud();if(!fbAuth)return toast(L('Cloud is only available on the public site.','Bulut sadece herkese açık sitede çalışır.'),'big');
@@ -8647,6 +8631,7 @@ function askMode(after){
 }
 function startFlow(){
   if(!S.mode){askMode(startFlow);return;}     // decide this once, before anything else
+  if(!CLOUD_ON){S.guest=true;save();beginPlay();return;}
   if(fbUser||S.guest){beginPlay();return;}
   $('stTitle').textContent=L('Where should your progress live?','İlerlemen nerede dursun?');
   $('stSub').textContent=L('Signing in keeps your progress in the cloud and puts you on the leaderboard.','Oturum açarsan ilerlemen bulutta saklanır ve liderlik tablosuna girersin.');
