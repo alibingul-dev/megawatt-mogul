@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.41.6</div>
+  <div class="t-ver" id="tVer">v0.42.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -295,7 +295,6 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div class="banner" id="banner" hidden></div>
 </div>
 <div id="sideCol">
-      <button class="rb" id="newsBtn" aria-label="What's new">📣<span class="badge" id="newsDot" hidden>!</span></button>
       <button class="rb" id="leadBtn" aria-label="Leaderboard">🏆</button>
       <button class="rb" id="gridBtn" aria-label="Grid lines" hidden>🔌</button>
       <button class="rb" id="repBtn" aria-label="Finance report">📊</button>
@@ -411,6 +410,11 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div class="btns" style="grid-template-columns:1fr 1fr"><button id="repPrev" hidden>‹</button><button id="repNext" hidden>›</button></div>
   <div class="btns"><button class="pri" id="repClose" data-i18n="close">Close</button></div>
 </div></div>
+<div class="modal" id="mKvkk"><div class="sheet tips">
+  <h2 id="kvTitle">Privacy notice</h2>
+  <div id="kvBody" style="text-align:left;line-height:1.6;font-size:14px"></div>
+  <div class="btns" id="kvBtns"></div>
+</div></div>
 <div class="modal" id="mNews"><div class="sheet tips">
   <h2 id="newsTitle">What's new</h2>
   <p id="newsSub"></p>
@@ -460,6 +464,8 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div class="langpick" style="display:flex;gap:6px;justify-content:center"><button data-lang="en" style="color:#fff">ENG</button><button data-lang="tr" style="color:#fff">TR</button></div>
     <button id="sLook" data-i18n="sLook">Change your look</button>
     <button id="sTut" data-i18n="sTut">Replay the tutorial</button>
+    <button id="newsBtn">📣 <span id="newsLbl">What's new</span><span class="badge" id="newsDot" hidden>!</span></button>
+    <button id="sMode">Mode: Competitive</button>
     <button id="sSpeed">Time speed: normal</button>
     <button class="pri setback">‹ Back</button>
   </div>
@@ -468,6 +474,8 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="sCloudOut" hidden>Sign out</button>
     <button id="sPull" hidden>Load from cloud</button>
     <button id="sPush" hidden>Save to cloud</button>
+    <button id="sPrivacy">🔒 <span id="privLbl">What is stored</span></button>
+    <button class="danger" id="sWipe" hidden>🗑️ <span id="wipeLbl">Delete my cloud data</span></button>
     <button class="pri setback">‹ Back</button>
   </div>
   <div class="btns setsec" id="setDisp" hidden>
@@ -483,7 +491,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.41.6 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.42.3 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4835,18 +4843,23 @@ function ribbonGeo(i0,i1,oA,yA,oB,yB){
 }
 /* the reservoir is the same channel, only wider and standing higher; as it empties the
    shoreline pulls in and the level falls back towards the river that feeds it */
+let cozyT=0;
 let lakeMesh=null,lakeShown=-1;
 /* a dry catchment does not send a wide sheet down a wide bed: the river pulls into the
    middle of its channel and leaves the banks bare. This is how much of the bed it covers. */
 function wetW(f){return Math.max(0.30,Math.min(1,0.22+0.72*f));}
 let riverUp=null,riverDown=null,upShown=-1,downShown=-1,tailRel=1,lakeSeam=-1;
+function rebuildRiverUp(k){
+  if(!riverUp)return;
+  upShown=k;const i0=lakeRange()[0],old=riverUp.geometry;
+  riverUp.geometry=ribbonGeo(0,i0,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);
+  old.dispose();
+}
 function setRiverFlow(){
   const [i0,i1]=lakeRange(),P=riverPts();
   if(riverUp){
     const k=wetW(waterCF());
-    if(Math.abs(k-upShown)>=0.025){upShown=k;const old=riverUp.geometry;
-      riverUp.geometry=ribbonGeo(0,i0,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);old.dispose();
-      lakeSeam=-1;}                                  // the lake must meet the new width
+    if(Math.abs(k-upShown)>=0.025){rebuildRiverUp(k);lakeSeam=-1;}   // the lake must meet the new width
   }
   if(riverDown){
     // below the wall the river only carries what the dam lets through, and it takes a
@@ -4867,7 +4880,8 @@ function setLakeLevel(f){
   lakeShown=f;lakeSeam=upShown;
   const [i0,i1]=lakeRange(),P=riverPts();
   const kLake=0.52+0.48*f, kRiver=upShown>0?upShown:kLake, yy=RIV_Y+(LAKE_Y-RIV_Y)*f;
-  if(Math.abs(yy-lakeYNow)>0.004){lakeYNow=yy;upShown=-1;}   // the backwater follows it up and down
+  if(Math.abs(yy-lakeYNow)>0.004){lakeYNow=yy;                // the backwater follows it up and down
+    rebuildRiverUp(upShown>0?upShown:wetW(waterCF()));}       // rebuilt now, so the two never disagree
   // at the join the lake is exactly as wide as the river arriving; it opens out from there
   const mix=i=>Math.min(1,Math.max(0,(i-i0)/LAKE_BLEND));
   const kAt=(q,i)=>kRiver+(kLake-kRiver)*mix(i);
@@ -5056,7 +5070,18 @@ const UNLOCK={};for(let i=1;i<LEVELS.length;i++)if(LEVELS[i].open)UNLOCK[LEVELS[
 UNLOCK.tips=UNLOCK.upgrades;UNLOCK.report=UNLOCK.roles;UNLOCK.report2=UNLOCK.repair;UNLOCK.report3=UNLOCK.shifts;
 UNLOCK.board=0;                       // leaderboard and friends are never level-gated
 UNLOCK.gridline=UNLOCK.regions;       // per-plant grid lines arrive with the far fields
-function has(k){return lvl()>=(UNLOCK[k]||0);}
+/* Two ways to play. Cozy is the whole game minus every system that asks you to think:
+   no levels, no shifts, no roles, no gates, no grid lines, no breakdowns, fires, snow
+   or ageing, no market cards. You walk, you collect, you sell, you build. Helpers do
+   the rest by themselves. Competitive is the game as it stands. */
+const COZY_ON={price:1,build:1,codes:1,upgrades:1,battery:1,crew:1,markets:1,regions:1,board:1,tips:1};
+function cozy(){return S.mode==='cozy';}
+function has(k){return cozy()?!!COZY_ON[k]:lvl()>=(UNLOCK[k]||0);}
+function cozyGuard(){                       // cozy never leaves a decision hanging
+  if(!cozy())return;
+  S.crew=S.crew||{};S.crew.auto=true;        // helpers sell at today's average, always
+  for(const p of S.plants){p.broken=false;p.fire=0;p.snow=0;p.gate='open';}
+}
 function perk(kind){
   let v=kind==='carry'?0:1;
   for(let i=2;i<=lvl();i++){const P=LEVELS[i]&&LEVELS[i].perk;if(!P)continue;
@@ -5473,6 +5498,7 @@ function update(dt){
     if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){p.broken=true;p.brokenAt=gameNow();const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
   tickWet(gdt);setRiverFlow();            // the catchment fills and drains, and the river shows it
+  if(cozy()&&(cozyT=(cozyT||0)+dt)>2){cozyT=0;cozyGuard();}
   S.sat=Math.max(0,S.sat-Math.max(0.12,S.sat*0.35)*dt);
   if(S.satT)for(const k in S.satT)S.satT[k]=Math.max(0,S.satT[k]-Math.max(0.16,S.satT[k]*0.4)*dt);
   // player
@@ -6624,7 +6650,9 @@ function hud(dt){
   $('cash').textContent=fmt(S.cash);$('wealth').textContent=fmt(wealth());{const c=S.contract,d=$('dealC');d.hidden=!c;if(c){const hl=Math.max(0,Math.ceil((c.until-gameNow())/HOUR));d.textContent=`🤝 ${c.delivered}/${c.need} · ${hl}h`;}}{const L=lossLastHour(),e=$('lossC');e.hidden=L<1;if(L>=1)e.textContent=`−${L} ⚡ · ${Math.round(efficiency()*100)}%`;e.title=L>=1?(S.lang==='tr'?'Son bir saatte kaybolan enerji · verimlilik':'Energy lost in the last hour · efficiency'):'';}$('carry').textContent=`${S.carry}/${carryCap()}`;
   $('pnow').textContent='₵'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
-  const G=GOALS[S.goal];const up=canLevel();$('goal').className='goal'+(up?' lvlup':'');$('goal').innerHTML=(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${L('Lv','Sv')}${lvl()}</b> · `)+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
+  const G=GOALS[S.goal];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
+  const chip=cozy()?`<b class="lvlchip">☕</b> · `:(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${L('Lv','Sv')}${lvl()}</b> · `);
+  $('goal').innerHTML=chip+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
   $('gridBtn').hidden=!has('gridline');$('leadBtn').hidden=!has('board');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
@@ -6653,6 +6681,18 @@ function hud(dt){
 /* ======================= CREW PANEL ======================= */
 function openCrew(){trackOnce('opened-crew-plan');renderCrew();$('mCrew').classList.add('on');}
 function renderCrew(){
+  if(cozy()){
+    $('crewList').innerHTML=
+      `<div class="rule" style="text-align:center">
+         <div class="row1" style="justify-content:center"><span>☕ ${L('Your crew runs itself','Ekibin kendi kendine çalışıyor')}</span></div>
+         <p style="margin-top:8px;line-height:1.5">${L('They collect from every plant and sell at the day\u2019s average price, around the clock. Nothing to set, nothing to watch.','Her santralden toplayıp günün ortalama fiyatından satıyorlar, gece gündüz. Ayarlanacak bir şey yok, takip edilecek bir şey yok.')}</p>
+         <p style="margin-top:10px;color:var(--soft);font-size:13px">${L('Hire more of them at the 👷 pad to earn faster.','Daha hızlı kazanmak için 👷 noktasından yenilerini işe al.')}</p>
+       </div>
+       <div class="note">${L('Want the orders, shifts and roles back? Settings › Game › Mode.','Emirleri, vardiyaları ve rolleri geri mı istiyorsun? Ayarlar › Oyun › Mod.')}</div>`;
+    for(const id of ['minRange','minAuto'])if($(id))$(id).closest('.rule').hidden=true;
+    return;
+  }
+  for(const id of ['minRange','minAuto'])if($(id))$(id).closest('.rule').hidden=false;
   const vals=todayCurve(),lo=Math.min(...vals),hi=Math.max(...vals),avg=todayAvg();
   const r=$('minRange');r.min=0;r.max=Math.ceil(hi*1.1);r.value=S.crew.auto?avg.toFixed(1):S.crew.min;r.disabled=S.crew.auto;
   $('minAuto').checked=S.crew.auto;
@@ -7245,7 +7285,7 @@ function doLevelUp(){
   openLevel();
 }
 
-$('goal').onclick=()=>{if(!document.body.classList.contains('title'))openLevel();};
+$('goal').onclick=()=>{if(!cozy()&&!document.body.classList.contains('title'))openLevel();};
 $('lvlGo').onclick=doLevelUp;
 $('lvlSkip').onclick=()=>$('mLvl').classList.remove('on');
 function renderGrid(){
@@ -7339,6 +7379,18 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.42.3',t:['Privacy notice and consent','Ayd\u0131nlatma metni ve onay'],l:[
+  ['Signing in with Google now needs a tick, and the tick is next to a link to a full privacy notice written to Article 10 of Turkish data protection law: who the data controller is and how to reach him, exactly which fields are stored, what is never stored, the purpose, the legal basis, where it is held, who can see it, how long it is kept, and your rights under Article 11.','Google ile oturum a\u00e7mak art\u0131k bir onay kutusu gerektiriyor ve kutunun yan\u0131nda, KVKK\u2019n\u0131n 10. maddesine g\u00f6re yaz\u0131lm\u0131\u015f tam bir ayd\u0131nlatma metninin ba\u011flant\u0131s\u0131 var: veri sorumlusunun kim oldu\u011fu ve nas\u0131l ula\u015f\u0131laca\u011f\u0131, tam olarak hangi alanlar\u0131n sakland\u0131\u011f\u0131, nelerin asla saklanmad\u0131\u011f\u0131, ama\u00e7, hukuki sebep, nerede tutuldu\u011fu, kimin g\u00f6rebilece\u011fi, ne kadar sakland\u0131\u011f\u0131 ve 11. madde haklar\u0131n.'],
+  ['Playing as a guest needs no consent and asks for none \u2014 nothing leaves your device that way. Anyone who signed in before the notice existed is asked once, and can decline, which turns the cloud off and keeps the game on their phone.','Misafir oynamak onay gerektirmiyor ve istemiyor \u2014 o yolda cihazdan hi\u00e7bir \u015fey \u00e7\u0131km\u0131yor. Metin yokken giri\u015f yapm\u0131\u015f olanlara bir kez soruluyor; reddedebilirler, o zaman bulut kapan\u0131r ve oyun telefonda devam eder.'],
+  ['Settings \u203a Account \u203a What is stored opens the same notice any time, and Delete my cloud data now also withdraws consent.','Ayarlar \u203a Hesap \u203a Neler saklan\u0131yor ayn\u0131 metni istedi\u011fin an a\u00e7\u0131yor; Bulut verilerimi sil art\u0131k r\u0131zay\u0131 da geri \u00e7ekiyor.']]},
+ {v:'0.42.0',t:['Two ways to play','\u0130ki t\u00fcrl\u00fc oynan\u0131yor'],l:[
+  ['\u2615 Cozy is the whole game with every system that asks you to think taken out: no levels, no shifts, no crew orders, no dam gates, no grid lines, no breakdowns, fires, snow or ageing, no market news. You walk, collect, sell and build; the crew collects from every plant and sells at the day average by itself, around the clock. Nothing to set, nothing to watch, nothing that can go wrong while you are away.','\u2615 \u00c7erezlik, oyunun d\u00fc\u015f\u00fcnmeyi gerektiren her sistemi \u00e7\u0131kar\u0131lm\u0131\u015f hali: seviye yok, vardiya yok, ekip emri yok, baraj kapa\u011f\u0131 yok, \u015febeke hatt\u0131 yok, ar\u0131za, yang\u0131n, kar, eskime yok, piyasa haberi yok. Y\u00fcr\u00fcr, toplar, satar, kurars\u0131n; ekip her santralden kendi toplay\u0131p g\u00fcn ortalamas\u0131ndan satar, gece g\u00fcnd\u00fcz. Ayarlanacak bir \u015fey yok, takip edilecek bir \u015fey yok, sen yokken ters gidebilecek bir \u015fey yok.'],
+  ['\u26a1 Competitive is the game as it was. The first time you press Play the game asks which one you want, and Settings \u203a Game \u203a Mode switches between them at any time \u2014 your money, your plants and your crew carry over untouched.','\u26a1 Rekabet\u00e7i, oyunun oldu\u011fu gibi hali. Oyna\u2019ya ilk bast\u0131\u011f\u0131nda hangisini istedi\u011fin soruluyor, Ayarlar \u203a Oyun \u203a Mod istedi\u011fin an de\u011fi\u015ftiriyor \u2014 paran, santrallerin ve ekibin hi\u00e7 bozulmadan ge\u00e7iyor.'],
+  ['Your Google name is no longer suggested as your nickname, so a real name cannot reach the leaderboard by accident. Before you sign in the game now states plainly what it keeps, Settings \u203a Account \u203a What is stored repeats it, and Delete my cloud data erases your nickname, your figures, your cloud save, your friend code and your friend list in one go.','Google ad\u0131n art\u0131k takma ad olarak \u00f6nerilmiyor, b\u00f6ylece ger\u00e7ek bir ad kazara liderlik tablosuna d\u00fc\u015femiyor. Oturum a\u00e7madan \u00f6nce oyun nelerin sakland\u0131\u011f\u0131n\u0131 a\u00e7\u0131k\u00e7a yaz\u0131yor, Ayarlar \u203a Hesap \u203a Neler saklan\u0131yor ayn\u0131s\u0131n\u0131 tekrarl\u0131yor, Bulut verilerimi sil ise takma ad\u0131n\u0131, rakamlar\u0131n\u0131, bulut kayd\u0131n\u0131, arkada\u015f kodunu ve arkada\u015f listeni tek seferde siliyor.'],
+  ['Patch notes moved off the map into Settings \u203a Game \u203a What\u2019s new, and only the last three updates are shown.','Yama notlar\u0131 haritadan \u00e7\u0131k\u0131p Ayarlar \u203a Oyun \u203a Yenilikler alt\u0131na ta\u015f\u0131nd\u0131 ve sadece son \u00fc\u00e7 g\u00fcncelleme g\u00f6steriliyor.']]},
+ {v:'0.41.7',t:['No more line across the reservoir','Haznenin \u00fczerindeki \u00e7izgi gitti'],l:[
+  ['A line kept flashing across the head of the reservoir, and it was worst while the gate stayed shut. When the held water changed level, the river feeding it was told to follow \u2014 but it only caught up on the next frame, so for that one frame the two surfaces stood a tenth of a unit apart and the edge between them lit up. A filling reservoir changes level constantly, which is why a shut gate showed it most.','Haznenin ba\u015f\u0131nda bir \u00e7izgi par\u0131lday\u0131p duruyordu ve en \u00e7ok kapak kapal\u0131yken g\u00f6r\u00fcn\u00fcyordu. Tutulan su seviye de\u011fi\u015ftirdi\u011finde onu besleyen nehre de takip et deniyordu \u2014 ama nehir ancak bir sonraki karede yeti\u015fiyordu, o tek karede iki y\u00fczey birbirinden bir birimin onda biri kadar ayr\u0131l\u0131p aradaki kenar\u0131 parlat\u0131yordu. Dolmakta olan bir hazne s\u00fcrekli seviye de\u011fi\u015ftirdi\u011fi i\u00e7in en \u00e7ok kapal\u0131 kapakta ortaya \u00e7\u0131k\u0131yordu.'],
+  ['The river above the wall is now rebuilt in the same frame the water level moves, not the one after. Measured over a full game day in all three gate settings, shut, automatic and open: the two surfaces meet at exactly the same point in every one of 14,400 frames.','Duvar\u0131n \u00fcst\u00fcndeki nehir art\u0131k su seviyesinin de\u011fi\u015fti\u011fi karede yeniden kuruluyor, bir sonrakinde de\u011fil. \u00dc\u00e7 kapak ayar\u0131n\u0131n \u00fc\u00e7\u00fcnde de \u2014 kapal\u0131, otomatik, a\u00e7\u0131k \u2014 tam bir oyun g\u00fcn\u00fc boyunca \u00f6l\u00e7\u00fcld\u00fc: 14.400 karenin hepsinde iki y\u00fczey t\u0131pat\u0131p ayn\u0131 noktada bulu\u015fuyor.']]},
  {v:'0.41.6',t:['A river only widens going down','Nehir a\u015fa\u011f\u0131 do\u011fru sadece geni\u015fler'],l:[
   ['The channel below the wall was narrower than the channel above the reservoir, so the water went narrow, wide, narrow, wide on its way down \u2014 which no river does. Below the wall it now picks up at the width it had above the reservoir and keeps growing all the way off the map, as a catchment does.','Duvar\u0131n alt\u0131ndaki kanal haznenin \u00fcst\u00fcndekinden darda, o y\u00fczden su a\u015fa\u011f\u0131 inerken dar, geni\u015f, dar, geni\u015f gidiyordu \u2014 hi\u00e7bir nehir b\u00f6yle yapmaz. Duvar\u0131n alt\u0131nda art\u0131k haznenin \u00fcst\u00fcndeki geni\u015fli\u011finden devam ediyor ve havza b\u00fcy\u00fcd\u00fck\u00e7e haritadan \u00e7\u0131kana kadar geni\u015flemeye devam ediyor.'],
   ['The wall has moved up to the foot of the reservoir. There is no open river between the lake and the dam any more \u2014 the held water runs straight into the wall, which is where a wall belongs.','Duvar haznenin dibine \u00e7ekildi. G\u00f6lle baraj aras\u0131nda art\u0131k a\u00e7\u0131k nehir yok \u2014 tutulan su do\u011frudan duvara dayan\u0131yor, bir duvar\u0131n durmas\u0131 gereken yer oras\u0131.'],
@@ -7484,15 +7536,16 @@ function openNews(){
   $('newsTitle').textContent=L("What's new",'Yenilikler');
   $('newsSub').textContent=L(`You are on v${GAME_VERSION}.`,`Sürümün: v${GAME_VERSION}.`);
   const seen=S.seenVer||'';
-  $('newsList').innerHTML=CHANGELOG.map(c=>{
+  $('newsList').innerHTML=CHANGELOG.slice(0,3).map(c=>{
     const fresh=cmpVer(c.v,seen)>0;
     return `<div class="tip ${fresh?'new':''}"><b>v${c.v} · ${tt(c.t)}</b>`+
       c.l.map(x=>`<span>• ${tt(x)}</span>`).join('')+`</div>`;}).join('');
+  $('newsList').innerHTML+=`<div class="note">${L('Only the last three updates are shown.','Sadece son \u00fc\u00e7 g\u00fcncelleme g\u00f6steriliyor.')}</div>`;
   S.seenVer=GAME_VERSION;$('newsDot').hidden=true;save();
   $('mNews').classList.add('on');trackOnce('news-opened');
 }
 function newsCheck(){$('newsDot').hidden=!(cmpVer(GAME_VERSION,S.seenVer||'')>0);}
-$('newsBtn').onclick=openNews;
+$('newsBtn').onclick=()=>{$('mSet').classList.remove('on');openNews();};
 $('newsClose').onclick=()=>$('mNews').classList.remove('on');
 
 /* ======================= TIPS (unlock as you play) ======================= */
@@ -7904,7 +7957,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));applyLang();}
+function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('privLbl').textContent=L('What is stored','Neler saklanıyor');$('wipeLbl').textContent=L('Delete my cloud data','Bulut verilerimi sil');$('newsLbl').textContent=L("What's new",'Yenilikler');$('sWipe').hidden=!fbUser;applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   acc:['setAcc',['👤','Account','Hesap'],['Google sign-in and cloud save','Google girişi ve bulut kaydı']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Sound, shadows, flashes','Ses, gölge, parlama']],
@@ -7930,12 +7983,104 @@ $('sClose').onclick=()=>$('mSet').classList.remove('on');
 $('sSound').onclick=()=>{S.muted=!S.muted;syncSet();};
 $('sFlash').onclick=()=>{S.lowFlash=!S.lowFlash;syncSet();save();};
 $('sShadow').onclick=()=>{S.shadows=!S.shadows;syncSet();};
+$('sMode').onclick=()=>{
+  const to=cozy()?'pro':'cozy',[t,d]=modeText(to);
+  if(!confirm(L(`Switch to ${t}?\n\n${d}\n\nYour money, your plants and your crew stay exactly as they are.`,
+               `${t} moduna ge\u00e7ilsin mi?\n\n${d}\n\nParan, santrallerin ve ekibin oldu\u011fu gibi kal\u0131r.`)))return;
+  S.mode=to;cozyGuard();syncSet();save();
+  toast(L(`Now playing ${t}.`,`Art\u0131k ${t} modundas\u0131n.`),'good');
+};
 $('sSpeed').onclick=()=>{S.speed=S.speed===1?4:S.speed===4?12:1;syncSet();};
+/* ======================= KVKK NOTICE AND CONSENT ======================= */
+const KVKK_VER='1.0', KVKK_OWNER='Ali Bing\u00fcl', KVKK_MAIL='baseloadgames@gmail.com';
+function kvkkText(){
+  const h=(t)=>`<p style="margin-top:12px"><b>${t}</b></p>`;
+  return S.lang==='tr' ? (
+    `<p>6698 say\u0131l\u0131 Ki\u015fisel Verilerin Korunmas\u0131 Kanunu\u2019nun 10. maddesi uyar\u0131nca haz\u0131rlanm\u0131\u015ft\u0131r.</p>`+
+    h('Veri sorumlusu')+`<p>${KVKK_OWNER} \u2014 ${KVKK_MAIL}<br>Megawatt Mogul ki\u015fisel bir projedir; herhangi bir kurum ad\u0131na y\u00fcr\u00fct\u00fclmez.</p>`+
+    h('\u0130\u015flenen ki\u015fisel veriler')+
+    `<p>\u2022 Se\u00e7ti\u011fin takma ad<br>\u2022 Google hesab\u0131n\u0131n kimlik numaras\u0131 (uid)<br>\u2022 Oyun i\u00e7i rakamlar\u0131n: servet, c\u00fczdan, g\u00fcn, santral say\u0131s\u0131<br>\u2022 Kay\u0131tl\u0131 oyunun<br>\u2022 Alt\u0131 karakterlik arkada\u015f kodun ve arkada\u015f listen</p>`+
+    h('\u0130\u015flenmeyen veriler')+
+    `<p>E-posta adresin, ger\u00e7ek ad\u0131n, profil foto\u011fraf\u0131n ve \u015fifren hi\u00e7bir \u015fekilde al\u0131nmaz veya saklanmaz. Giri\u015fi Google yapar; oyun \u015fifreni hi\u00e7 g\u00f6rmez.</p>`+
+    h('\u0130\u015fleme amac\u0131')+
+    `<p>Oyun ilerlemenin cihazlar aras\u0131 saklanmas\u0131, liderlik tablosunun olu\u015fturulmas\u0131 ve arkada\u015f listesinin y\u00fcr\u00fct\u00fclmesi.</p>`+
+    h('Hukuki sebep')+
+    `<p>A\u00e7\u0131k r\u0131zan (KVKK m. 5/1). R\u0131za vermezsen oyunu misafir olarak oynayabilirsin; o durumda hi\u00e7bir veri cihaz\u0131ndan \u00e7\u0131kmaz.</p>`+
+    h('Toplama y\u00f6ntemi')+
+    `<p>Oyun i\u00e7indeki Google ile oturum a\u00e7ma ad\u0131m\u0131 arac\u0131l\u0131\u011f\u0131yla, tamamen elektronik ortamda.</p>`+
+    h('Aktar\u0131m ve yurt d\u0131\u015f\u0131')+
+    `<p>Veriler Google LLC taraf\u0131ndan i\u015fletilen Firebase (Firestore) altyap\u0131s\u0131nda, Avrupa Birli\u011fi b\u00f6lgesindeki sunucularda tutulur ve Google\u2019\u0131n k\u00fcresel altyap\u0131s\u0131 gere\u011fi yurt d\u0131\u015f\u0131na aktar\u0131labilir. Ba\u015fka hi\u00e7bir \u00fc\u00e7\u00fcnc\u00fc ki\u015fiye aktar\u0131lmaz, sat\u0131lmaz, reklam i\u00e7in kullan\u0131lmaz.</p>`+
+    h('Kimler g\u00f6rebilir')+
+    `<p>Kay\u0131tl\u0131 oyununu yaln\u0131zca sen g\u00f6r\u00fcrs\u00fcn. Takma ad\u0131n ve oyun rakamlar\u0131n liderlik tablosunda di\u011fer oyunculara g\u00f6r\u00fcn\u00fcr.</p>`+
+    h('Saklama s\u00fcresi')+
+    `<p>R\u0131zan\u0131 geri \u00e7ekene kadar. Ayarlar \u203a Hesap \u203a Bulut verilerimi sil ile hepsi an\u0131nda silinir.</p>`+
+    h('Haklar\u0131n (KVKK m. 11)')+
+    `<p>Ki\u015fisel verilerinin i\u015flenip i\u015flenmedi\u011fini \u00f6\u011frenme, bilgi talep etme, i\u015fleme amac\u0131n\u0131 \u00f6\u011frenme, yurt i\u00e7inde veya yurt d\u0131\u015f\u0131nda aktar\u0131ld\u0131\u011f\u0131 \u00fc\u00e7\u00fcnc\u00fc ki\u015fileri bilme, eksik veya yanl\u0131\u015f i\u015flenmi\u015fse d\u00fczeltilmesini isteme, silinmesini veya yok edilmesini isteme, bu i\u015flemlerin aktar\u0131ld\u0131\u011f\u0131 ki\u015filere bildirilmesini isteme, otomatik sistemlerle analiz sonucu aleyhine bir sonu\u00e7 \u00e7\u0131kmas\u0131na itiraz etme ve zarara u\u011frarsan giderilmesini talep etme haklar\u0131na sahipsin. Ba\u015fvurular\u0131n\u0131 ${KVKK_MAIL} adresine iletebilirsin.</p>`
+  ) : (
+    `<p>Prepared under Article 10 of Turkish Personal Data Protection Law no. 6698 (KVKK).</p>`+
+    h('Data controller')+`<p>${KVKK_OWNER} \u2014 ${KVKK_MAIL}<br>Megawatt Mogul is a personal project, not run on behalf of any company.</p>`+
+    h('Personal data processed')+
+    `<p>\u2022 The nickname you choose<br>\u2022 Your Google account identifier (uid)<br>\u2022 Your in-game figures: wealth, wallet, day, plant count<br>\u2022 Your saved game<br>\u2022 Your six-character friend code and friend list</p>`+
+    h('Never processed')+
+    `<p>Your e-mail address, real name, profile photo and password are never collected or stored. Google performs the sign-in; this game never sees your password.</p>`+
+    h('Purpose')+
+    `<p>Keeping your progress across devices, building the leaderboard, and running the friend list.</p>`+
+    h('Legal basis')+
+    `<p>Your explicit consent (KVKK art. 5/1). Without consent you can still play as a guest, in which case no data leaves your device.</p>`+
+    h('Method of collection')+`<p>Through the in-game Google sign-in step, entirely by electronic means.</p>`+
+    h('Transfer and cross-border')+
+    `<p>Data is held on Firebase (Firestore), operated by Google LLC, on servers in the European Union region, and may be transferred abroad as part of Google\u2019s global infrastructure. It is passed to no other third party, never sold, never used for advertising.</p>`+
+    h('Who can see it')+
+    `<p>Only you can read your saved game. Your nickname and figures are visible to other players on the leaderboard.</p>`+
+    h('Retention')+`<p>Until you withdraw consent. Settings \u203a Account \u203a Delete my cloud data erases all of it at once.</p>`+
+    h('Your rights (KVKK art. 11)')+
+    `<p>You may learn whether your data is processed, request information, learn the purpose, know the third parties it is transferred to at home or abroad, request correction if incomplete or wrong, request erasure or destruction, request that these be notified to third parties, object to an adverse result produced by automated analysis, and claim compensation for damage. Write to ${KVKK_MAIL}.</p>`
+  );
+}
+function openKvkk(mode){
+  $('kvTitle').textContent=L('Privacy notice','Ayd\u0131nlatma metni');
+  $('kvBody').innerHTML=kvkkText();
+  const btns=$('kvBtns');
+  if(mode==='consent'){
+    btns.innerHTML=`<button class="pri" id="kvYes">\u2713 ${L('I have read it and I consent','Okudum, onay veriyorum')}</button>`+
+      `<button id="kvNo">${L('I do not consent \u2014 turn cloud off','Onay vermiyorum \u2014 bulut kapans\u0131n')}</button>`;
+    $('kvYes').onclick=()=>{S.kvkk={v:KVKK_VER,at:Date.now()};save();$('mKvkk').classList.remove('on');
+      toast(L('Thank you. Your progress is kept in the cloud.','Te\u015fekk\u00fcrler. \u0130lerlemen bulutta saklan\u0131yor.'),'good');};
+    $('kvNo').onclick=()=>{$('mKvkk').classList.remove('on');signOutCloud();};
+  }else{
+    btns.innerHTML=`<button class="pri" id="kvClose">${L('Close','Kapat')}</button>`;
+    $('kvClose').onclick=()=>$('mKvkk').classList.remove('on');
+  }
+  $('mKvkk').classList.add('on');
+}
+/* anyone already signed in from before the notice existed is asked once */
+function kvkkCheck(){if(fbUser&&CLOUD_ON&&!(S.kvkk&&S.kvkk.v))openKvkk('consent');}
+
+/* KVKK: say what is kept, and let anyone erase it without asking a human */
+$('sPrivacy').onclick=()=>{$('mSet').classList.remove('on');openKvkk('read');};
+
+$('sWipe').onclick=async()=>{
+  if(!fbUser||!fbDb)return;
+  if(!confirm(L('Delete your nickname, your figures and your cloud save? Your progress on this phone stays.','Takma ad\u0131n, rakamlar\u0131n ve bulut kayd\u0131n silinsin mi? Bu telefondaki ilerlemen kal\u0131r.')))return;
+  const uid=fbUser.uid;let ok=true;
+  const drop=async f=>{try{await f();}catch(e){ok=false;}};
+  await drop(()=>fbDb.collection('leaderboard').doc(uid).delete());
+  await drop(()=>fbDb.collection('profiles').doc(uid).delete());
+  await drop(()=>fbDb.collection('users').doc(uid).delete());
+  await drop(()=>fbDb.collection('codes').doc(myCode()).delete());
+  try{const snap=await fbDb.collection('friends').doc(uid).collection('list').limit(200).get();
+      for(const d of snap.docs){await drop(()=>d.ref.delete());
+        await drop(()=>fbDb.collection('friends').doc(d.id).collection('list').doc(uid).delete());}}catch(e){ok=false;}
+  toast(ok?L('Your cloud data is deleted.','Bulut verilerin silindi.')
+          :L('Some of it could not be deleted. Try again in a moment.','Bir k\u0131sm\u0131 silinemedi. Birazdan tekrar dene.'),ok?'good':'big');
+  S.syncBase=0;S.kvkk=null;save();              // deleting is also how consent is withdrawn
+};
+
 $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.removeItem(SAVE_KEY);}catch(e){}location.reload();}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.41.6';
+const GAME_VERSION='0.42.3';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
@@ -7948,7 +8093,7 @@ async function initCloud(){
     await loadJS(`https://www.gstatic.com/firebasejs/${FB_V}/firebase-auth-compat.js`);
     await loadJS(`https://www.gstatic.com/firebasejs/${FB_V}/firebase-firestore-compat.js`);
     firebase.initializeApp(FB_CFG);fbAuth=firebase.auth();fbDb=firebase.firestore();
-    fbAuth.onAuthStateChanged(u=>{fbUser=u;cloudUI();if(u){afterSignIn();loadPrizes().then(claimPrizes);}});
+    fbAuth.onAuthStateChanged(u=>{fbUser=u;cloudUI();if(u){afterSignIn();loadPrizes().then(claimPrizes);if(playing)setTimeout(kvkkCheck,800);}});
     cloudUI();checkMinVersion();
   }catch(e){console.warn('cloud off',e);}
 }
@@ -7958,7 +8103,8 @@ function cloudUI(){
   $('sPull').hidden=!fbUser;$('sPush').hidden=!fbUser;
   $('sPull').textContent=L('Load from cloud','Bulut kaydını yükle');$('sPush').textContent=L('Save to cloud','Buluta kaydet');
   $('sCloud').textContent=L('Sign in with Google','Google ile giriş yap');
-  $('sCloudOut').textContent=fbUser?L('Sign out','Çıkış yap')+' · '+(S.nick||fbUser.displayName||''):L('Sign out','Çıkış yap');
+  $('sCloudOut').textContent=fbUser?L('Sign out','Çıkış yap')+' · '+(S.nick||autoNick()):L('Sign out','Çıkış yap');
+  $('sWipe').hidden=!fbUser;
   $('leadBtn').hidden=!has('board');
 }
 async function signInCloud(){
@@ -8054,7 +8200,7 @@ async function cloudSave(force){
 function askNick(){
   $('nickTitle').textContent=L('Choose a nickname','Takma ad seç');
   $('nickSub').textContent=L('2 to 16 characters. Shown on the leaderboard.','2–16 karakter. Liderlik tablosunda görünür.');
-  $('nickIn').value=S.nick||(fbUser&&fbUser.displayName?fbUser.displayName.split(' ')[0]:'');
+  $('nickIn').value=S.nick||autoNick();       // never the real name from the Google account
   $('nickMsg').textContent='';$('nickOk').textContent='OK';$('nickSkip').textContent=L('Later','Sonra');
   $('mNick').classList.add('on');
 }
@@ -8484,22 +8630,49 @@ function start(kit){
   requestAnimationFrame(frame);
 }
 let playing=false;
+function modeText(m){
+  return m==='cozy'
+    ? [L('☕ Cozy','☕ Çerezlik'),L('Walk, collect, sell, build. Your crew handles the rest. Nothing breaks, nothing burns, nothing needs deciding.','Yürü, topla, sat, kur. Gerisini ekibin halleder. Hiçbir şey bozulmaz, yanmaz, karar gerektirmez.')]
+    : [L('⚡ Competitive','⚡ Rekabetçi'),L('Levels, shifts, crew orders, dam gates, breakdowns, market news. The full game.','Seviyeler, vardiyalar, ekip emirleri, baraj kapakları, arızalar, piyasa haberleri. Oyunun tamamı.')];
+}
+function askMode(after){
+  $('stTitle').textContent=L('Pick your game type','Oyun tipini seçmelisin');
+  $('stSub').textContent=L('You can switch later in Settings › Game.','Sonra Ayarlar › Oyun’dan değiştirebilirsin.');
+  $('stOpts').innerHTML=['cozy','pro'].map(m=>{const[t,d]=modeText(m);
+    return `<button data-m="${m}"><b>${t}</b><small>${d}</small></button>`;}).join('');
+  $('stOpts').onclick=e=>{const b=e.target.closest('button[data-m]');if(!b)return;
+    S.mode=b.dataset.m;cozyGuard();save();trackOnce('mode-'+S.mode);
+    $('mStart').classList.remove('on');after();};
+  $('mStart').classList.add('on');
+}
 function startFlow(){
+  if(!S.mode){askMode(startFlow);return;}     // decide this once, before anything else
   if(fbUser||S.guest){beginPlay();return;}
-  $('stTitle').textContent=L('How do you want to play?','Nasıl oynamak istersin?');
+  $('stTitle').textContent=L('Where should your progress live?','İlerlemen nerede dursun?');
   $('stSub').textContent=L('Signing in keeps your progress in the cloud and puts you on the leaderboard.','Oturum açarsan ilerlemen bulutta saklanır ve liderlik tablosuna girersin.');
   $('stOpts').innerHTML=
     `<button data-s="guest"><b>👤 ${L('Continue as guest','Misafir devam et')}</b><small>${L('Progress stays on this device only.','İlerleme sadece bu cihazda kalır.')}</small></button>`+
     `<button data-s="in"><b>🔑 ${L('Sign in with Google','Google ile oturum aç')}</b><small>${CLOUD_ON?L('Cloud save, leaderboard, new phone safe.','Bulut kayıt, liderlik tablosu, telefon değişse de güvende.'):L('Only on the public site.','Sadece herkese açık sitede çalışır.')}</small></button>`;
-  $('stOpts').onclick=async e=>{const b=e.target.closest('button[data-s]');if(!b)return;
+  $('stOpts').onclick=async e=>{
+    if(e.target.id==='kvkkLink'){e.preventDefault();openKvkk('read');return;}
+    const b=e.target.closest('button[data-s]');if(!b)return;
     $('mStart').classList.remove('on');
     if(b.dataset.s==='guest'){S.guest=true;save();trackOnce('chose-guest');beginPlay();}
-    else{trackOnce('chose-signin');beginPlay();setTimeout(()=>signInCloud(),300);}};
+    else{S.kvkk={v:KVKK_VER,at:Date.now()};trackOnce('chose-signin');beginPlay();setTimeout(()=>signInCloud(),300);}};
+  $('stOpts').insertAdjacentHTML('beforeend',
+    `<label class="note" style="margin-top:8px;display:flex;gap:8px;align-items:flex-start;text-align:left;cursor:pointer">
+       <input type="checkbox" id="kvkkChk" style="margin-top:3px;flex:0 0 auto">
+       <span>${L(`I have read the <a href="#" id="kvkkLink">privacy notice</a> and I consent to my nickname and game figures being stored. My e-mail, real name and photo are never sent anywhere, and I can delete everything from Settings at any time.`,
+                  `<a href="#" id="kvkkLink">Ayd\u0131nlatma metnini</a> okudum; takma ad\u0131m\u0131n ve oyun rakamlar\u0131m\u0131n saklanmas\u0131na onay veriyorum. E-postam, ger\u00e7ek ad\u0131m ve foto\u011fraf\u0131m hi\u00e7bir yere g\u00f6nderilmez; hepsini istedi\u011fim an Ayarlar\u2019dan silebilirim.`)}</span>
+     </label>`);
+  const inBtn=$('stOpts').querySelector('button[data-s="in"]'),chk=$('kvkkChk');
+  const gate=()=>{inBtn.disabled=!chk.checked;inBtn.style.opacity=chk.checked?'':'0.45';};
+  chk.onchange=gate;gate();                       // guest never needs the tick; cloud always does
   $('mStart').classList.add('on');
 }
 function beginPlay(){
   if(playing)return;playing=true;audioInit();sfx.goal();stopWave();
-  sessionStart=Date.now();trackSessionStart();newsCheck();
+  sessionStart=Date.now();trackSessionStart();newsCheck();setTimeout(kvkkCheck,1200);
   if((S.tutDone||S.day>=3||S.soldCells>=20)&&S.cardHour===null&&S.cardHour2===null&&!S.cardSoon){
     S.cardSoon=1;setTimeout(()=>{if(playing&&!cardOpen&&isActive())openCard();},45000);   // first card ~45 s in
   }
