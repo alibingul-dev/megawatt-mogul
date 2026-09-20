@@ -267,7 +267,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.41.4</div>
+  <div class="t-ver" id="tVer">v0.41.6</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -483,7 +483,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.41.4 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.41.6 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -4767,13 +4767,13 @@ const RIVER=[
   {x:1272,y:1425,w:66},
   {x:1264,y:1484,w:118},                // the valley opens out
   {x:1256,y:1522,w:160,lake:true},      // from here to the wall the water is the reservoir
-  {x:1270,y:1580,w:184,lake:true},      // it is a drowned valley, so it bulges where the valley did
-  {x:1268,y:1650,w:170},                // and closes again at the wall
-  {x:1274,y:1704,w:44},                 // the river picks up again below it
-  {x:1302,y:1795,w:46},
-  {x:1268,y:1885,w:49},                 // the tailrace weir
-  {x:1304,y:1995,w:52},
-  {x:1282,y:2110,w:54},
+  {x:1270,y:1578,w:188,lake:true},      // it is a drowned valley, so it bulges where the valley did
+  {x:1266,y:1628,w:172},                // the wall stands at the foot of it
+  {x:1270,y:1668,w:60},                 // below the wall the river picks up wider than it was above
+  {x:1296,y:1760,w:64},
+  {x:1268,y:1858,w:68},                 // the tailrace weir
+  {x:1300,y:1972,w:72},
+  {x:1284,y:2100,w:76},
 ];
 /* The path above is only the control points. The channel the player actually sees is
    this spline through them, so the banks curve and the width blends instead of stepping. */
@@ -4808,21 +4808,25 @@ function lakeRange(){
 }
 /* The wall backs the river up, so the water stands higher from the weir reach down to
    the dam and drops again below it. The rise is spread over the reach, not stepped. */
-const LAKE_Y=0.34, RIV_Y=0.20, BACK0=1400, BACK1=1522, WALLY=1656;
+const LAKE_Y=0.34, RIV_Y=0.20, BACK0=1400, BACK1=1522, WALLY=1630;
+let lakeYNow=LAKE_Y;                             // where the held water actually stands right now
 function riverY(q){
   if(q.y<=BACK0||q.y>WALLY)return RIV_Y;
-  if(q.y>=BACK1)return LAKE_Y;
-  return RIV_Y+(LAKE_Y-RIV_Y)*((q.y-BACK0)/(BACK1-BACK0));
+  if(q.y>=BACK1)return lakeYNow;
+  return RIV_Y+(lakeYNow-RIV_Y)*((q.y-BACK0)/(BACK1-BACK0));
 }
 /* one quad strip along the path; the two edges may sit at different offsets and heights */
 function ribbonGeo(i0,i1,oA,yA,oB,yB){
   const P=riverPts(),pos=[],idx=[];
+  const last=P.length-1;
   for(let i=i0;i<=i1;i++){
-    const a=P[Math.max(i0,i-1)],b=P[Math.min(i1,i+1)],q=P[i];
+    // neighbours come from the whole path, never from this strip's own ends, so two
+    // strips that meet at a point build that point identically
+    const a=P[Math.max(0,i-1)],b=P[Math.min(last,i+1)],q=P[i];
     let nx=b.y-a.y,nz=-(b.x-a.x);const L=Math.hypot(nx,nz)||1;nx/=L;nz/=L;
-    const wa=oA(q),wb=oB(q);
-    pos.push((q.x+nx*wa)*U,yA(q),(q.y+nz*wa)*U);
-    pos.push((q.x+nx*wb)*U,yB(q),(q.y+nz*wb)*U);
+    const wa=oA(q,i),wb=oB(q,i);
+    pos.push((q.x+nx*wa)*U,yA(q,i),(q.y+nz*wa)*U);
+    pos.push((q.x+nx*wb)*U,yB(q,i),(q.y+nz*wb)*U);
   }
   for(let i=0;i<i1-i0;i++){const k=i*2;idx.push(k,k+1,k+3,k,k+3,k+2);}
   const g=new THREE.BufferGeometry();
@@ -4835,13 +4839,14 @@ let lakeMesh=null,lakeShown=-1;
 /* a dry catchment does not send a wide sheet down a wide bed: the river pulls into the
    middle of its channel and leaves the banks bare. This is how much of the bed it covers. */
 function wetW(f){return Math.max(0.30,Math.min(1,0.22+0.72*f));}
-let riverUp=null,riverDown=null,upShown=-1,downShown=-1,tailRel=1;
+let riverUp=null,riverDown=null,upShown=-1,downShown=-1,tailRel=1,lakeSeam=-1;
 function setRiverFlow(){
   const [i0,i1]=lakeRange(),P=riverPts();
   if(riverUp){
     const k=wetW(waterCF());
     if(Math.abs(k-upShown)>=0.025){upShown=k;const old=riverUp.geometry;
-      riverUp.geometry=ribbonGeo(0,i0,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);old.dispose();}
+      riverUp.geometry=ribbonGeo(0,i0,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);old.dispose();
+      lakeSeam=-1;}                                  // the lake must meet the new width
   }
   if(riverDown){
     // below the wall the river only carries what the dam lets through, and it takes a
@@ -4854,14 +4859,20 @@ function setRiverFlow(){
       riverDown.geometry=ribbonGeo(i1,P.length-1,q=>-q.w/2*k,riverY,q=>q.w/2*k,riverY);old.dispose();}
   }
 }
+const LAKE_BLEND=4;                              // points over which the river hands over to the lake
 function setLakeLevel(f){
   if(!lakeMesh)return;
   f=Math.max(0.05,Math.min(1,f));
-  if(Math.abs(f-lakeShown)<0.03)return;
-  lakeShown=f;
-  const [i0,i1]=lakeRange(),k=0.52+0.48*f,yy=RIV_Y+(LAKE_Y-RIV_Y)*f;
+  if(Math.abs(f-lakeShown)<0.03&&lakeSeam===upShown)return;
+  lakeShown=f;lakeSeam=upShown;
+  const [i0,i1]=lakeRange(),P=riverPts();
+  const kLake=0.52+0.48*f, kRiver=upShown>0?upShown:kLake, yy=RIV_Y+(LAKE_Y-RIV_Y)*f;
+  if(Math.abs(yy-lakeYNow)>0.004){lakeYNow=yy;upShown=-1;}   // the backwater follows it up and down
+  // at the join the lake is exactly as wide as the river arriving; it opens out from there
+  const mix=i=>Math.min(1,Math.max(0,(i-i0)/LAKE_BLEND));
+  const kAt=(q,i)=>kRiver+(kLake-kRiver)*mix(i);
   const old=lakeMesh.geometry;
-  lakeMesh.geometry=ribbonGeo(i0,i1,q=>-q.w/2*k,()=>yy,q=>q.w/2*k,()=>yy);
+  lakeMesh.geometry=ribbonGeo(i0,i1,(q,i)=>-q.w/2*kAt(q,i),()=>yy,(q,i)=>q.w/2*kAt(q,i),()=>yy);
   old.dispose();
 }
 /* how far a point sits from the middle of the channel */
@@ -4904,8 +4915,8 @@ const PADS=[
   {id:'f1',kind:'build',type:'solarfarm',x:350,y:1790,cost:22000,req:'desert'},
   {id:'f2',kind:'build',type:'solarfarm',x:700,y:1820,cost:40000,req:'f1'},
   {id:'f3',kind:'build',type:'solarfarm',x:1050,y:1790,cost:70000,req:'f2'},
-  {id:'d1',kind:'build',type:'dam',x:1266,y:1665,cost:55000,req:'desert'},
-  {id:'r2',kind:'build',type:'river',x:1272,y:1885,cost:17000,req:'d1'},
+  {id:'d1',kind:'build',type:'dam',x:1266,y:1628,cost:55000,req:'desert'},
+  {id:'r2',kind:'build',type:'river',x:1268,y:1858,cost:17000,req:'d1'},
 ];
 const BUILD_ICON={turbine:'🌀',solar:'🔆',battery:'🔋',bigwind:'🌬️',solarfarm:'🌞',river:'🌊',dam:'🏞️'};
 /* the spline decides where the water runs, so anything standing in it reads its x off the spline */
@@ -5703,7 +5714,11 @@ function boxWage(b){let w=0;for(const i of (b.m||[]))w+=dailyWage(i);return w;}
 /* an older save was built on the old channel: put its hydro back in the water */
 function migrateRiver(){
   for(const q of S.plants){const T=PLANT_TYPES[q.type];if(!T)continue;
-    if(T.kind==='hydro'||T.kind==='dam')snapToRiver(q);}
+    if(T.kind!=='hydro'&&T.kind!=='dam')continue;
+    const pd=PADS.find(z=>z.id===q.id);        // the pad is where this plant belongs now
+    if(pd){q.x=pd.x;q.y=pd.y;}else snapToRiver(q);
+    if(plantObjs[q.id]){plantObjs[q.id].parent&&scene.remove(plantObjs[q.id]);delete plantObjs[q.id];}
+  }
 }
 function migrateBoxes(){                                 // first run: one example box holding everyone
   if(S.crew.boxes)return;
@@ -5916,7 +5931,7 @@ const groundMats=[];
     const DS=THREE.DoubleSide;
     const OFF={polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3};
     const water=M(0x3E8FD0,Object.assign({emissive:0x0d3a6b,emissiveIntensity:0.3,side:DS},OFF)),
-          deep =M(0x2F7BC0,Object.assign({emissive:0x0a2f58,emissiveIntensity:0.32,side:DS},OFF)),
+          deep =water,                                  // the lake is the same water, not a darker one
           bedN=M(0x8C8660,{side:DS,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),
           bedD=M(0xC2A36C,{side:DS,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),
           bankN=M(0x6F8A43,{side:DS}),bankD=M(0xC7A468,{side:DS}),
@@ -7324,6 +7339,14 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.41.6',t:['A river only widens going down','Nehir a\u015fa\u011f\u0131 do\u011fru sadece geni\u015fler'],l:[
+  ['The channel below the wall was narrower than the channel above the reservoir, so the water went narrow, wide, narrow, wide on its way down \u2014 which no river does. Below the wall it now picks up at the width it had above the reservoir and keeps growing all the way off the map, as a catchment does.','Duvar\u0131n alt\u0131ndaki kanal haznenin \u00fcst\u00fcndekinden darda, o y\u00fczden su a\u015fa\u011f\u0131 inerken dar, geni\u015f, dar, geni\u015f gidiyordu \u2014 hi\u00e7bir nehir b\u00f6yle yapmaz. Duvar\u0131n alt\u0131nda art\u0131k haznenin \u00fcst\u00fcndeki geni\u015fli\u011finden devam ediyor ve havza b\u00fcy\u00fcd\u00fck\u00e7e haritadan \u00e7\u0131kana kadar geni\u015flemeye devam ediyor.'],
+  ['The wall has moved up to the foot of the reservoir. There is no open river between the lake and the dam any more \u2014 the held water runs straight into the wall, which is where a wall belongs.','Duvar haznenin dibine \u00e7ekildi. G\u00f6lle baraj aras\u0131nda art\u0131k a\u00e7\u0131k nehir yok \u2014 tutulan su do\u011frudan duvara dayan\u0131yor, bir duvar\u0131n durmas\u0131 gereken yer oras\u0131.'],
+  ['Saves made before this are moved with it: a dam or a weir you already built is put where it now belongs on the channel, keeping its reservoir level and its gate setting.','Bundan \u00f6nce yap\u0131lm\u0131\u015f kay\u0131tlar da birlikte ta\u015f\u0131n\u0131yor: kurdu\u011fun baraj ya da savak kanalda art\u0131k ait oldu\u011fu yere konuyor, hazne seviyesini ve kapak ayar\u0131n\u0131 koruyarak.']]},
+ {v:'0.41.5',t:['The lake joins the river properly','G\u00f6l nehre d\u00fczg\u00fcn ba\u011flan\u0131yor'],l:[
+  ['Where the valley opened out the water broke apart and jumped wider. Three faults met at that one point: each strip worked out which way the channel ran from its own end points, so the river and the reservoir disagreed there; the reservoir was scaled by how full it was while the river was scaled by its flow, so the two widths did not match; and the backwater above the wall stood at a fixed height while the lake rose and fell, leaving one surface hovering above the other.','Vadinin a\u00e7\u0131ld\u0131\u011f\u0131 yerde su par\u00e7alan\u0131p bir anda geni\u015fliyordu. O tek noktada \u00fc\u00e7 hata bulu\u015fuyordu: her \u015ferit kanal\u0131n y\u00f6n\u00fcn\u00fc kendi u\u00e7 noktalar\u0131ndan hesapl\u0131yordu, bu y\u00fczden nehirle hazne orada anla\u015fam\u0131yordu; hazne doluluk oran\u0131na, nehir ise debisine g\u00f6re \u00f6l\u00e7ekleniyordu, yani iki geni\u015flik tutmuyordu; ve duvar\u0131n \u00fcst\u00fcndeki kabarma sabit y\u00fckseklikteyken g\u00f6l inip \u00e7\u0131k\u0131yordu, bir y\u00fczey di\u011ferinin \u00fcst\u00fcnde as\u0131l\u0131 kal\u0131yordu.'],
+  ['All three are gone. Every strip now takes its direction from the whole path, the lake meets the river at exactly the width the river arrives with and opens out from there, and the backwater stands at whatever the reservoir stands at \u2014 so when the dam draws down, the river above it drops with it. The two surfaces now meet at the same point to the last decimal, at any fill.','\u00dc\u00e7\u00fc de gitti. Her \u015ferit y\u00f6n\u00fcn\u00fc yolun tamam\u0131ndan al\u0131yor, g\u00f6l nehirle tam nehrin geldi\u011fi geni\u015flikte bulu\u015fup oradan a\u00e7\u0131l\u0131yor, ve kabarma haznenin durdu\u011fu yerde duruyor \u2014 yani baraj bo\u015fal\u0131nca \u00fcst\u00fcndeki nehir de al\u00e7al\u0131yor. \u0130ki y\u00fczey art\u0131k her doluluk seviyesinde son ondal\u0131\u011f\u0131na kadar ayn\u0131 noktada bulu\u015fuyor.'],
+  ['The reservoir is also the same blue as the river now, instead of a darker one that drew a hard line across the join.','Hazne ayr\u0131ca art\u0131k nehirle ayn\u0131 mavi; birle\u015fme yerine keskin bir \u00e7izgi \u00e7izen koyu ton kalkt\u0131.']]},
  {v:'0.41.4',t:['The dam stops twitching','Baraj art\u0131k titremiyor'],l:[
   ['The gate was deciding from scratch every frame against a price that never stops moving, so it opened and shut 158 times a game day \u2014 about once every three seconds. The river below it swung with every one of them, which is the shaking you saw, and the station down there was producing on the same stutter.','Kapak her karede s\u0131f\u0131rdan karar veriyordu ve kar\u015f\u0131s\u0131ndaki fiyat hi\u00e7 durmuyordu, bu y\u00fczden bir oyun g\u00fcn\u00fcnde 158 kez a\u00e7\u0131l\u0131p kapan\u0131yordu \u2014 yakla\u015f\u0131k \u00fc\u00e7 saniyede bir. Alt\u0131ndaki nehir her seferinde oynuyordu, g\u00f6rd\u00fc\u011f\u00fcn titreme buydu, ve a\u015fa\u011f\u0131daki santral de ayn\u0131 kekemelikle \u00fcretiyordu.'],
   ['It behaves like a dam now: once it opens it runs for at least an hour and a half and keeps running until the price falls below the day average, and it will not open at all on less than a third of a reservoir. Four or five runs a game day instead of seventy-nine, and it still generates slightly more than before.','Art\u0131k baraj gibi davran\u0131yor: bir kez a\u00e7\u0131ld\u0131 m\u0131 en az bir bu\u00e7uk saat \u00e7al\u0131\u015f\u0131yor ve fiyat g\u00fcn ortalamas\u0131n\u0131n alt\u0131na d\u00fc\u015fene kadar devam ediyor, haznenin \u00fc\u00e7te birinden az\u0131yla hi\u00e7 a\u00e7\u0131lm\u0131yor. G\u00fcnde yetmi\u015f dokuz yerine d\u00f6rt be\u015f \u00e7al\u0131\u015fma, ve \u00fcretimi eskisinden biraz daha fazla.'],
@@ -7912,7 +7935,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= CLOUD: sign-in, save, leaderboard ======================= */
-const GAME_VERSION='0.41.4';
+const GAME_VERSION='0.41.6';
 const CLOUD_ON=/\.github\.io$/.test(location.hostname)||/[?&]cloud=1/.test(location.search);
 const FB_CFG={apiKey:"AIzaSyBd0VX4zp4r8UEhrQ5PiV9pZFIyxJLB1Rk",authDomain:"megawatt-mogul.firebaseapp.com",projectId:"megawatt-mogul",storageBucket:"megawatt-mogul.firebasestorage.app",messagingSenderId:"374855787522",appId:"1:374855787522:web:fd98f6889cf0ba2a8a331b"};
 const FB_V='10.12.2';
