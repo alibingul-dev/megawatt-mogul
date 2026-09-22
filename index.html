@@ -273,7 +273,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.46.0</div>
+  <div class="t-ver" id="tVer">v0.47.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -461,7 +461,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.46.0 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
+  <p style="margin-top:10px">Megawatt Mogul v0.47.0 prototype. Trees: KayKit (CC0). Characters: Kenney (CC0). Progress saves on this device.</p>
 </div></div>
 
 <script>
@@ -6636,6 +6636,7 @@ function render(dt,now){
 const spark=$('spark'),sctx=spark.getContext('2d');let hudT=0;
 function hud(dt){
   hudT+=dt;if(hudT<0.15)return;hudT=0;
+  if(!cozy()&&canLevel())doLevelUp(true);       // no panel, no clicking: the ladder climbs itself
   const t=hourNow(),h=Math.floor(t)%24,pr=priceNow(),lv=level(pr);
   $('cash').textContent=fmt(S.cash);$('wealth').textContent=fmt(wealth());{const c=S.contract,d=$('dealC');d.hidden=!c;if(c){const hl=Math.max(0,Math.ceil((c.until-gameNow())/HOUR));d.textContent=`🤝 ${c.delivered}/${c.need} · ${hl}h`;}}{const L=lossLastHour(),e=$('lossC');e.hidden=L<1;if(L>=1)e.textContent=`−${L} ⚡ · ${Math.round(efficiency()*100)}%`;e.title=L>=1?(S.lang==='tr'?'Son bir saatte kaybolan enerji · verimlilik':'Energy lost in the last hour · efficiency'):'';}$('carry').textContent=`${S.carry}/${carryCap()}`;
   $('pnow').textContent='₵'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
@@ -7251,18 +7252,18 @@ function openLevel(){
   $('lvlCur').textContent=L('Now: ','Şu an: ')+now.join(' · ');
   $('mLvl').classList.add('on');trackOnce('level-panel');
 }
-function doLevelUp(){
+function doLevelUp(auto){
   if(!canLevel())return;
   S.lvl=lvl()+1;save();sfx.goal();
   const n=LEVELS[lvl()],o=n.open&&OPENTXT[n.open];
   toast(L(`Level ${lvl()} · ${tt(n.t)}`,`Seviye ${lvl()} · ${tt(n.t)}`),'big');
   if(o)toast(tt(o[1]),'good');
   trackOnce('level-up-'+lvl());
-  openLevel();
+  if(!auto)openLevel();                 // the competitive game climbs on its own; nothing to click
 }
 
-$('goal').onclick=()=>{if(!cozy()&&!document.body.classList.contains('title'))openLevel();};
-$('lvlGo').onclick=doLevelUp;
+$('goal').onclick=()=>{if(!document.body.classList.contains('title'))openLevel();};
+$('lvlGo').onclick=()=>doLevelUp();
 $('lvlSkip').onclick=()=>$('mLvl').classList.remove('on');
 function renderGrid(){
   const pls=S.plants.filter(x=>PLANT_TYPES[x.type]);
@@ -7355,6 +7356,9 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.47.0',t:['The ladder climbs itself','Merdiveni art\u0131k oyun t\u0131rman\u0131yor'],l:[
+  ['In the competitive game you no longer have to notice that you are ready and press a button: the moment your wealth reaches the next level, you move up and the new feature opens. Progress used to quietly stop for anyone who never opened that panel.','Rekabet\u00e7i oyunda art\u0131k haz\u0131r oldu\u011funu fark edip bir d\u00fc\u011fmeye basman gerekmiyor: servetin bir sonraki seviyeye yeter yetmez seviye atl\u0131yorsun ve yeni \u00f6zellik a\u00e7\u0131l\u0131yor. Daha \u00f6nce o paneli hi\u00e7 a\u00e7mayanlar\u0131n ilerlemesi sessizce duruyordu.'],
+  ['In the cozy game nothing climbs by itself \u2014 you open the panel from the goal bar and move up when you feel like it.','\u00c7erezlik oyunda hi\u00e7bir \u015fey kendili\u011finden t\u0131rmanm\u0131yor \u2014 paneli hedef \u00e7ubu\u011fundan a\u00e7\u0131p can\u0131n istedi\u011finde seviye atl\u0131yorsun.']]},
  {v:'0.46.0',t:['The game never phones home','Oyun art\u0131k hi\u00e7bir yere ba\u011flanm\u0131yor'],l:[
   ['The visit counter is gone too. The game now opens without contacting a single address \u2014 no analytics, no fonts fetched, no server, nothing. What it knows about you it keeps on your own phone and shows only to you.','Ziyaret sayac\u0131 da kald\u0131r\u0131ld\u0131. Oyun art\u0131k a\u00e7\u0131l\u0131rken tek bir adrese bile ba\u011flanm\u0131yor \u2014 ne analitik, ne d\u0131\u015far\u0131dan yaz\u0131 tipi, ne sunucu. Senin hakk\u0131nda bildi\u011fi ne varsa kendi telefonunda duruyor ve sadece sana g\u00f6r\u00fcn\u00fcyor.'],
   ['The game still keeps a private note of the day you first played and the day you last played, on your own device, so it can tell a first visit from a return. It goes nowhere.','Oyun ilk ve son oynad\u0131\u011f\u0131n g\u00fcn\u00fc h\u00e2l\u00e2 kendi cihaz\u0131nda tutuyor ki ilk geli\u015fi d\u00f6n\u00fc\u015ften ay\u0131rabilsin. Bu kay\u0131t hi\u00e7bir yere gitmiyor.'],
@@ -7988,7 +7992,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.46.0';
+const GAME_VERSION='0.47.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
