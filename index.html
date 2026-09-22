@@ -328,14 +328,16 @@ body.title #mini{visibility:hidden}
 body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .t-sky{position:absolute;inset:0;pointer-events:none}
 .t-sun{position:absolute;top:9%;right:14%;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,#FFF3B0,#FFD23F 60%,rgba(255,210,63,0) 72%)}
-.t-turb{position:absolute;right:5%;left:auto;bottom:45%;width:104px;height:auto;filter:drop-shadow(0 4px 0 rgba(0,0,0,.12))}
+.t-turb{position:absolute;right:1%;left:auto;bottom:30%;width:76px;height:auto;z-index:0;filter:drop-shadow(0 4px 0 rgba(0,0,0,.12))}
+@media (max-width:420px){.t-turb{width:62px;right:0;bottom:31%}}
+@media (max-height:620px){.t-turb{display:none}}
 .t-rot{transform-origin:60px 68px;animation:spin 3.2s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.t-card{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:-6vh}
+.t-card{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:-6vh}
 .t-name{font-family:'Lilita One',var(--disp);line-height:.88;display:flex;flex-direction:column;color:#FFD23F;
   -webkit-text-stroke:3px #1D2433;paint-order:stroke fill;text-shadow:0 6px 0 #1D2433}
 .t-name span:first-child{font-size:clamp(52px,15vw,84px);transform:rotate(-3deg)}
-.t-name span:last-child{font-size:clamp(64px,19vw,104px);color:#fff;transform:rotate(-3deg) translateX(12px)}
+.t-name span:last-child{font-size:clamp(58px,17vw,104px);color:#fff;transform:rotate(-3deg) translateX(6px)}
 .t-sub{margin-top:10px;background:#1D2433;color:#fff;font-family:var(--disp);font-size:18px;padding:3px 14px;border-radius:10px;transform:rotate(-3deg);font-weight:400}
 .t-line{margin-top:14px;color:#fff;font-weight:800;font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.35);max-width:280px}
 .t-play{pointer-events:auto;margin-top:26px;min-width:220px;padding:16px 26px;border-radius:18px;background:#FFD23F!important;color:#1D2433!important;font-family:var(--disp);font-size:26px;box-shadow:0 6px 0 #B7861B;transition:transform .08s;font-weight:400}
@@ -390,7 +392,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.49.0</div>
+  <div class="t-ver" id="tVer">v0.50.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -578,7 +580,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.49.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.50.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4763,14 +4765,24 @@ function priceAt(m){
 function nearestMarket(o){return markets().sort((a,b)=>dist(o,a)-dist(o,b))[0];}
 /* ---- per-plant grid connection: a share of this plant's output goes straight to the
        nearest market, no carrying. It sells at whatever the price is right then. ---- */
-const GRIDMAX=3, GRIDSHARE=0.15;                      // 15% of output per level
+const GRIDMAX=5, GRIDSHARE=0.14;                      // 14% of output per level, up to 70%
+/* A line that never degrades is a line you build once and forget, and at that point the
+   plant runs itself. Every cell the line pushes wears the connection a little; a worn
+   line carries less, until somebody stands at the plant and services it. */
+const GRID_WEAR_PER_CELL=0.0016;                      // ~600 cells from new to useless
+function gridWear(p){return Math.min(1,p.gwear||0);}
+function gridHealth(p){return 1-0.55*gridWear(p);}    // a dead-tired line still carries 45%
+function gridServiceCost(p){const pd=pad(p.id),base=(pd&&pd.cost?pd.cost:100);
+  return Math.max(15,Math.round(base*0.10*gridWear(p)*modMult('fixCost')));}
+function gridNeedsService(p){return gridLvl(p)>0&&gridWear(p)>=0.30;}
 function gridLvl(p){return Math.min(GRIDMAX,p.grid||0);}
-function gridShare(p){return gridLvl(p)*GRIDSHARE;}
+function gridShare(p){return gridLvl(p)*GRIDSHARE*gridHealth(p);}
 function gridCost(p){const pd=pad(p.id),base=(pd&&pd.cost?pd.cost:100);return Math.round(base*0.8*Math.pow(2.1,gridLvl(p)));}
 function canGrid(p){return has('gridline')&&gridLvl(p)<GRIDMAX;}
 function gridTo(p){return (p.gto==='bat'&&built('bat'))?'bat':'mkt';}
 function gridToIcon(p){return gridTo(p)==='bat'?'🔋':'🏙️';}
 function gridDeliver(p){                               // one cell down the line
+  p.gwear=Math.min(1,(p.gwear||0)+GRID_WEAR_PER_CELL);
   if(gridTo(p)==='bat'){
     const D=depotsOn().sort((a,b)=>dist(p,a)-dist(p,b))[0],each=batCapEach();
     if(D&&batAt(D.id)<each){batSet(D.id,batAt(D.id)+1);S.stats.stored=(S.stats.stored||0)+1;return;}
@@ -5011,13 +5023,13 @@ const PADS=[
   {id:'t5',kind:'build',type:'turbine',x:680,y:1040,cost:600,req:'s3'},
   {id:'s4',kind:'build',type:'solar',x:800,y:1040,cost:900,req:'t5'},
   {id:'helper',kind:'upg',key:'helper',label:['Hire helper','Yardımcı al'],icon:'👷',x:370,y:800,base:450,growth:1.17,max:45,req:'bat'},
-  {id:'batcap',kind:'upg',key:'batcap',label:['Battery capacity','Batarya kapasitesi'],icon:'🔋',x:990,y:880,base:500,growth:1.8,max:10,req:'bat'},
+  {id:'batcap',kind:'upg',key:'batcap',label:['Battery capacity','Batarya kapasitesi'],icon:'🔋',x:990,y:880,base:500,growth:1.72,max:14,req:'bat'},
   {id:'bateff',kind:'upg',key:'bateff',label:['Battery upgrade','Batarya geliştirme'],icon:'⚙️',x:1150,y:880,base:900,growth:1.7,max:5,req:'bat'},
-  {id:'batcapR',kind:'upg',key:'batcap',label:['Battery capacity','Batarya kapasitesi'],icon:'🔋',x:870,y:1600,base:500,growth:1.8,max:10,req:'batridge'},
+  {id:'batcapR',kind:'upg',key:'batcap',label:['Battery capacity','Batarya kapasitesi'],icon:'🔋',x:870,y:1600,base:500,growth:1.72,max:14,req:'batridge'},
   {id:'bateffR',kind:'upg',key:'bateff',label:['Battery upgrade','Batarya geliştirme'],icon:'⚙️',x:1030,y:1600,base:900,growth:1.7,max:5,req:'batridge'},
-  {id:'batcapD',kind:'upg',key:'batcap',label:['Battery capacity','Batarya kapasitesi'],icon:'🔋',x:440,y:1980,base:500,growth:1.8,max:10,req:'batdesert'},
+  {id:'batcapD',kind:'upg',key:'batcap',label:['Battery capacity','Batarya kapasitesi'],icon:'🔋',x:440,y:1980,base:500,growth:1.72,max:14,req:'batdesert'},
   {id:'bateffD',kind:'upg',key:'bateff',label:['Battery upgrade','Batarya geliştirme'],icon:'⚙️',x:600,y:1980,base:900,growth:1.7,max:5,req:'batdesert'},
-  {id:'grid',kind:'upg',key:'grid',label:['Grid link','Şebeke bağlantısı'],icon:'🔌',x:1090,y:1010,base:3000,growth:1,max:1,req:'batcap'},
+  {id:'grid',kind:'upg',key:'grid',label:['Grid link','Şebeke bağlantısı'],icon:'🔌',x:1090,y:1010,base:3000,growth:1.85,max:4,req:'batcap'},
   {id:'ridge',kind:'gate',region:'ridge',label:['Open the windy ridge','Rüzgârlı sırtı aç'],icon:'🚧',x:700,y:1180,cost:1500,req:'bat'},
   {id:'batridge',kind:'build',type:'battery',x:950,y:1580,cost:3500,req:'ridge'},
   {id:'town1',kind:'build',type:'town',x:170,y:1565,cost:6000,req:'ridge'},
@@ -5290,7 +5302,7 @@ function fresh(){
     built:{t1:true},paid:{},up:{bag:0,boots:0,helper:0,batcap:0,bateff:0,grid:0},regions:{},
     battery:0,sat:0,day:0,t:8*HOUR,daySec:DAY_SEC,goal:0,soldCells:0,
     crew:{auto:true,min:10,roles:[],plan:['auto','auto','auto','auto'],sites:[],mkts:[],staff:[],fixEff:0.7,tab:'all'},
-    satT:{},snow:0,bat:{},batFire:0,batFireT:0,batCycles:0,batCharge:0,batFault:false,morale:null,mods:[],contract:null,event:null,nextEvent:null,cardHour:null,cardHour2:null,cardSoon:0,cardDay:-1,dayEarned:0,lastDayEarned:0,
+    satT:{},snow:0,bat:{},batFire:0,batFireT:0,batCycles:0,batCharge:0,batFault:false,gridWear:0,gridSold:0,morale:null,mods:[],contract:null,event:null,nextEvent:null,cardHour:null,cardHour2:null,cardSoon:0,cardDay:-1,dayEarned:0,lastDayEarned:0,
     lang:'en',lvl:1,tutDone:false,tipsSeen:{},seenVer:'',claimed:{},badges:[],earnLog:[],group:[],nick:'',ref:'',guest:false,syncBase:0,dev:'',ledger:[],cardPrefs:{},cardHist:[],dayLog:[],debt:0,
     stats:{stored:0,peakCells:0,planned:0,crewCells:0,crewRev:0,byMkt:{},fixSpend:0},hints:{},muted:false,shadows:true,lowFlash:false,speed:1,lastSave:Date.now()};
 }
@@ -5302,7 +5314,7 @@ const speed=()=>230*(1+0.12*S.up.boots)*modMult('playerSpeed')*perk('speed');
 const batWear=()=>0.0002*(1-0.15*(S.up.bateff||0));
 const batHealth=()=>Math.max(0.5,1-batWear()*(S.batCycles||0));
 const batBonus=()=>1.15+0.03*(S.up.bateff||0);
-const batCapEach=()=>Math.max(1,Math.round(60*(1+S.up.batcap)*batHealth()));   // every site has its own tank
+const batCapEach=()=>Math.max(1,Math.round(75*(1+S.up.batcap)*batHealth()));   // every site has its own tank
 function batAt(id){S.bat=S.bat||{};return S.bat[id]||0;}
 function batSet(id,v){S.bat=S.bat||{};S.bat[id]=Math.max(0,Math.round(v));}
 function batTotal(){return depotsOn().reduce((a,D)=>a+batAt(D.id),0);}
@@ -5405,7 +5417,7 @@ function snowPanel(p){return Math.max(0,Math.min(1,p.snow||0));}
 function snowMult(p){return 1-0.7*snowPanel(p);}
 function batCharged(n){
   S.batCharge=(S.batCharge||0)+n;
-  const cap=Math.max(1,60*(1+S.up.batcap));
+  const cap=Math.max(1,75*(1+S.up.batcap));
   while(S.batCharge>=cap){S.batCharge-=cap;S.batCycles=(S.batCycles||0)+1;}
 }
 function batFixCost(){const pd=pad('bat');return Math.max(5,Math.round((pd&&pd.cost?pd.cost:250)*0.02*modMult('fixCost')));}
@@ -5590,7 +5602,7 @@ function syncHelpers(){
   if(S.crew.sites)S.crew.sites.length=Math.min(S.crew.sites.length,S.up.helper);
   if(S.crew.mkts)S.crew.mkts.length=Math.min(S.crew.mkts.length,S.up.helper);
 }
-let clearT=0,repT=0,gridT=0,gridLock=null,batFixT=0,refurbT=0,padLock=null,standPad=null,standT=0,fixT=0,cellTick=0,sellTick=0,batTick=0,gridTick=0;
+let clearT=0,repT=0,gridT=0,gsvT=0,gridLock=null,batFixT=0,refurbT=0,padLock=null,standPad=null,standT=0,fixT=0,cellTick=0,sellTick=0,batTick=0,gridTick=0;
 function update(dt){
   const tscale=(tutOpen||cardOpen)?0:S.speed;
   const t0=hourNow();S.t+=dt*tscale;
@@ -5716,6 +5728,14 @@ function update(dt){
   const br=S.plants.find(p=>p.broken&&dist(P,p)<80);
   if(br&&!S.moving){const need=fixTime(br,1.2);fixT+=dt;br.fix=fixT/need;if(fixT>=need){doRepair(br,true);fixT=0;}}
   else{fixT=0;S.plants.forEach(p=>p.fix=0);}
+  /* a tired grid line is serviced by standing at the plant, like any other repair */
+  {const gp=S.plants.find(p=>!p.broken&&!p.fire&&gridNeedsService(p)&&dist(P,p)<80&&S.cash>=gridServiceCost(p));
+   if(gp&&!S.moving){gsvT=(gsvT||0)+dt;gp.gsv=gsvT/2;
+     if(gsvT>=2){const c=gridServiceCost(gp);S.cash-=c;gp.gwear=0;gp.gsv=0;gsvT=0;
+       S.stats.fixSpend=(S.stats.fixSpend||0)+c;sfx.fix();floatTxt(gp.x,gp.y,'-₵'+fmt(c));
+       toast(L(`${codeOf(gp.id)} line serviced. Full capacity again.`,`${codeOf(gp.id)} hattı bakıma girdi. Tekrar tam kapasite.`),'good');
+       hint('gridwear',L('Grid lines wear as they carry. Stand at the plant to service one.','Şebeke hatları taşıdıkça yıpranır. Bakım için santralın yanında dur.'));}}
+   else{gsvT=0;S.plants.forEach(p=>p.gsv=0);}}
   sellTick-=dt;
   if(S.carry>0&&sellTick<=0){const m=markets().find(m=>dist(P,m)<m.r);if(m){const fs=(S.carryStore||0)>0;sellCell(S.px,S.py,true,false,m,fs);if(fs)S.carryStore--;carryTake(S);sellTick=0.06;}}
   batTick-=dt;
@@ -6689,6 +6709,7 @@ function nightK(t){if(t>=7.5&&t<=18)return 0;if(t>=20.5||t<=5)return 1;if(t<7.5)
 let camPos=new THREE.Vector3(),camInit=false,shadowZoom=0;
 function render(dt,now){
   frameNo++;
+  cellPool.forEach(o=>o.visible=false);coinPool.forEach(o=>o.visible=false);
   const t=hourNow(),nk=nightK(t);
   // camera
   const asp=innerWidth/innerHeight;camera.aspect=asp;
@@ -6740,6 +6761,8 @@ function render(dt,now){
     if(p.fire>0){const fl=0.8+Math.sin(performance.now()/90)*0.2;
       const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y,(T.kind==='wind'?7*T.scale:2.6)*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
     if(snowPanel(p)>0.05)place('sn'+p.id,'wrench',p.x,p.y+6,1.6,p.clr>0?`🧹 ${Math.round(p.clr*100)}%`:`🌨️ ${Math.round(snowPanel(p)*100)}%`);
+    if(gridNeedsService(p)&&!p.fire)place('gw'+p.id,'wrench'+(gridWear(p)>0.7?' fire':''),p.x+(T.kind==='wind'?0:14),p.y+14,T.kind==='wind'?4.4*T.scale:1.2,
+      p.gsv>0?`🔌 ${Math.round(p.gsv*100)}%`:`🔌 ${Math.round(gridWear(p)*100)}% · ₵${fmt(gridServiceCost(p))}`);
     if(!p.broken&&needsWork(p))place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,p.rep>0?`${canRebuild(p)?'🏗️':'♻️'} ${Math.round(p.rep*100)}%`:`${canRebuild(p)?'🏗️':'♻️'} ₵${fmt(canRebuild(p)?rebuildCost(p):repowerCost(p))}`);
   }
   // pads
@@ -6794,10 +6817,12 @@ function render(dt,now){
     if(hp.status==='Repairing')place('hs'+i,'nm',hp.x,hp.y,2.4,'🔧 '+Math.round(Math.min(1,(hp.fixT||0)/2)*100)+'%');
     else if(hp.status&&hp.status.startsWith('Waiting'))place('hs'+i,'nm',hp.x,hp.y,2.4,'⏳ '+stTr(hp.status));});
   // flyers
-  cellPool.forEach(o=>o.visible=false);coinPool.forEach(o=>o.visible=false);
   for(const f of flyers){
+    let tx,ty;
+    try{tx=f.tx();ty=f.ty();}catch(_){f.life=1;continue;}
+    if(!isFinite(tx)||!isFinite(ty)){f.life=1;continue;}
     const o=f.kind==='coin'?poolGet(coinPool,makeCoin):poolGet(cellPool,makeCell);
-    const k=f.life,e=k*k*(3-2*k),x=f.x+(f.tx()-f.x)*e,y=f.y+(f.ty()-f.y)*e;
+    const k=f.life,e=k*k*(3-2*k),x=f.x+(tx-f.x)*e,y=f.y+(ty-f.y)*e;
     o.position.set(x*U,f.h0+(f.h1-f.h0)*e+Math.sin(Math.PI*k)*2.2,y*U);o.rotation.y=k*6;
   }
   // floats
@@ -7521,16 +7546,19 @@ function renderGrid(){
   const toBat=pls.filter(x=>gridLvl(x)>0&&gridTo(x)==='bat').length;
   $('gridTitle').textContent=L('Grid lines','Şebeke hatları');
   $('gridSub').textContent=L('A line carries part of a plant\'s output by itself. Pick where it goes: straight to the market, or into the battery to wait for the peak.','Hat, santralin üretiminin bir kısmını kendi taşır. Nereye gideceğini sen seç: doğrudan pazara, ya da zirveyi beklemek için bataryaya.');
+  const wornN=pls.filter(x=>gridNeedsService(x)).length;
   $('gridCards').innerHTML=[[L('Wired','Bağlı'),`${wired} / ${pls.length}`],
     [L('Carried by line','Hatla taşınan'),`${Math.round(avg*100)}%`],
     [L('To the battery','Bataryaya'),toBat],
-    [L('To a market','Pazara'),wired-toBat]]
+    [L('To a market','Pazara'),wired-toBat],
+    [L('Lines needing service','Bakım bekleyen'),wornN||'—']]
     .map(([k,v])=>`<div class="mcard"><small>${k}</small><b>${v}</b></div>`).join('');
   $('gridBody').innerHTML=pls.map(x=>{
     const T=PLANT_TYPES[x.type],lv=gridLvl(x),cost=gridCost(x),can=canGrid(x),afford=S.cash>=cost;
     return `<div class="rule">
       <div class="row1"><span>${codeOf(x.id)} ${tt(T.name)}</span><span class="val">${Math.round(gridShare(x)*100)}%</span></div>
       <div class="scale"><span>${L('Line level','Hat seviyesi')} ${lv}/${GRIDMAX}</span><span>${L('of its output','üretiminin')}</span></div>
+      ${lv>0?`<div class="scale"><span>${gridNeedsService(x)?'🔌 ':''}${L('Line condition','Hat durumu')} ${Math.round(gridHealth(x)*100)}%</span><span>${gridNeedsService(x)?L(`service ₵${fmt(gridServiceCost(x))} — stand at the plant`,`bakım ₵${fmt(gridServiceCost(x))} — santralın yanında dur`):L('fine','iyi')}</span></div>`:''}
       <div class="assign" style="grid-template-columns:1fr 1fr;margin-top:8px">
         <button data-gto="${x.id}" class="${gridTo(x)==='bat'?'duty':''}"><small>${L('Sends to','Gönderdiği yer')}</small><b>${gridTo(x)==='bat'?'🔋 '+L('Battery','Batarya'):'🏙️ '+L('Nearest market','En yakın pazar')}</b></button>
         <button data-gup="${x.id}" ${can&&afford?'':'disabled'}><small>${can?(afford?L('Upgrade','Yükselt'):L('Not enough cash','Para yetmiyor')):L('Maxed','Tamam')}</small><b>${can?'₵'+fmt(cost):L('Lv','Sv')+GRIDMAX}</b></button>
@@ -7541,6 +7569,7 @@ function renderGrid(){
           .map(([k,a,b])=>`<button data-dgate="${x.id}" data-gv="${k}" class="${damGate(x)===k?'duty':''}"><small>${b}</small><b>${a}</b></button>`).join('')}
       </div>`}</div>`;}).join('')
     ||`<p style="text-align:center">${L('No plants yet.','Henüz santral yok.')}</p>`;
+  $('gridBody').innerHTML+=`<div class="note">${L('Lines wear as they carry. A worn line moves less of the output until you stand at the plant and service it.','Hatlar taşıdıkça yıpranır. Yıpranmış hat, sen santralın yanında durup bakım yapana kadar üretimin daha azını taşır.')}</div>`;
   $('gridBody').innerHTML+=`<div class="note">${L('A line sells at whatever the price is right then — it never fades and never waits, but it never catches the peak either. Sent to the battery it waits for you; if the tank is full it falls back to the market.','Hat o anki fiyattan satar — hiç sönmez, hiç beklemez, ama zirveyi de yakalamaz. Bataryaya giden seni bekler; tank doluysa pazara düşer.')}</div>`;
 }
 function openGridPanel(){renderGrid();$('mGrid').classList.add('on');trackOnce('grid-panel');}
@@ -7605,6 +7634,18 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.50.0',t:['Bigger tanks, longer lines, and lines that wear','Daha b\u00fcy\u00fck tanklar, daha uzun hatlar, y\u0131pranan hatlar'],l:[
+  ['Battery sites hold more from the first upgrade, and the capacity ladder runs four rungs further. A fully upgraded site now holds 1125 cells instead of 660.','Batarya sahalar\u0131 ilk y\u00fckseltmeden itibaren daha \u00e7ok tutuyor ve kapasite merdiveni d\u00f6rt basamak uzad\u0131. Tam y\u00fckseltilmi\u015f bir saha art\u0131k 660 yerine 1125 h\u00fccre tutuyor.'],
+  ['Grid lines go to five levels and carry up to 70% of a plant instead of 45%.','\u015eebeke hatlar\u0131 be\u015f seviyeye \u00e7\u0131kt\u0131 ve santralin %45\u2019i yerine %70\u2019ine kadar\u0131n\u0131 ta\u015f\u0131yor.'],
+  ['But a line now wears as it carries. A tired line moves less, shows its condition on the plant and in the grid panel, and is serviced by standing at the plant \u2014 so no line is ever build-and-forget.','Ama hat art\u0131k ta\u015f\u0131d\u0131k\u00e7a y\u0131pran\u0131yor. Yorulan hat daha az ta\u015f\u0131yor, durumunu santralda ve \u015febeke panelinde g\u00f6steriyor, bak\u0131m\u0131 da santral\u0131n yan\u0131nda durarak yap\u0131l\u0131yor \u2014 yani hi\u00e7bir hat kur-unut de\u011fil.']]},
+ {v:'0.49.0',t:['Rivals, fires that bite, and deals you can keep','Rakipler, ger\u00e7ekten yakan yang\u0131nlar ve yeti\u015febilen anla\u015fmalar'],l:[
+  ['Twelve companies now sit on a ladder above and below you, each growing a little every day. Passing one for the first time pays a bonus, and the report has a new Ladder page showing where you stand.','Art\u0131k senin \u00fcst\u00fcnde ve alt\u0131nda on iki \u015firketlik bir s\u0131ralama var; her biri her g\u00fcn biraz b\u00fcy\u00fcyor. Birini ilk kez ge\u00e7mek prim \u00f6d\u00fcyor, raporda da nerede oldu\u011funu g\u00f6steren yeni bir S\u0131ralama sayfas\u0131 var.'],
+  ['A fire now burns the stack beside the plant instead of leaving it frozen there, and the crew keeps away from a plant that is alight.','Yang\u0131n art\u0131k santral\u0131n yan\u0131ndaki y\u0131\u011f\u0131n\u0131 da yak\u0131yor, donmu\u015f halde b\u0131rakm\u0131yor; ekip de yanan santraldan uzak duruyor.'],
+  ['Deals were impossible to meet: the crew sold while you were away but none of it counted, and the target was sized against nameplate capacity rather than real output. Both are fixed.','Anla\u015fmalar yeti\u015fmiyordu: sen yokken ekip sat\u0131yordu ama hi\u00e7biri say\u0131lm\u0131yordu, \u00fcstelik hedef ger\u00e7ek \u00fcretime de\u011fil etiket g\u00fcc\u00fcne g\u00f6re hesaplan\u0131yordu. \u0130kisi de d\u00fczeltildi.'],
+  ['Twelve new cards for the early game, and the deck no longer repeats itself when only a handful qualify.','Erken oyun i\u00e7in on iki yeni kart; az say\u0131da kart uygunken deste art\u0131k kendini tekrar etmiyor.']]},
+ {v:'0.48.0',t:['Fullscreen, and playable with no signal','Tam ekran ve \u015febekesiz oynanabilir'],l:[
+  ['The Android navigation bar no longer covers the controls at the bottom of the screen.','Android gezinme \u00e7ubu\u011fu art\u0131k ekran\u0131n alt\u0131ndaki kontrolleri kapatm\u0131yor.'],
+  ['After the first launch the game runs with no connection at all.','\u0130lk a\u00e7\u0131l\u0131\u015ftan sonra oyun hi\u00e7 ba\u011flant\u0131 olmadan \u00e7al\u0131\u015f\u0131yor.']]},
  {v:'0.47.0',t:['The ladder climbs itself','Merdiveni art\u0131k oyun t\u0131rman\u0131yor'],l:[
   ['In the competitive game you no longer have to notice that you are ready and press a button: the moment your wealth reaches the next level, you move up and the new feature opens. Progress used to quietly stop for anyone who never opened that panel.','Rekabet\u00e7i oyunda art\u0131k haz\u0131r oldu\u011funu fark edip bir d\u00fc\u011fmeye basman gerekmiyor: servetin bir sonraki seviyeye yeter yetmez seviye atl\u0131yorsun ve yeni \u00f6zellik a\u00e7\u0131l\u0131yor. Daha \u00f6nce o paneli hi\u00e7 a\u00e7mayanlar\u0131n ilerlemesi sessizce duruyordu.'],
   ['In the cozy game nothing climbs by itself \u2014 you open the panel from the goal bar and move up when you feel like it.','\u00c7erezlik oyunda hi\u00e7bir \u015fey kendili\u011finden t\u0131rmanm\u0131yor \u2014 paneli hedef \u00e7ubu\u011fundan a\u00e7\u0131p can\u0131n istedi\u011finde seviye atl\u0131yorsun.']]},
@@ -8251,7 +8292,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.49.0';
+const GAME_VERSION='0.50.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
