@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "games.baseload.megawattmogul",
+    "sha256_cert_fingerprints": [
+      "F8:10:07:4C:F6:B3:A7:CB:7A:4B:D8:3E:61:6E:8B:05:C8:36:54:68:F4:F4:E9:FE:65:D2:FE:76:37:80:04:30"
+    ]
+  }
+}]
