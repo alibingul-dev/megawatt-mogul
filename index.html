@@ -183,7 +183,8 @@ html,body{height:100%;overflow:hidden;background:#3B7A4A;font-family:var(--body)
 .clock{font-family:var(--disp);font-size:16px;text-align:right;line-height:1.1;flex:0 0 auto;font-weight:400}
 .clock small{display:block;white-space:nowrap;font-family:var(--body);font-weight:800;font-size:11px;color:var(--soft)}
 .side{display:flex;flex-direction:column;gap:6px}
-.rb{pointer-events:auto;width:40px;height:40px;border-radius:13px;background:var(--panel);color:#1D2433;font-size:19px;box-shadow:0 3px 0 rgba(0,0,0,.18);display:grid;place-items:center;position:relative}
+.rb{pointer-events:auto;width:48px;height:46px;border-radius:13px;background:var(--panel);color:#1D2433;font-size:19px;box-shadow:0 3px 0 rgba(0,0,0,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1;position:relative}
+.rb .cap{font-family:var(--body);font-size:8.5px;font-weight:700;color:var(--soft);margin-top:2px;letter-spacing:.2px;white-space:nowrap}
 .crewb{height:48px;flex-direction:column;display:flex;align-items:center;justify-content:center;gap:0;line-height:1}
 .crewb .cnum{font-size:10px;font-weight:800;color:var(--soft);margin-top:1px}
 .rb .badge{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;border-radius:9px;background:var(--peak);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 4px}
@@ -391,7 +392,8 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .pgi .ck{font-size:17px;line-height:1.3}
 .pgi b{display:block;font-weight:400;font-family:var(--disp);font-size:16px;line-height:1.25}
 .pgi small{color:var(--soft);font-size:13px;line-height:1.35}
-.pgcode{font:17px/1.4 monospace;background:#1D2433;color:#FFD23F;padding:11px;border-radius:10px;letter-spacing:2px;text-align:center;margin:8px 0}
+.pgcode{font:17px/1.4 monospace;background:#1D2433;color:#FFD23F;padding:11px;border-radius:10px;letter-spacing:2px;text-align:center;margin:8px 0;user-select:all;-webkit-user-select:all}
+.pgcopy{width:100%;padding:11px;border-radius:12px;background:#23B26D;color:#fff;font-family:var(--disp);font-size:16px;font-weight:400}
 @media (prefers-reduced-motion: reduce){.t-rot,.t-play{animation:none}}
 @media (prefers-reduced-motion: reduce){ .toast{animation:none} }
 </style>
@@ -418,7 +420,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.56.0</div>
+  <div class="t-ver" id="tVer">v0.58.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -446,12 +448,12 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div class="banner" id="banner" hidden></div>
 </div>
 <div id="sideCol">
-      <button class="rb" id="gridBtn" aria-label="Grid lines" hidden>🔌</button>
-      <button class="rb" id="progIco" aria-label="Program" hidden>🎓</button>
-      <button class="rb" id="repBtn" aria-label="Finance report">📊</button>
-      <button class="rb" id="infoBtn" aria-label="Tips">ℹ️<span class="badge" id="infoDot" hidden>!</span></button>
-      <button class="rb zb" id="zIn" aria-label="Zoom in">＋</button>
-      <button class="rb zb" id="zOut" aria-label="Zoom out">－</button>
+      <button class="rb" id="gridBtn" aria-label="Grid lines" hidden><span>🔌</span><span class="cap" id="cap-grid">Lines</span></button>
+      <button class="rb" id="progIco" aria-label="Program" hidden><span>🎓</span><span class="cap" id="cap-prog">Program</span></button>
+      <button class="rb" id="repBtn" aria-label="Finance report"><span>📊</span><span class="cap" id="cap-rep">Report</span></button>
+      <button class="rb" id="infoBtn" aria-label="Tips"><span>ℹ️</span><span class="cap" id="cap-info">Tips</span><span class="badge" id="infoDot" hidden>!</span></button>
+      <button class="rb zb" id="zIn" aria-label="Zoom in"><span>＋</span><span class="cap" id="cap-zin">Closer</span></button>
+      <button class="rb zb" id="zOut" aria-label="Zoom out"><span>－</span><span class="cap" id="cap-zout">Wider</span></button>
   <button class="rb crewb" id="crewBtn" aria-label="Crew plan" hidden><span>👷</span><span class="cnum" id="crewN">1/45</span><span class="badge" id="crewAlert" hidden>!</span></button>
 </div>
 <canvas id="mini" width="90" height="128" aria-label="Mini map. Tap to enlarge."></canvas>
@@ -617,7 +619,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.56.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.58.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5072,6 +5074,8 @@ const PADS=[
   {id:'batcapD',kind:'upg',key:'batcap',label:['Battery capacity','Batarya kapasitesi'],icon:'🔋',x:440,y:1980,base:500,growth:1.72,max:14,req:'batdesert'},
   {id:'bateffD',kind:'upg',key:'bateff',label:['Battery upgrade','Batarya geliştirme'],icon:'⚙️',x:600,y:1980,base:900,growth:1.7,max:5,req:'batdesert'},
   {id:'grid',kind:'upg',key:'grid',label:['Grid link','Şebeke bağlantısı'],icon:'🔌',x:1090,y:1010,base:3000,growth:1.85,max:4,req:'batcap'},
+  {id:'gridR',kind:'upg',key:'grid',label:['Grid link','Şebeke bağlantısı'],icon:'🔌',x:1190,y:1600,base:3000,growth:1.85,max:4,req:'batridge'},
+  {id:'gridD',kind:'upg',key:'grid',label:['Grid link','Şebeke bağlantısı'],icon:'🔌',x:760,y:1980,base:3000,growth:1.85,max:4,req:'batdesert'},
   {id:'ridge',kind:'gate',region:'ridge',label:['Open the windy ridge','Rüzgârlı sırtı aç'],icon:'🚧',x:700,y:1180,cost:1500,req:'bat'},
   {id:'batridge',kind:'build',type:'battery',x:950,y:1580,cost:3500,req:'ridge'},
   {id:'town1',kind:'build',type:'town',x:170,y:1565,cost:6000,req:'ridge'},
@@ -6869,11 +6873,11 @@ function render(dt,now){
   const t=hourNow(),nk=nightK(t);
   // camera
   const asp=innerWidth/innerHeight;camera.aspect=asp;
-  const ZL=ZOOMS[S.zoom==null?1:S.zoom];const wantW=(asp<1?15:28)*ZL;const hf=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*asp);
+  const ZL=camAim?ZOOMS[0]:ZOOMS[S.zoom==null?1:S.zoom];const wantW=(asp<1?15:28)*ZL;const hf=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*asp);
   const distc=Math.min(190,Math.max(26,(wantW/2)/Math.tan(hf/2)));
   const PX=S.px*U,PZ=S.py*U;
   const CX=camAim?camAim.x*U:PX, CZ=camAim?camAim.y*U:PZ;      // she points, the camera goes
-  const halfW=Math.min(34,wantW*0.48);const tx=Math.max(halfW,Math.min(70-halfW,CX)),tz=Math.max(12,Math.min(98,CZ));
+  const halfW=Math.min(34,wantW*0.48);const tx=Math.max(halfW,Math.min(70-halfW,CX)),tz=Math.max(12,Math.min(98,CZ+(camAim?3:0)));   // lift the subject clear of Ela's card
   if(shadowZoom!==ZL){shadowZoom=ZL;const e=26*ZL;Object.assign(sun.shadow.camera,{left:-e,right:e,top:e,bottom:-e});sun.shadow.camera.updateProjectionMatrix();document.body.classList.toggle('far',ZL>=2);}
   const ang=THREE.MathUtils.degToRad(54);
   const want=new THREE.Vector3(tx,Math.sin(ang)*distc,tz+Math.cos(ang)*distc);
@@ -6994,6 +6998,8 @@ function render(dt,now){
     marker.visible=true;const hgt=(tg===S.plants[0])?8:tg===CITY?3:2.6;
     marker.position.set(tg.x*U,hgt+Math.sin(now/200)*0.4,tg.y*U);marker.rotation.y=now/400;
   }else{arrow.visible=false;marker.visible=false;}
+  if(camAim){arrow.visible=false;marker.visible=true;
+    marker.position.set(camAim.x*U,2.6+Math.sin(now/180)*0.5,camAim.y*U);marker.rotation.y=now/300;}
   if(S.batFault&&built('bat')){const D=depotsOn()[0];if(D){const[BX,BZ]=W3(D.x,D.y);smokeAt(BX,BZ,1.2,now,0.7);}}
   {const w=S.tw;twGroup.visible=!!w;
    if(w){const[TX,TZ]=W3(w.x,w.y);twGroup.position.set(TX,0,TZ);twGroup.rotation.y=now/200;
@@ -7023,7 +7029,7 @@ function hud(dt){
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
   document.querySelector('.market').style.visibility=has('price')?'':'hidden';
-  $('crewBtn').hidden=S.up.helper<1||!has('crew');$('crewN').textContent=`${S.up.helper}/45`;
+  $('crewBtn').hidden=S.up.helper<1||!has('crew');$('crewN').textContent=`${L('Crew','Ekip')} ${S.up.helper}/45`;try{syncCaps();}catch(e){}
   const alertOn=helpers.some(h=>(h.waitT||0)>15)||(S.up.helper>0&&benchList().length>0);$('crewAlert').hidden=!alertOn;$('crewBtn').setAttribute('aria-label',alertOn?'Crew plan: a helper is stuck waiting':'Crew plan');
   const bn=$('banner');
   if(curtailNow()){const cw=curtailWindow(S.day);bn.hidden=false;bn.className='banner cheap';bn.textContent=L(`📋 Dispatch order until ${cw[1]}:00 · store, don't sell`,`📋 ${cw[1]}:00'e kadar yük atma talimatı · satma, depola`);}
@@ -7824,6 +7830,12 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.58.0',t:['She actually shows you the thing now','Art\u0131k ger\u00e7ekten g\u00f6steriyor'],l:[
+  ['Pointing the camera was not enough: it barely moved, so the turbine or the panels stayed a speck on the edge. Now the view closes right in on whatever Ela is talking about, lifts it above her card and puts a marker ring around it.','Kameray\u0131 \u00e7evirmek yetmiyordu: neredeyse hi\u00e7 k\u0131p\u0131rdam\u0131yordu, t\u00fcrbin ya da paneller kenarda benek olarak kal\u0131yordu. Art\u0131k g\u00f6r\u00fcnt\u00fc Ela\u2019n\u0131n bahsetti\u011fi \u015feye yak\u0131nla\u015f\u0131yor, onu kart\u0131n \u00fcst\u00fcne kald\u0131r\u0131yor ve etraf\u0131na i\u015faret halkas\u0131 koyuyor.'],
+  ['The result code at the end of a program has a Copy button now \u2014 and the code itself can be selected by hand if copying is blocked.','Program sonundaki sonu\u00e7 kodunun art\u0131k Kopyala butonu var \u2014 kopyalama engellenirse kodun kendisi elle de se\u00e7ilebiliyor.']]},
+ {v:'0.57.0',t:['Every button says what it does','Her buton ne yapt\u0131\u011f\u0131n\u0131 s\u00f6yl\u00fcyor'],l:[
+  ['The side buttons are no longer bare icons. Lines, Report, Tips, Closer, Wider and Crew now carry a small label in your language, so nobody has to guess what a symbol means.','Yan butonlar art\u0131k \u00e7\u0131plak simge de\u011fil. Hatlar, Rapor, Taktik, Yak\u0131n, Uzak ve Ekip alt\u0131nda kendi dilinde k\u00fc\u00e7\u00fck bir yaz\u0131 var; kimse simgenin ne demek oldu\u011funu tahmin etmek zorunda kalm\u0131yor.'],
+  ['The grid-link pad used to sit only next to the first battery, which made that one battery look special. Every battery site now has the same three pads \u2014 capacity, upgrade and grid link \u2014 and they all feed the same grid level.','\u015eebeke ba\u011flant\u0131s\u0131 alan\u0131 sadece ilk bataryan\u0131n yan\u0131ndayd\u0131, bu da o bataryay\u0131 \u00f6zel g\u00f6steriyordu. Art\u0131k her batarya sahas\u0131nda ayn\u0131 \u00fc\u00e7 alan var \u2014 kapasite, geli\u015ftirme ve \u015febeke ba\u011flant\u0131s\u0131 \u2014 ve \u00fc\u00e7\u00fc de ayn\u0131 seviyeyi besliyor.']]},
  {v:'0.56.0',t:['Ela points, the camera follows','Ela g\u00f6steriyor, kamera gidiyor'],l:[
   ['When the guide says \u201cthat turbine\u201d or \u201cthe city\u201d, the camera now travels there while she talks \u2014 time is already stopped, so you actually get to look at what she means. The onboarding briefing does the same.','Rehber \u201c\u015fu t\u00fcrbin\u201d ya da \u201c\u015fehir\u201d dedi\u011finde kamera art\u0131k o \u015feye gidiyor \u2014 zaman zaten durdu\u011fu i\u00e7in bahsetti\u011fi \u015feye ger\u00e7ekten bakabiliyorsun. Oryantasyon anlat\u0131m\u0131 da ayn\u0131s\u0131n\u0131 yap\u0131yor.'],
   ['At night you no longer stand in a glowing circle. You carry a headlamp: the light goes where you are facing, and the rest of the field stays dark.','Gece art\u0131k \u0131\u015f\u0131kl\u0131 bir dairenin i\u00e7inde durmuyorsun. Kafa lamban var: \u0131\u015f\u0131k bakt\u0131\u011f\u0131n y\u00f6ne gidiyor, sahan\u0131n geri kalan\u0131 karanl\u0131k kal\u0131yor.'],
@@ -8513,7 +8525,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.56.0';
+const GAME_VERSION='0.58.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -8726,6 +8738,11 @@ const PROGRAMS=[
     w:['An instruction nobody wrote down is an instruction nobody follows. Same here, same at work.','Yazılmayan talimat uygulanmaz. Burada da, işte de.'],
     ok:()=>(S.stats.planned||0)>0}]}
 ];
+function syncCaps(){
+  const C=[['cap-prog','Program','Program'],['cap-grid','Lines','Hatlar'],['cap-rep','Report','Rapor'],
+           ['cap-info','Tips','Taktik'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
+  for(const [id,en,tr] of C){const e=$(id);if(e)e.textContent=L(en,tr);}
+}
 function syncProgBtn(){
   const p=PROGRAMS.find(x=>x.id===S.prog);
   const b=$('progBtn');if(b){b.hidden=!p;if(p)b.textContent=p.icon+' '+tt(p.name);}
@@ -8760,7 +8777,8 @@ function pgStepsHtml(p){
   if(done){
     html+=`<div class="pgi on"><span class="ck">🏁</span><span><b>${L('Programme complete','Program tamamlandı')}</b>`
       +`<small>${L('Send this code to whoever gave you the access code. The game sends nothing by itself.','Bu kodu sana erişim kodunu veren kişiye ilet. Oyun kendiliğinden hiçbir şey göndermez.')}</small></span></div>`
-      +`<div class="pgcode">${done.code}</div>`;
+      +`<div class="pgcode" id="pgCode">${done.code}</div>`
+      +`<button class="pgcopy" id="pgCopy">\ud83d\udccb ${L('Copy the code','Kodu kopyala')}</button>`;
   }
   return html;
 }
@@ -8783,6 +8801,14 @@ function openProgram(){
   $('pgTabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;pgTab=b.dataset.t;openProgram();};
   $('pgList').innerHTML=pgTab==='steps'?pgStepsHtml(p):pgTab==='gloss'?pgGlossHtml(p):pgLearnHtml(p);
   const rp=$('pgReplay');if(rp)rp.onclick=()=>{$('mProgram').classList.remove('on');elaSay(p.lessons,()=>openProgram());};
+  const cb=$('pgCopy');if(cb)cb.onclick=()=>{
+    const txt=(($('pgCode')||{}).textContent||'').trim();if(!txt)return;
+    const done=()=>{cb.textContent='\u2705 '+L('Copied','Kopyalandı');sfx.pick();setTimeout(()=>{cb.textContent='\ud83d\udccb '+L('Copy the code','Kodu kopyala');},1800);};
+    const fallback=()=>{try{const ta=document.createElement('textarea');ta.value=txt;ta.setAttribute('readonly','');
+      ta.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,99);
+      document.execCommand('copy');ta.remove();done();}catch(e){toast(L('Copy failed — select the code by hand.','Kopyalanamadı — kodu elle seç.'));}};
+    try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,fallback);else fallback();}catch(e){fallback();}
+  };
   $('pgList').scrollTop=0;
   $('pgQuit').textContent=L('Leave this program','Bu programdan çık');
   $('pgClose').textContent=L('Close','Kapat');
