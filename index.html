@@ -420,7 +420,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.58.0</div>
+  <div class="t-ver" id="tVer">v0.59.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -607,6 +607,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   </div>
   <div class="btns setsec" id="setDisp" hidden>
     <button id="sSound">Sound: on</button>
+    <button id="sMusic">Music: on</button>
     <button id="sShadow">Shadows: on</button>
     <button id="sFlash">Flashes: on</button>
     <button id="sUI">Panel size: 100%</button>
@@ -619,9 +620,9 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.58.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.59.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
-  Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>
+  Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
 </div></div>
 
@@ -5826,6 +5827,7 @@ function update(dt){
   syncHelpers();
   helpers.forEach((hp,i)=>updateHelper(hp,i,dt));
   try{tornadoTick(gdt);}catch(e){}
+  try{musicTick(dt);}catch(e){}
   for(const f of flyers)f.life+=dt*3;
   for(let i=flyers.length-1;i>=0;i--)if(flyers[i].life>=1)flyers.splice(i,1);
   for(const f of floats){f.life-=dt*0.9;f.rise+=dt*1.6;}
@@ -7830,6 +7832,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.59.1',t:['The field has a soundtrack','Sahan\u0131n art\u0131k m\u00fczi\u011fi var'],l:[
+  ['Three instrumental tracks, and the game picks the one that fits: Baseload on an ordinary day, Peak Hour through the evening peak, Curtailment when something is on fire, broken, storming or being crossed by a funnel. They cross-fade, they never cut.','\u00dc\u00e7 s\u00f6zs\u00fcz par\u00e7a var ve oyun duruma uyan\u0131 se\u00e7iyor: s\u0131radan g\u00fcnde Baseload, ak\u015fam zirvesinde Peak Hour, bir \u015fey yan\u0131yor, bozuluyor, f\u0131rt\u0131na var ya da hortum ge\u00e7iyorsa Curtailment. Birbirine s\u00f6n\u00fcmlenerek ge\u00e7iyorlar, asla kesilmiyorlar.'],
+  ['The music is downloaded only when it first plays, so the game still opens as fast as before, and Settings \u203a Display has its own Music switch separate from Sound.','M\u00fczik ilk \u00e7ald\u0131\u011f\u0131nda indiriliyor, yani oyun eskisi kadar h\u0131zl\u0131 a\u00e7\u0131l\u0131yor; Ayarlar \u203a G\u00f6r\u00fcnt\u00fc alt\u0131nda Ses\u2019ten ayr\u0131 bir M\u00fczik anahtar\u0131 var.'],
+  ['At x4 or x12 time speed the game hour races past the evening peak in seconds, so a track now holds for at least 18 seconds before it can change. Danger is the exception: fire, a storm or a funnel cuts in at once and lingers a few seconds after it clears.','x4 veya x12 zaman h\u0131z\u0131nda oyun saati ak\u015fam zirvesini saniyeler i\u00e7inde ge\u00e7iyor, bu y\u00fczden bir par\u00e7a de\u011fi\u015febilmek i\u00e7in en az 18 saniye \u00e7al\u0131yor. Tehlike istisna: yang\u0131n, f\u0131rt\u0131na veya hortum an\u0131nda giriyor ve ge\u00e7tikten sonra birka\u00e7 saniye daha kal\u0131yor.']]},
  {v:'0.58.0',t:['She actually shows you the thing now','Art\u0131k ger\u00e7ekten g\u00f6steriyor'],l:[
   ['Pointing the camera was not enough: it barely moved, so the turbine or the panels stayed a speck on the edge. Now the view closes right in on whatever Ela is talking about, lifts it above her card and puts a marker ring around it.','Kameray\u0131 \u00e7evirmek yetmiyordu: neredeyse hi\u00e7 k\u0131p\u0131rdam\u0131yordu, t\u00fcrbin ya da paneller kenarda benek olarak kal\u0131yordu. Art\u0131k g\u00f6r\u00fcnt\u00fc Ela\u2019n\u0131n bahsetti\u011fi \u015feye yak\u0131nla\u015f\u0131yor, onu kart\u0131n \u00fcst\u00fcne kald\u0131r\u0131yor ve etraf\u0131na i\u015faret halkas\u0131 koyuyor.'],
   ['The result code at the end of a program has a Copy button now \u2014 and the code itself can be selected by hand if copying is blocked.','Program sonundaki sonu\u00e7 kodunun art\u0131k Kopyala butonu var \u2014 kopyalama engellenirse kodun kendisi elle de se\u00e7ilebiliyor.']]},
@@ -8323,6 +8329,75 @@ $('mini').addEventListener('pointerdown',e=>{e.stopPropagation();
   b.style.width=b.width+'px';b.style.height=b.height+'px';drawMap(b,true);$('mMap').classList.add('on');trackOnce('minimap-opened');});
 $('mMap').addEventListener('pointerdown',()=>$('mMap').classList.remove('on'));
 
+
+/* ======================= MUSIC =======================
+   Three instrumental loops that follow what is happening, fetched as separate
+   files so the game still starts instantly and the service worker caches them
+   after the first play. Nothing autoplays before the player taps Play. */
+const MUSIC=[
+  {id:'baseload',   src:'music/baseload.mp3'},      // ordinary day
+  {id:'curtailment',src:'music/curtailment.mp3'},   // fire, storm, funnel, breakdown
+  {id:'peak',       src:'music/peak.mp3'}           // the evening peak
+];
+const MUS_VOL=0.42, MUS_FADE=1.4;                   // seconds
+/* Time speed can run at x4 or x12, so the game hour crosses 18:00 and 22:00 in a
+   few real seconds and a naive picker would flip tracks constantly. Switching is
+   held for MUS_HOLD real seconds, and leaving danger needs the danger to stay
+   gone for MUS_CALM — going INTO danger is always immediate. */
+const MUS_HOLD=18, MUS_CALM=6;
+const musicEl={};let musicNow=null,musicWant=null,musicOn=false,musicHold=0,musicCalm=0;
+function musicAllowed(){return S.music!==false;}
+function musicGet(id){
+  if(musicEl[id])return musicEl[id];
+  const m=MUSIC.find(x=>x.id===id);if(!m)return null;
+  const a=new Audio();a.src=m.src;a.loop=true;a.preload='none';a.volume=0;
+  a.addEventListener('error',()=>{a.dataset.bad='1';},{once:true});
+  musicEl[id]=a;return a;
+}
+function musicPick(){
+  if(!musicAllowed()||!playing)return null;
+  try{
+    if(S.tw)return 'curtailment';
+    if(S.plants.some(p=>p.fire>0)||S.batFire>0)return 'curtailment';
+    if(DAY&&DAY.weather==='stormy')return 'curtailment';
+    if(S.plants.some(p=>p.broken)||S.batFault)return 'curtailment';
+    if(PEAK_H.includes(Math.floor(hourNow())%24))return 'peak';
+  }catch(e){}
+  return 'baseload';
+}
+function musicStart(){                                // called from the Play tap: a real gesture
+  if(!musicAllowed()||musicOn)return;
+  musicOn=true;musicHold=0;musicCalm=0;musicSwitch(musicPick());musicHold=MUS_HOLD;
+}
+function musicSwitch(id){
+  if(id===musicNow)return;
+  musicWant=id;
+  if(id){const a=musicGet(id);
+    if(a&&!a.dataset.bad){try{const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});}catch(e){}}}
+  musicNow=id;
+}
+function musicTick(dt){
+  if(!musicOn)return;
+  musicHold=Math.max(0,musicHold-dt);
+  if(!musicAllowed()){                                 // switched off: fade everything out
+    for(const k in musicEl){const a=musicEl[k];if(a.volume>0){a.volume=Math.max(0,a.volume-dt/MUS_FADE);if(a.volume<=0)try{a.pause();}catch(e){}}}
+    musicNow=null;return;
+  }
+  let want=musicPick();
+  if(want==='curtailment')musicCalm=MUS_CALM;                       // danger: cut in at once
+  else if(musicCalm>0){musicCalm=Math.max(0,musicCalm-dt);want='curtailment';}   // and linger a little after it clears
+  if(want&&want!==musicNow){
+    if(want==='curtailment'||musicHold<=0){musicSwitch(want);musicHold=MUS_HOLD;}
+  }
+  for(const k in musicEl){
+    const a=musicEl[k],up=(k===musicNow);
+    const tgt=up?MUS_VOL:0;
+    if(a.volume<tgt)a.volume=Math.min(tgt,a.volume+dt/MUS_FADE);
+    else if(a.volume>tgt){a.volume=Math.max(tgt,a.volume-dt/MUS_FADE);
+      if(a.volume<=0&&!a.paused)try{a.pause();}catch(e){}}
+    if(up&&a.paused&&!a.dataset.bad){try{const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});}catch(e){}}
+  }
+}
 /* ======================= SAVE / OFFLINE ======================= */
 const SAVE_SCHEMA=4;           // bump + add a step in migrate() whenever the save shape changes
 const SAVE_PREV=SAVE_KEY+'_prev', SAVE_BACKUP=SAVE_KEY+'_backup';
@@ -8483,7 +8558,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
+function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Sound, shadows, flashes','Ses, gölge, parlama']],
   data:['setData',['💾','Save data','Kayıt verisi'],['Save code, backup, delete','Kayıt kodu, yedek, silme']]};
@@ -8517,6 +8592,7 @@ $('sMode').onclick=()=>{
 };
 $('sSpeed').onclick=()=>{S.speed=S.speed===1?4:S.speed===4?12:1;syncSet();};
 /* KVKK: say what is kept, and let anyone erase it without asking a human */
+$('sMusic').onclick=()=>{S.music=(S.music===false);if(S.music!==false&&playing)try{musicStart();musicSwitch(musicPick());}catch(e){}syncSet();save();};
 const UISCALES=[0.85,1,1.15,1.3,1.5];
 function uiScale(){const v=+S.uiScale;return UISCALES.indexOf(v)>=0?v:1;}
 function applyUiScale(){document.documentElement.style.setProperty('--uis',uiScale());}
@@ -8525,7 +8601,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.58.0';
+const GAME_VERSION='0.59.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -8869,7 +8945,7 @@ function startFlow(){
   S.guest=true;save();beginPlay();            // the game lives on this device and nowhere else
 }
 function beginPlay(){
-  if(playing)return;playing=true;audioInit();sfx.goal();stopWave();
+  if(playing)return;playing=true;audioInit();sfx.goal();stopWave();try{musicStart();}catch(e){}
   sessionStart=Date.now();trackSessionStart();newsCheck();
   if((S.tutDone||S.day>=3||S.soldCells>=20)&&S.cardHour===null&&S.cardHour2===null&&!S.cardSoon){
     S.cardSoon=1;setTimeout(()=>{if(playing&&!cardOpen&&isActive())openCard();},45000);   // first card ~45 s in
