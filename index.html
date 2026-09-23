@@ -418,7 +418,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.54.0</div>
+  <div class="t-ver" id="tVer">v0.55.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -617,7 +617,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.54.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.55.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5274,7 +5274,7 @@ function has(k){return cozy()?!!COZY_ON[k]:lvl()>=(UNLOCK[k]||0);}
 function cozyGuard(){                       // cozy never leaves a decision hanging
   if(!cozy())return;
   S.crew=S.crew||{};S.crew.auto=true;        // helpers sell at today's average, always
-  for(const p of S.plants){p.broken=false;p.fire=0;p.snow=0;p.gate='open';}
+  for(const p of S.plants){p.broken=false;p.hv=false;p.fire=0;p.snow=0;p.gate='open';}
 }
 function perk(kind){
   let v=kind==='carry'?0:1;
@@ -5402,19 +5402,29 @@ function lossLastHour(){const lim=gameNow()-HOUR;while(lossLog.length&&lossLog[0
 function repairCost(p){const pd=pad(p.id),base=pd&&pd.cost?pd.cost:100;
   const raw=base*0.01*modMult('fixCost');
   const cap=Math.max(20,dayIncome()*0.15*modMult('fixCost'));   // never more than ~15% of a day's income
-  return Math.max(1,Math.round(Math.min(raw,cap)));}
+  return Math.max(1,Math.round(Math.min(raw,cap)*(p&&p.hv?2.6:1)));}   // a wreck costs more than a fault
 function repairSlow(){return modMult('fixCost')>0.9&&false;}
 function doRepair(p,whoPays){
   const c=repairCost(p),poor=S.cash<c;
   if(!poor)S.cash=Math.max(0,S.cash-c);
   const idle=gameNow()-(p.brokenAt||gameNow());
   if(p.ages)p.ages=p.ages.map(v=>v+idle);
-  p.broken=false;p.fix=0;sfx.fix();
+  p.broken=false;p.hv=false;p.fix=0;sfx.fix();
   floatTxt(p.x,p.y,poor?L('Patched','Geçici onarım'):`-₵${fmt(c)}`,poor?'lost':'');
   S.stats.fixSpend=(S.stats.fixSpend||0)+(poor?0:c);
   return poor;
 }
-function fixTime(p,base){return base*(S.cash<repairCost(p)?2:1);}
+function heavy(p){return !!p.hv;}
+function fixTime(p,base){return base*(S.cash<repairCost(p)?2:1)*(heavy(p)?1.8:1);}
+/* One entry point for every way a plant can be hurt, so light and heavy always
+   mean the same thing wherever the damage came from. */
+function damagePlant(p,heavyChance){
+  if(!p||p.broken)return false;
+  p.broken=true;p.brokenAt=gameNow();
+  p.hv=Math.random()<(heavyChance||0);
+  p.fix=0;
+  return true;
+}
 /* snow: cover builds up on snowy days, panels lose output until they are cleared */
 function snowing(){return DAY.weather==='snowy';}
 /* fire: starts from lightning or worn-out gear, spreads if nobody puts it out */
@@ -5437,6 +5447,7 @@ function startBatFire(why){
 }
 function fireOut(p){
   p.fire=0;p.fireT=0;p.fireC=0;p.spread=0;p.broken=true;p.brokenAt=gameNow();
+  if(p.hv===undefined||p.hv===false)p.hv=Math.random()<0.5;      // half of the fires leave a wreck
   sfx.fix();floatTxt(p.x,p.y,L('Fire out','Yangın söndü'));
   toast(L(`${codeOf(p.id)} is out. It needs a repair now.`,`${codeOf(p.id)} söndürüldü. Şimdi onarım gerekiyor.`),'good');
   trackOnce('fire-out');
@@ -5691,7 +5702,7 @@ function update(dt){
         if(p.gacc>=1){p.gacc-=1;gridDeliver(p);continue;}}
       if(p.pile<T.max)pileAdd(p);else logLoss(1);}
     p.spin=(p.spin||0)+gdt*(0.6+cf*6);
-    if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){p.broken=true;p.brokenAt=gameNow();const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
+    if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){damagePlant(p,DAY.weather==='stormy'?0.35:0.12);const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
   tickWet(gdt);setRiverFlow();            // the catchment fills and drains, and the river shows it
   if(cozy()&&(cozyT=(cozyT||0)+dt)>2){cozyT=0;cozyGuard();}
@@ -5801,6 +5812,7 @@ function update(dt){
   }
   syncHelpers();
   helpers.forEach((hp,i)=>updateHelper(hp,i,dt));
+  try{tornadoTick(gdt);}catch(e){}
   for(const f of flyers)f.life+=dt*3;
   for(let i=flyers.length-1;i>=0;i--)if(flyers[i].life>=1)flyers.splice(i,1);
   for(const f of floats){f.life-=dt*0.9;f.rise+=dt*1.6;}
@@ -6626,6 +6638,84 @@ function plantObj(p){
   const pile=new THREE.Group();pile.position.set(p.type==='dam'?6.2:p.type==='solarfarm'?4:p.type==='river'?5.2:1.8,0.16,p.type==='dam'?3.4:p.type==='river'?2.6:1.2);root.add(pile);
   root.userData={model:g,pile,cells:[]};scene.add(root);plantObjs[p.id]=root;return root;
 }
+
+/* ======================= DAMAGE LOOKS AND THE FUNNEL =======================
+   Light damage keeps the old wrench. Heavy damage has to read at a glance from
+   across the map: a turbine buckles at the waist, a panel field cracks black,
+   and anything with machinery inside smokes. */
+const smokePool=[];let smokeUsed=0;
+function makeSmoke(){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.5,8,6),
+    new THREE.MeshToonMaterial({color:0x9AA3AD,gradientMap:grad,transparent:true,opacity:0.5,depthWrite:false}));
+  m.castShadow=false;m.receiveShadow=false;m.visible=false;scene.add(m);return m;
+}
+function smokeAt(wx,wz,baseY,now,seed){
+  for(let i=0;i<4;i++){
+    let o=smokePool[smokeUsed];
+    if(!o){o=makeSmoke();smokePool.push(o);}
+    smokeUsed++;
+    const k=((now/1600)+i*0.25+seed*0.17)%1;
+    o.visible=true;
+    o.position.set(wx+Math.sin((k+seed)*6.1)*0.6, baseY+k*3.4, wz+Math.cos((k+seed)*5.3)*0.6);
+    o.scale.setScalar(0.3+k*1.0);
+    o.material.opacity=0.5*(1-k);
+  }
+}
+function smokeReset(){for(let i=smokeUsed;i<smokePool.length;i++)smokePool[i].visible=false;smokeUsed=0;}
+function heavyLook(o,p,T,now){
+  const hv=!!(p.broken&&p.hv),m=o.userData.model;
+  if(T.kind==='wind'){m.rotation.z=hv?0.34:0;m.rotation.x=hv?0.07:0;m.position.y=hv?-0.25:0;}
+  else if(T.kind==='sun'||T.kind==='solar'||p.type==='solar'||p.type==='solarfarm'){
+    if(hv&&!o.userData.crk){
+      const g=new THREE.Group(),rows=p.type==='solarfarm'?3:2,cols=p.type==='solarfarm'?5:2;
+      for(let i=0;i<rows*cols*2;i++){
+        const x=((i%cols)-(cols-1)/2)*1.25+(Math.random()-0.5)*0.5,
+              z=(Math.floor(i/cols)%rows-(rows-1)/2)*1.25+(Math.random()-0.5)*0.5;
+        const q=new THREE.Mesh(new THREE.BoxGeometry(0.85,0.02,0.07),
+          new THREE.MeshBasicMaterial({color:0x101319}));
+        q.position.set(x,0.70,z);q.rotation.set(-0.45,Math.random()*3.1,0);g.add(q);
+      }
+      m.add(g);o.userData.crk=g;
+    }
+    if(o.userData.crk)o.userData.crk.visible=hv;
+  }
+  if(hv&&(T.kind==='hydro'||T.kind==='dam')){const[X,Z]=W3(p.x,p.y);smokeAt(X,Z,1.4,now,p.x*0.01);}
+}
+/* the funnel: it always crosses the map after the storm card, but it only bites
+   if the player chose to keep the turbines spinning. */
+const twGroup=new THREE.Group();twGroup.visible=false;scene.add(twGroup);
+for(let i=0;i<8;i++){
+  const r=0.45+i*0.52;
+  const c=new THREE.Mesh(new THREE.CylinderGeometry(r*0.78,r,1.25,12,1,true),
+    new THREE.MeshToonMaterial({color:0x8E99A6,gradientMap:grad,transparent:true,opacity:0.60,
+      side:THREE.DoubleSide,depthWrite:false}));
+  c.position.y=0.65+i*1.18;c.castShadow=false;twGroup.add(c);
+}
+function spawnTornado(bites){
+  const wp=(typeof windPlants==='function'?windPlants():S.plants.filter(p=>PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='wind'));
+  if(!wp.length)return;
+  const a=wp[Math.floor(Math.random()*wp.length)],d=Math.random()<0.5?1:-1;
+  S.tw={x0:a.x-d*560,y0:a.y+110,x1:a.x+d*560,y1:a.y-110,x:a.x-d*560,y:a.y+110,t:0,dur:26,hit:!!bites};
+  toast(L('🌪️ A funnel is crossing the field.','🌪️ Sahadan bir hortum geçiyor.'),'big');
+  try{trackOnce('tornado');}catch(e){}
+}
+function tornadoTick(dt){
+  const w=S.tw;if(!w)return;
+  w.t+=dt;const k=Math.min(1,w.t/(w.dur||26));
+  w.x=w.x0+(w.x1-w.x0)*k;w.y=w.y0+(w.y1-w.y0)*k;
+  if(w.hit){
+    for(const p of S.plants){
+      if(!PLANT_TYPES[p.type]||p.broken||p.fire)continue;
+      if(Math.hypot(p.x-w.x,p.y-w.y)<72&&damagePlant(p,0.55)){
+        sfx.warn();
+        toast(p.hv
+          ? L(`🌪️ The funnel wrecked ${codeOf(p.id)}.`,`🌪️ Hortum ${codeOf(p.id)} santralini hurdaya çevirdi.`)
+          : L(`🌪️ The funnel damaged ${codeOf(p.id)}.`,`🌪️ Hortum ${codeOf(p.id)} santraline zarar verdi.`),'big');
+      }
+    }
+  }
+  if(k>=1)S.tw=null;
+}
 function setPile(o,n,p){
   const ud=o.userData,show=Math.min(n,24);
   while(ud.cells.length<show){const i=ud.cells.length;const c=makeCell();c.position.set((i%2)*0.55,Math.floor(i/2)*CELL_STEP,0);ud.pile.add(c);ud.cells.push(c);}
@@ -6732,7 +6822,7 @@ function updateBolts(dt,cx,cz){
     const wp=S.plants.filter(q=>PLANT_TYPES[q.type]&&PLANT_TYPES[q.type].kind==='wind'&&!q.broken);
     if(wp.length&&Math.random()<0.25*modMult('breakage')){const q=wp[Math.floor(Math.random()*wp.length)];
       if(Math.random()<0.45)startFire(q,L('lightning','yıldırım'));
-      else{q.broken=true;q.brokenAt=gameNow();sfx.warn();toast(L(`⚡ Lightning hit ${codeOf(q.id)}. It needs a repair.`,`⚡ Yıldırım ${codeOf(q.id)} türbinine düştü. Onarım gerekiyor.`),'big');}}
+      else{damagePlant(q,0.5);sfx.warn();toast(L(`⚡ Lightning hit ${codeOf(q.id)}. It needs a repair.`,`⚡ Yıldırım ${codeOf(q.id)} türbinine düştü. Onarım gerekiyor.`),'big');}}
     if(built('bat')&&!S.batFire&&Math.random()<0.06*modMult('breakage'))startBatFire(L('lightning','yıldırım'));
   }
   if(sunSwing>0){sunSwing-=dt;if(sunSwing<=0&&sunHome)sun.position.copy(sunHome);}
@@ -6766,7 +6856,7 @@ function nightK(t){if(t>=7.5&&t<=18)return 0;if(t>=20.5||t<=5)return 1;if(t<7.5)
 let camPos=new THREE.Vector3(),camInit=false,shadowZoom=0;
 function render(dt,now){
   frameNo++;
-  cellPool.forEach(o=>o.visible=false);coinPool.forEach(o=>o.visible=false);
+  cellPool.forEach(o=>o.visible=false);coinPool.forEach(o=>o.visible=false);smokeUsed=0;
   const t=hourNow(),nk=nightK(t);
   // camera
   const asp=innerWidth/innerHeight;camera.aspect=asp;
@@ -6805,9 +6895,10 @@ function render(dt,now){
     if(!playing||tutOpen){if(!p.broken)p.spin=(p.spin||0)+dt*(1.6+(DAY?windCF(t)*4:2));}
     if(o.userData.model.userData.rotor)o.userData.model.userData.rotor.rotation.z=-(p.spin||0)*(p.broken?0:1);
     const pp=pops[p.id]||0;o.scale.setScalar(1+Math.sin(pp*Math.PI)*0.35);
+    try{heavyLook(o,p,T,now);}catch(e){}
     setPile(o,p.pile,p);
     if(p.pile>0)place('pile'+p.id,'cnt'+(p.pile>=T.max?' full':''),p.x+(p.type==='dam'?110:p.type==='solarfarm'?80:p.type==='river'?92:36),p.y+24,Math.min(p.pile,24)/2*CELL_STEP+0.9,p.pile>=T.max?L('FULL','DOLU'):String(p.pile));
-    if(p.broken)place('br'+p.id,'wrench',p.x,p.y,T.kind==='wind'?7*T.scale:2.4,p.fix>0?`🔧 ${Math.round(p.fix*100)}%`:'🔧');
+    if(p.broken)place('br'+p.id,'wrench'+(heavy(p)?' fire':''),p.x,p.y,T.kind==='wind'?7*T.scale:2.4,p.fix>0?`${heavy(p)?'🛠️':'🔧'} ${Math.round(p.fix*100)}%`:(heavy(p)?'🛠️':'🔧'));
     if(has('codes')){const eff=plantEff(p),old=eff<1;
      place('cd'+p.id,'code'+(old?' worn':''),p.x-(p.type==='solarfarm'?70:30),p.y+22,0.9,codeOf(p.id)+(old?` ${Math.round(eff*100)}%`:''));}
     if(T.kind==='hydro'&&TAILRACE[p.id]&&theDam()){const fm=flowMult(p);
@@ -6892,6 +6983,11 @@ function render(dt,now){
     marker.visible=true;const hgt=(tg===S.plants[0])?8:tg===CITY?3:2.6;
     marker.position.set(tg.x*U,hgt+Math.sin(now/200)*0.4,tg.y*U);marker.rotation.y=now/400;
   }else{arrow.visible=false;marker.visible=false;}
+  if(S.batFault&&built('bat')){const D=depotsOn()[0];if(D){const[BX,BZ]=W3(D.x,D.y);smokeAt(BX,BZ,1.2,now,0.7);}}
+  {const w=S.tw;twGroup.visible=!!w;
+   if(w){const[TX,TZ]=W3(w.x,w.y);twGroup.position.set(TX,0,TZ);twGroup.rotation.y=now/200;
+     twGroup.children.forEach((c,i)=>{c.position.x=Math.sin(now/260+i*0.55)*0.22*i;c.rotation.y=now/(140+i*20);});}}
+  smokeReset();
   sweepLabels();
   renderer.render(scene,camera);
   // cleanup float labels
@@ -7128,7 +7224,7 @@ const windPlants=()=>S.plants.filter(p=>PLANT_TYPES[p.type]&&PLANT_TYPES[p.type]
 const solarPlants=()=>S.plants.filter(p=>PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='solar');
 const DI=()=>dayIncome();
 const pay=x=>{S.cash=Math.max(0,S.cash-x);};
-const breakRandom=(list,n)=>{const c=list.filter(p=>!p.broken);for(let i=0;i<n&&c.length;i++){const k=Math.floor(Math.random()*c.length);const p=c.splice(k,1)[0];p.broken=true;p.brokenAt=gameNow();}};
+const breakRandom=(list,n)=>{const c=list.filter(p=>!p.broken);for(let i=0;i<n&&c.length;i++){const k=Math.floor(Math.random()*c.length);damagePlant(c.splice(k,1)[0],0.2);}};
 const newDeal=(n,pr,pen,hours)=>{S.contract={need:n,delivered:0,price:+pr.toFixed(1),penalty:+pen.toFixed(1),until:gameNow()+hours*HOUR};trackOnce('deal-signed');};
 const O=(en,trs,den,dtr,cost,go)=>({t:[en,trs],d:[den,dtr],cost:cost||0,go});
 const NOOP=()=>{};
@@ -7170,7 +7266,7 @@ const CARDS=[
   opts:()=>{const x=Math.round(DI()*0.5);return[O(`Pay a loyalty bonus (₵${fmt(x)})`,`Bağlılık primi ver (₵${fmt(x)})`,'Nothing changes.','Değişiklik yok.',x,()=>pay(x)),O('Ignore it','Önemseme','Helpers 25% slower for 3 days.','Yardımcılar 3 gün %25 yavaş.',0,()=>addMod('helperSpeed',0.75,72))];},safe:1},
  // ---- nature ----
  {id:'storm',icon:'🌪️',ok:()=>windPlants().length>0,title:['Storm warning','Fırtına uyarısı'],text:['Gusts may damage turbines in the next hours.','Önümüzdeki saatlerde rüzgâr türbinlere zarar verebilir.'],
-  opts:()=>[O('Stop the turbines','Türbinleri durdur','No wind power for 4 hours. No damage.','4 saat rüzgâr üretimi yok, hasar yok.',0,()=>addMod('windOff',1,4)),O('Keep them spinning','Çalışmaya devam','Turbines break 8× more often for 4 hours.','Türbinler 4 saat 8 kat sık bozulur.',0,()=>addMod('windBreak',8,4))],safe:0},
+  opts:()=>[O('Stop the turbines','Türbinleri durdur','The funnel passes over a stopped field. No damage.','Hortum duran sahanın üstünden geçer. Hasar yok.',0,()=>{addMod('windOff',1,4);spawnTornado(false);}),O('Keep them spinning','Çalışmaya devam','The funnel crosses the field with the blades turning.','Hortum, kanatlar dönerken sahadan geçer.',0,()=>{addMod('windBreak',8,4);spawnTornado(true);})],safe:0},
  {id:'birds',icon:'🦅',ok:()=>windPlants().length>0,title:['Bird migration','Kuş göçü'],text:['A large flock is crossing your wind farm.','Büyük bir kuş sürüsü rüzgâr sahandan geçiyor.'],
   opts:()=>{const x=Math.round(DI()*0.4);return[O('Pause turbines for 6 hours','Türbinleri 6 saat durdur','No wind power for 6 hours.','6 saat rüzgâr üretimi yok.',0,()=>addMod('windOff',1,6)),O(`Keep running, pay the fine (₵${fmt(x)})`,`Çalıştır, cezayı öde (₵${fmt(x)})`,'Output stays, wallet shrinks.','Üretim sürer, cüzdan küçülür.',x,()=>pay(x))];},safe:0},
  {id:'flood',icon:'🌊',ok:()=>S.plants.length>2,title:['Flood risk','Sel riski'],text:['Heavy rain could flood low ground.','Şiddetli yağış alçak alanları basabilir.'],
@@ -7261,7 +7357,7 @@ const CARDS=[
  {id:'theft',icon:'🔦',ok:()=>built('bat')&&batTotal()>=4,title:['Cable thieves nearby','Yakında kablo hırsızları'],text:['Police warn of thefts around battery sites.','Polis batarya sahalarındaki hırsızlıklara karşı uyarıyor.'],
   opts:()=>{const x=Math.round(DI()*0.3);return[O(`Hire a guard (₵${fmt(x)})`,`Bekçi tut (₵${fmt(x)})`,'You are safe.','Güvendesin.',x,()=>pay(x)),O('Take the chance','Şansını dene','A 60% chance to lose half the battery.','%60 ihtimalle bataryanın yarısını kaybedersin.',0,()=>{if(Math.random()<0.6){batDrain(Math.floor(batTotal()/2));toast(L('Thieves drained your battery.','Hırsızlar bataryanı boşalttı.'),'big');}})];},safe:0},
  {id:'spares',icon:'🧰',ok:()=>S.plants.some(p=>p.broken),title:['Repair crew available','Tamir ekibi müsait'],text:['A mobile crew can fix every broken plant now.','Seyyar bir ekip bozuk tüm santralleri hemen onarabilir.'],
-  opts:()=>{const x=Math.round(DI()*0.4);return[O(`Fix everything (₵${fmt(x)})`,`Hepsini onar (₵${fmt(x)})`,'All plants back online.','Tüm santraller çalışır.',x,()=>{pay(x);S.plants.forEach(p=>{if(p.broken){const idle=gameNow()-(p.brokenAt||gameNow());if(p.ages)p.ages=p.ages.map(v=>v+idle);p.broken=false;p.fix=0;}});}),O('I will fix them myself','Kendim onarırım','Nothing changes.','Değişiklik yok.',0,NOOP)];},safe:1},
+  opts:()=>{const x=Math.round(DI()*0.4);return[O(`Fix everything (₵${fmt(x)})`,`Hepsini onar (₵${fmt(x)})`,'All plants back online.','Tüm santraller çalışır.',x,()=>{pay(x);S.plants.forEach(p=>{if(p.broken){const idle=gameNow()-(p.brokenAt||gameNow());if(p.ages)p.ages=p.ages.map(v=>v+idle);p.broken=false;p.hv=false;p.fix=0;}});}),O('I will fix them myself','Kendim onarırım','Nothing changes.','Değişiklik yok.',0,NOOP)];},safe:1},
  // ---- public ----
  {id:'permit',icon:'📜',ok:()=>S.day>=6,title:['New permit rule','Yeni izin kuralı'],text:['A new rule needs extra paperwork.','Yeni bir kural ek evrak istiyor.'],
   opts:()=>{const x=Math.round(DI()*0.35);return[O(`Pay the consultant (₵${fmt(x)})`,`Danışmana öde (₵${fmt(x)})`,'All clear.','Sorun çıkmaz.',x,()=>pay(x)),O('Do it slowly','Yavaşça hallet','Sales −5% for 5 days.','Satışlar 5 gün −%5.',0,()=>addMod('income',0.95,120))];},safe:1},
@@ -7706,6 +7802,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.55.0',t:['A funnel you can watch, and damage you can see','\u0130zleyebilece\u011fin bir hortum, g\u00f6rebilece\u011fin hasar'],l:[
+  ['The storm card no longer just changes a number. A funnel now crosses the field in front of you \u2014 whichever option you picked. Stop the turbines and it passes harmlessly; keep them spinning and it takes whatever it touches.','F\u0131rt\u0131na kart\u0131 art\u0131k sadece bir say\u0131y\u0131 de\u011fi\u015ftirmiyor. G\u00f6z\u00fcn\u00fcn \u00f6n\u00fcnde sahadan bir hortum ge\u00e7iyor \u2014 hangi se\u00e7ene\u011fi se\u00e7ersen se\u00e7. T\u00fcrbinleri durdurursan zarars\u0131z ge\u00e7er; d\u00f6nd\u00fcrmeye devam edersen dokundu\u011funu al\u0131r.'],
+  ['Damage now has two levels. Light damage is the wrench you know. Heavy damage buckles a turbine at the waist, cracks a panel field black, and sets hydro, dams and a faulted battery smoking \u2014 and it costs 2.6\u00d7 as much and takes almost twice as long to put right.','Hasar art\u0131k iki kademeli. Hafif hasar bildi\u011fin anahtar i\u015fareti. A\u011f\u0131r hasarda t\u00fcrbinin beli b\u00fck\u00fcl\u00fcyor, panel sahas\u0131 simsiyah \u00e7atl\u0131yor, hidro, baraj ve ar\u0131zal\u0131 batarya duman t\u00fct\u00fcyor \u2014 \u00fcstelik 2,6 kat pahal\u0131ya ve neredeyse iki kat uzun s\u00fcrede onar\u0131l\u0131yor.'],
+  ['Lightning wrecks half of what it hits, storms a third, ordinary wear one in eight. Fires leave a wreck half the time.','Y\u0131ld\u0131r\u0131m vurdu\u011funun yar\u0131s\u0131n\u0131, f\u0131rt\u0131na \u00fc\u00e7te birini, s\u0131radan y\u0131pranma sekizde birini hurdaya \u00e7eviriyor. Yang\u0131nlar\u0131n yar\u0131s\u0131 arkas\u0131nda enkaz b\u0131rak\u0131yor.']]},
  {v:'0.54.0',t:['Nobody waits beside a burning turbine any more','Art\u0131k kimse yanan t\u00fcrbinin ba\u015f\u0131nda beklemiyor'],l:[
   ['A helper pinned to one field stood there for ever when that field caught fire \u2014 it was waiting for output from a plant that was on fire. They now fall back to HQ and say why.','Tek bir sahaya ba\u011flanm\u0131\u015f yard\u0131mc\u0131, o saha yan\u0131nca orada sonsuza kadar bekliyordu \u2014 yanan bir santralden \u00fcretim bekliyordu. Art\u0131k merkeze \u00e7ekiliyor ve sebebini yaz\u0131yor.'],
   ['Fix helpers now service grid lines as well, before they start repowering. Lines also wear about a third as fast, so servicing is an event and not a chore.','Tamir yard\u0131mc\u0131lar\u0131 art\u0131k \u015febeke hatlar\u0131n\u0131n bak\u0131m\u0131n\u0131 da yap\u0131yor, yenilemeye ba\u015flamadan \u00f6nce. Hatlar da yakla\u015f\u0131k \u00fc\u00e7te bir h\u0131zla y\u0131pran\u0131yor, b\u00f6ylece bak\u0131m bir olay oluyor, angarya de\u011fil.'],
@@ -8305,7 +8405,7 @@ function offline(secs){
   }
   if((S.crew.roles||[]).some(r=>r==='fix')){
     const brk=S.plants.filter(p=>p.broken&&PLANT_TYPES[p.type]);
-    if(brk.length){let spend=0;brk.forEach(p=>{const c=repairCost(p);if(S.cash>=c){S.cash-=c;spend+=c;}const idle=gameNow()-(p.brokenAt||gameNow());if(p.ages)p.ages=p.ages.map(v=>v+idle);p.broken=false;});S.stats.fixSpend=(S.stats.fixSpend||0)+spend;
+    if(brk.length){let spend=0;brk.forEach(p=>{const c=repairCost(p);if(S.cash>=c){S.cash-=c;spend+=c;}const idle=gameNow()-(p.brokenAt||gameNow());if(p.ages)p.ages=p.ages.map(v=>v+idle);p.broken=false;p.hv=false;});S.stats.fixSpend=(S.stats.fixSpend||0)+spend;
       lines.push(`🔧 ${L(`Your crew repaired ${brk.length} plant${brk.length>1?'s':''} for ₵${fmt(spend)}.`,`Ekibin ${brk.length} santrali ₵${fmt(spend)} karşılığında onardı.`)}`);}
   }
   if(S.contract&&gameNow()>=S.contract.until){const c=S.contract,miss=c.need-c.delivered,fine=Math.round(miss*c.penalty);S.cash=Math.max(0,S.cash-fine);lines.push(`🤝 ${L(`Deal missed by ${miss} cells. Imbalance charge ₵${fmt(fine)}.`,`Anlaşma ${miss} hücre eksik kaldı. Dengesizlik bedeli ₵${fmt(fine)}.`)}`);S.contract=null;}
@@ -8386,7 +8486,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.54.0';
+const GAME_VERSION='0.55.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
