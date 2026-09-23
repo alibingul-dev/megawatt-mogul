@@ -149,6 +149,8 @@ html,body{height:100%;overflow:hidden;background:#3B7A4A;font-family:var(--body)
 #labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .lb{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;will-change:transform;text-align:center}
 .tag{font-family:var(--disp);font-size:14px;color:#fff;background:rgba(29,36,51,.88);border-radius:9px;padding:1px 8px 2px;box-shadow:0 2px 0 rgba(0,0,0,.25);font-weight:400}
+.hlp{font-family:var(--body);font-size:10.5px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75);white-space:nowrap;letter-spacing:.2px}
+body.far .hlp{display:none}
 .tag.bad{background:#E8364F;color:#fff}
 .tag.ok{background:#1D2433}.tag.no{background:rgba(29,36,51,.55)}
 .tag.peak{background:var(--peak)}.tag.cheap{background:var(--cheap)}.tag.norm{background:#5C6B84}
@@ -420,7 +422,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.59.1</div>
+  <div class="t-ver" id="tVer">v0.60.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -620,7 +622,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.59.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.60.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5602,6 +5604,29 @@ function hh(t){const h=Math.floor(t)%24,m=Math.floor((t%1)*6)*10;return String(h
 function dur(s){s=Math.floor(s);if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h '+Math.floor(s%3600/60)+'m';}
 function regionAt(y){return REGIONS.find(r=>y>=r.y0&&y<r.y1);}
 function regionLocked(y){const r=regionAt(y);return r&&!S.regions[r.id];}
+/* one plain line under every pad, for anyone who does not know what the icon means */
+function padHelp(p){
+  if(p.kind==='gate')return L('Opens a new area','Yeni bir bölge açar');
+  if(p.kind==='upg')switch(p.key){
+    case 'bag':    return L('Carry more at once','Tek seferde daha çok taşı');
+    case 'boots':  return L('Walk faster','Daha hızlı yürü');
+    case 'helper': return L('Hires someone to haul and sell','Taşıyıp satacak birini işe alır');
+    case 'batcap': return L('The battery holds more','Batarya daha çok tutar');
+    case 'bateff': return L('Stored energy sells for more','Depolanan enerji daha pahalıya satılır');
+    case 'grid':   return L('The battery sells by itself at the peak','Batarya zirvede kendi başına satar');
+    default: return '';
+  }
+  if(p.kind==='build')switch(p.type){
+    case 'turbine': case 'bigwind':   return L('Makes power from wind','Rüzgârdan elektrik üretir');
+    case 'solar':   case 'solarfarm': return L('Makes power from sunlight','Güneşten elektrik üretir');
+    case 'river':   return L('Makes power from the river, day and night','Nehirden elektrik üretir, gece gündüz');
+    case 'dam':     return L('Stores water, produces when you choose','Suyu biriktirir, sen seçtiğinde üretir');
+    case 'battery': return L('Store now, sell at the peak','Şimdi depola, zirvede sat');
+    case 'town':    return L('A second place to sell','İkinci bir satış noktası');
+    default: return '';
+  }
+  return '';
+}
 function padVisible(p){
   if(p.kind==='upg'&&(p.key==='bag'||p.key==='boots')&&!has('upgrades'))return false;
   if(p.kind==='upg'&&p.key==='helper'&&!has('crew'))return false;
@@ -6942,6 +6967,7 @@ function render(dt,now){
     if(p.key==='helper')name=`${L('Hire helper','Yardımcı al')} ${S.up.helper+1}/45`;
     place('pn'+p.id,'nm',p.x,p.y,0.1,name,p.kind==='gate'?-44:-40);
     place('pc'+p.id,'tag '+(done?'ok':S.cash>=left?'ok':'no'),p.x,p.y,0.1,done?L('MAX','MAKS'):'₵'+fmt(left),p.kind==='gate'?34:34);
+    {const h=padHelp(p);if(h)place('ph'+p.id,'hlp',p.x,p.y,0.1,h,p.kind==='gate'?56:56);}
   }
   // battery
   {const each=batCapEach();
@@ -7832,6 +7858,8 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.60.0',t:['Every pad says what it is for','Her alan ne i\u015fe yarad\u0131\u011f\u0131n\u0131 yaz\u0131yor'],l:[
+  ['Under the price on every build and upgrade pad there is now one plain line saying what it does \u2014 carry more, walk faster, makes power from wind, store now and sell at the peak, opens a new area. Nobody has to work out what an icon means.','Her in\u015faat ve y\u00fckseltme alan\u0131n\u0131n fiyat\u0131n\u0131n alt\u0131nda art\u0131k ne i\u015fe yarad\u0131\u011f\u0131n\u0131 s\u00f6yleyen tek bir sat\u0131r var \u2014 daha \u00e7ok ta\u015f\u0131, daha h\u0131zl\u0131 y\u00fcr\u00fc, r\u00fczg\u00e2rdan elektrik \u00fcretir, \u015fimdi depola zirvede sat, yeni b\u00f6lge a\u00e7ar. Kimse simgenin anlam\u0131n\u0131 \u00e7\u00f6zmek zorunda de\u011fil.']]},
  {v:'0.59.1',t:['The field has a soundtrack','Sahan\u0131n art\u0131k m\u00fczi\u011fi var'],l:[
   ['Three instrumental tracks, and the game picks the one that fits: Baseload on an ordinary day, Peak Hour through the evening peak, Curtailment when something is on fire, broken, storming or being crossed by a funnel. They cross-fade, they never cut.','\u00dc\u00e7 s\u00f6zs\u00fcz par\u00e7a var ve oyun duruma uyan\u0131 se\u00e7iyor: s\u0131radan g\u00fcnde Baseload, ak\u015fam zirvesinde Peak Hour, bir \u015fey yan\u0131yor, bozuluyor, f\u0131rt\u0131na var ya da hortum ge\u00e7iyorsa Curtailment. Birbirine s\u00f6n\u00fcmlenerek ge\u00e7iyorlar, asla kesilmiyorlar.'],
   ['The music is downloaded only when it first plays, so the game still opens as fast as before, and Settings \u203a Display has its own Music switch separate from Sound.','M\u00fczik ilk \u00e7ald\u0131\u011f\u0131nda indiriliyor, yani oyun eskisi kadar h\u0131zl\u0131 a\u00e7\u0131l\u0131yor; Ayarlar \u203a G\u00f6r\u00fcnt\u00fc alt\u0131nda Ses\u2019ten ayr\u0131 bir M\u00fczik anahtar\u0131 var.'],
@@ -8601,7 +8629,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.59.1';
+const GAME_VERSION='0.60.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
