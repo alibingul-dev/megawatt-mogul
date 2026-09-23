@@ -232,6 +232,9 @@ body.title #mini{visibility:hidden}
 .copts .nomoney{display:block;font-size:11.5px;font-weight:800;color:var(--peak);margin-top:4px}
 .offlog{list-style:none;text-align:left;margin:8px 0;padding:0;max-height:30vh;overflow:auto}
 .offlog li{font-size:13px;padding:6px 8px;border-radius:10px;background:#F4F6FA;color:#1D2433;margin-bottom:5px}
+#fxCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:22;pointer-events:none}
+#fxCanvas[hidden]{display:none}
+#fxCanvas.tap{pointer-events:auto}
 #tutDim{position:fixed;inset:0;background:rgba(9,17,30,.42);z-index:24;pointer-events:none;transition:opacity .25s;opacity:1}
 #tutDim[hidden]{display:none}
 @keyframes tutpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
@@ -426,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.62.0</div>
+  <div class="t-ver" id="tVer">v0.63.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -465,6 +468,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 <canvas id="mini" width="90" height="128" aria-label="Mini map. Tap to enlarge."></canvas>
 <div class="modal" id="mMap"><canvas id="bigmap" aria-label="Map"></canvas></div>
 <div id="flashOv"></div>
+<canvas id="fxCanvas" hidden></canvas>
 <div id="toasts" aria-live="polite"></div>
 <div class="help" id="help" data-i18n="dragWalk">Drag anywhere to walk</div>
 
@@ -622,6 +626,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="pri setback">‹ Back</button>
   </div>
   <div class="btns setsec" id="setDisp" hidden>
+    <button id="sFx">Event scenes: on</button>
     <button id="sShadow">Shadows: on</button>
     <button id="sFlash">Flashes: on</button>
     <button id="sUI">Panel size: 100%</button>
@@ -634,7 +639,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.62.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.63.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5365,7 +5370,7 @@ function fresh(){
     crew:{auto:true,min:10,roles:[],plan:['auto','auto','auto','auto'],sites:[],mkts:[],staff:[],fixEff:0.7,tab:'all'},
     satT:{},snow:0,bat:{},batFire:0,batFireT:0,batCycles:0,batCharge:0,batFault:false,gridWear:0,gridSold:0,morale:null,mods:[],contract:null,event:null,nextEvent:null,cardHour:null,cardHour2:null,cardSoon:0,cardDay:-1,dayEarned:0,lastDayEarned:0,
     lang:'en',lvl:1,tutDone:false,tipsSeen:{},seenVer:'',claimed:{},badges:[],earnLog:[],group:[],nick:'',ref:'',guest:false,syncBase:0,dev:'',ledger:[],cardPrefs:{},cardHist:[],dayLog:[],debt:0,
-    progs:[],prog:null,progStep:{},progDone:{},vSfx:60,vMus:42,anc:{},ancNext:null,ancBat:0,ancMiss:0,
+    progs:[],prog:null,progStep:{},progDone:{},vSfx:60,vMus:42,anc:{},ancNext:null,ancBat:0,ancMiss:0,fxOff:false,
     stats:{stored:0,peakCells:0,planned:0,crewCells:0,crewRev:0,byMkt:{},fixSpend:0},hints:{},muted:false,shadows:true,lowFlash:false,speed:1,lastSave:Date.now()};
 }
 const built=id=>!!S.built[id];
@@ -5867,6 +5872,7 @@ function update(dt){
   helpers.forEach((hp,i)=>updateHelper(hp,i,dt));
   try{tornadoTick(gdt);}catch(e){}
   try{musicTick(dt);}catch(e){}
+  try{fxTick(dt);}catch(e){}
   for(const f of flyers)f.life+=dt*3;
   for(let i=flyers.length-1;i>=0;i--)if(flyers[i].life>=1)flyers.splice(i,1);
   for(const f of floats){f.life-=dt*0.9;f.rise+=dt*1.6;}
@@ -7328,13 +7334,13 @@ const CARDS=[
  {id:'storm',icon:'🌪️',ok:()=>windPlants().length>0,title:['Storm warning','Fırtına uyarısı'],text:['Gusts may damage turbines in the next hours.','Önümüzdeki saatlerde rüzgâr türbinlere zarar verebilir.'],
   opts:()=>[O('Stop the turbines','Türbinleri durdur','The funnel passes over a stopped field. No damage.','Hortum duran sahanın üstünden geçer. Hasar yok.',0,()=>{addMod('windOff',1,4);spawnTornado(false);}),O('Keep them spinning','Çalışmaya devam','The funnel crosses the field with the blades turning.','Hortum, kanatlar dönerken sahadan geçer.',0,()=>{addMod('windBreak',8,4);spawnTornado(true);})],safe:0},
  {id:'birds',icon:'🦅',ok:()=>windPlants().length>0,title:['Bird migration','Kuş göçü'],text:['A large flock is crossing your wind farm.','Büyük bir kuş sürüsü rüzgâr sahandan geçiyor.'],
-  opts:()=>{const x=Math.round(DI()*0.4);return[O('Pause turbines for 6 hours','Türbinleri 6 saat durdur','No wind power for 6 hours.','6 saat rüzgâr üretimi yok.',0,()=>addMod('windOff',1,6)),O(`Keep running, pay the fine (₵${fmt(x)})`,`Çalıştır, cezayı öde (₵${fmt(x)})`,'Output stays, wallet shrinks.','Üretim sürer, cüzdan küçülür.',x,()=>pay(x))];},safe:0},
+  opts:()=>{const x=Math.round(DI()*0.4);return[O('Pause turbines for 6 hours','Türbinleri 6 saat durdur','No wind power for 6 hours.','6 saat rüzgâr üretimi yok.',0,()=>{addMod('windOff',1,6);fxSoon('swarm',true);}),O(`Keep running, pay the fine (₵${fmt(x)})`,`Çalıştır, cezayı öde (₵${fmt(x)})`,'Output stays, wallet shrinks.','Üretim sürer, cüzdan küçülür.',x,()=>{pay(x);fxSoon('swarm',false);})];},safe:0},
  {id:'flood',icon:'🌊',ok:()=>S.plants.length>2,title:['Flood risk','Sel riski'],text:['Heavy rain could flood low ground.','Şiddetli yağış alçak alanları basabilir.'],
-  opts:()=>{const x=Math.round(DI()*0.5);return[O(`Build sandbags (₵${fmt(x)})`,`Kum torbası diz (₵${fmt(x)})`,'You are safe.','Güvendesin.',x,()=>pay(x)),O('Take the chance','Şansını dene','A 50% chance that 2 plants break.','%50 ihtimalle 2 santral bozulur.',0,()=>{if(Math.random()<0.5)breakRandom(S.plants.filter(p=>PLANT_TYPES[p.type]),2);})];},safe:0},
+  opts:()=>{const x=Math.round(DI()*0.5);return[O(`Build sandbags (₵${fmt(x)})`,`Kum torbası diz (₵${fmt(x)})`,'You are safe.','Güvendesin.',x,()=>{pay(x);fxSoon('wave',true);}),O('Take the chance','Şansını dene','A 50% chance that 2 plants break.','%50 ihtimalle 2 santral bozulur.',0,()=>{const hit=Math.random()<0.5;if(hit)breakRandom(S.plants.filter(p=>PLANT_TYPES[p.type]),2);fxSoon('wave',!hit);})];},safe:0},
  {id:'fog',icon:'🌫️',ok:()=>solarPlants().length>0,title:['Thick fog','Yoğun sis'],text:['Fog will dim your panels for half a day.','Sis yarım gün panellerini karartacak.'],
-  opts:()=>[O('Accept it','Kabul et','Solar −30% for 12 hours.','Güneş 12 saat −%30.',0,()=>addMod('solar',0.7,12)),O('Sell stored power early','Depodakini erken sat','Solar −30% for 12 hours, prices +10% for 3 hours.','Güneş 12 saat −%30, fiyatlar 3 saat +%10.',0,()=>{addMod('solar',0.7,12);addMod('price',1.1,3);})],safe:0},
+  opts:()=>[O('Accept it','Kabul et','Solar −30% for 12 hours.','Güneş 12 saat −%30.',0,()=>{addMod('solar',0.7,12);fxSoon('dust',false);}),O('Sell stored power early','Depodakini erken sat','Solar −30% for 12 hours, prices +10% for 3 hours.','Güneş 12 saat −%30, fiyatlar 3 saat +%10.',0,()=>{addMod('solar',0.7,12);addMod('price',1.1,3);fxSoon('dust',true);})],safe:0},
  {id:'lightning',icon:'⚡',ok:()=>S.plants.length>2,title:['Lightning season','Yıldırım mevsimi'],text:['Installers offer lightning rods for all plants.','Montajcılar tüm santrallere paratoner öneriyor.'],
-  opts:()=>{const x=Math.round(DI()*0.9);return[O(`Install rods (₵${fmt(x)})`,`Paratoner tak (₵${fmt(x)})`,'Breakdowns halved for 7 days.','Arızalar 7 gün yarıya iner.',x,()=>{pay(x);addMod('breakage',0.5,168);}),O('Skip','Geç','Breakdowns +50% for 3 days.','Arızalar 3 gün +%50.',0,()=>addMod('breakage',1.5,72))];},safe:1},
+  opts:()=>{const x=Math.round(DI()*0.9);return[O(`Install rods (₵${fmt(x)})`,`Paratoner tak (₵${fmt(x)})`,'Breakdowns halved for 7 days.','Arızalar 7 gün yarıya iner.',x,()=>{pay(x);addMod('breakage',0.5,168);fxSoon('sparks',true);}),O('Skip','Geç','Breakdowns +50% for 3 days.','Arızalar 3 gün +%50.',0,()=>{addMod('breakage',1.5,72);fxSoon('sparks',false);})];},safe:1},
  {id:'heatprep',icon:'🥵',ok:()=>solarPlants().length>0,title:['Heat is coming','Sıcaklar geliyor'],text:['Hot panels lose efficiency. Cooling is available.','Sıcak paneller verim kaybeder. Soğutma mümkün.'],
   opts:()=>{const x=Math.round(DI()*0.4);return[O(`Add cooling (₵${fmt(x)})`,`Soğutma ekle (₵${fmt(x)})`,'Solar +5% for 5 days.','Güneş 5 gün +%5.',x,()=>{pay(x);addMod('solar',1.05,120);}),O('Skip','Geç','Solar −10% for 2 days.','Güneş 2 gün −%10.',0,()=>addMod('solar',0.9,48))];},safe:1},
  // ---- market ----
@@ -7365,7 +7371,7 @@ const CARDS=[
  {id:'localpaper',icon:'📻',ok:()=>true,title:['The local radio calls','Yerel radyo arıyor'],text:['They want five minutes on where your power goes.','Enerjinin nereye gittiğine dair beş dakika istiyorlar.'],
   opts:()=>[O('Go on air','Yayına çık','Prices +15% for 8 hours.','Fiyatlar 8 saat +%15.',0,()=>addMod('price',1.15,8)),O('Too busy','Meşgulüm','Nothing changes.','Değişiklik yok.',0,NOOP)],safe:0},
  {id:'cabletheft',icon:'🔦',ok:()=>S.plants.length>=2,title:['Cable went missing overnight','Gece kablo çalındı'],text:['Someone cut a run of copper from the yard.','Biri sahadan bakır kabloyu kesip almış.'],
-  opts:()=>{const x=Math.round(DI()*0.35);return[O(`Replace and fence it (₵${fmt(x)})`,`Değiştir ve çevir (₵${fmt(x)})`,'No further trouble.','Başka sorun çıkmaz.',x,()=>pay(x)),O('Patch it up','Geçici onar','Breakdowns +40% for 4 days.','Arızalar 4 gün +%40.',0,()=>addMod('breakage',1.4,96))];},safe:0},
+  opts:()=>{const x=Math.round(DI()*0.35);return[O(`Replace and fence it (₵${fmt(x)})`,`Değiştir ve çevir (₵${fmt(x)})`,'No further trouble.','Başka sorun çıkmaz.',x,()=>{pay(x);fxSoon('thief',true);}),O('Patch it up','Geçici onar','Breakdowns +40% for 4 days.','Arızalar 4 gün +%40.',0,()=>{addMod('breakage',1.4,96);fxSoon('thief',false);})];},safe:0},
  {id:'forecast',icon:'🛰️',ok:()=>true,title:['Better weather data','Daha iyi hava verisi'],text:['A forecaster sells a sharper day-ahead outlook.','Bir tahminci daha keskin gün öncesi tahmin satıyor.'],
   opts:()=>{const x=Math.round(DI()*0.4);return[O(`Subscribe (₵${fmt(x)})`,`Abone ol (₵${fmt(x)})`,'Prices +12% for 3 days — you sell at better hours.','Fiyatlar 3 gün +%12 — daha iyi saatte satarsın.',x,()=>{pay(x);addMod('price',1.12,72);}),O('Read the sky','Gökyüzüne bak','Nothing changes.','Değişiklik yok.',0,NOOP)];},safe:1},
  {id:'inspection',icon:'📋',ok:()=>true,title:['Surprise safety inspection','Habersiz iş güvenliği denetimi'],text:['An inspector is at the gate with a clipboard.','Denetçi kapıda, elinde bir pano.'],
@@ -7899,6 +7905,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.63.0',t:['Events you watch happen','Ya\u015fand\u0131\u011f\u0131n\u0131 g\u00f6rd\u00fc\u011f\u00fcn olaylar'],l:[
+  ['A decision card is no longer just a number afterwards. The screen darkens and the thing plays out: a wave rolls across the field, a thief runs off with the copper, sparks rain down, a flock crosses, a dust cloud sweeps in.','Karar kart\u0131 art\u0131k sonras\u0131nda sadece bir say\u0131 de\u011fil. Ekran karar\u0131yor ve olay ya\u015fan\u0131yor: sahadan bir dalga ge\u00e7iyor, bir h\u0131rs\u0131z bak\u0131r\u0131 al\u0131p ka\u00e7\u0131yor, k\u0131v\u0131lc\u0131m ya\u011f\u0131yor, bir s\u00fcr\u00fc ge\u00e7iyor, toz bulutu geliyor.'],
+  ['What you chose changes what you see. Pay for the sandbags and the wave breaks on the dike; pay for the fence and a guard chases the thief off; fit the rods and a shield holds the sparks.','Ne se\u00e7ti\u011fin ne g\u00f6rd\u00fc\u011f\u00fcn\u00fc de\u011fi\u015ftiriyor. Kum torbas\u0131n\u0131 al\u0131rsan dalga sete \u00e7arp\u0131p k\u0131r\u0131l\u0131yor; \u00e7iti \u00f6dersen h\u0131rs\u0131z\u0131 bir bek\u00e7i kovalar; paratoneri takarsan k\u0131v\u0131lc\u0131mlar\u0131 bir kalkan tutar.'],
+  ['Deliberately rare so it never gets in the way: at most one scene a game day, four real minutes apart, never over a card or the guide, the clock never stops, and a tap skips it. Display \u203a Event scenes turns it off.','Yolunu kesmesin diye bilerek seyrek: oyun g\u00fcn\u00fcnde en fazla bir sahne, aralar\u0131nda d\u00f6rt ger\u00e7ek dakika, kart\u0131n veya rehberin \u00fcst\u00fcne asla \u00e7\u0131kmaz, saat durmaz, dokununca ge\u00e7ilir. G\u00f6r\u00fcnt\u00fc \u203a Olay sahneleri kapat\u0131r.']]},
  {v:'0.62.0',t:['Hold capacity back and get paid for it','Kapasiteyi tut, bedelini al'],l:[
   ['Water plants and the battery can now hold a reserve band of up to 30%. You are paid a flat hourly rate for it whatever the price is doing \u2014 the boring money that carries you through cheap days.','Su santralleri ve batarya art\u0131k %30\u2019a kadar rezerv band\u0131 tutabiliyor. Fiyat ne olursa olsun bunun i\u00e7in sabit saatlik bedel al\u0131yorsun \u2014 ucuz g\u00fcnlerde seni ta\u015f\u0131yan s\u0131k\u0131c\u0131 para.'],
   ['It costs what it costs in real life: hydro gives up that share of its output, and a battery must keep that share full AND that share empty, so its usable tank shrinks by twice the band.','Bedeli ger\u00e7ek hayattaki gibi: hidro \u00fcretiminin o kadar\u0131ndan vazge\u00e7iyor, batarya ise o kadar\u0131n\u0131 dolu VE o kadar\u0131n\u0131 bo\u015f tutmak zorunda, yani kullan\u0131labilir tank\u0131 band\u0131n iki kat\u0131 kadar k\u00fc\u00e7\u00fcl\u00fcyor.'],
@@ -8410,6 +8420,118 @@ $('mMap').addEventListener('pointerdown',()=>$('mMap').classList.remove('on'));
 
 
 
+
+/* ======================= EVENT CINEMATICS =======================
+   A small library of full-screen effects, reused by many cards, so an event
+   is felt and not just read. Two readings of each: the thing hits, or the
+   thing is turned away because the player paid for it. Kept rare on purpose:
+   one a day at most, four real minutes apart, never over a card or the guide,
+   never stopping the clock, always skippable by tapping. */
+const FX_LEN=2.0, FX_GAP=240000;             // seconds, and milliseconds between cinematics
+let fxNow=null,fxLast=0,fxDay=-1;
+function fxAllowed(){
+  if(S.fxOff)return false;
+  if(!playing||fxNow)return false;
+  if(tutOpen||cardOpen)return false;
+  if(document.querySelector('.modal.on'))return false;
+  if(fxDay===S.day)return false;                       // one a day
+  if(Date.now()-fxLast<FX_GAP)return false;
+  return true;
+}
+function playFx(kind,ok){
+  if(!FXLIB[kind]||!fxAllowed())return false;
+  fxNow={kind,ok:!!ok,t:0};fxDay=S.day;fxLast=Date.now();
+  const c=$('fxCanvas');c.hidden=false;c.classList.add('tap');
+  try{trackOnce('fx-'+kind);}catch(e){}
+  return true;
+}
+function fxSoon(kind,ok){setTimeout(()=>{try{playFx(kind,ok);}catch(e){}},700);}
+function fxEnd(){fxNow=null;const c=$('fxCanvas');c.hidden=true;c.classList.remove('tap');}
+$('fxCanvas').addEventListener('pointerdown',e=>{e.stopPropagation();fxEnd();});
+function fxTick(dt){
+  if(!fxNow)return;
+  fxNow.t+=dt;
+  const c=$('fxCanvas'),w=innerWidth,h=innerHeight,dpr=Math.min(2,devicePixelRatio||1);
+  if(c.width!==Math.round(w*dpr)||c.height!==Math.round(h*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);}
+  const g=c.getContext('2d');if(!g)return fxEnd();
+  g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const k=Math.min(1,fxNow.t/FX_LEN);
+  const dim=Math.sin(Math.PI*k);                        // fade the world in and out with the effect
+  g.fillStyle='rgba(8,14,26,'+(0.55*dim).toFixed(3)+')';g.fillRect(0,0,w,h);
+  try{FXLIB[fxNow.kind](g,k,fxNow.ok,w,h);}catch(e){}
+  if(k>=1)fxEnd();
+}
+function fxSil(g,x,y,sc,col){                           // a plain running silhouette
+  g.save();g.translate(x,y);g.scale(sc,sc);g.fillStyle=col;
+  g.beginPath();g.arc(0,-46,13,0,7);g.fill();
+  g.fillRect(-10,-34,20,30);
+  g.fillRect(-20,-30,11,8);g.fillRect(9,-30,11,8);
+  g.fillRect(-9,-4,7,22);g.fillRect(2,-4,7,22);
+  g.restore();
+}
+const FXLIB={
+  wave:(g,k,ok,w,h)=>{
+    const reach=ok?0.55:1.15, x=-w*0.4+w*reach*Math.sin(Math.min(1,k*1.25)*Math.PI/2);
+    g.fillStyle='rgba(38,110,190,.82)';
+    g.beginPath();g.moveTo(x-w,h);g.lineTo(x-w,h*0.32);
+    for(let i=0;i<=24;i++){const px=x-w+(w/24)*i;g.lineTo(px,h*0.32+Math.sin(i*0.7+k*9)*22);}
+    g.lineTo(x,h);g.closePath();g.fill();
+    g.fillStyle='rgba(255,255,255,.35)';
+    for(let i=0;i<=24;i++){const px=x-w+(w/24)*i;g.fillRect(px,h*0.32+Math.sin(i*0.7+k*9)*22-4,w/24,5);}
+    if(ok){g.fillStyle='rgba(212,184,120,.95)';g.fillRect(w*0.55,h*0.28,16,h*0.72);}
+  },
+  thief:(g,k,ok,w,h)=>{
+    const y=h*0.62, x=w*1.15-w*1.5*k;
+    fxSil(g,x,y,1.5,'#12161F');
+    g.fillStyle='#12161F';g.fillRect(x-30,y-52,24,10);           // the sack
+    if(ok){fxSil(g,x+Math.max(120,240-200*k),y,1.5,'#FFC83D');}    // the guard, closing in
+  },
+  sparks:(g,k,ok,w,h)=>{
+    const n=ok?14:46;
+    for(let i=0;i<n;i++){
+      const sx=(i*97%w), sy=((i*53)%h)*0.2+k*h*(0.9+(i%5)*0.06);
+      g.fillStyle=i%3?'rgba(255,196,64,.95)':'rgba(255,120,40,.9)';
+      g.fillRect(sx,sy,3,12+(i%4)*6);
+    }
+    if(ok){g.strokeStyle='rgba(120,220,255,.85)';g.lineWidth=5;
+      g.beginPath();g.arc(w/2,h/2,Math.min(w,h)*0.32*(0.7+0.3*Math.sin(k*Math.PI)),0,7);g.stroke();}
+  },
+  swarm:(g,k,ok,w,h)=>{
+    for(let i=0;i<34;i++){
+      const t=k+(i%7)*0.03, x=-60+ (w+140)*t + (i%5)*40;
+      const lift=ok?-Math.sin(Math.min(1,t)*Math.PI)*h*0.3:0;
+      const y=h*0.3+((i*37)%180)+lift;
+      const f=Math.sin(k*22+i)*7;
+      g.strokeStyle='rgba(20,24,34,.9)';g.lineWidth=3;
+      g.beginPath();g.moveTo(x-11,y+f);g.lineTo(x,y-4);g.lineTo(x+11,y+f);g.stroke();
+    }
+  },
+  frost:(g,k,ok,w,h)=>{
+    const d=(ok?Math.sin(k*Math.PI):Math.min(1,k*1.3))*Math.min(w,h)*0.42;
+    const gr=g.createRadialGradient(w/2,h/2,Math.max(0,Math.min(w,h)*0.5-d),w/2,h/2,Math.min(w,h)*0.8);
+    gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(1,'rgba(226,242,255,.92)');
+    g.fillStyle=gr;g.fillRect(0,0,w,h);
+    g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=2;
+    for(let i=0;i<18;i++){const a=i/18*7, r=Math.min(w,h)*0.5;
+      g.beginPath();g.moveTo(w/2+Math.cos(a)*r,h/2+Math.sin(a)*r);
+      g.lineTo(w/2+Math.cos(a)*(r-d*0.8),h/2+Math.sin(a)*(r-d*0.8));g.stroke();}
+  },
+  dust:(g,k,ok,w,h)=>{
+    const x=-w*0.5+w*1.6*k, a=ok?0.35:0.72;
+    for(let i=0;i<7;i++){
+      const cy=h*(0.18+i*0.11), r=h*(ok?0.10:0.17);
+      g.fillStyle='rgba(197,158,86,'+(a*(0.5+0.5*Math.sin(i+k*5))).toFixed(3)+')';
+      g.beginPath();g.arc(x+(i%3)*70-70,cy,r,0,7);g.fill();
+    }
+  },
+  blackout:(g,k,ok,w,h)=>{
+    const dark=ok?Math.sin(k*Math.PI)*0.7:Math.min(0.94,k*1.4);
+    g.fillStyle='rgba(0,0,0,'+dark.toFixed(3)+')';g.fillRect(0,0,w,h);
+    const on=Math.sin(k*(ok?26:9))>0;
+    if(on){g.fillStyle='rgba(255,214,102,.9)';g.beginPath();g.arc(w/2,h*0.42,16,0,7);g.fill();
+      g.fillStyle='rgba(255,214,102,.18)';g.beginPath();g.arc(w/2,h*0.42,70,0,7);g.fill();}
+  }
+};
 /* ======================= ANCILLARY SERVICE (SFK) =======================
    The only real decision in frequency control is how much capacity you hold
    back, so that is all the game models. Hydro gives up that share of its
@@ -8697,7 +8819,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
+function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   snd:['setSnd',['🔊','Sound','Ses'],['Effects and music, with sliders','Efektler ve müzik, kaydırıcılı']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Shadows, flashes, panel size','Gölge, parlama, panel boyutu']],
@@ -8745,6 +8867,7 @@ $('sfxRange').onchange=()=>{save();try{sfx.pick();}catch(e){}};
 $('musRange').oninput=e=>{S.vMus=+e.target.value;syncVol();};
 $('musRange').onchange=()=>save();
 $('sMusic').onclick=()=>{S.music=(S.music===false);if(S.music!==false&&playing)try{musicStart();musicSwitch(musicPick());}catch(e){}syncSet();save();};
+$('sFx').onclick=()=>{S.fxOff=!S.fxOff;if(S.fxOff)fxEnd();syncSet();save();};
 const UISCALES=[0.85,1,1.15,1.3,1.5];
 function uiScale(){const v=+S.uiScale;return UISCALES.indexOf(v)>=0?v:1;}
 function applyUiScale(){document.documentElement.style.setProperty('--uis',uiScale());}
@@ -8753,7 +8876,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.62.0';
+const GAME_VERSION='0.63.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
