@@ -209,8 +209,8 @@ body.title #mini{visibility:hidden}
 .help{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 22px);color:#fff;font-family:var(--disp);font-size:18px;text-shadow:0 2px 3px rgba(0,0,0,.5);pointer-events:none;text-align:center;width:90%;font-weight:400}
 .modal{position:fixed;inset:0;background:rgba(10,16,30,.55);display:none;align-items:center;justify-content:center;z-index:30;padding:calc(12px + env(safe-area-inset-top)) 14px calc(12px + env(safe-area-inset-bottom));touch-action:pan-y;overscroll-behavior:contain}
 .modal.on{display:flex}
-.sheet{background:#fff;color:#1D2433;border-radius:22px;padding:18px;width:min(420px,100%);max-height:86vh;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;text-align:center;box-shadow:0 6px 0 rgba(0,0,0,.2)}
-@supports(height:100dvh){.sheet{max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
+.sheet{zoom:var(--uis,1);background:#fff;color:#1D2433;border-radius:22px;padding:18px;width:min(420px,100%);max-height:calc(86vh / var(--uis,1));overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;text-align:center;box-shadow:0 6px 0 rgba(0,0,0,.2)}
+@supports(height:100dvh){.sheet{max-height:calc((100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) / var(--uis,1))}}
 .sheet>.btns:last-of-type{padding-bottom:2px}
 .sheet h2{font-family:var(--disp);font-size:26px;font-weight:400;margin-bottom:4px;color:#1D2433}
 .sheet p{color:#4A5568;font-size:14px;margin:4px 0}
@@ -418,7 +418,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.53.0</div>
+  <div class="t-ver" id="tVer">v0.54.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -607,6 +607,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="sSound">Sound: on</button>
     <button id="sShadow">Shadows: on</button>
     <button id="sFlash">Flashes: on</button>
+    <button id="sUI">Panel size: 100%</button>
     <button class="pri setback">‹ Back</button>
   </div>
   <div class="btns setsec" id="setData" hidden>
@@ -616,7 +617,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.53.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.54.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4805,7 +4806,7 @@ const GRIDMAX=5, GRIDSHARE=0.14;                      // 14% of output per level
 /* A line that never degrades is a line you build once and forget, and at that point the
    plant runs itself. Every cell the line pushes wears the connection a little; a worn
    line carries less, until somebody stands at the plant and services it. */
-const GRID_WEAR_PER_CELL=0.0016;                      // ~600 cells from new to useless
+const GRID_WEAR_PER_CELL=0.0006;                      // ~600 cells from new to useless
 function gridWear(p){return Math.min(1,p.gwear||0);}
 function gridHealth(p){return 1-0.55*gridWear(p);}    // a dead-tired line still carries 45%
 function gridServiceCost(p){const pd=pad(p.id),base=(pd&&pd.cost?pd.cost:100);
@@ -5905,6 +5906,8 @@ const SLOTS=[{id:'night',name:['Night','Gece'],range:'22–06'},{id:'morning',na
 const ST_TR={'Off shift':'Vardiya dışı','No job':'Görev yok','Repowering':'Yeniliyor','Fighting fire':'Yangına müdahale','Waiting for output':'Üretim bekliyor','Collecting':'Topluyor','Repairing':'Onarıyor','On strike':'Grevde','Looking for work':'İş arıyor','Collecting':'Topluyor','Selling':'Satıyor','Storing':'Depoluyor','Emptying battery':'Bataryayı boşaltıyor','Selling stored energy':'Depodakini satıyor'};
 function stTr(st){if(!st)return '';if(S.lang!=='tr')return st;if(st.startsWith('Waiting for output'))return 'Üretim bekliyor '+st.slice(18);
   if(st.startsWith('Waiting for'))return st.replace('Waiting for','Bekliyor:');
+  if(st.startsWith('Fire at '))return 'Yangın var '+st.slice(8);
+  if(st.startsWith('Servicing '))return 'Hat bakımı '+st.slice(10);
   if(st.startsWith('Collecting '))return 'Topluyor '+st.slice(11);
   if(st.startsWith('Selling '))return 'Satıyor '+st.slice(8);
   return ST_TR[st]||st;}
@@ -6014,6 +6017,21 @@ function updateHelper(hp,i,dt){
         if(hp.fixT>=2.5*skillFixT(i)){const c=Math.round(batFixCost()*skillFixC(i));if(S.cash>=c)S.cash-=c;S.batFault=false;hp.fixT=0;sfx.fix();floatTxt(D.x,D.y,'-₵'+fmt(c));S.stats.fixSpend=(S.stats.fixSpend||0)+c;}
         return;}
     }
+    if(!S.plants.some(p=>p.broken)){                                // lines before ageing: cheaper, faster, and they bite output now
+      const gp=S.plants.filter(p=>!p.broken&&!p.fire&&PLANT_TYPES[p.type]&&gridNeedsService(p)&&S.cash>=gridServiceCost(p))
+                       .sort((a,b)=>dist(hp,a)-dist(hp,b))[0];
+      if(gp){
+        hp.status='Servicing '+codeOf(gp.id);hp.target=null;hp.state='idle';
+        const dx=gp.x+30-hp.x,dy=gp.y+26-hp.y,l=Math.hypot(dx,dy);
+        if(l>10&&dist(hp,gp)>60){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.moving=true;hp.walk+=dt*10;hp.fixT=0;return;}
+        const need=2*skillFixT(i);hp.fixT=(hp.fixT||0)+dt;gp.gsv=Math.min(1,hp.fixT/need);
+        if(hp.fixT>=need){const c=gridServiceCost(gp);
+          if(S.cash>=c){S.cash-=c;gp.gwear=0;S.stats.fixSpend=(S.stats.fixSpend||0)+c;
+            floatTxt(gp.x,gp.y,'-₵'+fmt(c));sfx.fix();try{trackOnce('crew-grid-service');}catch(e){}}
+          gp.gsv=0;hp.fixT=0;}
+        return;
+      }
+    }
     const wear=S.plants.filter(p=>!p.broken&&PLANT_TYPES[p.type]&&canRepower(p)&&plantGen(p)<=fixEffLimit()&&S.cash>=repowerCost(p));
     if(!S.plants.some(p=>p.broken)&&wear.length){                   // nothing broken: renew the most worn plant on the list
       wear.sort((a,b)=>plantGen(a)-plantGen(b));
@@ -6068,8 +6086,9 @@ function updateHelper(hp,i,dt){
     if(hasBat&&okPrice&&depotWithEnergy(hp)&&hp.carry<cap&&(slotPlan==='sell'||(slotPlan==='auto'&&role==='peak'))){hp.state='toTake';}
     else if(hp.carry>=cap||(hp.carry>0&&!pickPlant())){hp.state='deliver';}
     else{const p=pickPlant();if(p){hp.target=p;hp.state='toPlant';}
+      else if(fixedSite&&fixedSite.fire){hp.status='Fire at '+codeOf(fixedSite.id);go(HQ.x+((i%8)*26-90)+Math.floor(i/8)*8,HQ.y+95+Math.floor(i/8)*26);}
       else if(fixedSite){hp.status='Waiting for output '+codeOf(fixedSite.id);go(fixedSite.x+34,fixedSite.y+42);}
-      else if(grpType){const g=S.plants.filter(p=>p.type===grpType);
+      else if(grpType){const g=S.plants.filter(p=>p.type===grpType&&!p.fire);
         if(g.length){const c=g.reduce((a,p)=>({x:a.x+p.x/g.length,y:a.y+p.y/g.length}),{x:0,y:0});
           hp.status='Waiting for output '+CODE_PREFIX[grpType]+'*';go(c.x+20,c.y+48);}else{hp.status='Looking for work';go(HQ.x+((i%8)*26-90)+Math.floor(i/8)*8,HQ.y+95+Math.floor(i/8)*26);}}
       else{go(HQ.x+((i%8)*26-90)+Math.floor(i/8)*8,HQ.y+95+Math.floor(i/8)*26);}}
@@ -6751,7 +6770,7 @@ function render(dt,now){
   const t=hourNow(),nk=nightK(t);
   // camera
   const asp=innerWidth/innerHeight;camera.aspect=asp;
-  const ZL=[0.72,1,1.45,2.0][S.zoom==null?1:S.zoom];const wantW=(asp<1?15:28)*ZL;const hf=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*asp);
+  const ZL=ZOOMS[S.zoom==null?1:S.zoom];const wantW=(asp<1?15:28)*ZL;const hf=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*asp);
   const distc=Math.min(190,Math.max(26,(wantW/2)/Math.tan(hf/2)));
   const PX=S.px*U,PZ=S.py*U;
   const halfW=Math.min(34,wantW*0.48);const tx=Math.max(halfW,Math.min(70-halfW,PX)),tz=Math.max(12,Math.min(98,PZ));
@@ -6963,6 +6982,7 @@ function renderCrew(){
   }
   html+=`<div class="row1" style="margin-top:10px;font-weight:800"><span>${tab==='all'?L('Task boxes','Görev kutuları'):tt(ROLES[tab].name)+' '+L('boxes','kutuları')}</span><button id="boxAdd" style="background:#1D2433;color:#fff;border-radius:10px;padding:5px 12px;font-weight:800;font-size:13px">+ ${L('New box','Yeni kutu')}</button></div>`;
   for(const b of boxes().filter(b=>tab==='all'||b.role===tab)){
+    if(boxShut[b.id]===undefined)boxShut[b.id]=true;      // open the panel to a clean list, not a wall of boxes
     const mem=b.m||[];
     html+=`<div class="rule">
       <button class="boxhead" data-btog="${b.id}"><span>${boxShut[b.id]?'▸':'▾'} ${tt(ROLES[b.role].name)} · ${SHIFTS[b.sh].icon} ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)} · ${mem.length} ${L('person','kişi')}</span><span class="bw">₵${fmt(boxWage(b))}/${L('day','gün')}</span></button>
@@ -7007,7 +7027,8 @@ function renderCrewLive(){
     cs.textContent=L(`Price now ₵${pr.toFixed(1)} — ${pr>=mp?'crew is allowed to sell':'crew holds its energy'}. Crew has sold ${S.stats.crewCells} cells${S.stats.crewCells?` at ₵${avg.toFixed(1)} on average`:''}. Energy lost so far: ${S.stats.wasted||0} cells. Repairs: ₵${fmt(S.stats.fixSpend||0)}.`,`Şu anki fiyat ₵${pr.toFixed(1)} — ${pr>=mp?'ekip satabilir':'ekip enerjisini tutuyor'}. Ekip ${S.stats.crewCells} hücre sattı${S.stats.crewCells?`, ortalama ₵${avg.toFixed(1)}`:''}. Şimdiye kadar kaybolan enerji: ${S.stats.wasted||0} hücre. Tamir: ₵${fmt(S.stats.fixSpend||0)}.`);}
 }
 $('crewBtn').onclick=openCrew;
-function setZoom(d){const z=Math.max(0,Math.min(3,(S.zoom==null?1:S.zoom)+d));if(z!==S.zoom){S.zoom=z;sfx.pick();trackOnce('zoom-used');}}
+const ZOOMS=[0.72,1,1.45,2.0,2.75,3.6];
+function setZoom(d){const z=Math.max(0,Math.min(ZOOMS.length-1,(S.zoom==null?1:S.zoom)+d));if(z!==S.zoom){S.zoom=z;sfx.pick();trackOnce('zoom-used');}}
 $('zIn').onclick=()=>setZoom(-1);$('zOut').onclick=()=>setZoom(1);
 let lastWheel=0;
 addEventListener('wheel',e=>{if(!playing||e.target.closest('.modal'))return;e.preventDefault();const now=performance.now();if(now-lastWheel<220||Math.abs(e.deltaY)<2)return;lastWheel=now;setZoom(e.deltaY>0?1:-1);},{passive:false});
@@ -7685,6 +7706,11 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.54.0',t:['Nobody waits beside a burning turbine any more','Art\u0131k kimse yanan t\u00fcrbinin ba\u015f\u0131nda beklemiyor'],l:[
+  ['A helper pinned to one field stood there for ever when that field caught fire \u2014 it was waiting for output from a plant that was on fire. They now fall back to HQ and say why.','Tek bir sahaya ba\u011flanm\u0131\u015f yard\u0131mc\u0131, o saha yan\u0131nca orada sonsuza kadar bekliyordu \u2014 yanan bir santralden \u00fcretim bekliyordu. Art\u0131k merkeze \u00e7ekiliyor ve sebebini yaz\u0131yor.'],
+  ['Fix helpers now service grid lines as well, before they start repowering. Lines also wear about a third as fast, so servicing is an event and not a chore.','Tamir yard\u0131mc\u0131lar\u0131 art\u0131k \u015febeke hatlar\u0131n\u0131n bak\u0131m\u0131n\u0131 da yap\u0131yor, yenilemeye ba\u015flamadan \u00f6nce. Hatlar da yakla\u015f\u0131k \u00fc\u00e7te bir h\u0131zla y\u0131pran\u0131yor, b\u00f6ylece bak\u0131m bir olay oluyor, angarya de\u011fil.'],
+  ['The crew panel opens with every task box collapsed, so you can find the one you want.','Ekip paneli t\u00fcm g\u00f6rev kutular\u0131 kapal\u0131 a\u00e7\u0131l\u0131yor, arad\u0131\u011f\u0131n kutuyu rahat bulas\u0131n diye.'],
+  ['Two more zoom-out steps, and a Panel size setting under Display for anyone playing on a big screen.','\u0130ki kademe daha uzakla\u015fma, bir de b\u00fcy\u00fck ekranda oynayanlar i\u00e7in G\u00f6r\u00fcnt\u00fc ayarlar\u0131nda Panel boyutu se\u00e7ene\u011fi.']]},
  {v:'0.53.0',t:['Ela does the talking now','Art\u0131k Ela anlat\u0131yor'],l:[
   ['The Onboarding briefing is no longer a wall of text: Ela walks through it in eight short steps, written for someone who has never thought about electricity before.','Oryantasyon anlat\u0131m\u0131 art\u0131k bir metin duvar\u0131 de\u011fil: Ela sekiz k\u0131sa ad\u0131mda anlat\u0131yor ve metin elektri\u011fi hi\u00e7 d\u00fc\u015f\u00fcnmemi\u015f biri i\u00e7in yaz\u0131ld\u0131.'],
   ['While Ela is talking the world dims, walking is disabled, and the Next button breathes so it is obvious where to tap.','Ela konu\u015furken d\u00fcnya kararrr\u0131yor, y\u00fcr\u00fcme kapan\u0131yor ve \u0130leri butonu nefes al\u0131p vererek nereye basaca\u011f\u0131n\u0131 belli ediyor.'],
@@ -8109,7 +8135,7 @@ function drawMap(cv,big){
     if(big){g.font='bold '+Math.round(FS*1.25)+'px sans-serif';g.fillText('🔒 '+tt(r.name),W/2,y0+hh/2);}
     else{g.font='bold '+Math.max(9,Math.round(k*90))+'px sans-serif';g.fillText('🔒',W/2,y0+hh/2+3);}}
   // camera view box
-  if(!big){const ZL=[0.72,1,1.45,2.0][S.zoom==null?1:S.zoom],vw=15*ZL*20,vh=vw*1.6;
+  if(!big){const ZL=ZOOMS[S.zoom==null?1:S.zoom],vw=15*ZL*20,vh=vw*1.6;
     g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=1;
     g.strokeRect((S.px-vw/2)*k,(S.py-vh/2)*k,vw*k,vh*k);}
   // goal marker
@@ -8318,7 +8344,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
+function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Sound, shadows, flashes','Ses, gölge, parlama']],
   data:['setData',['💾','Save data','Kayıt verisi'],['Save code, backup, delete','Kayıt kodu, yedek, silme']]};
@@ -8352,11 +8378,15 @@ $('sMode').onclick=()=>{
 };
 $('sSpeed').onclick=()=>{S.speed=S.speed===1?4:S.speed===4?12:1;syncSet();};
 /* KVKK: say what is kept, and let anyone erase it without asking a human */
+const UISCALES=[0.85,1,1.15,1.3,1.5];
+function uiScale(){const v=+S.uiScale;return UISCALES.indexOf(v)>=0?v:1;}
+function applyUiScale(){document.documentElement.style.setProperty('--uis',uiScale());}
+$('sUI').onclick=()=>{const k=(UISCALES.indexOf(uiScale())+1)%UISCALES.length;S.uiScale=UISCALES[k];applyUiScale();syncSet();save();};
 $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.removeItem(SAVE_KEY);}catch(e){}location.reload();}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.53.0';
+const GAME_VERSION='0.54.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -8480,7 +8510,7 @@ function start(kit){
   btn.textContent=had?L('Continue','Devam et'):L('Play','Oyna');
   $('tStatus').innerHTML=had?`👛 ₵${fmt(S.cash)} · 🏛️ ₵${fmt(wealth())}<br>📅 ${dateLabel(S.day)}`:'';
   const veteran=had&&(S.tutDone||S.day>=3||S.soldCells>=20);
-  $('tutChk').checked=!veteran;$('tutChk').closest('label').hidden=veteran;applyLang();try{syncProgBtn();}catch(e){}
+  $('tutChk').checked=!veteran;$('tutChk').closest('label').hidden=veteran;applyLang();try{syncProgBtn();}catch(e){}try{applyUiScale();}catch(e){}
   btn.onclick=startFlow;
   requestAnimationFrame(frame);
 }
