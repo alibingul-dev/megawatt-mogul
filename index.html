@@ -229,6 +229,11 @@ body.title #mini{visibility:hidden}
 .copts .nomoney{display:block;font-size:11.5px;font-weight:800;color:var(--peak);margin-top:4px}
 .offlog{list-style:none;text-align:left;margin:8px 0;padding:0;max-height:30vh;overflow:auto}
 .offlog li{font-size:13px;padding:6px 8px;border-radius:10px;background:#F4F6FA;color:#1D2433;margin-bottom:5px}
+#tutDim{position:fixed;inset:0;background:rgba(9,17,30,.42);z-index:24;pointer-events:none;transition:opacity .25s;opacity:1}
+#tutDim[hidden]{display:none}
+@keyframes tutpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+#tutNext{animation:tutpulse 1.25s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){#tutNext{animation:none}}
 #tut{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:25;display:flex;justify-content:center;padding:0 10px;pointer-events:none}
 .tut-card{pointer-events:auto}
 .tut-card{width:min(480px,100%);display:flex;gap:10px;align-items:flex-end}
@@ -372,6 +377,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .pgtabs button{flex:1;padding:8px 6px;border-radius:11px;background:#EDF1F6;color:#5C6780;font-family:var(--disp);font-size:14px;font-weight:400}
 .pgtabs button.on{background:#1D2433;color:#fff}
 .pglist{display:flex;flex-direction:column;gap:8px;text-align:left;max-height:46vh;overflow:auto;margin:6px 0}
+.pgreplay{padding:11px;border-radius:12px;background:#FFD23F;color:#1D2433;font-family:var(--disp);font-size:16px;font-weight:400}
 .pgl{padding:11px 13px;border-radius:12px;background:#F2F5F9}
 .pgl b{display:block;font-family:var(--disp);font-weight:400;font-size:17px;margin-bottom:3px}
 .pgl p{margin:0;font-size:14px;line-height:1.45;color:#3A4357}
@@ -412,7 +418,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.52.0</div>
+  <div class="t-ver" id="tVer">v0.53.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -490,6 +496,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <h2>Choose your language<br><small style="font-size:18px;color:var(--soft)">Dilini seç</small></h2>
   <div class="btns langbig"><button class="pri" data-pick="en">ENG — English</button><button class="pri" data-pick="tr">TR — Türkçe</button></div>
 </div></div>
+<div id="tutDim" hidden></div>
 <div id="tut" hidden>
   <div class="tut-card">
     <img id="tutImg" alt="" class="tut-img">
@@ -609,7 +616,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.52.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.53.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5612,6 +5619,7 @@ addEventListener('pointerup',endJoy);glc.addEventListener('pointercancel',endJoy
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;audioInit();$('help').hidden=true;});
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 function inputVec(){
+  if(tutOpen)return[0,0,0];            // Ela is talking: the world waits, the player waits with it
   let vx=0,vy=0;
   if(keys.arrowleft||keys.a)vx-=1;if(keys.arrowright||keys.d)vx+=1;if(keys.arrowup||keys.w)vy-=1;if(keys.arrowdown||keys.s)vy+=1;
   if(vx||vy){const l=Math.hypot(vx,vy);return[vx/l,vy/l,1];}
@@ -7293,34 +7301,46 @@ const TUT=[
  {t:["Seasons, weather and market news change prices. Sometimes a decision card appears. Every choice has a trade-off.","Mevsim, hava ve piyasa haberleri fiyatları değiştirir. Bazen bir karar kartı çıkar. Her seçimin bir bedeli var."],hl:'#banner'},
  {t:["The yellow arrow shows your next goal. Use the mini map and ＋/－ to look around. In ⚙️ you'll find language, save code and this guide again. ℹ️ collects tactics you unlock as you play. Good luck, boss!","Sarı ok bir sonraki hedefini gösterir. Etrafa bakmak için mini haritayı ve ＋/－ butonlarını kullan. ⚙️ içinde dil, kayıt kodu ve bu rehber var. ℹ️ oynadıkça açılan taktikleri toplar. Bol şans patron!"],hl:'#mini'},
 ];
-let tutOpen=false,tutI=0;
+let tutOpen=false,tutI=0,tutSeq=null,tutAfter=null;
 function whenNoModal(fn){if(document.querySelector('.modal.on'))setTimeout(()=>whenNoModal(fn),400);else fn();}
 function openLangPick(then){
   const m=$('mLang');m.classList.add('on');
   m.onclick=e=>{const b=e.target.closest('button[data-pick]');if(!b)return;setLang(b.dataset.pick);m.classList.remove('on');then&&then();};
 }
+function elaSay(lines,after){                 // same card, different script
+  tutSeq=lines;tutAfter=after||null;tutI=0;tutOpen=true;
+  $('tut').hidden=false;$('tutDim').hidden=false;$('help').hidden=true;
+  const src=(typeof thumbs!=='undefined'&&(thumbs['character-female-d']||Object.values(thumbs)[0]))||'';
+  if(src)$('tutImg').src=src;
+  showTut();
+}
 function startTutorial(){
-  tutI=0;tutOpen=true;$('tut').hidden=false;$('help').hidden=true;
+  tutSeq=TUT;tutAfter=null;
+  tutI=0;tutOpen=true;$('tut').hidden=false;$('tutDim').hidden=false;$('help').hidden=true;
   const src=(typeof thumbs!=='undefined'&&(thumbs['character-female-d']||Object.values(thumbs)[0]))||'';
   if(src)$('tutImg').src=src;
   trackOnce('tutorial-started');showTut();
 }
 function showTut(){
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
-  const st=TUT[tutI];
+  const seq=tutSeq||TUT,st=seq[tutI];
   $('tutName').textContent=L('Ela · Field engineer','Ela · Saha mühendisi');
-  $('tutText').textContent=tt(st.t);
-  $('tutStep').textContent=`${tutI+1}/${TUT.length}`;
+  $('tutText').textContent=tt(st.b||st.t);   // a programme line carries its body in .b
+  $('tutStep').textContent=`${tutI+1}/${seq.length}`;
   $('tutSkip').textContent=L('Skip','Geç');$('tutBack').textContent=L('Back','Geri');$('tutBack').hidden=tutI===0;
-  $('tutNext').textContent=tutI===TUT.length-1?L("Let's play!",'Hadi başlayalım!'):L('Next','İleri');
+  $('tutNext').textContent=tutI===seq.length-1?L("Let's play!",'Hadi başlayalım!'):L('Next','İleri');
   if(st.hl){const e=document.querySelector(st.hl);if(e&&!e.hidden)e.classList.add('tut-hl');}
 }
 function endTutorial(done){
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
-  $('tut').hidden=true;tutOpen=false;S.tutDone=true;last=0;save();
-  trackOnce(done?'tutorial-finished':'tutorial-skipped');
+  $('tut').hidden=true;$('tutDim').hidden=true;tutOpen=false;last=0;
+  const wasGame=(tutSeq===TUT||tutSeq===null),after=tutAfter;
+  tutSeq=null;tutAfter=null;
+  if(wasGame){S.tutDone=true;trackOnce(done?'tutorial-finished':'tutorial-skipped');}
+  save();
+  if(after)try{after(done);}catch(e){}
 }
-$('tutNext').onclick=()=>{if(tutI<TUT.length-1){tutI++;showTut();sfx.pick();}else endTutorial(true);};
+$('tutNext').onclick=()=>{const seq=tutSeq||TUT;if(tutI<seq.length-1){tutI++;showTut();sfx.pick();}else endTutorial(true);};
 $('tutBack').onclick=()=>{if(tutI>0){tutI--;showTut();}};
 $('tutSkip').onclick=()=>endTutorial(false);
 $('sTut').onclick=()=>{$('mSet').classList.remove('on');openLangPick(startTutorial);};
@@ -7665,6 +7685,11 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.53.0',t:['Ela does the talking now','Art\u0131k Ela anlat\u0131yor'],l:[
+  ['The Onboarding briefing is no longer a wall of text: Ela walks through it in eight short steps, written for someone who has never thought about electricity before.','Oryantasyon anlat\u0131m\u0131 art\u0131k bir metin duvar\u0131 de\u011fil: Ela sekiz k\u0131sa ad\u0131mda anlat\u0131yor ve metin elektri\u011fi hi\u00e7 d\u00fc\u015f\u00fcnmemi\u015f biri i\u00e7in yaz\u0131ld\u0131.'],
+  ['While Ela is talking the world dims, walking is disabled, and the Next button breathes so it is obvious where to tap.','Ela konu\u015furken d\u00fcnya kararrr\u0131yor, y\u00fcr\u00fcme kapan\u0131yor ve \u0130leri butonu nefes al\u0131p vererek nereye basaca\u011f\u0131n\u0131 belli ediyor.'],
+  ['One code opens one program, and it starts immediately \u2014 no picker. Leaving the program takes its button off the screen as well.','Bir kod bir program a\u00e7\u0131yor ve program hemen ba\u015fl\u0131yor \u2014 se\u00e7im ekran\u0131 yok. Programdan \u00e7\u0131k\u0131nca butonu da ekrandan kalk\u0131yor.'],
+  ['A program can hand you starting money. Onboarding leaves you enough for two turbines and a panel, so the lesson is never a grind.','Program sana ba\u015flang\u0131\u00e7 paras\u0131 verebiliyor. Oryantasyon iki t\u00fcrbin ve bir panel kuracak kadar b\u0131rak\u0131yor, b\u00f6ylece ders bir u\u011fra\u015fa d\u00f6nm\u00fcyor.']]},
  {v:'0.52.0',t:['Onboarding now teaches, not just checks','Oryantasyon art\u0131k sadece i\u015faretlemiyor, anlat\u0131yor'],l:[
   ['The Onboarding program opens with a briefing written for someone who knows nothing about electricity: why power cannot be stored, what a wind plant and a solar plant actually are, why we store at all, why the price moves hour by hour, and what the job really is.','Oryantasyon program\u0131 art\u0131k elektri\u011fi hi\u00e7 bilmeyen biri i\u00e7in yaz\u0131lm\u0131\u015f bir anlat\u0131mla a\u00e7\u0131l\u0131yor: elektrik neden depolanamaz, r\u00fczg\u00e2r ve g\u00fcne\u015f santrali tam olarak nedir, neden depolar\u0131z, fiyat neden saat saat oynar ve i\u015fin asl\u0131 nedir.'],
   ['A glossary page explains seventeen terms in both languages \u2014 RES, GES, BESS, capacity factor, peak, day-ahead, imbalance, curtailment and the rest \u2014 including EV charging, which is not in the game but very much in the real business.','S\u00f6zl\u00fck sayfas\u0131 on yedi terimi iki dilde a\u00e7\u0131kl\u0131yor \u2014 RES, GES, BESS, kapasite fakt\u00f6r\u00fc, puant, g\u00fcn \u00f6ncesi, dengesizlik, k\u0131s\u0131tlama ve di\u011ferleri \u2014 oyunda olmayan ama ger\u00e7ek i\u015fte fazlas\u0131yla olan elektrikli ara\u00e7 \u015farj\u0131 dahil.'],
@@ -8331,7 +8356,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.52.0';
+const GAME_VERSION='0.53.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -8476,19 +8501,24 @@ const PROGRAMS=[
  {id:'onb',icon:'🎓',h:3134712986,
   name:['Onboarding','Oryantasyon'],
   sub:['A guided first day at an energy company. Ten steps, no score, no time limit.','Bir enerji şirketinde rehberli ilk gün. On adım, puan yok, süre yok.'],
+  cash:150,
   lessons:[
-   {t:['Electricity cannot wait','Elektrik bekleyemez'],
-    b:['Almost everything else you buy can sit in a warehouse. Electricity cannot. At every second of the day, exactly as much has to be produced as is being used — not more, not less. The whole industry exists to keep those two numbers equal.','Satın aldığın hemen her şey depoda bekleyebilir. Elektrik bekleyemez. Günün her saniyesinde, tüketilen kadar üretilmek zorunda — ne fazla ne eksik. Bütün sektör bu iki sayıyı eşit tutmak için var.']},
-   {t:['RES — a wind power plant','RES — rüzgâr enerji santrali'],
-    b:['A wind plant turns moving air into electricity. It produces when the wind blows, and nobody decides when that is. A big one is a few dozen turbines on a ridge; each turbine is roughly 3–6 MW today. You do not control its output — you can only forecast it and plan around it.','Rüzgâr santrali havanın hareketini elektriğe çevirir. Rüzgâr estiğinde üretir ve ne zaman eseceğine kimse karar veremez. Büyük bir RES, bir sırtta onlarca türbindir; bugün her türbin kabaca 3–6 MW. Üretimini kontrol edemezsin — sadece tahmin edip ona göre plan yaparsın.']},
-   {t:['GES — a solar power plant','GES — güneş enerji santrali'],
-    b:['A solar plant turns sunlight into electricity. It produces in the middle of the day and stops at sunset — which is exactly when people come home and demand peaks. That mismatch is not a flaw in the panels; it is the single most important fact in this business.','Güneş santrali gün ışığını elektriğe çevirir. Öğle saatlerinde üretir, güneş batınca durur — yani tam da insanlar eve dönüp talebin zirveye çıktığı saatte. Bu uyumsuzluk panellerin kusuru değil; bu işin en önemli gerçeği.']},
-   {t:['BESS — why we store','BESS — neden depoluyoruz'],
-    b:['A battery storage system charges when there is more electricity than anyone needs and discharges when there is less. It does not produce anything. What it does is move energy across hours — and hours are where the money is, because the same megawatt-hour is worth very different amounts at 04:00 and at 19:00.','Batarya depolama sistemi, kimsenin ihtiyacı olmayan fazla elektrik varken şarj olur, azken boşalır. Hiçbir şey üretmez. Yaptığı şey enerjiyi saatler arasında taşımaktır — para da saatlerdedir, çünkü aynı megavatsaat 04:00 ile 19:00’da bambaşka eder.']},
-   {t:['Why the price moves','Fiyat neden oynuyor'],
-    b:['Demand changes hour by hour: low at night, high in the evening. Every hour the cheapest plants are used first and the most expensive plant that is still needed sets the price for everybody. So when demand climbs, an expensive plant enters the stack and the price for the whole hour jumps with it.','Talep saat saat değişir: gece düşük, akşam yüksek. Her saat önce en ucuz santraller kullanılır ve hâlâ ihtiyaç duyulan en pahalı santral fiyatı herkes için belirler. Talep yükselince pahalı bir santral devreye girer ve o saatin fiyatı onunla birlikte zıplar.']},
-   {t:['So what is our job?','Peki bizim işimiz ne?'],
-    b:['Producing electricity is only half of it. The other half is deciding when and where it is sold — and that decision can be worth as much as the plant itself. That is the whole subject of this game: you will produce, you will store, and you will choose the hour.','Elektriği üretmek işin yarısı. Diğer yarısı ne zaman ve nereye satılacağına karar vermek — ve bu karar bazen santralin kendisi kadar değerli. Bu oyunun konusu tam olarak bu: üreteceksin, depolayacaksın ve saati sen seçeceksin.']}],
+   {t:['Hello','Merhaba'],
+    b:["Hi, I'm Ela. Today you learn the electricity business. If you know nothing about it, that is fine — we start from zero.","Merhaba, ben Ela. Bugün elektrik işini öğreneceğiz. Hiç bilmiyorsan hiç sorun değil — sıfırdan başlıyoruz."]},
+   {t:['Electricity cannot be kept','Elektrik saklanamaz'],
+    b:["Electricity is not like water in a bucket. You cannot fill it up and keep it. The moment someone turns on a lamp, that electricity has to be made right then.","Elektrik kovadaki su gibi değil. Doldurup bir kenarda tutamazsın. Birisi lambayı açtığı anda, o elektriğin tam o anda üretilmiş olması lazım."]},
+   {t:['The spinning one','Dönen şey'],
+    b:["That tall spinning thing is a wind turbine. When the wind blows, it makes electricity. We cannot make the wind blow. The wind decides.","Şu uzun dönen şey bir rüzgâr türbini. Rüzgâr estiğinde elektrik üretir. Rüzgârı biz estiremeyiz. Ona rüzgâr karar verir."]},
+   {t:['The blue boards','Mavi levhalar'],
+    b:["Those blue boards are solar panels. While the sun is up they make electricity. When the sun goes down, they stop. Every evening.","Şu mavi levhalar güneş paneli. Güneş varken elektrik üretir. Güneş batınca durur. Her akşam."]},
+   {t:['And here is the problem','İşte sorun burada'],
+    b:["In the evening everyone comes home and turns the lights on. That is when electricity is needed most. And that is exactly when the sun goes down.","Akşam olunca herkes eve gelir, ışıkları yakar. Elektriğe en çok o saat ihtiyaç olur. Güneş de tam o saat batar."]},
+   {t:['So we use a battery','Bu yüzden batarya var'],
+    b:["A battery is a box for hours. We put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya, saatleri saklayan bir kutu gibi. Gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."]},
+   {t:['The price moves','Fiyat oynar'],
+    b:["Electricity does not cost the same all day. At night it is cheap. In the evening it is expensive. Same electricity, different hour, different money.","Elektrik gün boyu aynı para etmez. Gece ucuzdur. Akşam pahalıdır. Aynı elektrik, farklı saat, farklı para."]},
+   {t:['That is our job','Bizim işimiz bu'],
+    b:["Make it, keep it for the right hour, sell it when it is expensive. That is the whole job. I left you enough money for two turbines and a panel — go build.","Üret, doğru saate sakla, pahalıyken sat. İşin tamamı bu. Sana iki türbin ve bir panel kuracak kadar para bıraktım — hadi kur."]}],
   gloss:[
    {k:'RES',t:['Wind power plant','Rüzgâr enerji santrali'],d:['Turns wind into electricity. Output follows the weather, not your plan.','Rüzgârı elektriğe çevirir. Üretim senin planını değil havayı takip eder.']},
    {k:'GES',t:['Solar power plant','Güneş enerji santrali'],d:['Turns sunlight into electricity. Produces midday, stops at sunset.','Gün ışığını elektriğe çevirir. Öğlen üretir, gün batımında durur.']},
@@ -8540,8 +8570,9 @@ const PROGRAMS=[
     ok:()=>(S.stats.planned||0)>0}]}
 ];
 function syncProgBtn(){
-  const b=$('progBtn');if(b){b.hidden=!((S.progs||[]).length);b.textContent='🎓 '+L('Programs','Programlar');}
-  const i=$('progIco');if(i)i.hidden=!((S.progs||[]).length);   // stays reachable in game, program or not
+  const p=PROGRAMS.find(x=>x.id===S.prog);
+  const b=$('progBtn');if(b){b.hidden=!p;if(p)b.textContent=p.icon+' '+tt(p.name);}
+  const i=$('progIco');if(i)i.hidden=!S.prog;                    // one code, one program: no program, no button
 }
 function progOk(p,i){
   S.progStep=S.progStep||{};const a=S.progStep[p.id]=S.progStep[p.id]||[];
@@ -8577,8 +8608,9 @@ function pgStepsHtml(p){
   return html;
 }
 function pgLearnHtml(p){
-  return (p.lessons||[]).map(l=>`<div class="pgl"><b>${tt(l.t)}</b><p>${tt(l.b)}</p></div>`).join('')
-    ||`<div class="pgl"><p>${L('No briefing in this program.','Bu programda anlatım yok.')}</p></div>`;
+  if(!(p.lessons||[]).length)return `<div class="pgl"><p>${L('No briefing in this program.','Bu programda anlatım yok.')}</p></div>`;
+  return `<button class="pgreplay" id="pgReplay">▶ ${L('Let Ela tell it again','Ela tekrar anlatsın')}</button>`
+    +p.lessons.map(l=>`<div class="pgl"><b>${tt(l.t)}</b><p>${tt(l.b)}</p></div>`).join('');
 }
 function pgGlossHtml(p){
   return (p.gloss||[]).map(g=>{const k=Array.isArray(g.k)?tt(g.k):g.k,off=/EV|Elektrikli/.test(k)?' off':'';
@@ -8593,12 +8625,13 @@ function openProgram(){
   $('pgTabs').innerHTML=tabs.map(([k,t])=>`<button data-t="${k}"${pgTab===k?' class="on"':''}>${t}</button>`).join('');
   $('pgTabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;pgTab=b.dataset.t;openProgram();};
   $('pgList').innerHTML=pgTab==='steps'?pgStepsHtml(p):pgTab==='gloss'?pgGlossHtml(p):pgLearnHtml(p);
+  const rp=$('pgReplay');if(rp)rp.onclick=()=>{$('mProgram').classList.remove('on');elaSay(p.lessons,()=>openProgram());};
   $('pgList').scrollTop=0;
   $('pgQuit').textContent=L('Leave this program','Bu programdan çık');
   $('pgClose').textContent=L('Close','Kapat');
   $('mProgram').classList.add('on');
 }
-function openPrograms(){
+function openPrograms(){   // kept for a future multi-programme build; unused while one code means one programme
   const list=(S.progs||[]).map(id=>PROGRAMS.find(p=>p.id===id)).filter(Boolean);
   $('stTitle').textContent=L('Programs','Programlar');
   $('stSub').textContent=L('Opened with a code. Your normal game keeps running underneath.','Kodla açılır. Normal oyunun altta çalışmaya devam eder.');
@@ -8611,21 +8644,27 @@ function openPrograms(){
     if(S.prog){try{trackOnce('prog-open-'+S.prog);}catch(e){}openProgram();}};
   $('mStart').classList.add('on');
 }
+function startProgram(p){
+  S.progs=[p.id];S.prog=p.id;S.progStep=S.progStep||{};S.progDone=S.progDone||{};
+  if(p.cash)S.cash=Math.max(S.cash,p.cash);        // nobody learns anything while broke
+  pgTab='learn';save();syncProgBtn();
+  try{trackOnce('prog-start-'+p.id);}catch(e){}
+  $('mSet').classList.remove('on');$('mProgram').classList.remove('on');
+  const go=()=>{if(document.querySelector('.modal.on')||tutOpen){setTimeout(go,400);return;}elaSay(p.lessons||[],()=>openProgram());};go();
+}
 $('sCode').onclick=()=>{
   const v=prompt(L('Enter your access code','Erişim kodunu gir'));
   if(v===null)return;
   const p=PROGRAMS.find(x=>x.h===codeHash(v));
   if(!p){toast(L('That code did not work.','Bu kod çalışmadı.'));return;}
-  S.progs=S.progs||[];
-  if(S.progs.indexOf(p.id)<0){S.progs.push(p.id);try{trackOnce('prog-unlock-'+p.id);}catch(e){}}
-  save();syncProgBtn();
+  if(S.prog===p.id){openProgram();return;}
   toast(L('Unlocked: ','Açıldı: ')+tt(p.name),'big');
-  openPrograms();
+  startProgram(p);
 };
-$('progBtn').onclick=openPrograms;
-$('progIco').onclick=()=>{if(S.prog)openProgram();else openPrograms();};
+$('progBtn').onclick=()=>{if(S.prog)openProgram();};
+$('progIco').onclick=openProgram;
 $('pgClose').onclick=()=>$('mProgram').classList.remove('on');
-$('pgQuit').onclick=()=>{S.prog=null;save();syncProgBtn();$('mProgram').classList.remove('on');};
+$('pgQuit').onclick=()=>{S.prog=null;S.progs=[];save();syncProgBtn();$('mProgram').classList.remove('on');};
 
 function modeText(m){
   return m==='cozy'
