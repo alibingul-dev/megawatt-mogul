@@ -367,6 +367,14 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 @media (max-height:700px){#tChar{width:104px;height:104px}.t-char{bottom:4%;left:5%;right:auto}.t-bubble{bottom:34px;font-size:12.5px;max-width:min(200px,50vw)}.t-turb{width:78px;right:5%;left:auto}}
 .t-ver{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 30px);color:rgba(255,255,255,.85);font-family:var(--disp);font-size:14px;letter-spacing:.5px;font-weight:400}
 .t-credit{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 14px);color:rgba(255,255,255,.85);font-size:11px;font-weight:700}
+.t-prog{pointer-events:auto;margin-top:12px;padding:10px 20px;border-radius:14px;background:rgba(255,255,255,.92)!important;color:#1D2433!important;font-family:var(--disp);font-size:17px;font-weight:400;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.pglist{display:flex;flex-direction:column;gap:8px;text-align:left;max-height:46vh;overflow:auto;margin:6px 0}
+.pgi{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:12px;background:#F2F5F9}
+.pgi.on{background:#E6F7EE}
+.pgi .ck{font-size:17px;line-height:1.3}
+.pgi b{display:block;font-weight:400;font-family:var(--disp);font-size:16px;line-height:1.25}
+.pgi small{color:var(--soft);font-size:13px;line-height:1.35}
+.pgcode{font:17px/1.4 monospace;background:#1D2433;color:#FFD23F;padding:11px;border-radius:10px;letter-spacing:2px;text-align:center;margin:8px 0}
 @media (prefers-reduced-motion: reduce){.t-rot,.t-play{animation:none}}
 @media (prefers-reduced-motion: reduce){ .toast{animation:none} }
 </style>
@@ -387,12 +395,13 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div class="t-line" data-i18n="tagline">Build wind and solar. Buy low, sell the peak.</div>
     <button id="playBtn" class="t-play" disabled>Building the grid…</button>
     <label class="t-tut"><input type="checkbox" id="tutChk" checked> <span data-i18n="showHow">Show me how to play</span></label>
+    <button id="progBtn" class="t-prog" hidden>Programs</button>
     <div class="t-lang"><button data-lang="en">ENG</button><button data-lang="tr">TR</button></div>
     <div class="t-status" id="tStatus"></div>
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.50.0</div>
+  <div class="t-ver" id="tVer">v0.51.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -421,6 +430,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 </div>
 <div id="sideCol">
       <button class="rb" id="gridBtn" aria-label="Grid lines" hidden>🔌</button>
+      <button class="rb" id="progIco" aria-label="Program" hidden>🎓</button>
       <button class="rb" id="repBtn" aria-label="Finance report">📊</button>
       <button class="rb" id="infoBtn" aria-label="Tips">ℹ️<span class="badge" id="infoDot" hidden>!</span></button>
       <button class="rb zb" id="zIn" aria-label="Zoom in">＋</button>
@@ -457,6 +467,12 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <h2 id="stTitle">How do you want to play?</h2>
   <p id="stSub"></p>
   <div class="copts" id="stOpts"></div>
+</div></div>
+<div class="modal" id="mProgram"><div class="sheet">
+  <h2 id="pgTitle">Program</h2>
+  <p id="pgSub"></p>
+  <div id="pgList" class="pglist"></div>
+  <div class="btns"><button id="pgQuit">Leave this program</button><button class="pri" id="pgClose">Close</button></div>
 </div></div>
 <div class="modal" id="mLang"><div class="sheet">
   <h2>Choose your language<br><small style="font-size:18px;color:var(--soft)">Dilini seç</small></h2>
@@ -564,6 +580,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="sTut" data-i18n="sTut">Replay the tutorial</button>
     <button id="newsBtn">📣 <span id="newsLbl">What's new</span><span class="badge" id="newsDot" hidden>!</span></button>
     <button id="sMode">Mode: Competitive</button>
+    <button id="sCode">🔑 Enter a code</button>
     <button id="sSpeed">Time speed: normal</button>
     <button class="pri setback">‹ Back</button>
   </div>
@@ -580,7 +597,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.50.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.51.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5304,6 +5321,7 @@ function fresh(){
     crew:{auto:true,min:10,roles:[],plan:['auto','auto','auto','auto'],sites:[],mkts:[],staff:[],fixEff:0.7,tab:'all'},
     satT:{},snow:0,bat:{},batFire:0,batFireT:0,batCycles:0,batCharge:0,batFault:false,gridWear:0,gridSold:0,morale:null,mods:[],contract:null,event:null,nextEvent:null,cardHour:null,cardHour2:null,cardSoon:0,cardDay:-1,dayEarned:0,lastDayEarned:0,
     lang:'en',lvl:1,tutDone:false,tipsSeen:{},seenVer:'',claimed:{},badges:[],earnLog:[],group:[],nick:'',ref:'',guest:false,syncBase:0,dev:'',ledger:[],cardPrefs:{},cardHist:[],dayLog:[],debt:0,
+    progs:[],prog:null,progStep:{},progDone:{},
     stats:{stored:0,peakCells:0,planned:0,crewCells:0,crewRev:0,byMkt:{},fixSpend:0},hints:{},muted:false,shadows:true,lowFlash:false,speed:1,lastSave:Date.now()};
 }
 const built=id=>!!S.built[id];
@@ -6847,6 +6865,7 @@ function hud(dt){
   hudT+=dt;if(hudT<0.15)return;hudT=0;
   if(!cozy()&&canLevel())doLevelUp(true);
   try{checkRivals();}catch(e){}       // no panel, no clicking: the ladder climbs itself
+  try{progCheck();}catch(e){}         // a program, if one is running, ticks its own checklist
   const t=hourNow(),h=Math.floor(t)%24,pr=priceNow(),lv=level(pr);
   $('cash').textContent=fmt(S.cash);$('wealth').textContent=fmt(wealth());{const c=S.contract,d=$('dealC');d.hidden=!c;if(c){const hl=Math.max(0,Math.ceil((c.until-gameNow())/HOUR));d.textContent=`🤝 ${c.delivered}/${c.need} · ${hl}h`;}}{const L=lossLastHour(),e=$('lossC');e.hidden=L<1;if(L>=1)e.textContent=`−${L} ⚡ · ${Math.round(efficiency()*100)}%`;e.title=L>=1?(S.lang==='tr'?'Son bir saatte kaybolan enerji · verimlilik':'Energy lost in the last hour · efficiency'):'';}$('carry').textContent=`${S.carry}/${carryCap()}`;
   $('pnow').textContent='₵'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
@@ -7634,6 +7653,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.51.0',t:['Programs: the menu grows when a code opens it','Programlar: kod girilince men\u00fc b\u00fcy\u00fcr'],l:[
+  ['Settings \u203a Game now has \u201cEnter a code\u201d. A valid code adds a program to the title screen; without one nothing changes and nothing extra is shown.','Ayarlar \u203a Oyun\u2019a \u201cKod gir\u201d eklendi. Ge\u00e7erli bir kod ba\u015fl\u0131k ekran\u0131na bir program ekler; kod yoksa hi\u00e7bir \u015fey de\u011fi\u015fmez, fazladan bir \u015fey g\u00f6r\u00fcnmez.'],
+  ['The first program is Onboarding: ten guided steps through a first day at an energy company, each one explaining why it matters. It runs on top of your normal game \u2014 nothing is reset and nothing is locked.','\u0130lk program Oryantasyon: bir enerji \u015firketinde ilk g\u00fcn\u00fc ge\u00e7iren on rehberli ad\u0131m, her biri neden \u00f6nemli oldu\u011funu anlat\u0131yor. Normal oyununun \u00fczerinde \u00e7al\u0131\u015f\u0131r \u2014 hi\u00e7bir \u015fey s\u0131f\u0131rlanmaz, hi\u00e7bir \u015fey kilitlenmez.'],
+  ['Finishing a program prints a result code on your own screen. The game sends nothing anywhere \u2014 you pass the code on yourself, or you do not.','Bir program\u0131 bitirmek kendi ekran\u0131nda bir sonu\u00e7 kodu bas\u0131yor. Oyun hi\u00e7bir yere hi\u00e7bir \u015fey g\u00f6ndermiyor \u2014 kodu sen iletirsin ya da iletmezsin.']]},
  {v:'0.50.0',t:['Bigger tanks, longer lines, and lines that wear','Daha b\u00fcy\u00fck tanklar, daha uzun hatlar, y\u0131pranan hatlar'],l:[
   ['Battery sites hold more from the first upgrade, and the capacity ladder runs four rungs further. A fully upgraded site now holds 1125 cells instead of 660.','Batarya sahalar\u0131 ilk y\u00fckseltmeden itibaren daha \u00e7ok tutuyor ve kapasite merdiveni d\u00f6rt basamak uzad\u0131. Tam y\u00fckseltilmi\u015f bir saha art\u0131k 660 yerine 1125 h\u00fccre tutuyor.'],
   ['Grid lines go to five levels and carry up to 70% of a plant instead of 45%.','\u015eebeke hatlar\u0131 be\u015f seviyeye \u00e7\u0131kt\u0131 ve santralin %45\u2019i yerine %70\u2019ine kadar\u0131n\u0131 ta\u015f\u0131yor.'],
@@ -8254,7 +8277,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
+function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Sound, shadows, flashes','Ses, gölge, parlama']],
   data:['setData',['💾','Save data','Kayıt verisi'],['Save code, backup, delete','Kayıt kodu, yedek, silme']]};
@@ -8292,7 +8315,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.50.0';
+const GAME_VERSION='0.51.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -8416,11 +8439,130 @@ function start(kit){
   btn.textContent=had?L('Continue','Devam et'):L('Play','Oyna');
   $('tStatus').innerHTML=had?`👛 ₵${fmt(S.cash)} · 🏛️ ₵${fmt(wealth())}<br>📅 ${dateLabel(S.day)}`:'';
   const veteran=had&&(S.tutDone||S.day>=3||S.soldCells>=20);
-  $('tutChk').checked=!veteran;$('tutChk').closest('label').hidden=veteran;applyLang();
+  $('tutChk').checked=!veteran;$('tutChk').closest('label').hidden=veteran;applyLang();try{syncProgBtn();}catch(e){}
   btn.onclick=startFlow;
   requestAnimationFrame(frame);
 }
 let playing=false;
+
+/* ======================= PROGRAMS =======================
+   Alternative modes that ride on the same engine and only appear in the menu
+   once their access code has been entered. Nothing is sent anywhere: a finished
+   program prints a result code on the player's own screen and the player passes
+   it on themselves, so the game never becomes a collector of anyone's data. */
+function codeHash(v){let h=2166136261>>>0;const t=String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
+function progCode(id){
+  const n=codeHash(id+'|'+(S.seed||0)+'|'+(S.day||0)+'|'+Math.round(S.earned||0));
+  return id.toUpperCase().slice(0,3)+'-'+('0000000'+n.toString(36).toUpperCase()).slice(-7);
+}
+const PROGRAMS=[
+ {id:'onb',icon:'🎓',h:3134712986,
+  name:['Onboarding','Oryantasyon'],
+  sub:['A guided first day at an energy company. Ten steps, no score, no time limit.','Bir enerji şirketinde rehberli ilk gün. On adım, puan yok, süre yok.'],
+  steps:[
+   {t:['Collect energy from the turbine','Türbinden enerji topla'],
+    w:['A plant produces whether anyone is watching or not. Energy that nobody moves is energy that fades.','Santral kimse bakmasa da üretir. Kimsenin taşımadığı enerji söner.'],
+    ok:()=>S.carry>0||S.soldCells>0},
+   {t:['Carry it to the city and sell it','Şehre taşı ve sat'],
+    w:['Production is worth nothing until it reaches a buyer. Everything between the two is your job.','Üretim, alıcıya ulaşana kadar hiçbir şey etmez. Aradaki her şey senin işin.'],
+    ok:()=>S.soldCells>0},
+   {t:['Make five sales and watch the price box','Beş satış yap ve fiyat kutusunu izle'],
+    w:['The same cell is not worth the same at 04:00 and at 19:00. Demand sets the price, hour by hour.','Aynı hücre 04:00 ile 19:00’da aynı etmez. Fiyatı talep belirler, saat saat.'],
+    ok:()=>S.soldCells>=5},
+   {t:['Build a second turbine','İkinci bir türbin kur'],
+    w:['One plant is a hobby. Volume is what makes a position worth managing.','Tek santral hobidir. Bir pozisyonu yönetmeye değer kılan şey hacimdir.'],
+    ok:()=>built('t2')},
+   {t:['Build a solar panel','Bir güneş paneli kur'],
+    w:['Wind and sun do not fail at the same hour. Mixing them is the cheapest risk management there is.','Rüzgâr ile güneş aynı saatte kesilmez. İkisini karıştırmak en ucuz risk yönetimidir.'],
+    ok:()=>built('s1')},
+   {t:['Build the battery station','Batarya istasyonunu kur'],
+    w:['Storage turns a production business into a trading business: you stop selling when you produce and start selling when you choose.','Depolama, üretim işini ticaret işine çevirir: ürettiğinde değil, seçtiğinde satarsın.'],
+    ok:()=>built('bat')},
+   {t:['Store 10 cells while the price is low','Fiyat düşükken 10 hücre depola'],
+    w:['Buying cheap is a decision you make when it feels wrong. That is the whole trade.','Ucuza almak, yanlış hissettiren anda verdiğin karardır. Bütün iş bu.'],
+    ok:()=>(S.stats.stored||0)>=10},
+   {t:['Sell 8 cells at the evening peak','Akşam zirvesinde 8 hücre sat'],
+    w:['The peak is short and it does not wait. Being ready for it is worth more than producing more.','Zirve kısadır ve beklemez. Ona hazır olmak, daha çok üretmekten değerlidir.'],
+    ok:()=>(S.stats.peakCells||0)>=8},
+   {t:['Hire your first helper','İlk yardımcını işe al'],
+    w:['Beyond a certain size you stop carrying and start deciding who carries.','Belli bir büyüklükten sonra taşımayı bırakır, kimin taşıyacağına karar verirsin.'],
+    ok:()=>(S.up.helper||0)>0},
+   {t:['Give your helper a plan','Yardımcına bir plan ver'],
+    w:['An instruction nobody wrote down is an instruction nobody follows. Same here, same at work.','Yazılmayan talimat uygulanmaz. Burada da, işte de.'],
+    ok:()=>(S.stats.planned||0)>0}]}
+];
+function syncProgBtn(){
+  const b=$('progBtn');if(b){b.hidden=!((S.progs||[]).length);b.textContent='🎓 '+L('Programs','Programlar');}
+  const i=$('progIco');if(i)i.hidden=!((S.progs||[]).length);   // stays reachable in game, program or not
+}
+function progOk(p,i){
+  S.progStep=S.progStep||{};const a=S.progStep[p.id]=S.progStep[p.id]||[];
+  if(a.indexOf(i)>=0)return true;
+  let v=false;try{v=!!p.steps[i].ok();}catch(e){}
+  if(v)a.push(i);
+  return v;
+}
+function progCheck(){
+  if(!S.prog)return;
+  const p=PROGRAMS.find(x=>x.id===S.prog);if(!p)return;
+  S.progDone=S.progDone||{};if(S.progDone[p.id])return;
+  const before=((S.progStep||{})[p.id]||[]).length;
+  let n=0;for(let i=0;i<p.steps.length;i++)if(progOk(p,i))n++;
+  if(n>before){try{sfx.goal();}catch(e){}
+    toast(`🎓 ${n}/${p.steps.length} · ${tt(p.steps[n-1].t)}`);}
+  if(n>=p.steps.length){
+    S.progDone[p.id]={day:S.day,code:progCode(p.id)};save();syncProgBtn();
+    try{trackOnce('prog-done-'+p.id);}catch(e){}
+    openProgram();
+  }
+}
+function openProgram(){
+  const p=PROGRAMS.find(x=>x.id===S.prog);if(!p)return;
+  const done=(S.progDone||{})[p.id];
+  $('pgTitle').textContent=p.icon+' '+tt(p.name);
+  $('pgSub').textContent=tt(p.sub);
+  let html=p.steps.map((st,i)=>{const ok=progOk(p,i);
+    return `<div class="pgi${ok?' on':''}"><span class="ck">${ok?'✅':'⬜'}</span><span><b>${tt(st.t)}</b><small>${tt(st.w)}</small></span></div>`;}).join('');
+  if(done){
+    html+=`<div class="pgi on"><span class="ck">🏁</span><span><b>${L('Programme complete','Program tamamlandı')}</b>`
+      +`<small>${L('Send this code to whoever gave you the access code. The game sends nothing by itself.','Bu kodu sana erişim kodunu veren kişiye ilet. Oyun kendiliğinden hiçbir şey göndermez.')}</small></span></div>`
+      +`<div class="pgcode">${done.code}</div>`;
+  }
+  $('pgList').innerHTML=html;
+  $('pgQuit').textContent=L('Leave this program','Bu programdan çık');
+  $('pgClose').textContent=L('Close','Kapat');
+  $('mProgram').classList.add('on');
+}
+function openPrograms(){
+  const list=(S.progs||[]).map(id=>PROGRAMS.find(p=>p.id===id)).filter(Boolean);
+  $('stTitle').textContent=L('Programs','Programlar');
+  $('stSub').textContent=L('Opened with a code. Your normal game keeps running underneath.','Kodla açılır. Normal oyunun altta çalışmaya devam eder.');
+  $('stOpts').innerHTML=list.map(p=>{const d=(S.progDone||{})[p.id],mark=d?' ✅':(S.prog===p.id?' ●':'');
+    return `<button data-p="${p.id}"><b>${p.icon} ${tt(p.name)}${mark}</b><small>${tt(p.sub)}</small></button>`;}).join('')
+    +`<button data-p=""><b>${L('No program','Program yok')}</b><small>${L('Just play the normal game.','Sadece normal oyunu oyna.')}</small></button>`;
+  $('stOpts').onclick=e=>{const b=e.target.closest('button[data-p]');if(!b)return;
+    S.prog=b.dataset.p||null;if(S.prog){S.progStep=S.progStep||{};S.progDone=S.progDone||{};}
+    save();$('mStart').classList.remove('on');syncProgBtn();
+    if(S.prog){try{trackOnce('prog-open-'+S.prog);}catch(e){}openProgram();}};
+  $('mStart').classList.add('on');
+}
+$('sCode').onclick=()=>{
+  const v=prompt(L('Enter your access code','Erişim kodunu gir'));
+  if(v===null)return;
+  const p=PROGRAMS.find(x=>x.h===codeHash(v));
+  if(!p){toast(L('That code did not work.','Bu kod çalışmadı.'));return;}
+  S.progs=S.progs||[];
+  if(S.progs.indexOf(p.id)<0){S.progs.push(p.id);try{trackOnce('prog-unlock-'+p.id);}catch(e){}}
+  save();syncProgBtn();
+  toast(L('Unlocked: ','Açıldı: ')+tt(p.name),'big');
+  openPrograms();
+};
+$('progBtn').onclick=openPrograms;
+$('progIco').onclick=()=>{if(S.prog)openProgram();else openPrograms();};
+$('pgClose').onclick=()=>$('mProgram').classList.remove('on');
+$('pgQuit').onclick=()=>{S.prog=null;save();syncProgBtn();$('mProgram').classList.remove('on');};
+
 function modeText(m){
   return m==='cozy'
     ? [L('☕ Cozy','☕ Çerezlik'),L('Walk, collect, sell, build. Your crew handles the rest. Nothing breaks, nothing burns, nothing needs deciding.','Yürü, topla, sat, kur. Gerisini ekibin halleder. Hiçbir şey bozulmaz, yanmaz, karar gerektirmez.')]
