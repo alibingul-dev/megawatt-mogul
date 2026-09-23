@@ -418,7 +418,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.55.0</div>
+  <div class="t-ver" id="tVer">v0.56.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -617,7 +617,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.55.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.56.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4802,7 +4802,12 @@ function priceAt(m){
 function nearestMarket(o){return markets().sort((a,b)=>dist(o,a)-dist(o,b))[0];}
 /* ---- per-plant grid connection: a share of this plant's output goes straight to the
        nearest market, no carrying. It sells at whatever the price is right then. ---- */
-const GRIDMAX=5, GRIDSHARE=0.14;                      // 14% of output per level, up to 70%
+const GRIDMAX=5, GRIDSHARE=0.14;
+const GSPDMAX=5, GRIDSPD=0.22;                      // cells per second per speed level
+function gridSpd(p){return Math.min(GSPDMAX,p.gspd||0);}
+function gridRate(p){return gridSpd(p)*GRIDSPD*gridHealth(p);}
+function gridSpdCost(p){const pd=pad(p.id),base=(pd&&pd.cost?pd.cost:100);return Math.round(base*0.6*Math.pow(2.0,gridSpd(p)));}
+function canGridSpd(p){return gridLvl(p)>0&&gridSpd(p)<GSPDMAX;}                      // 14% of output per level, up to 70%
 /* A line that never degrades is a line you build once and forget, and at that point the
    plant runs itself. Every cell the line pushes wears the connection a little; a worn
    line carries less, until somebody stands at the plant and services it. */
@@ -5051,7 +5056,7 @@ const PADS=[
   {id:'t2',kind:'build',type:'turbine',x:680,y:760,cost:12,req:null},
   {id:'t3',kind:'build',type:'turbine',x:800,y:760,cost:35,req:'t2'},
   {id:'s1',kind:'build',type:'solar',x:560,y:900,cost:70,req:'t2'},
-  {id:'bag',kind:'upg',key:'bag',label:['Backpack','Sırt çantası'],icon:'🎒',x:190,y:800,base:50,growth:1.9,max:8,req:'t3'},
+  {id:'bag',kind:'upg',key:'bag',label:['Backpack','Sırt çantası'],icon:'🎒',x:190,y:800,base:50,growth:1.9,max:10,req:'t3'},
   {id:'s2',kind:'build',type:'solar',x:680,y:900,cost:140,req:'s1'},
   {id:'t4',kind:'build',type:'turbine',x:800,y:900,cost:220,req:'s2'},
   {id:'bat',kind:'build',type:'battery',x:1090,y:640,cost:250,req:'s1'},
@@ -5701,6 +5706,10 @@ function update(dt){
       if(gridLvl(p)>0){p.gacc=(p.gacc||0)+gridShare(p);
         if(p.gacc>=1){p.gacc-=1;gridDeliver(p);continue;}}
       if(p.pile<T.max)pileAdd(p);else logLoss(1);}
+    if(gridLvl(p)>0&&gridSpd(p)>0&&p.pile>0&&!p.broken&&!p.fire){   // the line also empties what is already stacked
+      p.gsa=(p.gsa||0)+gridRate(p)*gdt;
+      while(p.gsa>=1&&p.pile>0){p.gsa-=1;pileTake(p);gridDeliver(p);}
+    }
     p.spin=(p.spin||0)+gdt*(0.6+cf*6);
     if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){damagePlant(p,DAY.weather==='stormy'?0.35:0.12);const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
@@ -6173,7 +6182,7 @@ const hemi=new THREE.HemisphereLight(0xcfe9ff,0x5d7a45,0.6);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffffff,1);sun.castShadow=true;
 sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-26,right:26,top:26,bottom:-26,near:1,far:120});sun.shadow.bias=-0.0008;
 scene.add(sun);scene.add(sun.target);
-const lamp=new THREE.PointLight(0xffe6b0,0,14,1.6);scene.add(lamp);
+const lamp=new THREE.SpotLight(0xffe6b0,0,30,0.62,0.55,1.1);lamp.castShadow=false;scene.add(lamp);scene.add(lamp.target);  // one shadow map only (error 16)
 scene.fog=new THREE.Fog(0x9ed5f5,70,170);
 
 const groundMats=[];
@@ -6863,7 +6872,8 @@ function render(dt,now){
   const ZL=ZOOMS[S.zoom==null?1:S.zoom];const wantW=(asp<1?15:28)*ZL;const hf=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*asp);
   const distc=Math.min(190,Math.max(26,(wantW/2)/Math.tan(hf/2)));
   const PX=S.px*U,PZ=S.py*U;
-  const halfW=Math.min(34,wantW*0.48);const tx=Math.max(halfW,Math.min(70-halfW,PX)),tz=Math.max(12,Math.min(98,PZ));
+  const CX=camAim?camAim.x*U:PX, CZ=camAim?camAim.y*U:PZ;      // she points, the camera goes
+  const halfW=Math.min(34,wantW*0.48);const tx=Math.max(halfW,Math.min(70-halfW,CX)),tz=Math.max(12,Math.min(98,CZ));
   if(shadowZoom!==ZL){shadowZoom=ZL;const e=26*ZL;Object.assign(sun.shadow.camera,{left:-e,right:e,top:e,bottom:-e});sun.shadow.camera.updateProjectionMatrix();document.body.classList.toggle('far',ZL>=2);}
   const ang=THREE.MathUtils.degToRad(54);
   const want=new THREE.Vector3(tx,Math.sin(ang)*distc,tz+Math.cos(ang)*distc);
@@ -6873,8 +6883,8 @@ function render(dt,now){
   const sky=skyCol(t);scene.background=sky;scene.fog.color.copy(sky);
   scene.fog.near=distc*0.9;scene.fog.far=distc*2.4;
   const sa=Math.PI*(t-6)/12;
-  sun.position.set(PX+Math.cos(sa)*30,Math.max(6,Math.sin(Math.max(0.15,Math.min(Math.PI-0.15,sa)))*40),PZ+14);
-  sun.target.position.set(PX,0,PZ);
+  sun.position.set(CX+Math.cos(sa)*30,Math.max(6,Math.sin(Math.max(0.15,Math.min(Math.PI-0.15,sa)))*40),CZ+14);
+  sun.target.position.set(CX,0,CZ);
   const wdim=DAY.weather==='stormy'?0.5:DAY.weather==='rainy'?0.62:DAY.weather==='cloudy'?0.85:1;
   sun.intensity=(0.2+(1-nk)*0.62)*wdim;sun.color.setHSL(0.1,nk>0.2?0.2:0.35,0.8+0.2*(1-nk));
   if(nk>0.5)sun.color.setHex(0x9fb6ff);
@@ -6883,7 +6893,8 @@ function render(dt,now){
   updateRain(dt,camPos.x,camPos.z-Math.cos(ang)*distc);
   updateBolts(dt,camPos.x,camPos.z-Math.cos(ang)*distc);
   sun.castShadow=S.shadows;
-  lamp.intensity=nk*1.6;lamp.position.set(PX,2.5,PZ);
+  lamp.intensity=nk*3.1;lamp.position.set(PX,3.4,PZ);
+  {const fa=S.face||0;lamp.target.position.set(PX+Math.sin(fa)*11,0,PZ+Math.cos(fa)*11);lamp.target.updateMatrixWorld();}
   winMats.forEach(m=>m.emissiveIntensity=nk);
   // city ring
   const pr=priceNow(),lv=level(pr);
@@ -7409,16 +7420,16 @@ function openCard(){
 const TUT=[
  {t:["Hi! I'm Ela, your field engineer. Your goal: build the richest energy company. 👛 Wallet is your cash, 🏛️ Wealth is cash plus everything you built.","Merhaba! Ben Ela, saha mühendisin. Amacın: en zengin enerji şirketini kurmak. 👛 Cüzdan nakit paran, 🏛️ Zenginlik ise nakit artı kurduğun her şey."],hl:'.bar .box'},
  {t:["Put your finger anywhere on the screen and drag to walk. On a computer, use WASD or the arrow keys. Try it now: time is paused while we talk.","Yürümek için parmağını ekranın herhangi bir yerine koyup sürükle. Bilgisayarda WASD veya ok tuşlarını kullan. Şimdi dene: biz konuşurken zaman duruyor."]},
- {t:["Walk next to a wind turbine. The ⚡ cells it produced jump onto your back automatically.","Bir rüzgâr türbininin yanına yürü. Ürettiği ⚡ hücreler otomatik olarak sırtına geçer."]},
- {t:["Carry them into the ring next to the city to sell. The price changes every hour. The evening peak (18–22) pays the most.","Satmak için şehrin yanındaki halkaya taşı. Fiyat her saat değişir. En çok akşam zirvesi (18–22) kazandırır."],hl:'.market'},
+ {t:["Walk next to a wind turbine. The ⚡ cells it produced jump onto your back automatically.","Bir rüzgâr türbininin yanına yürü. Ürettiği ⚡ hücreler otomatik olarak sırtına geçer."],cam:()=>S.plants[0]},
+ {t:["Carry them into the ring next to the city to sell. The price changes every hour. The evening peak (18–22) pays the most.","Satmak için şehrin yanındaki halkaya taşı. Fiyat her saat değişir. En çok akşam zirvesi (18–22) kazandırır."],hl:'.market',cam:()=>CITY},
  {t:["Energy doesn't last: yellow cells are fresh, orange ones are ageing, red ones are about to vanish. Sell them or store them in time.","Enerji bekletilmez: sarı hücre taze, turuncu eskiyor, kırmızı kaybolmak üzere. Zamanında sat ya da depola."]},
- {t:["Stand on a dashed square to pay for it bit by bit. That's how you build turbines, solar panels and upgrades.","Kesik çizgili karenin üstünde durunca parası azar azar ödenir. Türbin, güneş paneli ve yükseltmeleri böyle kurarsın."]},
- {t:["Later you'll build a battery. Drop energy on the green pad when it's cheap, take it from the red pad at the peak. Buy low, sell high!","İleride batarya kuracaksın. Ucuzken enerjiyi yeşil alana bırak, zirvede kırmızı alandan al. Ucuza al, pahalıya sat!"]},
- {t:["At HQ you can hire helpers. With the 👷 button you decide when they sell and when they store.","Merkezde yardımcı işe alabilirsin. 👷 butonuyla ne zaman satıp ne zaman depolayacaklarına sen karar verirsin."]},
+ {t:["Stand on a dashed square to pay for it bit by bit. That's how you build turbines, solar panels and upgrades.","Kesik çizgili karenin üstünde durunca parası azar azar ödenir. Türbin, güneş paneli ve yükseltmeleri böyle kurarsın."],cam:()=>pad('t2')},
+ {t:["Later you'll build a battery. Drop energy on the green pad when it's cheap, take it from the red pad at the peak. Buy low, sell high!","İleride batarya kuracaksın. Ucuzken enerjiyi yeşil alana bırak, zirvede kırmızı alandan al. Ucuza al, pahalıya sat!"],cam:()=>pad('bat')},
+ {t:["At HQ you can hire helpers. With the 👷 button you decide when they sell and when they store.","Merkezde yardımcı işe alabilirsin. 👷 butonuyla ne zaman satıp ne zaman depolayacaklarına sen karar verirsin."],cam:()=>pad('helper')},
  {t:["Seasons, weather and market news change prices. Sometimes a decision card appears. Every choice has a trade-off.","Mevsim, hava ve piyasa haberleri fiyatları değiştirir. Bazen bir karar kartı çıkar. Her seçimin bir bedeli var."],hl:'#banner'},
  {t:["The yellow arrow shows your next goal. Use the mini map and ＋/－ to look around. In ⚙️ you'll find language, save code and this guide again. ℹ️ collects tactics you unlock as you play. Good luck, boss!","Sarı ok bir sonraki hedefini gösterir. Etrafa bakmak için mini haritayı ve ＋/－ butonlarını kullan. ⚙️ içinde dil, kayıt kodu ve bu rehber var. ℹ️ oynadıkça açılan taktikleri toplar. Bol şans patron!"],hl:'#mini'},
 ];
-let tutOpen=false,tutI=0,tutSeq=null,tutAfter=null;
+let tutOpen=false,tutI=0,tutSeq=null,tutAfter=null,camAim=null;   // camAim: the guide borrows the camera
 function whenNoModal(fn){if(document.querySelector('.modal.on'))setTimeout(()=>whenNoModal(fn),400);else fn();}
 function openLangPick(then){
   const m=$('mLang');m.classList.add('on');
@@ -7441,6 +7452,7 @@ function startTutorial(){
 function showTut(){
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
   const seq=tutSeq||TUT,st=seq[tutI];
+  camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y};}catch(e){}}
   $('tutName').textContent=L('Ela · Field engineer','Ela · Saha mühendisi');
   $('tutText').textContent=tt(st.b||st.t);   // a programme line carries its body in .b
   $('tutStep').textContent=`${tutI+1}/${seq.length}`;
@@ -7450,7 +7462,7 @@ function showTut(){
 }
 function endTutorial(done){
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
-  $('tut').hidden=true;$('tutDim').hidden=true;tutOpen=false;last=0;
+  $('tut').hidden=true;$('tutDim').hidden=true;tutOpen=false;camAim=null;last=0;
   const wasGame=(tutSeq===TUT||tutSeq===null),after=tutAfter;
   tutSeq=null;tutAfter=null;
   if(wasGame){S.tutDone=true;trackOnce(done?'tutorial-finished':'tutorial-skipped');}
@@ -7729,8 +7741,12 @@ function renderGrid(){
       ${lv>0?`<div class="scale"><span>${gridNeedsService(x)?'🔌 ':''}${L('Line condition','Hat durumu')} ${Math.round(gridHealth(x)*100)}%</span><span>${gridNeedsService(x)?L(`service ₵${fmt(gridServiceCost(x))} — stand at the plant`,`bakım ₵${fmt(gridServiceCost(x))} — santralın yanında dur`):L('fine','iyi')}</span></div>`:''}
       <div class="assign" style="grid-template-columns:1fr 1fr;margin-top:8px">
         <button data-gto="${x.id}" class="${gridTo(x)==='bat'?'duty':''}"><small>${L('Sends to','Gönderdiği yer')}</small><b>${gridTo(x)==='bat'?'🔋 '+L('Battery','Batarya'):'🏙️ '+L('Nearest market','En yakın pazar')}</b></button>
-        <button data-gup="${x.id}" ${can&&afford?'':'disabled'}><small>${can?(afford?L('Upgrade','Yükselt'):L('Not enough cash','Para yetmiyor')):L('Maxed','Tamam')}</small><b>${can?'₵'+fmt(cost):L('Lv','Sv')+GRIDMAX}</b></button>
-      </div>${T.kind!=='dam'?'':`
+        <button data-gup="${x.id}" ${can&&afford?'':'disabled'}><small>${can?(afford?L('More share','Pay artır'):L('Not enough cash','Para yetmiyor')):L('Maxed','Tamam')}</small><b>${can?'₵'+fmt(cost):L('Lv','Sv')+GRIDMAX}</b></button>
+      </div>
+      ${lv>0?`<div class="scale" style="margin-top:8px"><span>${L('Line speed','Hat hızı')} ${gridSpd(x)}/${GSPDMAX}</span><span>${gridSpd(x)?L(`${gridRate(x).toFixed(2)} cells/s off the stack`,`yığından ${gridRate(x).toFixed(2)} hücre/sn`):L('takes new output only','sadece yeni üretimi alıyor')}</span></div>
+      <div class="assign" style="grid-template-columns:1fr;margin-top:6px">
+        <button data-gspd="${x.id}" ${canGridSpd(x)&&S.cash>=gridSpdCost(x)?'':'disabled'}><small>${canGridSpd(x)?(S.cash>=gridSpdCost(x)?L('Faster line','Hattı hızlandır'):L('Not enough cash','Para yetmiyor')):L('Maxed','Tamam')}</small><b>${canGridSpd(x)?'₵'+fmt(gridSpdCost(x)):L('Lv','Sv')+GSPDMAX}</b></button>
+      </div>`:''}${T.kind!=='dam'?'':`
       <div class="scale" style="margin-top:10px"><span>💧 ${L('Reservoir','Hazne')} ${Math.round(damRes(x))}/${damCap(x)}</span><span>${x.open?L('releasing','bırakıyor'):L('filling','doluyor')}</span></div>
       <div class="assign" style="grid-template-columns:1fr 1fr 1fr;margin-top:6px">
         ${[['auto',L('Auto','Otomatik'),L('Peak only','Sadece zirve')],['open',L('Open','Açık'),L('Always run','Hep çalışsın')],['shut',L('Shut','Kapalı'),L('Store only','Sadece biriktir')]]
@@ -7755,7 +7771,13 @@ $('gridBody').addEventListener('click',e=>{
     const c=gridCost(x);if(S.cash<c)return;
     S.cash-=c;x.grid=gridLvl(x)+1;sfx.build();logLedger('grid',-c,codeOf(x.id));
     toast(L(`${codeOf(x.id)} line at level ${gridLvl(x)}: ${Math.round(gridShare(x)*100)}% of its output moves by itself.`,`${codeOf(x.id)} hattı seviye ${gridLvl(x)}: üretiminin %${Math.round(gridShare(x)*100)}'i kendi taşınıyor.`),'good');
-    trackOnce('gridline');save();renderGrid();}
+    trackOnce('gridline');save();renderGrid();return;}
+  const sp=e.target.closest('button[data-gspd]');
+  if(sp&&!sp.disabled){const x=S.plants.find(q=>q.id===sp.dataset.gspd);if(!x||!canGridSpd(x))return;
+    const c=gridSpdCost(x);if(S.cash<c)return;
+    S.cash-=c;x.gspd=gridSpd(x)+1;sfx.build();logLedger('grid',-c,codeOf(x.id));
+    toast(L(`${codeOf(x.id)} line speed ${gridSpd(x)}: it now clears ${gridRate(x).toFixed(2)} cells a second off the stack.`,`${codeOf(x.id)} hat hızı ${gridSpd(x)}: yığından saniyede ${gridRate(x).toFixed(2)} hücre çekiyor.`),'good');
+    trackOnce('gridspeed');save();renderGrid();}
 });
 function openMarkets(){
   const avg=todayAvg(),h=Math.floor(hourNow())%24,t=hourNow(),P={x:S.px,y:S.py};
@@ -7802,6 +7824,11 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.56.0',t:['Ela points, the camera follows','Ela g\u00f6steriyor, kamera gidiyor'],l:[
+  ['When the guide says \u201cthat turbine\u201d or \u201cthe city\u201d, the camera now travels there while she talks \u2014 time is already stopped, so you actually get to look at what she means. The onboarding briefing does the same.','Rehber \u201c\u015fu t\u00fcrbin\u201d ya da \u201c\u015fehir\u201d dedi\u011finde kamera art\u0131k o \u015feye gidiyor \u2014 zaman zaten durdu\u011fu i\u00e7in bahsetti\u011fi \u015feye ger\u00e7ekten bakabiliyorsun. Oryantasyon anlat\u0131m\u0131 da ayn\u0131s\u0131n\u0131 yap\u0131yor.'],
+  ['At night you no longer stand in a glowing circle. You carry a headlamp: the light goes where you are facing, and the rest of the field stays dark.','Gece art\u0131k \u0131\u015f\u0131kl\u0131 bir dairenin i\u00e7inde durmuyorsun. Kafa lamban var: \u0131\u015f\u0131k bakt\u0131\u011f\u0131n y\u00f6ne gidiyor, sahan\u0131n geri kalan\u0131 karanl\u0131k kal\u0131yor.'],
+  ['The backpack goes two levels further \u2014 48 cells at the top instead of 40.','S\u0131rt \u00e7antas\u0131 iki seviye daha uzad\u0131 \u2014 tavanda 40 yerine 48 h\u00fccre.'],
+  ['A grid line now has a second dial: speed. Share decides how much of new output the line takes; speed decides how fast it clears what is already stacked at the plant. Five levels, and a worn line is slower at both.','\u015eebeke hatt\u0131n\u0131n art\u0131k ikinci bir kademesi var: h\u0131z. Pay, yeni \u00fcretimin ne kadar\u0131n\u0131 hatt\u0131n ald\u0131\u011f\u0131n\u0131 belirliyor; h\u0131z ise santralda birikmi\u015f y\u0131\u011f\u0131n\u0131 ne kadar \u00e7abuk bo\u015falttt\u0131\u011f\u0131n\u0131. Be\u015f seviye, ve y\u0131pranm\u0131\u015f hat ikisinde de yava\u015f.']]},
  {v:'0.55.0',t:['A funnel you can watch, and damage you can see','\u0130zleyebilece\u011fin bir hortum, g\u00f6rebilece\u011fin hasar'],l:[
   ['The storm card no longer just changes a number. A funnel now crosses the field in front of you \u2014 whichever option you picked. Stop the turbines and it passes harmlessly; keep them spinning and it takes whatever it touches.','F\u0131rt\u0131na kart\u0131 art\u0131k sadece bir say\u0131y\u0131 de\u011fi\u015ftirmiyor. G\u00f6z\u00fcn\u00fcn \u00f6n\u00fcnde sahadan bir hortum ge\u00e7iyor \u2014 hangi se\u00e7ene\u011fi se\u00e7ersen se\u00e7. T\u00fcrbinleri durdurursan zarars\u0131z ge\u00e7er; d\u00f6nd\u00fcrmeye devam edersen dokundu\u011funu al\u0131r.'],
   ['Damage now has two levels. Light damage is the wrench you know. Heavy damage buckles a turbine at the waist, cracks a panel field black, and sets hydro, dams and a faulted battery smoking \u2014 and it costs 2.6\u00d7 as much and takes almost twice as long to put right.','Hasar art\u0131k iki kademeli. Hafif hasar bildi\u011fin anahtar i\u015fareti. A\u011f\u0131r hasarda t\u00fcrbinin beli b\u00fck\u00fcl\u00fcyor, panel sahas\u0131 simsiyah \u00e7atl\u0131yor, hidro, baraj ve ar\u0131zal\u0131 batarya duman t\u00fct\u00fcyor \u2014 \u00fcstelik 2,6 kat pahal\u0131ya ve neredeyse iki kat uzun s\u00fcrede onar\u0131l\u0131yor.'],
@@ -8486,7 +8513,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.55.0';
+const GAME_VERSION='0.56.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -8638,15 +8665,15 @@ const PROGRAMS=[
    {t:['Electricity cannot be kept','Elektrik saklanamaz'],
     b:["Electricity is not like water in a bucket. You cannot fill it up and keep it. The moment someone turns on a lamp, that electricity has to be made right then.","Elektrik kovadaki su gibi değil. Doldurup bir kenarda tutamazsın. Birisi lambayı açtığı anda, o elektriğin tam o anda üretilmiş olması lazım."]},
    {t:['The spinning one','Dönen şey'],
-    b:["That tall spinning thing is a wind turbine. When the wind blows, it makes electricity. We cannot make the wind blow. The wind decides.","Şu uzun dönen şey bir rüzgâr türbini. Rüzgâr estiğinde elektrik üretir. Rüzgârı biz estiremeyiz. Ona rüzgâr karar verir."]},
+    b:["That tall spinning thing is a wind turbine. When the wind blows, it makes electricity. We cannot make the wind blow. The wind decides.","Şu uzun dönen şey bir rüzgâr türbini. Rüzgâr estiğinde elektrik üretir. Rüzgârı biz estiremeyiz. Ona rüzgâr karar verir."],cam:()=>S.plants[0]},
    {t:['The blue boards','Mavi levhalar'],
-    b:["Those blue boards are solar panels. While the sun is up they make electricity. When the sun goes down, they stop. Every evening.","Şu mavi levhalar güneş paneli. Güneş varken elektrik üretir. Güneş batınca durur. Her akşam."]},
+    b:["Those blue boards are solar panels. While the sun is up they make electricity. When the sun goes down, they stop. Every evening.","Şu mavi levhalar güneş paneli. Güneş varken elektrik üretir. Güneş batınca durur. Her akşam."],cam:()=>S.plants.find(x=>x.type==='solar')||pad('s1')},
    {t:['And here is the problem','İşte sorun burada'],
     b:["In the evening everyone comes home and turns the lights on. That is when electricity is needed most. And that is exactly when the sun goes down.","Akşam olunca herkes eve gelir, ışıkları yakar. Elektriğe en çok o saat ihtiyaç olur. Güneş de tam o saat batar."]},
    {t:['So we use a battery','Bu yüzden batarya var'],
-    b:["A battery is a box for hours. We put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya, saatleri saklayan bir kutu gibi. Gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."]},
+    b:["A battery is a box for hours. We put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya, saatleri saklayan bir kutu gibi. Gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."],cam:()=>pad('bat')},
    {t:['The price moves','Fiyat oynar'],
-    b:["Electricity does not cost the same all day. At night it is cheap. In the evening it is expensive. Same electricity, different hour, different money.","Elektrik gün boyu aynı para etmez. Gece ucuzdur. Akşam pahalıdır. Aynı elektrik, farklı saat, farklı para."]},
+    b:["Electricity does not cost the same all day. At night it is cheap. In the evening it is expensive. Same electricity, different hour, different money.","Elektrik gün boyu aynı para etmez. Gece ucuzdur. Akşam pahalıdır. Aynı elektrik, farklı saat, farklı para."],cam:()=>CITY},
    {t:['That is our job','Bizim işimiz bu'],
     b:["Make it, keep it for the right hour, sell it when it is expensive. That is the whole job. I left you enough money for two turbines and a panel — go build.","Üret, doğru saate sakla, pahalıyken sat. İşin tamamı bu. Sana iki türbin ve bir panel kuracak kadar para bıraktım — hadi kur."]}],
   gloss:[
