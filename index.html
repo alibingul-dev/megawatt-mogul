@@ -368,7 +368,18 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .t-ver{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 30px);color:rgba(255,255,255,.85);font-family:var(--disp);font-size:14px;letter-spacing:.5px;font-weight:400}
 .t-credit{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 14px);color:rgba(255,255,255,.85);font-size:11px;font-weight:700}
 .t-prog{pointer-events:auto;margin-top:12px;padding:10px 20px;border-radius:14px;background:rgba(255,255,255,.92)!important;color:#1D2433!important;font-family:var(--disp);font-size:17px;font-weight:400;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.pgtabs{display:flex;gap:6px;justify-content:center;margin:2px 0 6px}
+.pgtabs button{flex:1;padding:8px 6px;border-radius:11px;background:#EDF1F6;color:#5C6780;font-family:var(--disp);font-size:14px;font-weight:400}
+.pgtabs button.on{background:#1D2433;color:#fff}
 .pglist{display:flex;flex-direction:column;gap:8px;text-align:left;max-height:46vh;overflow:auto;margin:6px 0}
+.pgl{padding:11px 13px;border-radius:12px;background:#F2F5F9}
+.pgl b{display:block;font-family:var(--disp);font-weight:400;font-size:17px;margin-bottom:3px}
+.pgl p{margin:0;font-size:14px;line-height:1.45;color:#3A4357}
+.pgg{padding:9px 12px;border-radius:12px;background:#F2F5F9}
+.pgg b{font-family:var(--disp);font-weight:400;font-size:16px}
+.pgg i{font-style:normal;color:var(--soft);font-size:13px}
+.pgg p{margin:3px 0 0;font-size:13.5px;line-height:1.45;color:#3A4357}
+.pgg.off{background:#FFF6E0}
 .pgi{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:12px;background:#F2F5F9}
 .pgi.on{background:#E6F7EE}
 .pgi .ck{font-size:17px;line-height:1.3}
@@ -401,7 +412,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.51.0</div>
+  <div class="t-ver" id="tVer">v0.52.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -471,6 +482,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 <div class="modal" id="mProgram"><div class="sheet">
   <h2 id="pgTitle">Program</h2>
   <p id="pgSub"></p>
+  <div class="pgtabs" id="pgTabs"></div>
   <div id="pgList" class="pglist"></div>
   <div class="btns"><button id="pgQuit">Leave this program</button><button class="pri" id="pgClose">Close</button></div>
 </div></div>
@@ -597,7 +609,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.51.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.52.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -7653,6 +7665,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.52.0',t:['Onboarding now teaches, not just checks','Oryantasyon art\u0131k sadece i\u015faretlemiyor, anlat\u0131yor'],l:[
+  ['The Onboarding program opens with a briefing written for someone who knows nothing about electricity: why power cannot be stored, what a wind plant and a solar plant actually are, why we store at all, why the price moves hour by hour, and what the job really is.','Oryantasyon program\u0131 art\u0131k elektri\u011fi hi\u00e7 bilmeyen biri i\u00e7in yaz\u0131lm\u0131\u015f bir anlat\u0131mla a\u00e7\u0131l\u0131yor: elektrik neden depolanamaz, r\u00fczg\u00e2r ve g\u00fcne\u015f santrali tam olarak nedir, neden depolar\u0131z, fiyat neden saat saat oynar ve i\u015fin asl\u0131 nedir.'],
+  ['A glossary page explains seventeen terms in both languages \u2014 RES, GES, BESS, capacity factor, peak, day-ahead, imbalance, curtailment and the rest \u2014 including EV charging, which is not in the game but very much in the real business.','S\u00f6zl\u00fck sayfas\u0131 on yedi terimi iki dilde a\u00e7\u0131kl\u0131yor \u2014 RES, GES, BESS, kapasite fakt\u00f6r\u00fc, puant, g\u00fcn \u00f6ncesi, dengesizlik, k\u0131s\u0131tlama ve di\u011ferleri \u2014 oyunda olmayan ama ger\u00e7ek i\u015fte fazlas\u0131yla olan elektrikli ara\u00e7 \u015farj\u0131 dahil.'],
+  ['The program window now has three pages: Briefing, Steps and Glossary.','Program penceresi art\u0131k \u00fc\u00e7 sayfal\u0131: Anlat\u0131m, Ad\u0131mlar ve S\u00f6zl\u00fck.']]},
  {v:'0.51.0',t:['Programs: the menu grows when a code opens it','Programlar: kod girilince men\u00fc b\u00fcy\u00fcr'],l:[
   ['Settings \u203a Game now has \u201cEnter a code\u201d. A valid code adds a program to the title screen; without one nothing changes and nothing extra is shown.','Ayarlar \u203a Oyun\u2019a \u201cKod gir\u201d eklendi. Ge\u00e7erli bir kod ba\u015fl\u0131k ekran\u0131na bir program ekler; kod yoksa hi\u00e7bir \u015fey de\u011fi\u015fmez, fazladan bir \u015fey g\u00f6r\u00fcnmez.'],
   ['The first program is Onboarding: ten guided steps through a first day at an energy company, each one explaining why it matters. It runs on top of your normal game \u2014 nothing is reset and nothing is locked.','\u0130lk program Oryantasyon: bir enerji \u015firketinde ilk g\u00fcn\u00fc ge\u00e7iren on rehberli ad\u0131m, her biri neden \u00f6nemli oldu\u011funu anlat\u0131yor. Normal oyununun \u00fczerinde \u00e7al\u0131\u015f\u0131r \u2014 hi\u00e7bir \u015fey s\u0131f\u0131rlanmaz, hi\u00e7bir \u015fey kilitlenmez.'],
@@ -8315,7 +8331,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.51.0';
+const GAME_VERSION='0.52.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -8460,6 +8476,37 @@ const PROGRAMS=[
  {id:'onb',icon:'🎓',h:3134712986,
   name:['Onboarding','Oryantasyon'],
   sub:['A guided first day at an energy company. Ten steps, no score, no time limit.','Bir enerji şirketinde rehberli ilk gün. On adım, puan yok, süre yok.'],
+  lessons:[
+   {t:['Electricity cannot wait','Elektrik bekleyemez'],
+    b:['Almost everything else you buy can sit in a warehouse. Electricity cannot. At every second of the day, exactly as much has to be produced as is being used — not more, not less. The whole industry exists to keep those two numbers equal.','Satın aldığın hemen her şey depoda bekleyebilir. Elektrik bekleyemez. Günün her saniyesinde, tüketilen kadar üretilmek zorunda — ne fazla ne eksik. Bütün sektör bu iki sayıyı eşit tutmak için var.']},
+   {t:['RES — a wind power plant','RES — rüzgâr enerji santrali'],
+    b:['A wind plant turns moving air into electricity. It produces when the wind blows, and nobody decides when that is. A big one is a few dozen turbines on a ridge; each turbine is roughly 3–6 MW today. You do not control its output — you can only forecast it and plan around it.','Rüzgâr santrali havanın hareketini elektriğe çevirir. Rüzgâr estiğinde üretir ve ne zaman eseceğine kimse karar veremez. Büyük bir RES, bir sırtta onlarca türbindir; bugün her türbin kabaca 3–6 MW. Üretimini kontrol edemezsin — sadece tahmin edip ona göre plan yaparsın.']},
+   {t:['GES — a solar power plant','GES — güneş enerji santrali'],
+    b:['A solar plant turns sunlight into electricity. It produces in the middle of the day and stops at sunset — which is exactly when people come home and demand peaks. That mismatch is not a flaw in the panels; it is the single most important fact in this business.','Güneş santrali gün ışığını elektriğe çevirir. Öğle saatlerinde üretir, güneş batınca durur — yani tam da insanlar eve dönüp talebin zirveye çıktığı saatte. Bu uyumsuzluk panellerin kusuru değil; bu işin en önemli gerçeği.']},
+   {t:['BESS — why we store','BESS — neden depoluyoruz'],
+    b:['A battery storage system charges when there is more electricity than anyone needs and discharges when there is less. It does not produce anything. What it does is move energy across hours — and hours are where the money is, because the same megawatt-hour is worth very different amounts at 04:00 and at 19:00.','Batarya depolama sistemi, kimsenin ihtiyacı olmayan fazla elektrik varken şarj olur, azken boşalır. Hiçbir şey üretmez. Yaptığı şey enerjiyi saatler arasında taşımaktır — para da saatlerdedir, çünkü aynı megavatsaat 04:00 ile 19:00’da bambaşka eder.']},
+   {t:['Why the price moves','Fiyat neden oynuyor'],
+    b:['Demand changes hour by hour: low at night, high in the evening. Every hour the cheapest plants are used first and the most expensive plant that is still needed sets the price for everybody. So when demand climbs, an expensive plant enters the stack and the price for the whole hour jumps with it.','Talep saat saat değişir: gece düşük, akşam yüksek. Her saat önce en ucuz santraller kullanılır ve hâlâ ihtiyaç duyulan en pahalı santral fiyatı herkes için belirler. Talep yükselince pahalı bir santral devreye girer ve o saatin fiyatı onunla birlikte zıplar.']},
+   {t:['So what is our job?','Peki bizim işimiz ne?'],
+    b:['Producing electricity is only half of it. The other half is deciding when and where it is sold — and that decision can be worth as much as the plant itself. That is the whole subject of this game: you will produce, you will store, and you will choose the hour.','Elektriği üretmek işin yarısı. Diğer yarısı ne zaman ve nereye satılacağına karar vermek — ve bu karar bazen santralin kendisi kadar değerli. Bu oyunun konusu tam olarak bu: üreteceksin, depolayacaksın ve saati sen seçeceksin.']}],
+  gloss:[
+   {k:'RES',t:['Wind power plant','Rüzgâr enerji santrali'],d:['Turns wind into electricity. Output follows the weather, not your plan.','Rüzgârı elektriğe çevirir. Üretim senin planını değil havayı takip eder.']},
+   {k:'GES',t:['Solar power plant','Güneş enerji santrali'],d:['Turns sunlight into electricity. Produces midday, stops at sunset.','Gün ışığını elektriğe çevirir. Öğlen üretir, gün batımında durur.']},
+   {k:'BESS',t:['Battery storage','Batarya depolama'],d:['Charges when energy is cheap and plentiful, discharges when it is scarce and dear.','Enerji ucuz ve bolken şarj olur, kıt ve pahalıyken boşalır.']},
+   {k:'MW / MWh',t:['Power vs energy','Güç ile enerji'],d:['MW is how fast; MWh is how much. A 10 MW plant running one hour makes 10 MWh.','MW ne hızda; MWh ne kadar. 10 MW’lık bir santral bir saat çalışırsa 10 MWh üretir.']},
+   {k:['Installed capacity','Kurulu güç'],t:['Nameplate','Etiket gücü'],d:['What a plant could produce at full output. It almost never runs there.','Santralin tam kapasitede üretebileceği. Neredeyse hiç orada çalışmaz.']},
+   {k:['Capacity factor','Kapasite faktörü'],t:['Reality vs nameplate','Gerçek ile etiket'],d:['Yearly output divided by what full output would have given. Roughly 30–40% for wind, 15–20% for solar in Turkey.','Yıllık üretimin, tam kapasitede üretilebilecek olana oranı. Türkiye’de rüzgârda kabaca %30–40, güneşte %15–20.']},
+   {k:['Peak','Puant'],t:['The expensive hours','Pahalı saatler'],d:['The hours of highest demand, typically the evening. Where most of the margin is made.','Talebin en yüksek olduğu saatler, genelde akşam. Kârın çoğu burada yapılır.']},
+   {k:['Baseload','Baz yük'],t:['The floor','Taban'],d:['The demand that never goes away, even at 04:00.','04:00’te bile kaybolmayan talep.']},
+   {k:['Day-ahead market','Gün Öncesi Piyasası (GÖP)'],t:['Selling tomorrow','Yarını satmak'],d:['Where tomorrow’s electricity is bought and sold, hour by hour, the day before.','Yarının elektriğinin bir gün önceden, saat saat alınıp satıldığı yer.']},
+   {k:['Intraday market','Gün İçi Piyasası (GİP)'],t:['Fixing today','Bugünü düzeltmek'],d:['Where you correct your position during the day as forecasts change.','Tahminler değiştikçe pozisyonunu gün içinde düzelttiğin yer.']},
+   {k:['Market clearing price','Piyasa Takas Fiyatı (PTF)'],t:['The hourly price','Saatlik fiyat'],d:['The single price every buyer pays and every seller receives for that hour.','O saat için her alıcının ödediği, her satıcının aldığı tek fiyat.']},
+   {k:['Imbalance','Dengesizlik'],t:['The gap','Fark'],d:['The difference between what you said you would produce and what you actually produced. It is charged.','Üreteceğini söylediğin ile gerçekten ürettiğin arasındaki fark. Bedeli vardır.']},
+   {k:['Final schedule','KGÜP'],t:['Your declaration','Beyanın'],d:['The production you formally declare for each hour of tomorrow.','Yarının her saati için resmen beyan ettiğin üretim.']},
+   {k:['Curtailment','Kısıtlama'],t:['Told to stop','Durdurulmak'],d:['When the grid cannot take what you can produce, and you are asked to produce less.','Şebeke üretebildiğini alamadığında daha az üretmen istenir.']},
+   {k:['Unlicensed generation','Lisanssız üretim'],t:['Small and local','Küçük ve yerel'],d:['Rooftop and small field solar that feeds the site it sits on. Most of Turkey’s solar count, a small share of its megawatts.','Üstünde durduğu tesisi besleyen çatı ve küçük arazi güneşi. Türkiye’deki güneş sayısının çoğu, megavatının küçük kısmı.']},
+   {k:['Grid','Şebeke'],t:['The network','Ağ'],d:['Transmission carries power far at high voltage; distribution brings it to the street.','İletim yüksek gerilimle uzağa taşır; dağıtım sokağa getirir.']},
+   {k:['EV charging','Elektrikli araç şarjı'],t:['Demand you can move','Kaydırılabilir talep'],d:['Cars that charge overnight are flexible demand — they can soak up cheap hours and stay off the peak. Not in this game yet; very much in the real business.','Gece şarj olan araçlar esnek taleptir — ucuz saatleri emer, puanttan uzak durur. Bu oyunda henüz yok; gerçek işte fazlasıyla var.']}],
   steps:[
    {t:['Collect energy from the turbine','Türbinden enerji topla'],
     w:['A plant produces whether anyone is watching or not. Energy that nobody moves is energy that fades.','Santral kimse bakmasa da üretir. Kimsenin taşımadığı enerji söner.'],
@@ -8512,16 +8559,14 @@ function progCheck(){
   if(n>before){try{sfx.goal();}catch(e){}
     toast(`🎓 ${n}/${p.steps.length} · ${tt(p.steps[n-1].t)}`);}
   if(n>=p.steps.length){
-    S.progDone[p.id]={day:S.day,code:progCode(p.id)};save();syncProgBtn();
+    S.progDone[p.id]={day:S.day,code:progCode(p.id)};save();syncProgBtn();pgTab='steps';
     try{trackOnce('prog-done-'+p.id);}catch(e){}
     openProgram();
   }
 }
-function openProgram(){
-  const p=PROGRAMS.find(x=>x.id===S.prog);if(!p)return;
+let pgTab='learn';
+function pgStepsHtml(p){
   const done=(S.progDone||{})[p.id];
-  $('pgTitle').textContent=p.icon+' '+tt(p.name);
-  $('pgSub').textContent=tt(p.sub);
   let html=p.steps.map((st,i)=>{const ok=progOk(p,i);
     return `<div class="pgi${ok?' on':''}"><span class="ck">${ok?'✅':'⬜'}</span><span><b>${tt(st.t)}</b><small>${tt(st.w)}</small></span></div>`;}).join('');
   if(done){
@@ -8529,7 +8574,26 @@ function openProgram(){
       +`<small>${L('Send this code to whoever gave you the access code. The game sends nothing by itself.','Bu kodu sana erişim kodunu veren kişiye ilet. Oyun kendiliğinden hiçbir şey göndermez.')}</small></span></div>`
       +`<div class="pgcode">${done.code}</div>`;
   }
-  $('pgList').innerHTML=html;
+  return html;
+}
+function pgLearnHtml(p){
+  return (p.lessons||[]).map(l=>`<div class="pgl"><b>${tt(l.t)}</b><p>${tt(l.b)}</p></div>`).join('')
+    ||`<div class="pgl"><p>${L('No briefing in this program.','Bu programda anlatım yok.')}</p></div>`;
+}
+function pgGlossHtml(p){
+  return (p.gloss||[]).map(g=>{const k=Array.isArray(g.k)?tt(g.k):g.k,off=/EV|Elektrikli/.test(k)?' off':'';
+    return `<div class="pgg${off}"><b>${k}</b> <i>· ${tt(g.t)}</i><p>${tt(g.d)}</p></div>`;}).join('')
+    ||`<div class="pgg"><p>${L('No glossary in this program.','Bu programda sözlük yok.')}</p></div>`;
+}
+function openProgram(){
+  const p=PROGRAMS.find(x=>x.id===S.prog);if(!p)return;
+  $('pgTitle').textContent=p.icon+' '+tt(p.name);
+  $('pgSub').textContent=tt(p.sub);
+  const tabs=[['learn','📖 '+L('Briefing','Anlatım')],['steps','✅ '+L('Steps','Adımlar')],['gloss','📔 '+L('Glossary','Sözlük')]];
+  $('pgTabs').innerHTML=tabs.map(([k,t])=>`<button data-t="${k}"${pgTab===k?' class="on"':''}>${t}</button>`).join('');
+  $('pgTabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;pgTab=b.dataset.t;openProgram();};
+  $('pgList').innerHTML=pgTab==='steps'?pgStepsHtml(p):pgTab==='gloss'?pgGlossHtml(p):pgLearnHtml(p);
+  $('pgList').scrollTop=0;
   $('pgQuit').textContent=L('Leave this program','Bu programdan çık');
   $('pgClose').textContent=L('Close','Kapat');
   $('mProgram').classList.add('on');
