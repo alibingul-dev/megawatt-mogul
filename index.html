@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.64.0</div>
+  <div class="t-ver" id="tVer">v0.65.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -458,6 +458,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 </div>
 <div id="sideCol">
       <button class="rb" id="gridBtn" aria-label="Grid lines" hidden><span>🔌</span><span class="cap" id="cap-grid">Lines</span></button>
+      <button class="rb" id="mntBtn" aria-label="Upkeep" hidden><span>🧰</span><span class="cap" id="cap-mnt">Upkeep</span><span class="badge" id="mntN" hidden>0</span></button>
       <button class="rb" id="progIco" aria-label="Program" hidden><span>🎓</span><span class="cap" id="cap-prog">Program</span></button>
       <button class="rb" id="repBtn" aria-label="Finance report"><span>📊</span><span class="cap" id="cap-rep">Report</span></button>
       <button class="rb" id="infoBtn" aria-label="Tips"><span>ℹ️</span><span class="cap" id="cap-info">Tips</span><span class="badge" id="infoDot" hidden>!</span></button>
@@ -553,6 +554,12 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div id="gridBody"></div>
   <div class="btns"><button class="pri" id="gridClose" data-i18n="close">Close</button></div>
 </div></div>
+<div class="modal" id="mMaint"><div class="sheet tips">
+  <h2 id="mntTitle">Upkeep</h2>
+  <p id="mntSub"></p>
+  <div id="mntBody"></div>
+  <div class="btns"><button class="pri" id="mntClose" data-i18n="close">Close</button></div>
+</div></div>
 <div class="modal" id="mRep"><div class="sheet tips">
   <h2 id="repTitle">Finance report</h2>
   <div class="mgrid" id="repCards"></div>
@@ -639,7 +646,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.64.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.65.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4902,6 +4909,62 @@ function nukeDay(){
     else if(S.day>=p.fuelDay+NUKE_OUT){p.fuelDay=S.day+NUKE_CYCLE;toast(L(`⚛️ ${c} is back on fresh fuel.`,`⚛️ ${c} yeni yakıtla tekrar devrede.`),'good');}
   }
 }
+/* ---- bilateral contract (ikili anlaşma): once a nuclear plant stands, a buyer offers to fix
+       the price of part of its output for the next 14 days. It is settled like a real CfD:
+       every day you get (fixed − day's average system price) × volume. A falling market pays
+       you, a rising one costs you. The offer is priced off the buyer's own view of those days,
+       plus or minus a margin you cannot see; your only clue is how it compares with the
+       last week and the season. One contract at a time. ---- */
+const BIL_DAYS=14, BIL_GAP=7, BIL_SHARES=[0.25,0.5,1];
+function bilCells(){return Math.round(PLANT_TYPES.nuclear.rate*DAY_SEC);}          // one plant, one full day
+function bilOn(){return has('nuclear')&&built('n1');}
+function bilDue(){return bilOn()&&!S.bil&&S.day>=(S.bilNext||0);}
+function futureAvg(d0,n){                                   // the system price those days will print without cards
+  const sd=S.day,sD=DAY,sm=S.mods;let sum=0,c=0;
+  try{S.mods=[];for(let d=d0;d<d0+n;d++){S.day=d;DAY=makeDay(d);for(let h=0;h<24;h++){sum+=basePrice(h,h+0.5);c++;}}}
+  finally{S.day=sd;DAY=sD;S.mods=sm;}
+  return c?sum/c:0;
+}
+function recentAvg(){const h=(S.pxDays||[]).slice(-7);return h.length?h.reduce((a,b)=>a+b,0)/h.length:todayAvg();}
+function bilMakeOffer(){
+  if(S.bilOffer&&S.bilOffer.day===S.day)return S.bilOffer;
+  const d0=S.day+1,fair=futureAvg(d0,BIL_DAYS),u=-0.10+hrand(S.seed,S.day,971,3)*0.22;
+  S.bilOffer={day:S.day,from:d0,k:Math.max(0.5,Math.round(fair*(1+u)*100)/100),ref:Math.round(recentAvg()*100)/100};
+  return S.bilOffer;
+}
+function bilAccept(sh){
+  const o=S.bilOffer||bilMakeOffer();
+  S.bil={k:o.k,q:Math.round(bilCells()*sh),sh,from:o.from,to:o.from+BIL_DAYS-1,pnl:0};
+  S.bilOffer=null;S.bilNext=S.bil.to+1;try{trackOnce('bil-accept');}catch(e){}
+}
+function bilDecline(){S.bilOffer=null;S.bilNext=S.day+BIL_GAP;}
+function bilDayEnd(){                                         // runs as a day closes, before the date moves on
+  const a=S.pxAcc||[];
+  const avg=a.length>=12?a.reduce((x,y)=>x+y,0)/a.length:todayAvg();
+  S.pxDays=(S.pxDays||[]).concat(Math.round(avg*100)/100).slice(-14);S.pxAcc=[];
+  const b=S.bil;if(!b||S.day<b.from||S.day>b.to)return null;
+  const v=b.q*(b.k-avg);
+  S.cash=Math.max(0,S.cash+v);b.pnl+=v;if(v>0){S.earned+=v;S.dayEarned=(S.dayEarned||0)+v;}
+  logLedger('bilateral',Math.round(v),'N1');
+  const line=L(`📜 Contract: day average ₵${avg.toFixed(2)}, fixed ₵${b.k.toFixed(2)} → ${v>=0?'+':'−'}₵${fmt(Math.abs(v))}`,
+               `📜 İkili anlaşma: gün ortalaması ₵${avg.toFixed(2)}, sabit ₵${b.k.toFixed(2)} → ${v>=0?'+':'−'}₵${fmt(Math.abs(v))}`);
+  let end=null;
+  if(S.day>=b.to){end=L(`📜 Contract closed after ${BIL_DAYS} days: ${b.pnl>=0?'+':'−'}₵${fmt(Math.abs(b.pnl))} against selling it all at the day price.`,
+                        `📜 Anlaşma ${BIL_DAYS} gün sonra kapandı: hepsini gün fiyatından satmaya göre ${b.pnl>=0?'+':'−'}₵${fmt(Math.abs(b.pnl))}.`);
+    S.stats.bilPnl=(S.stats.bilPnl||0)+b.pnl;S.bil=null;}
+  return {line,end,v};
+}
+const BILCARD={id:'bilateral',icon:'📜',ok:()=>false,safe:0,
+  title:['A buyer wants a fixed price','Alıcı sabit fiyat istiyor'],
+  get text(){const o=S.bilOffer||bilMakeOffer(),se=seasonOf(o.from+BIL_DAYS-1);return [
+    `A factory offers ₵${o.k.toFixed(2)} per cell for the next ${BIL_DAYS} days, whatever the market does. Last 7 days averaged ₵${o.ref.toFixed(2)}; the contract runs into ${se.name[0].toLowerCase()} ${se.icon}. Every day you receive the gap between the fixed price and the day's average — or pay it.`,
+    `Bir fabrika önümüzdeki ${BIL_DAYS} gün için, piyasa ne yaparsa yapsın hücre başına ₵${o.k.toFixed(2)} teklif ediyor. Son 7 günün ortalaması ₵${o.ref.toFixed(2)}; anlaşma ${se.name[1].toLowerCase()} ${se.icon} içine uzanıyor. Her gün sabit fiyat ile gün ortalaması arasındaki farkı alırsın — ya da ödersin.`];},
+  opts:()=>{const o=S.bilOffer||bilMakeOffer();
+    return [O('Decline','Reddet','Everything keeps selling at the day price.','Hepsi gün fiyatından satılmaya devam eder.',0,bilDecline)]
+      .concat(BIL_SHARES.map(sh=>{const q=Math.round(bilCells()*sh);
+        return O(`Fix ${Math.round(sh*100)}% of N1`,`N1'in %${Math.round(sh*100)}'ini sabitle`,
+          `${fmt(q)} cells a day at ₵${o.k.toFixed(2)}. ₵1 of market move = ₵${fmt(q)} a day.`,
+          `Günde ${fmt(q)} hücre, ₵${o.k.toFixed(2)}'den. Piyasada ₵1'lik oynama = günde ₵${fmt(q)}.`,0,()=>bilAccept(sh));}));}};
 function nukeHour(){
   for(const p of S.plants){if(!isNuke(p)||!nukeOn(p))continue;
     if(plantAge(p)<2)continue;                                   // never in its first two days
@@ -5759,7 +5822,7 @@ let clearT=0,repT=0,gridT=0,gsvT=0,gridLock=null,batFixT=0,refurbT=0,padLock=nul
 function update(dt){
   const tscale=(tutOpen||cardOpen)?0:S.speed;
   const t0=hourNow();S.t+=dt*tscale;
-  if(S.t>=DAY_SEC){S.t-=DAY_SEC;S.day++;DAY=makeDay(S.day);try{ancApplyDay();}catch(e){}try{nukeDay();}catch(e){}onNewDay();save();}
+  if(S.t>=DAY_SEC){S.t-=DAY_SEC;try{const r=bilDayEnd();if(r){toast(r.line,r.v>=0?'good':'');if(r.end)setTimeout(()=>toast(r.end,'big'),2500);}}catch(e){}S.day++;DAY=makeDay(S.day);try{ancApplyDay();}catch(e){}try{nukeDay();}catch(e){}onNewDay();save();}
   const t=hourNow(),h=Math.floor(t)%24;if(Math.floor(t0)%24!==h)onHour(h);
   const gdt=dt*tscale;
   for(const p of S.plants){if(PLANT_TYPES[p.type])pileDecay(p);}
@@ -5994,6 +6057,10 @@ function onNewDay(quiet){
 function onHour(h){
   try{ancPayHour();}catch(e){}
   try{nukeHour();}catch(e){}
+  try{(S.pxAcc=S.pxAcc||[]).push(basePrice(h,h+0.5));}catch(e){}
+  try{if(bilDue()&&h>=10&&h<=20&&!cardOpen&&!tutOpen){bilMakeOffer();
+    hint('bil',L('📜 A bilateral contract is a handshake: "for the next two weeks I sell you this much at this price." If the market falls, you win the gap. If it rises, the buyer does. The gap is settled every evening.','📜 İkili anlaşma bir el sıkışmadır: "önümüzdeki iki hafta sana şu kadarını şu fiyattan satacağım." Piyasa düşerse fark senin, yükselirse alıcının. Fark her akşam ödenir.'),'big');
+    if(isActive())openCard(BILCARD);else{const r=autoCard(BILCARD);if(r)toast('📋 '+r,'');}}}catch(e){}
   if(S.cardHour!==null&&h>=S.cardHour&&!cardOpen){S.cardHour=null;S.cardDay=S.day;
     if(isActive())openCard();else{const r=autoCard();if(r)toast('📋 '+r,'');}}
   else if(S.cardHour2!==null&&h>=S.cardHour2&&!cardOpen&&isActive()){S.cardHour2=null;openCard();}
@@ -7052,16 +7119,16 @@ function render(dt,now){
       place('nk'+p.id,'cnt'+(on?'':' full'),p.x,p.y-60,7.8,
         nukeScram(p)?`🛑 SCRAM · ${Math.max(1,Math.ceil((p.scramUntil-gameNow())/HOUR))} ${L('h','sa')}`
         :nukeOut(p)?`⛽ ${L('Refuelling','Yakıt yenileme')} · ${p.fuelDay+NUKE_OUT-S.day}${L('d','g')}`
-        :`⚛️ 100%${dl<=NUKE_WARN?` · ⛽ ${dl}${L('d','g')}`:''}`);}
+        :`⚛️ 100%${dl<=NUKE_WARN?` · ⛽ ${dl}${L('d','g')}`:''}`);
+      if(S.bil&&p.id==='n1')place('bl'+p.id,'cnt',p.x,p.y-88,9.2,`📜 %${Math.round(S.bil.sh*100)} @ ₵${S.bil.k.toFixed(2)} · ${S.bil.to-S.day+1}${L('d','g')} · ${S.bil.pnl>=0?'+':'−'}₵${fmt(Math.abs(S.bil.pnl))}`);}
     if(T.kind==='dam'){const full=damRes(p)>=damCap(p);
       setLakeLevel(damCap(p)?damRes(p)/damCap(p):0);
       place('dm'+p.id,'cnt'+(full?' full':''),p.x,p.y-34,3.9,`💧 ${Math.round(damRes(p))}/${damCap(p)}${p.open?' \u26a1':full?' !':''}`);}
     if(p.fire>0){const fl=0.8+Math.sin(performance.now()/90)*0.2;
       const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y,(T.kind==='wind'?7*T.scale:2.6)*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
     if(snowPanel(p)>0.05)place('sn'+p.id,'wrench',p.x,p.y+6,1.6,p.clr>0?`🧹 ${Math.round(p.clr*100)}%`:`🌨️ ${Math.round(snowPanel(p)*100)}%`);
-    if(gridNeedsService(p)&&!p.fire)place('gw'+p.id,'wrench'+(gridWear(p)>0.7?' fire':''),p.x+(T.kind==='wind'?0:14),p.y+14,T.kind==='wind'?4.4*T.scale:1.2,
-      p.gsv>0?`🔌 ${Math.round(p.gsv*100)}%`:`🔌 ${Math.round(gridWear(p)*100)}% · ₵${fmt(gridServiceCost(p))}`);
-    if(!p.broken&&needsWork(p))place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,p.rep>0?`${canRebuild(p)?'🏗️':'♻️'} ${Math.round(p.rep*100)}%`:`${canRebuild(p)?'🏗️':'♻️'} ₵${fmt(canRebuild(p)?rebuildCost(p):repowerCost(p))}`);
+    if(gridNeedsService(p)&&!p.fire&&p.gsv>0)place('gw'+p.id,'wrench',p.x+(T.kind==='wind'?0:14),p.y+14,T.kind==='wind'?4.4*T.scale:1.2,`🔌 ${Math.round(p.gsv*100)}%`);   // costs live in 🧰 Upkeep
+    if(!p.broken&&needsWork(p)&&p.rep>0)place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,`${canRebuild(p)?'🏗️':'♻️'} ${Math.round(p.rep*100)}%`);   // costs live in 🧰 Upkeep
   }
   // pads
   for(const p of PADS){
@@ -7161,6 +7228,7 @@ function hud(dt){
   const G=GOALS[S.goal];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${L('Lv','Sv')}${lvl()}</b> · `);
   $('goal').innerHTML=chip+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
+  {const n=maintList().length;$('mntBtn').hidden=!(has('gridline')||has('ageing'));const b=$('mntN');b.hidden=!n;b.textContent=n>9?'9+':String(n);}
   $('gridBtn').hidden=!has('gridline');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
@@ -7536,17 +7604,18 @@ function pickCard(){
   S.cardHist=(S.cardHist||[]).concat(c.id).slice(-40);
   return c;
 }
-function autoCard(){
-  const c=pickCard();if(!c)return null;
+function autoCard(c0){
+  const c=c0||pickCard();if(!c)return null;
   const opts=c.opts();let i=S.cardPrefs&&S.cardPrefs[c.id];
+  if(c.id==='bilateral')i=c.safe;                       // never sign a price commitment on the player's behalf
   if(i===undefined||!opts[i]||opts[i].cost>DI()*0.5||opts[i].cost>S.cash)i=c.safe||0;
   if(opts[i].cost>S.cash)i=opts.findIndex(o=>!o.cost);
   if(i<0)return null;
   opts[i].go();track('card-auto-'+c.id+'-'+i);
   return `${c.icon} ${tt(c.title)}: ${tt(opts[i].t)}`;
 }
-function openCard(){
-  const c=pickCard();if(!c)return;
+function openCard(c0){
+  const c=(c0&&c0.opts)?c0:pickCard();if(!c)return;
   cardOpen=true;sfx.warn();
   $('cardIcon').textContent=c.icon;$('cardTitle').textContent=tt(c.title);$('cardText').textContent=tt(c.text);
   const opts=c.opts();
@@ -7924,6 +7993,27 @@ $('mGrid').addEventListener('input',e=>{           // sliders must not re-render
     const sc=r.previousElementSibling;if(sc){const val=sc.querySelector('.val');if(val)val.textContent='%'+Math.round(v*100)+(v!==ancBand(S.plants.find(q=>q.id===id))?' → '+L('tomorrow','yarın'):'');}}
 });
 $('mGrid').addEventListener('change',e=>{if(e.target.closest('input.ancr')){sfx.pick();save();renderGrid();}});
+/* ---- upkeep card: every pending line service and repower with its price, off the map ---- */
+function maintList(){
+  const out=[];
+  for(const p of S.plants){const T=PLANT_TYPES[p.type];if(!T||isNuke(p))continue;
+    if(gridNeedsService(p))out.push({p,k:'line',c:gridServiceCost(p),w:gridWear(p)});
+    if(!p.broken&&needsWork(p))out.push({p,k:canRebuild(p)?'rebuild':'repower',c:canRebuild(p)?rebuildCost(p):repowerCost(p),w:1-plantCap(p)});}
+  return out.sort((a,b)=>b.w-a.w);
+}
+function renderMaint(){
+  const L2=maintList(),tot=L2.reduce((a,x)=>a+x.c,0),fixers=(S.crew.roles||[]).filter(r=>r==='fix').length;
+  $('mntTitle').textContent=L('🧰 Upkeep','🧰 Bakım');
+  $('mntSub').textContent=L2.length?L(`${L2.length} jobs waiting · ₵${fmt(tot)} in total. Stand next to the plant, or let a Fix-role helper do it (${fixers} on the crew).`,`${L2.length} iş bekliyor · toplam ₵${fmt(tot)}. Santralin yanında dur ya da Tamir rolündeki bir yardımcı yapsın (ekipte ${fixers} kişi).`)
+                                   :L('Nothing waiting. Lines and plants are in good shape.','Bekleyen iş yok. Hatlar ve santraller iyi durumda.');
+  const nm={line:['🔌 Line service','🔌 Hat bakımı'],repower:['♻️ Repower','♻️ Yenileme'],rebuild:['🏗️ Rebuild','🏗️ Söküp yeniden kur']};
+  $('mntBody').innerHTML=L2.map(x=>{const pct=x.k==='line'?L(`worn ${Math.round(x.w*100)}%`,`%${Math.round(x.w*100)} aşınmış`):L(`ceiling ${Math.round(plantCap(x.p)*100)}%`,`tavan %${Math.round(plantCap(x.p)*100)}`);
+    const busy=(x.k==='line'&&x.p.gsv>0)||(x.k!=='line'&&x.p.rep>0);
+    return `<div class="scale" style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span><b>${codeOf(x.p.id)}</b> · ${tt(nm[x.k])} · ${pct}${busy?' · '+L('in progress','yapılıyor'):''}</span><span style="white-space:nowrap;font-weight:700">₵${fmt(x.c)}</span></div>`;}).join('');
+}
+function openMaint(){renderMaint();$('mMaint').classList.add('on');trackOnce('maint-panel');}
+$('mntBtn').onclick=openMaint;
+$('mntClose').onclick=()=>$('mMaint').classList.remove('on');
 function openGridPanel(){renderGrid();$('mGrid').classList.add('on');trackOnce('grid-panel');}
 $('gridBtn').onclick=openGridPanel;
 $('gridClose').onclick=()=>$('mGrid').classList.remove('on');
@@ -7992,6 +8082,13 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.65.1',t:['Upkeep off the map','Bakım haritadan kalktı'],l:[
+  ['Line-service and repower prices no longer float over the plants. A new 🧰 Upkeep button lists every waiting job with its price, and its badge shows how many there are. On the map you only see a job while it is being done.','Hat bakımı ve yenileme fiyatları artık santrallerin üstünde durmuyor. Yeni 🧰 Bakım butonu bekleyen her işi fiyatıyla listeliyor, rozeti de kaç iş olduğunu gösteriyor. Haritada bir işi yalnızca yapılırken görüyorsun.']]},
+ {v:'0.65.0',t:['Bilateral contracts','İkili anlaşmalar'],l:[
+  ['Once N1 stands, a buyer comes every week or so and offers to fix the price of 25%, 50% or all of its output for the next 14 days.','N1 kurulunca haftada bir kadar bir alıcı geliyor ve önümüzdeki 14 gün için üretiminin %25, %50 ya da tamamının fiyatını sabitlemeyi teklif ediyor.'],
+  ['It settles like the real thing: every evening you receive the gap between the fixed price and the day\'s average system price — or pay it when the market ran higher.','Gerçeğindeki gibi uzlaşıyor: her akşam sabit fiyat ile günün ortalama sistem fiyatı arasındaki farkı alıyorsun — piyasa daha yüksek gittiyse ödüyorsun.'],
+  ['The offer is priced off the buyer\'s own view plus a margin you cannot see. Your clues: the last 7 days\' average and the season the contract runs into.','Teklif alıcının kendi beklentisine göre, göremediğin bir payla fiyatlanıyor. İpuçların: son 7 günün ortalaması ve anlaşmanın uzandığı mevsim.'],
+  ['The running result sits above N1. Away from the game, the contract keeps settling and the plant keeps earning.','Anlık sonuç N1\'in üstünde duruyor. Oyundan uzaktayken de anlaşma uzlaşmaya, santral kazanmaya devam ediyor.']]},
  {v:'0.64.0',t:['Baseload: nuclear','Baz yük: nükleer'],l:[
   ['Level 19, Baseload, opens at ₵2.5M in wealth. Up in the north by the river stands the nuclear pad.','Seviye 19, Baz yük, ₵2.5M serveti geçince açılıyor. Kuzeyde, nehir kıyısında nükleer alanı seni bekliyor.'],
   ['It runs flat out day and night and sells straight into the grid at the system price. You never carry it, and it never floods the city market.','Gece gündüz tam güç çalışır ve sistem fiyatından doğrudan şebekeye satar. Enerjisini taşımazsın, şehir pazarını da doldurmaz.'],
@@ -8827,7 +8924,7 @@ function offline(secs){
   const capS=8*3600,used=Math.min(secs,capS);
   // --- money the crew made (same model as before), spread over the days that pass ---
   const cap=6+2*Math.floor(S.up.bag/2),trip=12;
-  const prod=S.plants.reduce((a,p)=>{const T=PLANT_TYPES[p.type];return a+(T?T.rate*(T.kind==='wind'?0.4:0.3):0);},0);
+  const prod=S.plants.reduce((a,p)=>{const T=PLANT_TYPES[p.type];return a+(T&&T.kind!=='nuclear'?T.rate*(T.kind==='wind'?0.4:0.3):0);},0);
   const vals=[];for(let i=0;i<24;i++)vals.push(P0*DEMAND[i]);const avg=vals.reduce((a,b)=>a+b,0)/24;
   const mp=S.crew.auto?avg:S.crew.min;const ok=vals.filter(v=>v>=mp);const share=ok.length/24;
   const realized=ok.length?ok.reduce((a,b)=>a+b,0)/ok.length:0;
@@ -8847,7 +8944,10 @@ function offline(secs){
   const segEarn=(sec)=>{const ev=eventNow();const m=ev?Math.max(0.4,Math.min(2.5,[...Array(24).keys()].reduce((a,h)=>a+ev.price(h),0)/24)):1;return perSec*sec*m*modMult('income');};
   while(tLeft>0){
     const step=Math.min(tLeft,DAY_SEC-S.t);
-    const e=segEarn(step);earned+=e;
+    let e=segEarn(step);
+    {let nk=0;for(const p of S.plants)if(isNuke(p)&&nukeOn(p))nk+=PLANT_TYPES.nuclear.rate*step*todayAvg()*modMult('income')*perk('price');
+     if(nk>0){S.stats.nuke=(S.stats.nuke||0)+nk;e+=nk;}}
+    earned+=e;
     /* the crew was selling the whole time, so those cells belong to the open deal;
        without this a deal signed before a break could never be met */
     if(S.contract&&realized>0&&gameNow()<S.contract.until){
@@ -8862,7 +8962,8 @@ function offline(secs){
     points.push({day:S.day,earn:e,icons});
     S.t+=step;tLeft-=step;
     if(S.t>=DAY_SEC-1e-6){
-      S.t=0;S.day++;DAY=makeDay(S.day);
+      {const r=bilDayEnd();if(r){lines.push(`${dateLabel(S.day)} · ${r.line}`);if(r.end)lines.push(r.end);}}
+      S.t=0;S.day++;DAY=makeDay(S.day);try{nukeDay();}catch(e){}
       const before=S.event&&S.event.id;
       onNewDay(true);
       const d=dateLabel(S.day),w=WEATHER[DAY.weather];
@@ -8971,7 +9072,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.64.0';
+const GAME_VERSION='0.65.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -9186,7 +9287,7 @@ const PROGRAMS=[
 ];
 function syncCaps(){
   const C=[['cap-prog','Program','Program'],['cap-grid','Lines','Hatlar'],['cap-rep','Report','Rapor'],
-           ['cap-info','Tips','Taktik'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
+           ['cap-info','Tips','Taktik'],['cap-mnt','Upkeep','Bakım'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
   for(const [id,en,tr] of C){const e=$(id);if(e)e.textContent=L(en,tr);}
 }
 function syncProgBtn(){
