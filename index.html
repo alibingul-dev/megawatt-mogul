@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.66.0</div>
+  <div class="t-ver" id="tVer">v0.68.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -646,7 +646,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.66.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.68.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4882,7 +4882,7 @@ const PLANT_TYPES={
        the national grid at the system price (no hauling, no local saturation), and cannot
        turn down. It stops only for a fixed refuelling outage and for a SCRAM. No fire,
        storm, lightning, breakdown or ageing: the one risk it carries is the SCRAM. ---- */
-const NUKE={x:1565,y:760};
+const NUKE={x:1530,y:760};
 const EAST={x0:1420,name:['East bank','Doğu kıyısı']};    // land across the river: room to frame the river, and the nuclear site
 const NUKE_CYCLE=20, NUKE_OUT=2, NUKE_WARN=3;          // days between refuels, days offline, days of notice
 const NUKE_SCRAM_H=6, NUKE_SCRAM_P=1/(24*18);          // hours offline; chance per running hour (~one in 18 days)
@@ -4966,6 +4966,33 @@ const BILCARD={id:'bilateral',icon:'📜',ok:()=>false,safe:0,
         return O(`Fix ${Math.round(sh*100)}% of N1`,`N1'in %${Math.round(sh*100)}'ini sabitle`,
           `${fmt(q)} cells a day at ₵${o.k.toFixed(2)}. ₵1 of market move = ₵${fmt(q)} a day.`,
           `Günde ${fmt(q)} hücre, ₵${o.k.toFixed(2)}'den. Piyasada ₵1'lik oynama = günde ₵${fmt(q)}.`,0,()=>bilAccept(sh));}));}};
+/* ---- turbine brands: once breakdowns are on, a new wind turbine asks which make it is.
+       Economy refunds part of the price but produces less and breaks more; Premium costs
+       extra up front, produces more and breaks half as often. Invented makes, no real ones. ---- */
+const BRANDS={
+  eco:{name:['Fırıldak (economy)','Fırıldak (ekonomi)'],tag:'▼',out:0.94,brk:1.8,days:0.5},
+  std:{name:['Esinti (standard)','Esinti (standart)'],tag:'',out:1,brk:1,days:0},
+  pro:{name:['Poyrazmatik (premium)','Poyrazmatik (premium)'],tag:'★',out:1.10,brk:0.5,days:1.2}};
+/* priced off a day of the turbine's own output, not its pad price: late in the game a pad
+   costs pennies next to what the turbine earns, and then premium would be a free win */
+function brandDayVal(p){const T=PLANT_TYPES[p.type];return T.rate*0.42*DAY_SEC*todayAvg();}
+function brandOf(p){return BRANDS[p&&p.brand]||BRANDS.std;}
+function brandCard(p){
+  const pd=pad(p.id),base=pd&&pd.cost?padCost(pd):100,T=PLANT_TYPES[p.type];
+  const dv=brandDayVal(p),refund=Math.round(Math.max(base*0.2,dv*BRANDS.eco.days)),extra=Math.round(Math.max(base*0.35,dv*BRANDS.pro.days));
+  const set=k=>()=>{p.brand=k;try{trackOnce('brand-'+k);}catch(e){}};
+  return {id:'brand',icon:'🏷️',ok:()=>false,safe:1,
+    title:[`Which make is ${codeOf(p.id)}?`,`${codeOf(p.id)} hangi marka olsun?`],
+    text:[`The ${tt(T.name).toLowerCase()} is up. The supplier offers three makes. You pick once; it stays with the turbine.`,`${tt(T.name)} kuruldu. Tedarikçi üç marka sunuyor. Bir kez seçersin, türbinle kalır.`],
+    opts:()=>[
+      O(`${BRANDS.eco.name[0]} · ₵${fmt(refund)} back`,`${BRANDS.eco.name[1]} · ₵${fmt(refund)} iade`,'Output −6%, breaks 80% more often.','Üretim −%6, %80 daha sık bozulur.',0,()=>{S.cash+=refund;set('eco')();}),
+      O(BRANDS.std.name[0],BRANDS.std.name[1],'Nothing changes.','Değişiklik yok.',0,set('std')),
+      O(`${BRANDS.pro.name[0]} · ₵${fmt(extra)}`,`${BRANDS.pro.name[1]} · ₵${fmt(extra)}`,'Output +10%, breaks half as often.','Üretim +%10, yarı yarıya seyrek bozulur.',extra,()=>{pay(extra);set('pro')();})]};
+}
+function askBrand(p){
+  if(!has('repair')||cozy()||!isActive())return;               // away or before breakdowns: stays standard
+  whenNoModal(()=>{if(cardOpen||tutOpen){setTimeout(()=>askBrand(p),1500);return;}openCard(brandCard(p));});
+}
 function nukeHour(){
   for(const p of S.plants){if(!isNuke(p)||!nukeOn(p))continue;
     if(plantAge(p)<2)continue;                                   // never in its first two days
@@ -5003,7 +5030,7 @@ function tickWet(dt){
 function waterCF(){return seasonalWater(S.day)*(0.88+0.30*wetStore())*modMult('water');}
 const DAM_FILL=0.28, DAM_OPEN=1.12;
 /* r2 sits below the wall: it runs on whatever the dam lets through */
-const TAILRACE={r2:1};
+const TAILRACE={r2:1,r5:1};
 function theDam(){return S.plants.find(q=>q.type==='dam'&&!q.broken&&!q.fire)||S.plants.find(q=>q.type==='dam');}
 function damRelease(d){return d?(d.open?1.35:(damGate(d)==='shut'?0.3:0.65)):1;}
 function flowMult(p){
@@ -5220,6 +5247,9 @@ const PADS=[
   {id:'f3',kind:'build',type:'solarfarm',x:1050,y:1790,cost:70000,req:'f2'},
   {id:'d1',kind:'build',type:'dam',x:1266,y:1628,cost:55000,req:'desert'},
   {id:'r2',kind:'build',type:'river',x:1268,y:1858,cost:17000,req:'d1'},
+  {id:'r3',kind:'build',type:'river',x:1300,y:450,cost:12000,req:'r1'},
+  {id:'r4',kind:'build',type:'river',x:1330,y:990,cost:15000,req:'r3'},
+  {id:'r5',kind:'build',type:'river',x:1296,y:1760,cost:24000,req:'r2'},
   {id:'east',kind:'gate',region:'east',label:['Open the east bank','Doğu kıyısını aç'],icon:'🌉',x:1225,y:1110,cost:300000,req:null},
   {id:'n1',kind:'build',type:'nuclear',x:NUKE.x,y:NUKE.y,cost:1200000,req:'east'},
 ];
@@ -5865,7 +5895,7 @@ function update(dt){
       cf=p.open?1:0;
     }
     else cf=solarShape(t)*solarMult()*sheepBonus(p)*snowMult(p);
-    p.acc+=T.rate*plantGen(p)*cf*gdt*(1-ancBand(p));   // the reserved band never reaches the stack
+    p.acc+=T.rate*plantGen(p)*cf*gdt*(1-ancBand(p))*brandOf(p).out;   // the reserved band never reaches the stack
     while(p.acc>=1){p.acc-=1;
       if(T.kind==='dam'){if((p.res||0)<1){p.acc=0;break;}p.res-=1;}
       if(gridLvl(p)>0){p.gacc=(p.gacc||0)+gridShare(p);
@@ -5876,14 +5906,20 @@ function update(dt){
       while(p.gsa>=1&&p.pile>0){p.gsa-=1;pileTake(p);gridDeliver(p);}
     }
     p.spin=(p.spin||0)+gdt*(0.6+cf*6);
-    if(has('repair')&&Math.random()<0.0012*gdt*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){damagePlant(p,DAY.weather==='stormy'?0.35:0.12);const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
+    if(has('repair')&&Math.random()<0.0012*gdt*brandOf(p).brk*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){damagePlant(p,DAY.weather==='stormy'?0.35:0.12);const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
   tickWet(gdt);setRiverFlow();            // the catchment fills and drains, and the river shows it
   if(cozy()&&(cozyT=(cozyT||0)+dt)>2){cozyT=0;cozyGuard();}
   S.sat=Math.max(0,S.sat-Math.max(0.12,S.sat*0.35)*dt);
   if(S.satT)for(const k in S.satT)S.satT[k]=Math.max(0,S.satT[k]-Math.max(0.16,S.satT[k]*0.4)*dt);
   // player
-  const[vx,vy,m]=inputVec();const sp=speed()*m;
+  let[vx,vy,m]=inputVec();
+  if(m>0.05)autoGo=null;                                           // the joystick always wins
+  else if(autoGo){const tp=jobOpen(autoGo);
+    if(!tp)autoGo=null;                                            // done by a helper, or gone
+    else{const dx=tp.x-S.px,dy=tp.y+30-S.py,l=Math.hypot(dx,dy);
+      if(l<40)autoGo=null;else{vx=dx/l;vy=dy/l;m=1;}}}
+  const sp=speed()*m;
   let nx=S.px+vx*sp*dt,ny=S.py+vy*sp*dt;
   nx=Math.max(20,Math.min(WORLD.w-20,nx));ny=Math.max(60,Math.min(WORLD.h-20,ny));
   for(const r of REGIONS)if(!S.regions[r.id]&&ny>r.y0-16)ny=Math.min(ny,r.y0-16);
@@ -6084,6 +6120,7 @@ function completePad(p){
   if(p.kind==='build'){
     S.built[p.id]=true;logLedger('build',-padCost(p),p.id);
     if(p.type!=='battery'&&p.type!=='town')S.plants.push({id:p.id,type:p.type,x:p.x,y:p.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1});
+    if(PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='wind'){const np=S.plants[S.plants.length-1];setTimeout(()=>askBrand(np),900);}
     pops[p.id]=1;toast(`${p.type==='battery'?L('Battery station','Batarya istasyonu'):p.type==='town'?L('Town market','Kasaba pazarı'):tt(PLANT_TYPES[p.type].name)} ${L('built','kuruldu')}`,'good');
     if(p.type==='town')toast(L('Town market open. Sell right here instead of walking to the city.','Kasaba pazarı açıldı. Şehre yürümek yerine burada sat.'),'big');
     if(p.type==='battery'&&p.id!=='bat')toast(L('Field depot ready. Store far-field energy here before it fades.','Saha deposu hazır. Uzaktaki enerjiyi sönmeden buraya bırak.'),'good');
@@ -7089,7 +7126,7 @@ function render(dt,now){
   const distc=Math.min(190,Math.max(26,(wantW/2)/Math.tan(hf/2)));
   const PX=S.px*U,PZ=S.py*U;
   const CX=camAim?camAim.x*U:PX, CZ=camAim?camAim.y*U:PZ;      // she points, the camera goes
-  const halfW=Math.min(WORLD.w*U/2-1,wantW*0.48);const tx=Math.max(halfW,Math.min(WORLD.w*U-halfW,CX)),tz=Math.max(12,Math.min(98,CZ+(camAim?3:0)));   // lift the subject clear of Ela's card
+  const halfW=Math.min(WORLD.w*U/2-1,wantW*0.48);const tx=Math.max(halfW,Math.min(WORLD.w*U-halfW+6,CX)),tz=Math.max(12,Math.min(98,CZ+(camAim?3:0)));   // lift the subject clear of Ela's card
   if(shadowZoom!==ZL){shadowZoom=ZL;const e=26*ZL;Object.assign(sun.shadow.camera,{left:-e,right:e,top:e,bottom:-e});sun.shadow.camera.updateProjectionMatrix();document.body.classList.toggle('far',ZL>=2);}
   const ang=THREE.MathUtils.degToRad(54);
   const want=new THREE.Vector3(tx,Math.sin(ang)*distc,tz+Math.cos(ang)*distc);
@@ -7127,9 +7164,10 @@ function render(dt,now){
     if(p.pile>0)place('pile'+p.id,'cnt'+(p.pile>=T.max?' full':''),p.x+(p.type==='dam'?110:p.type==='solarfarm'?80:p.type==='river'?92:36),p.y+24,Math.min(p.pile,24)/2*CELL_STEP+0.9,p.pile>=T.max?L('FULL','DOLU'):String(p.pile));
     if(p.broken)place('br'+p.id,'wrench'+(heavy(p)?' fire':''),p.x,p.y,T.kind==='wind'?7*T.scale:2.4,p.fix>0?`${heavy(p)?'🛠️':'🔧'} ${Math.round(p.fix*100)}%`:(heavy(p)?'🛠️':'🔧'));
     if(has('codes')){const eff=plantEff(p),old=eff<1;
-     place('cd'+p.id,'code'+(old?' worn':''),p.x-(p.type==='solarfarm'?70:30),p.y+22,0.9,codeOf(p.id)+(old?` ${Math.round(eff*100)}%`:''));}
+     place('cd'+p.id,'code'+(old?' worn':''),p.x-(p.type==='solarfarm'?70:30),p.y+22,0.9,codeOf(p.id)+brandOf(p).tag+(old?` ${Math.round(eff*100)}%`:''));}
     if(T.kind==='hydro'&&TAILRACE[p.id]&&theDam()){const fm=flowMult(p);
       place('tr'+p.id,'cnt'+(fm<1?' full':''),p.x,p.y-26,2.2,`\ud83c\udf0a ${Math.round(fm*100)}%`);}
+    if(autoGo&&autoGo.id===p.id)place('ag'+p.id,'cnt',p.x,p.y-30,T.kind==='wind'?8*T.scale:3.2,'🎯');
     if(T.kind==='nuclear'){const[X,Z]=W3(p.x,p.y),on=nukeOn(p);
       if(on&&playing){smokeAt(X+2.2,Z+0.6,6.6,now,0.3);smokeAt(X+2.2,Z+0.6,7.4,now+800,0.9);}
       const dl=p.fuelDay!=null?p.fuelDay-S.day:NUKE_CYCLE;
@@ -8015,6 +8053,7 @@ $('mGrid').addEventListener('change',e=>{if(e.target.closest('input.ancr')){sfx.
 function maintList(){
   const out=[];
   for(const p of S.plants){const T=PLANT_TYPES[p.type];if(!T||isNuke(p))continue;
+    if(p.broken&&!p.fire)out.push({p,k:'fix',c:repairCost(p),w:2+(heavy(p)?1:0)});
     if(gridNeedsService(p))out.push({p,k:'line',c:gridServiceCost(p),w:gridWear(p)});
     if(!p.broken&&needsWork(p))out.push({p,k:canRebuild(p)?'rebuild':'repower',c:canRebuild(p)?rebuildCost(p):repowerCost(p),w:1-plantCap(p)});}
   return out.sort((a,b)=>b.w-a.w);
@@ -8024,13 +8063,21 @@ function renderMaint(){
   $('mntTitle').textContent=L('🧰 Upkeep','🧰 Bakım');
   $('mntSub').textContent=L2.length?L(`${L2.length} jobs waiting · ₵${fmt(tot)} in total. Stand next to the plant, or let a Fix-role helper do it (${fixers} on the crew).`,`${L2.length} iş bekliyor · toplam ₵${fmt(tot)}. Santralin yanında dur ya da Tamir rolündeki bir yardımcı yapsın (ekipte ${fixers} kişi).`)
                                    :L('Nothing waiting. Lines and plants are in good shape.','Bekleyen iş yok. Hatlar ve santraller iyi durumda.');
-  const nm={line:['🔌 Line service','🔌 Hat bakımı'],repower:['♻️ Repower','♻️ Yenileme'],rebuild:['🏗️ Rebuild','🏗️ Söküp yeniden kur']};
-  $('mntBody').innerHTML=L2.map(x=>{const pct=x.k==='line'?L(`worn ${Math.round(x.w*100)}%`,`%${Math.round(x.w*100)} aşınmış`):L(`ceiling ${Math.round(plantCap(x.p)*100)}%`,`tavan %${Math.round(plantCap(x.p)*100)}`);
-    const busy=(x.k==='line'&&x.p.gsv>0)||(x.k!=='line'&&x.p.rep>0);
-    return `<div class="scale" style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span><b>${codeOf(x.p.id)}</b> · ${tt(nm[x.k])} · ${pct}${busy?' · '+L('in progress','yapılıyor'):''}</span><span style="white-space:nowrap;font-weight:700">₵${fmt(x.c)}</span></div>`;}).join('');
+  const nm={fix:['🔧 Breakdown','🔧 Arıza'],line:['🔌 Line service','🔌 Hat bakımı'],repower:['♻️ Repower','♻️ Yenileme'],rebuild:['🏗️ Rebuild','🏗️ Söküp yeniden kur']};
+  $('mntBody').innerHTML=L2.map(x=>{const pct=x.k==='fix'?(heavy(x.p)?L('heavy','ağır'):L('light','hafif')):x.k==='line'?L(`worn ${Math.round(x.w*100)}%`,`%${Math.round(x.w*100)} aşınmış`):L(`ceiling ${Math.round(plantCap(x.p)*100)}%`,`tavan %${Math.round(plantCap(x.p)*100)}`);
+    const busy=(x.k==='fix'&&x.p.fix>0)||(x.k==='line'&&x.p.gsv>0)||((x.k==='repower'||x.k==='rebuild')&&x.p.rep>0);
+    return `<div class="scale" style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span><b>${codeOf(x.p.id)}</b> · ${tt(nm[x.k])} · ${pct}${busy?' · '+L('in progress','yapılıyor'):''}</span><span style="white-space:nowrap;font-weight:700;display:flex;align-items:center;gap:8px">₵${fmt(x.c)}<button class="pri" data-go="${x.p.id}|${x.k}" style="padding:4px 10px;min-height:0;font-size:.85em">${L('Go','Git')}</button></span></div>`;}).join('');
 }
 function openMaint(){renderMaint();$('mMaint').classList.add('on');trackOnce('maint-panel');}
 $('mntBtn').onclick=openMaint;
+/* Go: the character walks to the job by itself. The joystick always wins (touch it and the
+   walk is cancelled), and if a helper finishes the job first the walk stops. */
+let autoGo=null;
+function jobOpen(j){const p=S.plants.find(q=>q.id===j.id);if(!p)return null;
+  const ok=j.k==='fix'?p.broken:j.k==='line'?gridNeedsService(p):needsWork(p)&&!p.broken;return ok?p:null;}
+$('mntBody').addEventListener('click',e=>{const b=e.target.closest('button[data-go]');if(!b)return;
+  const [id,k]=b.dataset.go.split('|');autoGo={id,k};$('mMaint').classList.remove('on');
+  toast(L(`🚶 Walking to ${codeOf(id)}. Touch the joystick to take over.`,`🚶 ${codeOf(id)}'e gidiliyor. Joystick'e dokunursan kontrol sende.`),'');trackOnce('maint-go');});
 $('mntClose').onclick=()=>$('mMaint').classList.remove('on');
 function openGridPanel(){renderGrid();$('mGrid').classList.add('on');trackOnce('grid-panel');}
 $('gridBtn').onclick=openGridPanel;
@@ -8100,6 +8147,14 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.68.0',t:['Go to the job','İşe git'],l:[
+  ['Turbine makes renamed: Fırıldak, Esinti, Poyrazmatik. The extra for Poyrazmatik and the refund for Fırıldak now follow what the turbine earns in a day, not its pad price — late in the game premium was a free win.','Türbin markalarının adı değişti: Fırıldak, Esinti, Poyrazmatik. Poyrazmatik\'in ek ücreti ve Fırıldak\'ın iadesi artık pad fiyatına değil türbinin bir günde kazandığına göre; oyunun sonlarında premium bedava kazançtı.'],
+  ['Three more run-of-river plants along the river: R3 and R4 in the home field once R1 stands, R5 below the dam after R2.','Nehir boyunca üç akarsu santrali daha: R1 kurulunca ana sahada R3 ve R4, R2\'den sonra barajın altında R5.'],
+  ['🧰 Upkeep now lists broken plants too, and every job has a Go button: your character walks there by itself. Touch the joystick and you are back in control; if a helper fixes it first, the walk stops.','🧰 Bakım artık arızalı santralleri de listeliyor ve her işin yanında Git butonu var: karakterin oraya kendisi yürüyor. Joystick\'e dokunursan kontrol sende; bir yardımcı önce tamir ederse yürüyüş duruyor.']]},
+ {v:'0.67.0',t:['Turbine makes','Türbin markaları'],l:[
+  ['Once breakdowns are on (level 12), every new wind turbine asks which make it is. Fırıldak (economy) hands back money but produces 6% less and breaks 80% more often. Esinti (standard) is what you had. Poyrazmatik (premium) costs extra, produces 10% more and breaks half as often.','Arızalar açıldıktan sonra (seviye 12) her yeni rüzgâr türbini hangi marka olacağını soruyor. Fırıldak (ekonomi) para iade eder ama %6 az üretir ve %80 daha sık bozulur. Esinti (standart) bugüne kadarki türbin. Poyrazmatik (premium) ek ödeme ister, %10 fazla üretir ve yarı yarıya seyrek bozulur.'],
+  ['The make stays with the turbine and shows next to its code: ★ premium, ▼ economy. The makes are invented.','Marka türbinle kalır ve kodunun yanında görünür: ★ premium, ▼ ekonomi. Markalar hayalidir.'],
+  ['The nuclear plant sits a little further from the edge and the camera can now look past the east edge, so N1 is fully in view behind the side buttons.','Nükleer santral kenardan biraz içeri alındı ve kamera artık doğu kenarın ötesine bakabiliyor; N1 yan butonların arkasında kalmadan tam görünüyor.']]},
  {v:'0.66.0',t:['The east bank','Doğu kıyısı'],l:[
   ['The map now goes on past the river. The camera can follow you to the water, so the river plants sit in the middle of the screen instead of hugging its edge.','Harita artık nehrin ötesine uzanıyor. Kamera seni suya kadar takip edebiliyor; akarsu santralleri ekranın kenarına sıkışmak yerine ortada duruyor.'],
   ['The nuclear plant moved out of the city\'s shadow to its own site on the east bank. At level 19 a bridge pad by the river opens the bank for ₵300K.','Nükleer santral şehrin dibinden, doğu kıyısındaki kendi alanına taşındı. Seviye 19\'da nehrin yanındaki köprü alanı kıyıyı ₵300K karşılığında açıyor.'],
@@ -9095,7 +9150,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.66.0';
+const GAME_VERSION='0.68.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
