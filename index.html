@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.65.1</div>
+  <div class="t-ver" id="tVer">v0.66.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -646,7 +646,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.65.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.66.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4808,7 +4808,7 @@ const ASSETS={"forest":{"Tree_1_A":{"asset":{"generator":"Khronos glTF Blender I
 <script>
 'use strict';
 /* ======================= CONFIG ======================= */
-const WORLD={w:1400,h:2000}, U=1/20;
+const WORLD={w:1700,h:2000}, U=1/20;
 const DAY_SEC=480, HOUR=DAY_SEC/24, P0=10; // 1 game hour = 20 s
 const DEMAND=[0.45,0.42,0.40,0.40,0.43,0.52,0.72,0.95,1.0,0.95,0.86,0.78,0.72,0.72,0.80,0.95,1.2,1.8,2.6,3.3,3.2,2.3,1.4,0.8];
 const AVG_D=DEMAND.reduce((a,b)=>a+b,0)/24;
@@ -4882,7 +4882,8 @@ const PLANT_TYPES={
        the national grid at the system price (no hauling, no local saturation), and cannot
        turn down. It stops only for a fixed refuelling outage and for a SCRAM. No fire,
        storm, lightning, breakdown or ageing: the one risk it carries is the SCRAM. ---- */
-const NUKE={x:1110,y:230};
+const NUKE={x:1565,y:760};
+const EAST={x0:1420,name:['East bank','Doğu kıyısı']};    // land across the river: room to frame the river, and the nuclear site
 const NUKE_CYCLE=20, NUKE_OUT=2, NUKE_WARN=3;          // days between refuels, days offline, days of notice
 const NUKE_SCRAM_H=6, NUKE_SCRAM_P=1/(24*18);          // hours offline; chance per running hour (~one in 18 days)
 function isNuke(p){const T=p&&PLANT_TYPES[p.type];return !!T&&T.kind==='nuclear';}
@@ -5219,7 +5220,8 @@ const PADS=[
   {id:'f3',kind:'build',type:'solarfarm',x:1050,y:1790,cost:70000,req:'f2'},
   {id:'d1',kind:'build',type:'dam',x:1266,y:1628,cost:55000,req:'desert'},
   {id:'r2',kind:'build',type:'river',x:1268,y:1858,cost:17000,req:'d1'},
-  {id:'n1',kind:'build',type:'nuclear',x:NUKE.x,y:NUKE.y,cost:1200000,req:null},
+  {id:'east',kind:'gate',region:'east',label:['Open the east bank','Doğu kıyısını aç'],icon:'🌉',x:1225,y:1110,cost:300000,req:null},
+  {id:'n1',kind:'build',type:'nuclear',x:NUKE.x,y:NUKE.y,cost:1200000,req:'east'},
 ];
 const BUILD_ICON={turbine:'🌀',solar:'🔆',battery:'🔋',bigwind:'🌬️',solarfarm:'🌞',river:'🌊',dam:'🏞️'};
 /* the spline decides where the water runs, so anything standing in it reads its x off the spline */
@@ -5373,7 +5375,7 @@ const OPENTXT={
   ageing:[['Ageing','Yaşlanma'],['Plants wear out. Repower them, rebuild when the ceiling drops too low.','Santraller yıpranır. Yenile, tavan çok düşünce söküp yeniden kur.']],
   skills:[['Skills and wages','Yetenek ve ücret'],['Helpers have star ratings and cost a daily wage.','Yardımcıların yıldızları var ve günlük ücret alıyorlar.']],
   grid:[['Grid link','Şebeke bağlantısı'],['The battery can sell by itself at the peak.','Batarya zirvede kendi başına satabilir.']],
-  nuclear:[['Nuclear','Nükleer'],['A plant that never sleeps, up by the river in the north. It sells straight to the grid.','Kuzeyde nehir kıyısında hiç uyumayan bir santral. Doğrudan şebekeye satar.']],
+  nuclear:[['Nuclear','Nükleer'],['A plant that never sleeps, across the river on the east bank. Open the bank first. It sells straight to the grid.','Nehrin karşısında, doğu kıyısında hiç uyumayan bir santral. Önce kıyıyı aç. Doğrudan şebekeye satar.']],
 };
 const LEVELS=[null,
  {need:0,      t:['Hauler','Hamal'],              open:null,      hard:null, perk:null},
@@ -5764,6 +5766,7 @@ function padVisible(p){
   if(p.kind==='build'&&p.type==='town'&&!has('regions'))return false;
   if(p.kind==='build'&&p.type==='nuclear'&&!has('nuclear'))return false;
   if(p.kind==='gate'&&!has('regions'))return false;
+  if(p.kind==='gate'&&p.region==='east'&&!has('nuclear'))return false;
   if(p.kind==='build'&&built(p.id))return false;
   if(p.kind==='gate'&&S.regions[p.region])return false;
   if(p.req&&!(built(p.req)||S.regions[p.req]||(pad(p.req)&&pad(p.req).kind==='upg'&&S.up[pad(p.req).key]>0)))return false;
@@ -5884,6 +5887,7 @@ function update(dt){
   let nx=S.px+vx*sp*dt,ny=S.py+vy*sp*dt;
   nx=Math.max(20,Math.min(WORLD.w-20,nx));ny=Math.max(60,Math.min(WORLD.h-20,ny));
   for(const r of REGIONS)if(!S.regions[r.id]&&ny>r.y0-16)ny=Math.min(ny,r.y0-16);
+  if(!S.regions.east&&nx>EAST.x0-16)nx=Math.min(nx,EAST.x0-16);
   S.moving=m>0.05;if(S.moving)S.face=Math.atan2(vx,vy);
   S.px=nx;S.py=ny;const P={x:S.px,y:S.py};
   cellTick-=dt;
@@ -6091,7 +6095,7 @@ function completePad(p){
       if(!boxes().length){const b=newBox();b.m=[0];boxes().push(b);applyBoxes();}   // first hire gets a starter box
       else toast(L('New helper is on the bench. Open 👷 and put them in a task box.','Yeni yardımcı boşta. 👷 ile bir görev kutusuna koy.'),'big');hint('crew',L('Tap 👷 at the top to tell your helpers when to sell.','Yardımcılarına ne zaman satacaklarını söylemek için üstteki 👷 butonuna dokun.'),'big');}
     toast({bag:L(`Backpack holds ${carryCap()}`,`Sırt çantası ${carryCap()} taşır`),boots:L('You walk faster','Daha hızlı yürüyorsun'),helper:L('A helper joined your crew','Ekibine bir yardımcı katıldı'),batcap:L(`Battery holds ${batCap()}`,`Batarya ${batCap()} tutar`),bateff:L(`Battery upgraded: +${Math.round((batBonus()-1)*100)}% on stored energy, slower wear, fewer faults`,`Batarya geliştirildi: depodan satışta +%${Math.round((batBonus()-1)*100)}, daha yavaş yıpranma, daha az arıza`),grid:L('Grid link: the battery sells by itself at the peak','Şebeke bağlantısı: batarya zirvede kendi satar')}[p.key],'good');
-  }else{S.regions[p.region]=true;toast(`${tt(REGIONS.find(r=>r.id===p.region).name)} ${L('is open','açıldı')}`,'big');}
+  }else{S.regions[p.region]=true;toast(`${tt((REGIONS.find(r=>r.id===p.region)||EAST).name)} ${L('is open','açıldı')}`,'big');}
   save();
 }
 /* ---- helper AI with roles ---- */
@@ -6147,6 +6151,8 @@ function benchList(){const o=[];for(let i=0;i<S.up.helper;i++)if(!boxOf(i))o.pus
 function boxWage(b){let w=0;for(const i of (b.m||[]))w+=dailyWage(i);return w;}
 /* an older save was built on the old channel: put its hydro back in the water */
 function migrateRiver(){
+  for(const q of S.plants)if(isNuke(q)&&(q.x!==NUKE.x||q.y!==NUKE.y)){q.x=NUKE.x;q.y=NUKE.y;S.regions.east=true;
+    if(plantObjs[q.id]){plantObjs[q.id].parent&&scene.remove(plantObjs[q.id]);delete plantObjs[q.id];}}
   for(const q of S.plants){const T=PLANT_TYPES[q.type];if(!T)continue;
     if(T.kind!=='hydro'&&T.kind!=='dam')continue;
     const pd=PADS.find(z=>z.id===q.id);        // the pad is where this plant belongs now
@@ -6366,10 +6372,10 @@ const groundMats=[];
 {
   const base=mesh(new THREE.PlaneGeometry(400,400),new THREE.MeshToonMaterial({color:0x4E8A4F,gradientMap:grad}),35,-0.05,50,false);base.rotation.x=-Math.PI/2;scene.add(base);
   groundMats.push([base.material,new THREE.Color(0x4E8A4F)]);
-  const g1=mesh(new THREE.PlaneGeometry(70,61.5),new THREE.MeshToonMaterial({color:0x55A043,gradientMap:grad}),35,0,30.75,false);g1.rotation.x=-Math.PI/2;scene.add(g1);
+  const g1=mesh(new THREE.PlaneGeometry(WORLD.w*U,61.5),new THREE.MeshToonMaterial({color:0x55A043,gradientMap:grad}),WORLD.w*U/2,0,30.75,false);g1.rotation.x=-Math.PI/2;scene.add(g1);
   groundMats.push([g1.material,new THREE.Color(0x55A043)]);
   for(const r of REGIONS){const d=(r.y1-r.y0)*U;const mt=new THREE.MeshToonMaterial({color:r.col,gradientMap:grad});
-    const g=mesh(new THREE.PlaneGeometry(70,d),mt,35,0,r.y0*U+d/2,false);g.rotation.x=-Math.PI/2;scene.add(g);
+    const g=mesh(new THREE.PlaneGeometry(WORLD.w*U,d),mt,WORLD.w*U/2,0,r.y0*U+d/2,false);g.rotation.x=-Math.PI/2;scene.add(g);
     groundMats.push([mt,new THREE.Color(r.col)]);}
   const road=M(0xD9BE85),dash=M(0xFFF6DD);
   const r1=mesh(new THREE.PlaneGeometry(2.4,79),road,35,0.02,16.5+39.5,false);r1.rotation.x=-Math.PI/2;scene.add(r1);
@@ -6419,7 +6425,7 @@ const groundMats=[];
   }
   // edge cliffs around main field for depth
   const cliffM=M(0x7A5B3A);
-  const cl=mesh(new THREE.BoxGeometry(72,3,1),cliffM,35,-1.5,-0.5);scene.add(cl);
+  const cl=mesh(new THREE.BoxGeometry(WORLD.w*U+2,3,1),cliffM,WORLD.w*U/2,-1.5,-0.5);scene.add(cl);
 
 }
 
@@ -6427,8 +6433,10 @@ const groundMats=[];
 /* nature: KayKit models when available, simple cones otherwise */
 function natureSpots(){
   const tr=rng(7),trees=[];
-  for(let i=0;i<140;i++){const x=tr()*WORLD.w,y=tr()*1210;if(Math.abs(x-700)<90)continue;if(onRiver(x,y,70))continue;if(y>540&&y<1120&&x>130&&x<1250)continue;if(y<470&&x>470&&x<930)continue;if(Math.hypot(x-NUKE.x,y-NUKE.y)<150)continue;trees.push([x,y,0.8+tr()*0.7]);}
+  for(let i=0;i<140;i++){const x=tr()*1400,y=tr()*1210;if(Math.abs(x-700)<90)continue;if(onRiver(x,y,70))continue;if(y>540&&y<1120&&x>130&&x<1250)continue;if(y<470&&x>470&&x<930)continue;if(Math.hypot(x-NUKE.x,y-NUKE.y)<150)continue;trees.push([x,y,0.8+tr()*0.7]);}
   for(let i=0;i<50;i++){const x=-400+tr()*2200,y=-300+tr()*2600;if(x>-20&&x<WORLD.w+20&&y>-20&&y<WORLD.h+20)continue;trees.push([x,y,1+tr()*0.8]);}
+  {const te=rng(71);for(let i=0;i<70;i++){const x=EAST.x0+30+te()*(WORLD.w-EAST.x0-50),y=40+te()*1940;
+     if(Math.hypot(x-NUKE.x,y-NUKE.y)<190)continue;if(onRiver(x,y,70))continue;trees.push([x,y,0.8+te()*0.7]);}}
   return trees;
 }
 function blocked(x,y,pad){
@@ -6559,13 +6567,13 @@ function buildNatureFallback(){
     col.setHSL(0.3+tr()*0.06,0.55,0.32+tr()*0.08);c1.setColorAt(i,col);col.offsetHSL(0,0,0.07);c2.setColorAt(i,col);
   });
   [trunks,c1,c2].forEach(m=>{m.castShadow=true;m.receiveShadow=true;scene.add(m);});
-  const rocks=[];for(let i=0;i<30;i++){const x=tr()*WORLD.w,y=1250+tr()*340;if(Math.abs(x-700)<90)continue;if([300,560,840,1100].some(px=>Math.abs(px-x)<90))continue;rocks.push([x,y]);}
-  for(let i=0;i<24;i++){const x=tr()*WORLD.w,y=1650+tr()*330;if(Math.abs(x-700)<90)continue;if([350,700,1050].some(px=>Math.abs(px-x)<140))continue;rocks.push([x,y]);}
+  const rocks=[];for(let i=0;i<30;i++){const x=tr()*1400,y=1250+tr()*340;if(Math.abs(x-700)<90)continue;if([300,560,840,1100].some(px=>Math.abs(px-x)<90))continue;rocks.push([x,y]);}
+  for(let i=0;i<24;i++){const x=tr()*1400,y=1650+tr()*330;if(Math.abs(x-700)<90)continue;if([350,700,1050].some(px=>Math.abs(px-x)<140))continue;rocks.push([x,y]);}
   const rk=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.8,0),M(0xB0A89A),rocks.length);
   rocks.forEach(([x,y],i)=>{const[X,Z]=W3(x,y);dm.position.set(X,0.4,Z);const s=0.6+tr()*0.9;dm.scale.set(s,s*0.7,s);dm.rotation.set(tr(),tr(),0);dm.updateMatrix();rk.setMatrixAt(i,dm.matrix);});
   rk.castShadow=rk.receiveShadow=true;scene.add(rk);
   // cacti in desert
-  const cac=[];for(let i=0;i<14;i++){const x=tr()*WORLD.w,y=1660+tr()*320;if(Math.abs(x-700)<90||[350,700,1050].some(px=>Math.abs(px-x)<150))continue;cac.push([x,y]);}
+  const cac=[];for(let i=0;i<14;i++){const x=tr()*1400,y=1660+tr()*320;if(Math.abs(x-700)<90||[350,700,1050].some(px=>Math.abs(px-x)<150))continue;cac.push([x,y]);}
   const cm=new THREE.InstancedMesh(new THREE.CylinderGeometry(0.25,0.3,1.8,6),M(0x4F9A55),cac.length);
   cac.forEach(([x,y],i)=>{const[X,Z]=W3(x,y);dm.position.set(X,0.9,Z);dm.scale.set(1,1,1);dm.rotation.set(0,0,0);dm.updateMatrix();cm.setMatrixAt(i,dm.matrix);});
   cm.castShadow=true;scene.add(cm);
@@ -6800,11 +6808,19 @@ TOWNS.forEach(makeTown);
 const fenceObjs={};
 for(const r of REGIONS){
   const g=new THREE.Group();const z=r.y0*U;
-  const posts=new THREE.InstancedMesh(new THREE.BoxGeometry(0.25,1.2,0.25),M(0xA0683A),36);const dm=new THREE.Object3D();
-  for(let i=0;i<36;i++){dm.position.set(i*2,0.6,z);dm.updateMatrix();posts.setMatrixAt(i,dm.matrix);}posts.castShadow=true;g.add(posts);
-  g.add(mesh(new THREE.BoxGeometry(70,0.14,0.1),M(0x8A5A2B),35,0.9,z));g.add(mesh(new THREE.BoxGeometry(70,0.14,0.1),M(0x8A5A2B),35,0.5,z));
-  const d=(r.y1-r.y0)*U;const cover=mesh(new THREE.PlaneGeometry(70,d),new THREE.MeshBasicMaterial({color:0x0b1020,transparent:true,opacity:0.38}),35,0.2,z+d/2,false);cover.rotation.x=-Math.PI/2;g.add(cover);
+  const NP=Math.ceil(WORLD.w*U/2)+1;const posts=new THREE.InstancedMesh(new THREE.BoxGeometry(0.25,1.2,0.25),M(0xA0683A),NP);const dm=new THREE.Object3D();
+  for(let i=0;i<NP;i++){dm.position.set(i*2,0.6,z);dm.updateMatrix();posts.setMatrixAt(i,dm.matrix);}posts.castShadow=true;g.add(posts);
+  g.add(mesh(new THREE.BoxGeometry(WORLD.w*U,0.14,0.1),M(0x8A5A2B),WORLD.w*U/2,0.9,z));g.add(mesh(new THREE.BoxGeometry(WORLD.w*U,0.14,0.1),M(0x8A5A2B),WORLD.w*U/2,0.5,z));
+  const d=(r.y1-r.y0)*U;const cover=mesh(new THREE.PlaneGeometry(WORLD.w*U,d),new THREE.MeshBasicMaterial({color:0x0b1020,transparent:true,opacity:0.38}),WORLD.w*U/2,0.2,z+d/2,false);cover.rotation.x=-Math.PI/2;g.add(cover);
   scene.add(g);fenceObjs[r.id]=g;
+}
+{ // the east bank: a fence running north-south just past the river, and the same dark wash while it is shut
+  const g=new THREE.Group(),x=EAST.x0*U,len=WORLD.h*U,n=Math.ceil(len/2)+1;
+  const posts=new THREE.InstancedMesh(new THREE.BoxGeometry(0.25,1.2,0.25),M(0xA0683A),n);const dm=new THREE.Object3D();
+  for(let i=0;i<n;i++){dm.position.set(x,0.6,i*2);dm.updateMatrix();posts.setMatrixAt(i,dm.matrix);}posts.castShadow=true;g.add(posts);
+  g.add(mesh(new THREE.BoxGeometry(0.1,0.14,len),M(0x8A5A2B),x,0.9,len/2));g.add(mesh(new THREE.BoxGeometry(0.1,0.14,len),M(0x8A5A2B),x,0.5,len/2));
+  const w=(WORLD.w-EAST.x0)*U;const cover=mesh(new THREE.PlaneGeometry(w,len),new THREE.MeshBasicMaterial({color:0x0b1020,transparent:true,opacity:0.38}),x+w/2,0.21,len/2,false);cover.rotation.x=-Math.PI/2;g.add(cover);
+  scene.add(g);fenceObjs.east=g;
 }
 
 /* pads */
@@ -6843,6 +6859,7 @@ function plantObj(p){
   else g=p.type==='solarfarm'?makeSolar(5,3):makeSolar(2,2);
   const root=new THREE.Group();root.add(g);const[X,Z]=W3(p.x,p.y);root.position.set(X,0,Z);
   if(T.kind==='hydro'||T.kind==='dam')root.rotation.y=riverAt(p.y).ang;   // square to the channel
+  if(T.kind==='nuclear')root.rotation.y=Math.PI;                         // intake pipe points back at the river
   const pile=new THREE.Group();pile.position.set(p.type==='dam'?6.2:p.type==='solarfarm'?4:p.type==='river'?5.2:1.8,0.16,p.type==='dam'?3.4:p.type==='river'?2.6:1.2);root.add(pile);
   root.userData={model:g,pile,cells:[]};scene.add(root);plantObjs[p.id]=root;return root;
 }
@@ -7072,7 +7089,7 @@ function render(dt,now){
   const distc=Math.min(190,Math.max(26,(wantW/2)/Math.tan(hf/2)));
   const PX=S.px*U,PZ=S.py*U;
   const CX=camAim?camAim.x*U:PX, CZ=camAim?camAim.y*U:PZ;      // she points, the camera goes
-  const halfW=Math.min(34,wantW*0.48);const tx=Math.max(halfW,Math.min(70-halfW,CX)),tz=Math.max(12,Math.min(98,CZ+(camAim?3:0)));   // lift the subject clear of Ela's card
+  const halfW=Math.min(WORLD.w*U/2-1,wantW*0.48);const tx=Math.max(halfW,Math.min(WORLD.w*U-halfW,CX)),tz=Math.max(12,Math.min(98,CZ+(camAim?3:0)));   // lift the subject clear of Ela's card
   if(shadowZoom!==ZL){shadowZoom=ZL;const e=26*ZL;Object.assign(sun.shadow.camera,{left:-e,right:e,top:e,bottom:-e});sun.shadow.camera.updateProjectionMatrix();document.body.classList.toggle('far',ZL>=2);}
   const ang=THREE.MathUtils.degToRad(54);
   const want=new THREE.Vector3(tx,Math.sin(ang)*distc,tz+Math.cos(ang)*distc);
@@ -7114,7 +7131,7 @@ function render(dt,now){
     if(T.kind==='hydro'&&TAILRACE[p.id]&&theDam()){const fm=flowMult(p);
       place('tr'+p.id,'cnt'+(fm<1?' full':''),p.x,p.y-26,2.2,`\ud83c\udf0a ${Math.round(fm*100)}%`);}
     if(T.kind==='nuclear'){const[X,Z]=W3(p.x,p.y),on=nukeOn(p);
-      if(on&&playing){smokeAt(X-2.2,Z-0.6,6.6,now,0.3);smokeAt(X-2.2,Z-0.6,7.4,now+800,0.9);}
+      if(on&&playing){smokeAt(X+2.2,Z+0.6,6.6,now,0.3);smokeAt(X+2.2,Z+0.6,7.4,now+800,0.9);}
       const dl=p.fuelDay!=null?p.fuelDay-S.day:NUKE_CYCLE;
       place('nk'+p.id,'cnt'+(on?'':' full'),p.x,p.y-60,7.8,
         nukeScram(p)?`🛑 SCRAM · ${Math.max(1,Math.ceil((p.scramUntil-gameNow())/HOUR))} ${L('h','sa')}`
@@ -7158,6 +7175,7 @@ function render(dt,now){
    if(n)place('hqrest','tag no',HQ_DOOR.x,HQ_DOOR.y-6,0.1,`😴 ${n}`);else if(LB['hqrest']){LB['hqrest'].el.remove();delete LB['hqrest'];}}
   // regions
   for(const r of REGIONS){fenceObjs[r.id].visible=!S.regions[r.id];if(!S.regions[r.id])place('rg'+r.id,'big',700,(r.y0+r.y1)/2,0.3,`🔒 ${tt(r.name)}`);}
+  if(fenceObjs.east){fenceObjs.east.visible=!S.regions.east;if(!S.regions.east)place('rgeast','big',(EAST.x0+WORLD.w)/2,640,0.3,`🔒 ${tt(EAST.name)}${has('nuclear')?'':' · '+L('Lv','Sv')+UNLOCK.nuclear}`);}
   // city label
   place('city','tag '+lv[1],CITY.x,CITY.y+CITY.r+10,0.1,L(`SELL · ₵${pr.toFixed(1)} each`,`SAT · tanesi ₵${pr.toFixed(1)}`));
   for(const T of TOWNS){const g=townObjs[T.id];if(g)g.visible=built(T.id);
@@ -8082,6 +8100,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.66.0',t:['The east bank','Doğu kıyısı'],l:[
+  ['The map now goes on past the river. The camera can follow you to the water, so the river plants sit in the middle of the screen instead of hugging its edge.','Harita artık nehrin ötesine uzanıyor. Kamera seni suya kadar takip edebiliyor; akarsu santralleri ekranın kenarına sıkışmak yerine ortada duruyor.'],
+  ['The nuclear plant moved out of the city\'s shadow to its own site on the east bank. At level 19 a bridge pad by the river opens the bank for ₵300K.','Nükleer santral şehrin dibinden, doğu kıyısındaki kendi alanına taşındı. Seviye 19\'da nehrin yanındaki köprü alanı kıyıyı ₵300K karşılığında açıyor.'],
+  ['Already built N1? It moves across by itself and the bank is open for you.','N1\'i zaten kurduysan kendiliğinden karşıya taşınır ve kıyı senin için açık olur.']]},
  {v:'0.65.1',t:['Upkeep off the map','Bakım haritadan kalktı'],l:[
   ['Line-service and repower prices no longer float over the plants. A new 🧰 Upkeep button lists every waiting job with its price, and its badge shows how many there are. On the map you only see a job while it is being done.','Hat bakımı ve yenileme fiyatları artık santrallerin üstünde durmuyor. Yeni 🧰 Bakım butonu bekleyen her işi fiyatıyla listeliyor, rozeti de kaç iş olduğunu gösteriyor. Haritada bir işi yalnızca yapılırken görüyorsun.']]},
  {v:'0.65.0',t:['Bilateral contracts','İkili anlaşmalar'],l:[
@@ -8550,6 +8572,7 @@ function drawMap(cv,big){
     g.beginPath();g.arc(p.x*k,p.y*k,rr,0,7);g.fill();g.stroke();
     if(p.broken&&Math.floor(performance.now()/350)%2){g.strokeStyle='#E8364F';g.lineWidth=1.5;g.beginPath();g.arc(p.x*k,p.y*k,rr*2.1,0,7);g.stroke();}}
   // locked regions: dark wash + diagonal hatching
+  if(!S.regions.east){g.fillStyle='rgba(8,14,28,.55)';g.fillRect(EAST.x0*k,0,W-EAST.x0*k,WORLD.h*k);}
   for(const r of REGIONS)if(!S.regions[r.id]){
     const y0=r.y0*k,hh=(r.y1-r.y0)*k;
     g.fillStyle='rgba(8,14,28,.55)';g.fillRect(0,y0,W,hh);
@@ -9072,7 +9095,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.65.1';
+const GAME_VERSION='0.66.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
