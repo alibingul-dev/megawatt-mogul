@@ -430,7 +430,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.77.0</div>
+  <div class="t-ver" id="tVer">v0.78.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -659,7 +659,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.77.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.78.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5571,7 +5571,7 @@ function freePad(id){if(!S||!S.plants)return undefined;const q=S.plants.find(p=>
 function freeCost(t){const n=S.plants.filter(p=>p.free&&p.type===t).length;return Math.round(FREE_BASE[t]*Math.pow(1.25,n)*perk('build'));}
 function freeSpot(t){if(placing&&placing.mode==='sugg')return placing.list[placing.i];
   if(isBld(t)){const f=S.face||0;return {x:Math.round(S.px+Math.sin(f)*120),y:Math.round(S.py+Math.cos(f)*120)};}
-  if(isDeco(t)){const f=S.face||0,d=t==='road'?40:45;let x=S.px+Math.sin(f)*d,y=S.py+Math.cos(f)*d;
+  if(isDeco(t)){const f=S.face||0,d=t==='road'?40:t==='axe'?70:45;let x=S.px+Math.sin(f)*d,y=S.py+Math.cos(f)*d;
     if(t==='road'){x=Math.round(x/40)*40;y=Math.round(y/40)*40;}return {x:Math.round(x),y:Math.round(y),r:t==='road'?(Math.abs(Math.cos(f))>Math.abs(Math.sin(f))?1:0):0};}
   const f=S.face||0,d=t==='solarfarm'?95:70;let x=Math.round(S.px+Math.sin(f)*d),y=Math.round(S.py+Math.cos(f)*d);
   if(t==='river'){const r=riverAt(y);if(Math.abs(x-r.x)<r.w/2+140)x=Math.round(r.x);}return {x,y};}
@@ -5618,11 +5618,13 @@ function moveCost(p){const pd=pad(p.id);return Math.max(50,Math.round(((pd&&pd.c
 /* ---- roads and decorations (v0.74): cheap, placed with the same ghost. Roads snap to a
    40 px grid and speed you up by 30%; sheep grazing next to panels keep their 5% bonus. ---- */
 const DECO={road:{n:['Road','Yol'],i:'🛣️',c:60},tree:{n:['Tree','Ağaç'],i:'🌳',c:40},flowers:{n:['Flower bed','Çiçek tarhı'],i:'🌸',c:30},
-  bush:{n:['Bush','Çalı'],i:'🌿',c:25},sheep:{n:['Sheep','Koyun'],i:'🐑',c:150},cow:{n:['Cow','İnek'],i:'🐄',c:250}};
+  bush:{n:['Bush','Çalı'],i:'🌿',c:25},sheep:{n:['Sheep','Koyun'],i:'🐑',c:150},cow:{n:['Cow','İnek'],i:'🐄',c:250},axe:{n:['Cut trees','Ağaç kes'],i:'🪓',c:30}};
 function isDeco(t){return !!DECO[t];}
 function decoBlock(x,y){return (S.deco||[]).some(d=>Math.hypot(d.x-x,d.y-y)<(d.k==='road'?34:40));}
 function onRoad(x,y){for(const d of (S.deco||[]))if(d.k==='road'){const hx=d.r?12:22,hy=d.r?22:12;if(Math.abs(x-d.x)<hx+2&&Math.abs(y-d.y)<hy+2)return true;}return false;}
 function decoWhy(t,x,y){
+  if(t==='axe'){if(regionLocked(y)||(!S.regions.east&&x>EAST.x0-10))return L('This area is not open yet.','Bu bölge henüz açık değil.');
+    return treesNear(x,y,AXE_R).length?null:L('No trees to cut here.','Burada kesilecek ağaç yok.');}
   if(x<30||x>WORLD.w-30||y<70||y>LAND_H-30)return L('Too close to the edge of the map.','Haritanın kenarına çok yakın.');
   if(regionLocked(y)||(!S.regions.east&&x>EAST.x0-10))return L('This area is not open yet.','Bu bölge henüz açık değil.');
   if(onRiver(x,y,t==='road'?20:10))return L('That is the river.','Burası nehir.');
@@ -5643,14 +5645,31 @@ function decoMesh(t,rot){
   else if(t==='sheep')g.add(makeSheep());else if(t==='cow')g.add(makeCow());
   return g;
 }
-const decoObjs=[];let decoBuilt=false;
+const decoObjs=[];let decoBuilt=false;const decoObjMap=new Map();
+/* v0.78 trees: every tree on the map can be cut. Cut spots are kept as coordinates, so they
+   survive any later change to how the forest is laid out. Building something clears the trees
+   standing on its own footprint for free; 🪓 clears any other spot for ₵30 a tree. */
+let TREE_REF=[];const AXE_R=55;const ZERO_M4=new THREE.Matrix4().makeScale(0,0,0);
+function hideTree(t){if(t.cut)return;t.cut=true;for(const [m,i] of t.refs){if(!m)continue;m.setMatrixAt(i,ZERO_M4);m.instanceMatrix.needsUpdate=true;}}
+function treesNear(x,y,r){const out=[];for(const t of TREE_REF)if(!t.cut&&Math.hypot(t.x-x,t.y-y)<r)out.push({t});
+  for(const d of (S.deco||[]))if((d.k==='tree'||d.k==='bush'||d.k==='flowers')&&Math.hypot(d.x-x,d.y-y)<r)out.push({d});return out;}
+function cutTreesAt(x,y,r){const list=treesNear(x,y,r);S.cut=S.cut||[];
+  for(const it of list){if(it.t){hideTree(it.t);S.cut.push([Math.round(it.t.x),Math.round(it.t.y)]);}
+    else{const o=decoObjMap.get(it.d);if(o){scene.remove(o);decoObjMap.delete(it.d);}S.deco.splice(S.deco.indexOf(it.d),1);}}
+  return list.length;}
+const CLEAR_R={bigwind:45,turbine:35,solar:45,solarfarm:95,river:0};
+function clearFor(t,x,y){const r=isBld(t)?85:t==='road'?24:isDeco(t)?0:(CLEAR_R[t]!=null?CLEAR_R[t]:40);if(r>0)cutTreesAt(x,y,r);}
+function applyCuts(){if(!TREE_REF.length||typeof S==='undefined'||!S)return;
+  for(const [x,y] of (S.cut||[]))for(const t of TREE_REF)if(!t.cut&&Math.abs(t.x-x)<3&&Math.abs(t.y-y)<3)hideTree(t);
+  for(const b of (S.blds||[]))cutTreesAt(b.x,b.y,85);                 // anything already built under a tree gets its ground back
+  for(const q of S.plants)if(q.free)clearFor(q.type,q.x,q.y);}
 function spawnDecoAnimal(d){try{const o=d.k==='sheep'?makeSheep():makeCow();const P={x:d.x,y:d.y,r:70,kind:d.k};
   const an={o,P,x:d.x,y:d.y,tx:d.x,ty:d.y,wait:1,face:0,phase:Math.random()*6,kind:d.k};o.scale.setScalar(d.k==='cow'?1.1:0.95);scene.add(o);animals.push(an);}catch(e){}}
 function addDecoObj(d){
   if(d.k==='sheep'||d.k==='cow'){spawnDecoAnimal(d);return;}
-  const o=decoMesh(d.k,d.r);const[X,Z]=W3(d.x,d.y);o.position.set(X,0,Z);o.traverse(m=>{if(m.isMesh){m.castShadow=d.k!=='road';}});scene.add(o);decoObjs.push(o);
+  const o=decoMesh(d.k,d.r);const[X,Z]=W3(d.x,d.y);o.position.set(X,0,Z);o.traverse(m=>{if(m.isMesh){m.castShadow=d.k!=='road';}});scene.add(o);decoObjs.push(o);decoObjMap.set(d,o);
 }
-function decoTick(){if(decoBuilt)return;decoBuilt=true;for(const d of (S.deco||[]))addDecoObj(d);}
+function decoTick(){if(decoBuilt)return;decoBuilt=true;for(const d of (S.deco||[]))addDecoObj(d);try{applyCuts();}catch(e){}}
 /* ---- buildings and supply contracts (v0.75): a factory, an office block or a data centre
    you build is a customer. It buys at 95% of the local price, and once a week it offers a
    7-day contract: a daily quota at a premium over the recent average. Cells sold there count
@@ -5728,6 +5747,8 @@ function ghostFor(t,rot){
   const key=t+(t==='road'?(rot?'v':'h'):'');
   if(ghosts[key])return ghosts[key];
   if(isBld(t)){const root=new THREE.Group();root.add(bldMesh(t));const ring=new THREE.Mesh(new THREE.RingGeometry(3.2,3.9,40),ghostMats.green);ring.rotation.x=-Math.PI/2;ring.position.y=0.09;root.add(ring);root.visible=false;scene.add(root);ghosts[key]=root;return root;}
+  if(t==='axe'){const root=new THREE.Group();const ring=new THREE.Mesh(new THREE.RingGeometry(AXE_R*U*0.86,AXE_R*U,40),ghostMats.green);ring.rotation.x=-Math.PI/2;ring.position.y=0.09;root.add(ring);
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(AXE_R*U*0.86,40),ghostMats.green);disc.rotation.x=-Math.PI/2;disc.position.y=0.07;root.add(disc);root.visible=false;scene.add(root);ghosts[key]=root;return root;}
   if(isDeco(t)){const root=new THREE.Group();root.add(decoMesh(t,rot));const r=t==='road'?1.4:1.1;const ring=new THREE.Mesh(new THREE.RingGeometry(r*0.75,r,32),ghostMats.green);ring.rotation.x=-Math.PI/2;ring.position.y=0.09;root.add(ring);root.visible=false;scene.add(root);ghosts[key]=root;return root;}
   const T=PLANT_TYPES[t];let g;
   if(T.kind==='wind')g=makeTurbine(T.scale);else if(T.kind==='hydro')g=makeRiver(2.6);else g=t==='solarfarm'?makeSolar(5,3):makeSolar(2,2);
@@ -5740,40 +5761,64 @@ function paintGhost(root,c){root.traverse(o=>{if(o.isMesh)o.material=ghostMats[c
 function startPlacing(mode,t,id){
   placing={mode,t,id};$('mBuild').classList.remove('on');$('placeBar').hidden=false;sfx.pick();
 }
-function stopPlacing(){if(placing&&placing.mode==='sugg')camAim=null;placing=null;$('placeBar').hidden=true;$('pbNext').hidden=true;for(const k in ghosts)ghosts[k].visible=false;}
+const ROAD_MAX=15,roadGhosts=[[],[]];
+function roadGhost(i,r){let g=roadGhosts[r][i];if(!g){g=new THREE.Group();g.add(decoMesh('road',r));paintGhost(g,'green');g.visible=false;scene.add(g);roadGhosts[r][i]=g;}return g;}
+function hideRoadGhosts(){for(const L2 of roadGhosts)for(const g of L2)g.visible=false;}
+function computeRoadRun(){const f=S.face||0,sp=freeSpot('road'),vert=!!sp.r;
+  const dx=vert?0:(Math.sin(f)>=0?40:-40),dy=vert?(Math.cos(f)>=0?40:-40):0,out=[];
+  for(let i=0;i<ROAD_MAX+20&&out.length<ROAD_MAX;i++){const x=sp.x+dx*i,y=sp.y+dy*i;
+    if((S.deco||[]).some(d=>d.k==='road'&&d.x===x&&d.y===y))continue;       // already road: walk over it
+    if(decoWhy('road',x,y))break;out.push({x,y,r:sp.r});}
+  return out;}
+function roadGo(){
+  if(!placing.run){const run=computeRoadRun();if(!run.length)return;placing.run=run;placing.runAt={x:S.px,y:S.py};sfx.pick();return;}
+  const c=DECO.road.c;let n=0;
+  for(const t of placing.run){if(S.cash<c)break;if(decoWhy('road',t.x,t.y))continue;S.cash-=c;const d={k:'road',x:t.x,y:t.y,r:t.r};(S.deco=S.deco||[]).push(d);addDecoObj(d);clearFor('road',t.x,t.y);n++;}
+  placing.run=null;hideRoadGhosts();if(n){sfx.build();logLedger('build',-n*c,'road');toast(L(`🛣️ ${n} road pieces laid for ₵${fmt(n*c)}.`,`🛣️ ${n} parça yol ₵${fmt(n*c)} karşılığında döşendi.`),'good');try{trackOnce('road-run');}catch(e){}save();}}
+function stopPlacing(){hideRoadGhosts();if(placing&&placing.mode==='sugg')camAim=null;placing=null;$('placeBar').hidden=true;$('pbNext').hidden=true;for(const k in ghosts)ghosts[k].visible=false;}
 function placeTick(){
   const sp=placing?freeSpot(placing.t):null,gk=placing?placing.t+(placing.t==='road'?(sp.r?'v':'h'):''):'';
   for(const k in ghosts)if(!placing||k!==gk)ghosts[k].visible=false;
   if(!placing)return;
+  if(placing.t==='road'&&placing.run&&Math.hypot(S.px-placing.runAt.x,S.py-placing.runAt.y)>40){placing.run=null;hideRoadGhosts();}   // walked off: draw again from here
+  if(placing.t==='road'&&placing.run){const run=placing.run,c=DECO.road.c;for(const k in ghosts)ghosts[k].visible=false;hideRoadGhosts();
+    run.forEach((t,i)=>{const g=roadGhost(i,t.r?1:0);const[X,Z]=W3(t.x,t.y);g.position.set(X,0.05,Z);g.visible=true;});
+    const n=Math.min(run.length,Math.floor(S.cash/c));
+    $('pbText').textContent=L(`🛣️ ${run.length} pieces drawn. Press again to lay them all.`,`🛣️ ${run.length} parça çizildi. Hepsini döşemek için tekrar bas.`)+(n<run.length?' · '+L(`money for ${n}`,`${n} tanesine para yetiyor`):'');
+    const b=$('pbGo');b.disabled=n<1;b.textContent=L(`Lay all ×${n}`,`Hepsini döşe ×${n}`)+' ₵'+fmt(n*c);return;}
   const st=spotState(placing.t,sp.x,sp.y,placing.mode==='move'?placing.id:null);
   const g=ghostFor(placing.t,sp.r);g.visible=true;
   if(placing.mode==='sugg'){camAim={x:sp.x,y:sp.y};$('pbNext').hidden=placing.list.length<2;}const[X,Z]=W3(sp.x,sp.y);g.position.set(X,0.05,Z);
   g.rotation.y=placing.t==='river'?riverAt(sp.y).ang:0;
   if(g.userData.c!==st.c)paintGhost(g,st.c);
   const P=placing.mode==='move'?S.plants.find(q=>q.id===placing.id):null;
-  const cost=P?moveCost(P):isDeco(placing.t)?DECO[placing.t].c:isBld(placing.t)?Math.round(BLD[placing.t].c*perk('build')):freeCost(placing.t),poor=S.cash<cost;
+  const cost=P?moveCost(P):placing.t==='axe'?DECO.axe.c*Math.max(1,treesNear(sp.x,sp.y,AXE_R).length):isDeco(placing.t)?DECO[placing.t].c:isBld(placing.t)?Math.round(BLD[placing.t].c*perk('build')):freeCost(placing.t),poor=S.cash<cost;
   $('pbText').textContent=(placing.mode==='sugg'?`📍 ${placing.i+1}/${placing.list.length} · `:'')+(st.why?'⛔ '+st.why:(st.c==='yellow'?L(`🟡 Allowed, but output ${Math.round(st.q*100)}% here.`,`🟡 Olur ama burada verim %${Math.round(st.q*100)}.`):L(`🟢 Good spot · output ${Math.round(st.q*100)}%`,`🟢 İyi yer · verim %${Math.round(st.q*100)}`)))+(poor?' · '+L('not enough money','para yetmiyor'):'');
-  const b=$('pbGo');b.disabled=!!st.why||poor;b.textContent=(placing.mode==='move'?L('Move','Taşı'):placing.mode==='sugg'?L('Build here','Buraya kur'):L('Build','Kur'))+' ₵'+fmt(cost);
+  const b=$('pbGo');b.disabled=!!st.why||poor;b.textContent=(placing.mode==='move'?L('Move','Taşı'):placing.mode==='sugg'?L('Build here','Buraya kur'):placing.t==='road'?L('Draw road','Yolu çiz'):placing.t==='axe'?L('Cut','Kes'):L('Build','Kur'))+(placing.t==='road'?'':' ₵'+fmt(cost));
+  if(placing.t==='road'){const n=computeRoadRun().length;b.disabled=!n||S.cash<DECO.road.c;$('pbText').textContent=n?L(`🛣️ ${n} pieces fit this way. Draw them first.`,`🛣️ Bu yöne ${n} parça sığıyor. Önce çiz.`):'⛔ '+L('No room for a road this way.','Bu yönde yola yer yok.');}
+  if(placing.t==='axe'&&!st.why)$('pbText').textContent=L(`🪓 ${treesNear(sp.x,sp.y,AXE_R).length} trees in the ring.`,`🪓 Halkada ${treesNear(sp.x,sp.y,AXE_R).length} ağaç var.`)+(poor?' · '+L('not enough money','para yetmiyor'):'');
 }
 function confirmPlace(){
-  if(!placing)return;const t=placing.t,sp=freeSpot(t),mv=placing.mode==='move';
+  if(!placing)return;if(placing.t==='road'){roadGo();return;}const t=placing.t,sp=freeSpot(t),mv=placing.mode==='move';
   const st=spotState(t,sp.x,sp.y,mv?placing.id:null);if(st.why)return;
   if(isBld(t)){const c=Math.round(BLD[t].c*perk('build'));if(S.cash<c)return;S.cash-=c;S.bldN=(S.bldN||0)+1;
     const same=(S.blds||[]).filter(b=>b.k===t).length;const b={id:'bd'+S.bldN,k:t,x:sp.x,y:sp.y,code:BLD[t].pre+(same+1),del:0,con:null,next:S.day+7,cost:c};
-    (S.blds=S.blds||[]).push(b);addBldObj(b);sfx.build();logLedger('build',-c,b.code);
+    (S.blds=S.blds||[]).push(b);addBldObj(b);clearFor(t,sp.x,sp.y);sfx.build();logLedger('build',-c,b.code);
     toast(L(`${BLD[t].i} ${tt(BLD[t].n)} ${b.code} built. It buys energy from you.`,`${BLD[t].i} ${tt(BLD[t].n)} ${b.code} kuruldu. Senden enerji alıyor.`),'good');
     stopPlacing();save();setTimeout(()=>askBldContract(b),900);try{trackOnce('bld-'+t);}catch(e){}return;}
+  if(t==='axe'){const n=treesNear(sp.x,sp.y,AXE_R).length,c=DECO.axe.c*n;if(!n||S.cash<c)return;S.cash-=c;cutTreesAt(sp.x,sp.y,AXE_R);sfx.build();logLedger('build',-c,'axe');
+    toast(L(`🪓 ${n} trees cut for ₵${fmt(c)}.`,`🪓 ${n} ağaç ₵${fmt(c)} karşılığında kesildi.`),'good');try{trackOnce('axe');}catch(e){}save();return;}   // stay in placing mode
   if(isDeco(t)){const c=DECO[t].c;if(S.cash<c)return;S.cash-=c;const d={k:t,x:sp.x,y:sp.y,r:sp.r||0};(S.deco=S.deco||[]).push(d);addDecoObj(d);sfx.build();
     try{trackOnce('deco-'+t);}catch(e){}save();return;}      // stay in placing mode: lay the next one
   if(mv){const p=S.plants.find(q=>q.id===placing.id);if(!p)return stopPlacing();const c=moveCost(p);if(S.cash<c)return;
-    S.cash-=c;p.x=sp.x;p.y=sp.y;p.q=st.q;
+    S.cash-=c;p.x=sp.x;p.y=sp.y;p.q=st.q;clearFor(p.type,sp.x,sp.y);
     if(plantObjs[p.id]){plantObjs[p.id].parent&&scene.remove(plantObjs[p.id]);delete plantObjs[p.id];}
     sfx.build();logLedger('move',-c,codeOf(p.id));toast(L(`↔️ ${codeOf(p.id)} moved for ₵${fmt(c)}.`,`↔️ ${codeOf(p.id)} ₵${fmt(c)} karşılığında taşındı.`),'good');
     try{trackOnce('plant-move');}catch(e){}
   }else{const c=freeCost(t);if(S.cash<c)return;
     S.cash-=c;S.freeN=(S.freeN||0)+1;
     const np={id:'fb'+S.freeN,type:t,x:sp.x,y:sp.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1,free:true,cost:c,code:freeCode(t),q:st.q};
-    S.plants.push(np);pops[np.id]=1;sfx.build();logLedger('build',-c,np.code);
+    S.plants.push(np);pops[np.id]=1;clearFor(t,sp.x,sp.y);sfx.build();logLedger('build',-c,np.code);
     toast(L(`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} built for ₵${fmt(c)}.`,`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} ₵${fmt(c)} karşılığında kuruldu.`),'good');
     if(PLANT_TYPES[t].kind==='wind')setTimeout(()=>askBrand(np),900);
     try{trackOnce('free-build-'+t);}catch(e){}}
@@ -6913,8 +6958,9 @@ function buildNature(kit){
   const tr=rng(19);
   const trees=natureSpots();
   const T=['Tree_1_A','Tree_2_A','Tree_3_A','Tree_4_A'],bk=T.map(()=>[]);
-  trees.forEach(t=>bk[Math.floor(tr()*T.length)].push(t));
-  T.forEach((ty,k)=>instanced(kit.geo[ty],kit.mat,bk[k],(d,[x,y,s])=>{const[X,Z]=W3(x,y);d.position.set(X,0,Z);d.scale.setScalar(s*1.15);d.rotation.set(0,tr()*6.28,0);}));
+  const bi=trees.map(t=>{const k=Math.floor(tr()*T.length);bk[k].push(t);return [k,bk[k].length-1];});
+  const ms=T.map((ty,k)=>instanced(kit.geo[ty],kit.mat,bk[k],(d,[x,y,s])=>{const[X,Z]=W3(x,y);d.position.set(X,0,Z);d.scale.setScalar(s*1.15);d.rotation.set(0,tr()*6.28,0);}));
+  TREE_REF=trees.map((t,i)=>({x:t[0],y:t[1],refs:[[ms[bi[i][0]],bi[i][1]]]}));try{applyCuts();}catch(e){}
   // bushes and grass on the green field
   const bush=[],grass=[],rocks=[],bare=[];
   for(let i=0;i<900&&bush.length<110;i++){const x=40+tr()*1320,y=60+tr()*1150;if(blocked(x,y,10))continue;bush.push([x,y]);}
@@ -6940,6 +6986,7 @@ function buildNatureFallback(){
     col.setHSL(0.3+tr()*0.06,0.55,0.32+tr()*0.08);c1.setColorAt(i,col);col.offsetHSL(0,0,0.07);c2.setColorAt(i,col);
   });
   [trunks,c1,c2].forEach(m=>{m.castShadow=true;m.receiveShadow=true;scene.add(m);});
+  TREE_REF=trees.map((t,i)=>({x:t[0],y:t[1],refs:[[trunks,i],[c1,i],[c2,i]]}));try{applyCuts();}catch(e){}
   const rocks=[];for(let i=0;i<30;i++){const x=tr()*1400,y=1250+tr()*340;if(Math.abs(x-700)<90)continue;if([300,560,840,1100].some(px=>Math.abs(px-x)<90))continue;rocks.push([x,y]);}
   for(let i=0;i<24;i++){const x=tr()*1400,y=1650+tr()*330;if(Math.abs(x-700)<90)continue;if([350,700,1050].some(px=>Math.abs(px-x)<140))continue;rocks.push([x,y]);}
   const rk=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.8,0),M(0xB0A89A),rocks.length);
@@ -7662,6 +7709,7 @@ function hud(dt){
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
   const G=GOALS[S.goal];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${S.prest?'⭐'+S.prest+' ':''}${L('Lv','Sv')}${lvl()}</b> · `);
+  if(!up&&!cozy()&&prestOk()){$('goal').innerHTML=chip+L('⭐ A new world can be opened — tap here','⭐ Yeni dünya açabilirsin — buraya dokun');}else
   $('goal').innerHTML=chip+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
   {const n=maintList().length;$('mntBtn').hidden=!(has('gridline')||has('ageing'));const b=$('mntN');b.hidden=!n;b.textContent=n>9?'9+':String(n);}
   $('rankBtn').hidden=!has('report');$('buildBtn').hidden=!has('regions')||cozy();
@@ -8383,7 +8431,7 @@ function doLevelUp(auto){
   if(!auto)openLevel();                 // the competitive game climbs on its own; nothing to click
 }
 
-$('goal').onclick=()=>{if(!document.body.classList.contains('title'))openLevel();};
+$('goal').onclick=()=>{if(document.body.classList.contains('title'))return;if(!canLevel()&&!cozy()&&prestOk()){openCard(prestCard());return;}openLevel();};
 $('lvlGo').onclick=()=>doLevelUp();
 $('lvlSkip').onclick=()=>$('mLvl').classList.remove('on');
 function renderGrid(){
@@ -8555,6 +8603,11 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.78.0',t:['Axe, fast roads, new worlds made clear','Balta, hızlı yol, dünyalar netleşti'],l:[
+  ['🏗️ › 🪓 Cut trees: a ring shows which trees go; ₵30 a tree. Anything you build or move now clears the trees on its own footprint for free — and plants and buildings already standing under trees get their ground back.','🏗️ › 🪓 Ağaç kes: halka hangi ağaçların gideceğini gösterir; ağaç başı ₵30. Kurduğun ya da taşıdığın her şey artık kendi yerindeki ağaçları bedavaya temizliyor — ağaç altında kalmış santral ve binaların yeri de açıldı.'],
+  ['Roads: face the way you want to go and press Draw road — the whole run shows up to the next obstacle (up to 15 pieces). Press again to lay them all at once.','Yol: gitmek istediğin yöne dön, Yolu çiz\'e bas — bir sonraki engele kadar bütün yol görünür (en fazla 15 parça). Tekrar bas, hepsi bir anda döşensin.'],
+  ['At level 19 with a nuclear plant the top banner now says a new world can be opened; tap it to see what that means. The Settings button is renamed ⭐ Open a new world.','Sv19 ve nükleer santral olunca üst şerit artık yeni dünya açabileceğini söylüyor; ne demek olduğunu görmek için dokun. Ayarlar\'daki buton ⭐ Yeni dünya aç oldu.'],
+  ['Fixed: a river plant you built yourself could share the code R6 with the new coast river square; yours gets a new number.','Düzeltme: kendin kurduğun bir akarsu santrali yeni kıyı karesiyle aynı R6 kodunu alabiliyordu; seninki yeni bir numara aldı.']]},
  {v:'0.77.0',t:['Worlds','Dünyalar'],l:[
   ['⭐ Rebuild now opens a new world that starts from scratch: level 1, ₵0, an empty map. The world you leave is kept exactly as it is.','⭐ Yeniden yapılan artık sıfırdan başlayan yeni bir dünya açıyor: Sv1, ₵0, boş harita. Bıraktığın dünya olduğu gibi saklanıyor.'],
   ['Settings › Game › 🌍 Worlds: go back to any older world, and back again to the newest. Only the world you are in runs — the others stand still, so switching back and forth earns nothing extra.','Ayarlar › Oyun › 🌍 Dünyalar: istediğin eski dünyaya geç, sonra en yenisine geri dön. Sadece içinde olduğun dünya işler — diğerleri durur, yani gidip gelmek fazladan kazanç getirmez.'],
@@ -9434,6 +9487,7 @@ function load(){
     S.crew=Object.assign(fresh().crew,o.crew||{});
     if(!Array.isArray(S.crew.roles))S.crew.roles=[];
     migrateBoxes();applyBoxes();migrateRiver();
+    {const taken=new Set(Object.values(ASSET_CODE));for(const q of S.plants)if(q.free&&taken.has(q.code))q.code=freeCode(q.type);}   // v0.78: a free plant never shares a code with a map square
     S.hints=S.hints||{};if((S.earned||0)>50){S.hints['jit-carry']=S.hints['jit-sale']=S.hints['jit-pad']=1;}
     if(!S.lvl)S.lvl=((o.day||0)>=3||(o.earned||0)>1000||(o.goal||0)>0)?MAXLVL:1;   // anyone already playing keeps every feature
     S.plants.forEach(p=>{if(!p.born)p.born=gameNow();if(!p.gen)p.gen=1;if(p.gen>1)p.gen=1;});   // old repower bonus capped at 100%
@@ -9555,7 +9609,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`🌍 ${L('Worlds','Dünyalar')} · P0–P${worldMax()}`;}b.disabled=!prestOk();b.textContent=`⭐ ${L('Rebuild','Yeniden yapılan')} · P${(S.prest||0)+1}`+(prestOk()?'':` (${L('Lv','Sv')}19 + N1)`);}
+function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`🌍 ${L('Worlds','Dünyalar')} · P0–P${worldMax()}`;}b.disabled=!prestOk();b.textContent=`⭐ ${L('Open a new world','Yeni dünya aç')} · P${(S.prest||0)+1}`+(prestOk()?'':` (${L('Lv','Sv')}19 + N1)`);}
   $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   snd:['setSnd',['🔊','Sound','Ses'],['Effects and music, with sliders','Efektler ve müzik, kaydırıcılı']],
@@ -9615,7 +9669,7 @@ function prestFloor(P){return PFLOOR[Math.min(P,PFLOOR.length-1)];}
 function prestCash(P){return Math.round(LEVELS[prestFloor(P)].need*0.5*(1+P));}
 function prestCard(){const P=(S.prest||0)+1,fl=prestFloor(P);
   return {id:'prestige',icon:'⭐',ok:()=>false,safe:0,
-    title:[`Rebuild as P${P}?`,`P${P} olarak yeniden yapılan?`],
+    title:[`Open world P${P}?`,`P${P} dünyasını aç?`],
     text:[`World P${P} starts from scratch: level 1, ₵0, an empty map. Its own advantage: ${worldPerkTxt(P)}. Its own ladder, with rivals ${Math.round(50*P)}% richer. This world stays exactly as it is — you can come back to it any time from Settings › Game › Worlds.`,
           `P${P} dünyası sıfırdan başlar: Sv1, ₵0, boş harita. Kendi avantajı: ${worldPerkTxt(P)}. Kendi sıralaması var, rakipler %${Math.round(50*P)} daha zengin. Bu dünya olduğu gibi kalır — istediğin an Ayarlar › Oyun › Dünyalar'dan geri dönebilirsin.`],
     opts:()=>[O('Not now','Şimdi değil','Nothing changes.','Değişiklik yok.',0,NOOP),
@@ -9705,7 +9759,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{const mx=worldM
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.77.0';
+const GAME_VERSION='0.78.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
