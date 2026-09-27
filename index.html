@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.73.0</div>
+  <div class="t-ver" id="tVer">v0.75.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -556,7 +556,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div id="gridBody"></div>
   <div class="btns"><button class="pri" id="gridClose" data-i18n="close">Close</button></div>
 </div></div>
-<div id="placeBar" hidden style="position:fixed;left:50%;transform:translateX(-50%);width:min(94vw,460px);box-sizing:border-box;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;background:#101725;color:#fff;border-radius:16px;padding:10px 12px;display:flex;gap:8px;align-items:center;max-width:94vw;box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:13px"><span id="pbText" style="flex:1;min-width:0"></span><button id="pbNo" style="padding:6px 10px;min-height:0">✕</button><button class="pri" id="pbGo" style="padding:6px 12px;min-height:0;white-space:nowrap">Build</button></div>
+<div id="placeBar" hidden style="position:fixed;left:50%;transform:translateX(-50%);width:min(94vw,460px);box-sizing:border-box;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;background:#101725;color:#fff;border-radius:16px;padding:10px 12px;display:flex;gap:8px;align-items:center;max-width:94vw;box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:13px"><span id="pbText" style="flex:1;min-width:0"></span><button id="pbNext" hidden style="padding:6px 10px;min-height:0">›</button><button id="pbNo" style="padding:6px 10px;min-height:0">✕</button><button class="pri" id="pbGo" style="padding:6px 12px;min-height:0;white-space:nowrap">Build</button></div>
 <div class="modal" id="mBuild"><div class="sheet tips">
   <h2 id="bldTitle">Build here</h2>
   <p id="bldSub"></p>
@@ -657,7 +657,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.73.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.75.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4832,7 +4832,7 @@ const TOWNS=[
   {id:'town2',x:1040,y:1930,r:70,mult:0.88,sat:0.07},
 ];
 const townsOn=()=>TOWNS.filter(t=>built(t.id));
-function markets(){return [{id:'city',x:CITY.x,y:CITY.y,r:CITY.r,mult:1,sat:0.035}].concat(townsOn());}
+function markets(){return [{id:'city',x:CITY.x,y:CITY.y,r:CITY.r,mult:1,sat:0.035}].concat(townsOn(),(S&&S.blds||[]).map(b=>({id:b.id,x:b.x,y:b.y,r:BLD[b.k].r,mult:0.95,sat:0.05,bld:b})));}
 function marketSat(m){return m.id==='city'?S.sat:((S.satT&&S.satT[m.id])||0);}
 function priceAt(m){
   if(m.id==='city')return priceNow();
@@ -5315,6 +5315,7 @@ function dateLabel(d){try{return new Intl.DateTimeFormat(S.lang==='tr'?'tr-TR':'
 function upgSpent(p){let s=0;for(let k=0;k<(S.up[p.key]||0);k++)s+=Math.round(p.base*Math.pow(p.growth,k));return s;}
 function assetsValue(){
   let v=10;
+  for(const b of (S.blds||[]))v+=b.cost||0;
   for(const q of S.plants)if(q.free)v+=q.cost||0;
   for(const p of PADS){
     if(p.kind==='build'&&S.built[p.id])v+=p.cost;
@@ -5545,7 +5546,11 @@ const pad=id=>PADS.find(p=>p.id===id)||freePad(id);
 const FREE_BASE={turbine:800,solar:1000,bigwind:16000,solarfarm:80000,river:20000};
 function freePad(id){if(!S||!S.plants)return undefined;const q=S.plants.find(p=>p.id===id&&p.free);return q?{id:q.id,kind:'build',type:q.type,cost:q.cost,x:q.x,y:q.y}:undefined;}
 function freeCost(t){const n=S.plants.filter(p=>p.free&&p.type===t).length;return Math.round(FREE_BASE[t]*Math.pow(1.25,n)*perk('build'));}
-function freeSpot(t){const f=S.face||0,d=t==='solarfarm'?95:70;let x=Math.round(S.px+Math.sin(f)*d),y=Math.round(S.py+Math.cos(f)*d);
+function freeSpot(t){if(placing&&placing.mode==='sugg')return placing.list[placing.i];
+  if(isBld(t)){const f=S.face||0;return {x:Math.round(S.px+Math.sin(f)*120),y:Math.round(S.py+Math.cos(f)*120)};}
+  if(isDeco(t)){const f=S.face||0,d=t==='road'?40:45;let x=S.px+Math.sin(f)*d,y=S.py+Math.cos(f)*d;
+    if(t==='road'){x=Math.round(x/40)*40;y=Math.round(y/40)*40;}return {x:Math.round(x),y:Math.round(y),r:t==='road'?(Math.abs(Math.cos(f))>Math.abs(Math.sin(f))?1:0):0};}
+  const f=S.face||0,d=t==='solarfarm'?95:70;let x=Math.round(S.px+Math.sin(f)*d),y=Math.round(S.py+Math.cos(f)*d);
   if(t==='river'){const r=riverAt(y);if(Math.abs(x-r.x)<r.w/2+140)x=Math.round(r.x);}return {x,y};}
 function isHydro(p){const T=PLANT_TYPES[p.type];return T&&(T.kind==='hydro'||T.kind==='dam');}
 function freeWhyNot(x,y,t,selfId){
@@ -5566,6 +5571,7 @@ function freeWhyNot(x,y,t,selfId){
   if(PADS.some(q=>q.id!==selfId&&!padDone(q)&&!(q.kind==='gate'&&S.regions[q.region])&&(()=>{const A=padAt(q);return Math.hypot(x-A.x,y-A.y)<90;})()))return L('A building square is here.','Burada bir inşaat karesi var.');
   if(S.plants.some(q=>q.id!==selfId&&Math.hypot(x-q.x,y-q.y)<90))return L('Too close to another plant.','Başka bir santrale çok yakın.');
   if(typeof decoBlock==='function'&&decoBlock(x,y))return L('Something is built here.','Burada bir şey var.');
+  if(bldNear(x,y,120))return L('Too close to a building.','Bir binaya çok yakın.');
   return null;
 }
 /* how well a spot suits the type: 1 = normal. Wind likes the ridge and hates other turbines'
@@ -5577,46 +5583,165 @@ function siteQ(t,x,y,selfId){
   else if(k==='solar'){q=y>=1620?1.15:y>=1230?0.95:0.9;}
   return Math.round(q*100)/100;
 }
-function spotState(t,x,y,selfId){const why=freeWhyNot(x,y,t,selfId);if(why)return {c:'red',why,q:0};const q=siteQ(t,x,y,selfId);return {c:q<0.95?'yellow':'green',why:null,q};}
+function spotState(t,x,y,selfId){if(isBld(t)){const w=bldWhy(t,x,y);return w?{c:'red',why:w,q:0}:{c:'green',why:null,q:1};}
+  if(isDeco(t)){const w=decoWhy(t,x,y);return w?{c:'red',why:w,q:0}:{c:'green',why:null,q:1};}
+  const why=freeWhyNot(x,y,t,selfId);if(why)return {c:'red',why,q:0};const q=siteQ(t,x,y,selfId);return {c:q<0.95?'yellow':'green',why:null,q};}
 function freeCode(t){const pre=CODE_PREFIX[t];let mx=0;
   for(const c of Object.values(ASSET_CODE).concat(S.plants.map(p=>p.code||''))){const m=c.match(/^([A-Z]+)(\d+)$/);if(m&&m[1]===pre)mx=Math.max(mx,+m[2]);}
   return pre+(mx+1);}
 function movable(p){const T=PLANT_TYPES[p.type];return !!T&&(T.kind==='wind'||T.kind==='solar'||T.kind==='hydro')&&!p.fire;}
 function nearMovable(){return S.plants.filter(movable).map(p=>({p,d:Math.hypot(p.x-S.px,p.y-S.py)})).filter(o=>o.d<130).sort((a,b)=>a.d-b.d)[0];}
 function moveCost(p){const pd=pad(p.id);return Math.max(50,Math.round(((pd&&pd.cost)||p.cost||500)*0.2));}
+/* ---- roads and decorations (v0.74): cheap, placed with the same ghost. Roads snap to a
+   40 px grid and speed you up by 30%; sheep grazing next to panels keep their 5% bonus. ---- */
+const DECO={road:{n:['Road','Yol'],i:'🛣️',c:60},tree:{n:['Tree','Ağaç'],i:'🌳',c:40},flowers:{n:['Flower bed','Çiçek tarhı'],i:'🌸',c:30},
+  bush:{n:['Bush','Çalı'],i:'🌿',c:25},sheep:{n:['Sheep','Koyun'],i:'🐑',c:150},cow:{n:['Cow','İnek'],i:'🐄',c:250}};
+function isDeco(t){return !!DECO[t];}
+function decoBlock(x,y){return (S.deco||[]).some(d=>Math.hypot(d.x-x,d.y-y)<(d.k==='road'?34:40));}
+function onRoad(x,y){for(const d of (S.deco||[]))if(d.k==='road'){const hx=d.r?12:22,hy=d.r?22:12;if(Math.abs(x-d.x)<hx+2&&Math.abs(y-d.y)<hy+2)return true;}return false;}
+function decoWhy(t,x,y){
+  if(x<30||x>WORLD.w-30||y<70||y>WORLD.h-30)return L('Too close to the edge of the map.','Haritanın kenarına çok yakın.');
+  if(regionLocked(y)||(!S.regions.east&&x>EAST.x0-10))return L('This area is not open yet.','Bu bölge henüz açık değil.');
+  if(onRiver(x,y,t==='road'?20:10))return L('That is the river.','Burası nehir.');
+  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+20||Math.hypot(x-HQ.x,y-HQ.y)<90||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<90)||TOWNS.some(o=>Math.hypot(x-o.x,y-o.y)<80)||Math.hypot(x-NUKE.x,y-NUKE.y)<150)return L('Too close to a building.','Bir binaya çok yakın.');
+  if(typeof bldNear==='function'&&bldNear(x,y,80))return L('Too close to a building.','Bir binaya çok yakın.');
+  if(S.plants.some(q=>Math.hypot(x-q.x,y-q.y)<55))return L('A plant is here.','Burada bir santral var.');
+  if(PADS.some(q=>!padDone(q)&&!(q.kind==='gate'&&S.regions[q.region])&&(()=>{const A=padAt(q);return Math.hypot(x-A.x,y-A.y)<60;})()))return L('A building square is here.','Burada bir inşaat karesi var.');
+  if((S.deco||[]).some(d=>t==='road'&&d.k==='road'?(d.x===x&&d.y===y):Math.hypot(d.x-x,d.y-y)<30))return L('Something is already here.','Burada zaten bir şey var.');
+  return null;
+}
+function decoMesh(t,rot){
+  const g=new THREE.Group();
+  if(t==='road'){const m=new THREE.Mesh(new THREE.PlaneGeometry(rot?2.4:44*U,rot?44*U:2.4),M(0xD9BE85));m.rotation.x=-Math.PI/2;m.position.y=0.025;m.receiveShadow=true;g.add(m);}
+  else if(t==='tree'){g.add(mesh(new THREE.CylinderGeometry(0.16,0.22,1.1,6),M(0x7A5234),0,0.55,0));g.add(mesh(new THREE.ConeGeometry(1.0,1.6,7),M(0x3E9B47),0,1.6,0));g.add(mesh(new THREE.ConeGeometry(0.75,1.3,7),M(0x4DB356),0,2.35,0));}
+  else if(t==='flowers'){const d=new THREE.Mesh(new THREE.CircleGeometry(0.9,16),M(0x5C9E3A));d.rotation.x=-Math.PI/2;d.position.y=0.03;g.add(d);
+    const cols=[0xFF6FA8,0xFFD23F,0xB07CFF,0xFF8A3D];for(let i=0;i<9;i++){const a=i*2.4,r=0.25+0.55*((i*37)%10)/10;g.add(mesh(new THREE.SphereGeometry(0.15,6,5),M(cols[i%4]),Math.cos(a)*r,0.2,Math.sin(a)*r));}}
+  else if(t==='bush'){g.add(mesh(new THREE.IcosahedronGeometry(0.7,0),M(0x3F8F3A),0,0.55,0));g.add(mesh(new THREE.IcosahedronGeometry(0.5,0),M(0x4FA64A),0.5,0.4,0.2));}
+  else if(t==='sheep')g.add(makeSheep());else if(t==='cow')g.add(makeCow());
+  return g;
+}
+const decoObjs=[];let decoBuilt=false;
+function spawnDecoAnimal(d){try{const o=d.k==='sheep'?makeSheep():makeCow();const P={x:d.x,y:d.y,r:70,kind:d.k};
+  const an={o,P,x:d.x,y:d.y,tx:d.x,ty:d.y,wait:1,face:0,phase:Math.random()*6,kind:d.k};o.scale.setScalar(d.k==='cow'?1.1:0.95);scene.add(o);animals.push(an);}catch(e){}}
+function addDecoObj(d){
+  if(d.k==='sheep'||d.k==='cow'){spawnDecoAnimal(d);return;}
+  const o=decoMesh(d.k,d.r);const[X,Z]=W3(d.x,d.y);o.position.set(X,0,Z);o.traverse(m=>{if(m.isMesh){m.castShadow=d.k!=='road';}});scene.add(o);decoObjs.push(o);
+}
+function decoTick(){if(decoBuilt)return;decoBuilt=true;for(const d of (S.deco||[]))addDecoObj(d);}
+/* ---- buildings and supply contracts (v0.75): a factory, an office block or a data centre
+   you build is a customer. It buys at 95% of the local price, and once a week it offers a
+   7-day contract: a daily quota at a premium over the recent average. Cells sold there count
+   toward the quota (yours, your crew's, and grid lines whose nearest market it is). Short
+   deliveries are fined at half the contract price per missing cell when the day closes.
+   While you are away the contract is paused: no fines, no premium. ---- */
+const BLD={factory:{n:['Factory','Fabrika'],i:'🏭',c:60000,need:500,prem:1.15,r:75,pre:'FB'},
+  office:{n:['Office block','Ofis binası'],i:'🏢',c:25000,need:180,prem:1.25,r:60,pre:'OF'},
+  dc:{n:['Data centre','Veri merkezi'],i:'🖥️',c:150000,need:1200,prem:1.10,r:85,pre:'VM'}};
+function isBld(t){return !!BLD[t];}
+function bldNear(x,y,d){return (S.blds||[]).some(b=>Math.hypot(b.x-x,b.y-y)<d+BLD[b.k].r*0.6);}
+function bldWhy(t,x,y){
+  if(x<80||x>WORLD.w-80||y<110||y>WORLD.h-80)return L('Too close to the edge of the map.','Haritanın kenarına çok yakın.');
+  if(regionLocked(y)||(!S.regions.east&&x>EAST.x0-60))return L('This area is not open yet.','Bu bölge henüz açık değil.');
+  if(REGIONS.some(r=>Math.abs(y-r.y0)<70)||Math.abs(x-EAST.x0)<70)return L('That is a fence line between areas.','Burası bölgeler arasındaki çit hattı.');
+  if(onRiver(x,y,90))return L('Too close to the river.','Nehre çok yakın.');
+  if((Math.abs(x-700)<70&&y>320)||(Math.abs(y-700)<70&&x>250&&x<1140))return L('That is the road.','Burası yol.');
+  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+110||TOWNS.some(o=>Math.hypot(x-o.x,y-o.y)<150)||Math.hypot(x-HQ.x,y-HQ.y)<180||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<160)||Math.hypot(x-NUKE.x,y-NUKE.y)<220||bldNear(x,y,110))
+    return L('Too close to another building.','Başka bir binaya çok yakın.');
+  if(S.plants.some(q=>Math.hypot(x-q.x,y-q.y)<120))return L('Too close to a plant.','Bir santrale çok yakın.');
+  if(PADS.some(q=>!padDone(q)&&!(q.kind==='gate'&&S.regions[q.region])&&(()=>{const A=padAt(q);return Math.hypot(x-A.x,y-A.y)<120;})()))return L('A building square is here.','Burada bir inşaat karesi var.');
+  if((S.deco||[]).some(d=>Math.hypot(d.x-x,d.y-y)<70))return L('Something is built here.','Burada bir şey var.');
+  return null;
+}
+function bldMesh(k){
+  const g=new THREE.Group(),wall=M(0xE9E2D2),roof=M(0x5C6B84),dark=M(0x4A5566),glass=M(0x8FC7E8);
+  if(k==='factory'){g.add(mesh(new THREE.BoxGeometry(5.2,2.2,3.4),wall,0,1.1,0));
+    for(let i=0;i<3;i++){const t=mesh(new THREE.BoxGeometry(1.7,0.9,3.5),roof,-1.73+i*1.73,2.5,0);t.rotation.z=0.35;g.add(t);}
+    g.add(mesh(new THREE.CylinderGeometry(0.3,0.36,3.6,10),M(0xB0443A),2.1,3.0,-1.0));
+    g.add(mesh(new THREE.BoxGeometry(1.4,1.2,0.1),dark,-1.4,0.6,1.72));}
+  else if(k==='office'){g.add(mesh(new THREE.BoxGeometry(2.6,5.4,2.6),wall,0,2.7,0));
+    for(let y=0;y<5;y++)for(const z of [1.31,-1.31])g.add(mesh(new THREE.BoxGeometry(2.2,0.45,0.04),glass,0,0.9+y*0.95,z));
+    g.add(mesh(new THREE.BoxGeometry(2.8,0.25,2.8),roof,0,5.5,0));}
+  else{g.add(mesh(new THREE.BoxGeometry(6,1.8,3.8),M(0xCDD4DC),0,0.9,0));
+    for(let i=0;i<4;i++)g.add(mesh(new THREE.CylinderGeometry(0.45,0.45,0.25,12),dark,-2.1+i*1.4,1.9,0));
+    g.add(mesh(new THREE.BoxGeometry(6.1,0.15,0.3),M(0x2FA36B),0,1.2,1.92));}
+  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;
+}
+const bldObjs={};
+function addBldObj(b){const o=bldMesh(b.k);const[X,Z]=W3(b.x,b.y);o.position.set(X,0,Z);scene.add(o);bldObjs[b.id]=o;}
+let bldBuilt=false;
+function bldTick(now){
+  if(!bldBuilt){bldBuilt=true;for(const b of (S.blds||[]))addBldObj(b);}
+  for(const b of (S.blds||[])){const K=BLD[b.k],c=b.con&&S.day>=b.con.from&&S.day<=b.con.to?b.con:null;
+    place('bl'+b.id,'cnt'+(c&&(b.del||0)<c.need?' full':''),b.x,b.y-40,b.k==='office'?6.4:3.6,`${K.i} ${b.code}`+(c?` · 📜 ${fmt(b.del||0)}/${fmt(c.need)} · ${c.to-S.day+1}${L('d','g')}`:''));
+    if(b.k==='factory'){const[X,Z]=W3(b.x,b.y);smokeAt(X+2.1,Z-1.0,4.8,now,b.x*0.01);}}
+}
+function bldOffer(b){
+  const K=BLD[b.k],pr=Math.max(1,Math.round(recentAvg()*K.prem*100)/100),need=Math.round(K.need*(1+0.25*(S.prest||0)));
+  return {id:'bldcon',icon:K.i,ok:()=>false,safe:0,
+    title:[`${tt(K.n)} ${b.code} wants a supply contract`,`${tt(K.n)} ${b.code} tedarik sözleşmesi istiyor`],
+    text:[`${fmt(need)} cells a day for 7 days at ₵${pr.toFixed(2)} each — ${Math.round((K.prem-1)*100)}% over the recent average. Deliver them here yourself, with your crew, or through grid lines. Every missing cell costs ₵${(pr*0.5).toFixed(2)} when the day closes.`,
+          `7 gün boyunca günde ${fmt(need)} hücre, tanesi ₵${pr.toFixed(2)} — son ortalamanın %${Math.round((K.prem-1)*100)} üstü. Buraya kendin, ekibinle ya da şebeke hattıyla teslim et. Gün kapanınca eksik her hücre ₵${(pr*0.5).toFixed(2)} ceza.`],
+    opts:()=>[O('Spot only','Sadece spot','It buys at 95% of the local price, no quota.','Yerel fiyatın %95\'inden alır, kota yok.',0,()=>{b.next=S.day+3;}),
+              O('Sign for 7 days','7 günlük imzala',`Quota ${fmt(need)}/day at ₵${pr.toFixed(2)}.`,`Günde ${fmt(need)} kota, ₵${pr.toFixed(2)}.`,0,()=>{b.con={price:pr,need,from:S.day,to:S.day+6};b.del=0;try{trackOnce('bld-contract');}catch(e){}})]};
+}
+function askBldContract(b){if(!isActive())return;whenNoModal(()=>{if(cardOpen||tutOpen){setTimeout(()=>askBldContract(b),1500);return;}openCard(bldOffer(b));});}
+function bldHour(h){if(h<9||h>18)return;for(const b of (S.blds||[]))if(!b.con&&S.day>=(b.next||0)&&!cardOpen&&!tutOpen&&isActive()){b.next=S.day+1;openCard(bldOffer(b));return;}}
+function bldDayEnd(away){
+  const out=[];
+  for(const b of (S.blds||[])){const c=b.con;if(!c||S.day<c.from||S.day>c.to){b.del=0;continue;}
+    const short=Math.max(0,c.need-(b.del||0));
+    if(short>0&&!away){const fine=Math.round(short*c.price*0.5);S.cash=Math.max(0,S.cash-fine);logLedger('bldfine',-fine,b.code);
+      out.push(L(`📜 ${b.code}: ${fmt(short)} cells short, fined ₵${fmt(fine)}.`,`📜 ${b.code}: ${fmt(short)} hücre eksik, ₵${fmt(fine)} ceza.`));}
+    else if(!away)out.push(L(`📜 ${b.code}: quota met.`,`📜 ${b.code}: kota tamam.`));
+    b.del=0;if(S.day>=c.to){b.con=null;b.next=S.day+1;}}
+  return out;
+}
 /* ---- placing mode: the ghost and the bottom bar ---- */
 let placing=null;const ghosts={};
 const ghostMats={green:new THREE.MeshBasicMaterial({color:0x00FF88,transparent:true,opacity:0.6,depthWrite:false}),
   yellow:new THREE.MeshBasicMaterial({color:0xF7C948,transparent:true,opacity:0.5,depthWrite:false}),
   red:new THREE.MeshBasicMaterial({color:0xE8364F,transparent:true,opacity:0.5,depthWrite:false})};
-function ghostFor(t){
-  if(ghosts[t])return ghosts[t];const T=PLANT_TYPES[t];let g;
+function ghostFor(t,rot){
+  const key=t+(t==='road'?(rot?'v':'h'):'');
+  if(ghosts[key])return ghosts[key];
+  if(isBld(t)){const root=new THREE.Group();root.add(bldMesh(t));const ring=new THREE.Mesh(new THREE.RingGeometry(3.2,3.9,40),ghostMats.green);ring.rotation.x=-Math.PI/2;ring.position.y=0.09;root.add(ring);root.visible=false;scene.add(root);ghosts[key]=root;return root;}
+  if(isDeco(t)){const root=new THREE.Group();root.add(decoMesh(t,rot));const r=t==='road'?1.4:1.1;const ring=new THREE.Mesh(new THREE.RingGeometry(r*0.75,r,32),ghostMats.green);ring.rotation.x=-Math.PI/2;ring.position.y=0.09;root.add(ring);root.visible=false;scene.add(root);ghosts[key]=root;return root;}
+  const T=PLANT_TYPES[t];let g;
   if(T.kind==='wind')g=makeTurbine(T.scale);else if(T.kind==='hydro')g=makeRiver(2.6);else g=t==='solarfarm'?makeSolar(5,3):makeSolar(2,2);
   const root=new THREE.Group();root.add(g);root.visible=false;
   {const r=t==='solarfarm'?5.2:t==='bigwind'?3.2:t==='solar'?2.6:t==='river'?2.4:2.2;const ring=new THREE.Mesh(new THREE.RingGeometry(r*0.78,r,40),ghostMats.green);ring.rotation.x=-Math.PI/2;ring.position.y=0.08;root.add(ring);}
   g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
-  scene.add(root);ghosts[t]=root;return root;
+  scene.add(root);ghosts[key]=root;return root;
 }
 function paintGhost(root,c){root.traverse(o=>{if(o.isMesh)o.material=ghostMats[c];});root.userData.c=c;}
 function startPlacing(mode,t,id){
   placing={mode,t,id};$('mBuild').classList.remove('on');$('placeBar').hidden=false;sfx.pick();
 }
-function stopPlacing(){placing=null;$('placeBar').hidden=true;for(const k in ghosts)ghosts[k].visible=false;}
+function stopPlacing(){if(placing&&placing.mode==='sugg')camAim=null;placing=null;$('placeBar').hidden=true;$('pbNext').hidden=true;for(const k in ghosts)ghosts[k].visible=false;}
 function placeTick(){
-  for(const k in ghosts)if(!placing||k!==placing.t)ghosts[k].visible=false;
+  const sp=placing?freeSpot(placing.t):null,gk=placing?placing.t+(placing.t==='road'?(sp.r?'v':'h'):''):'';
+  for(const k in ghosts)if(!placing||k!==gk)ghosts[k].visible=false;
   if(!placing)return;
-  const sp=freeSpot(placing.t),st=spotState(placing.t,sp.x,sp.y,placing.mode==='move'?placing.id:null);
-  const g=ghostFor(placing.t);g.visible=true;const[X,Z]=W3(sp.x,sp.y);g.position.set(X,0.05,Z);
+  const st=spotState(placing.t,sp.x,sp.y,placing.mode==='move'?placing.id:null);
+  const g=ghostFor(placing.t,sp.r);g.visible=true;
+  if(placing.mode==='sugg'){camAim={x:sp.x,y:sp.y};$('pbNext').hidden=placing.list.length<2;}const[X,Z]=W3(sp.x,sp.y);g.position.set(X,0.05,Z);
   g.rotation.y=placing.t==='river'?riverAt(sp.y).ang:0;
   if(g.userData.c!==st.c)paintGhost(g,st.c);
   const P=placing.mode==='move'?S.plants.find(q=>q.id===placing.id):null;
-  const cost=P?moveCost(P):freeCost(placing.t),poor=S.cash<cost;
-  $('pbText').textContent=(st.why?'⛔ '+st.why:(st.c==='yellow'?L(`🟡 Allowed, but output ${Math.round(st.q*100)}% here.`,`🟡 Olur ama burada verim %${Math.round(st.q*100)}.`):L(`🟢 Good spot · output ${Math.round(st.q*100)}%`,`🟢 İyi yer · verim %${Math.round(st.q*100)}`)))+(poor?' · '+L('not enough money','para yetmiyor'):'');
-  const b=$('pbGo');b.disabled=!!st.why||poor;b.textContent=(placing.mode==='move'?L('Move','Taşı'):L('Build','Kur'))+' ₵'+fmt(cost);
+  const cost=P?moveCost(P):isDeco(placing.t)?DECO[placing.t].c:isBld(placing.t)?Math.round(BLD[placing.t].c*perk('build')):freeCost(placing.t),poor=S.cash<cost;
+  $('pbText').textContent=(placing.mode==='sugg'?`📍 ${placing.i+1}/${placing.list.length} · `:'')+(st.why?'⛔ '+st.why:(st.c==='yellow'?L(`🟡 Allowed, but output ${Math.round(st.q*100)}% here.`,`🟡 Olur ama burada verim %${Math.round(st.q*100)}.`):L(`🟢 Good spot · output ${Math.round(st.q*100)}%`,`🟢 İyi yer · verim %${Math.round(st.q*100)}`)))+(poor?' · '+L('not enough money','para yetmiyor'):'');
+  const b=$('pbGo');b.disabled=!!st.why||poor;b.textContent=(placing.mode==='move'?L('Move','Taşı'):placing.mode==='sugg'?L('Build here','Buraya kur'):L('Build','Kur'))+' ₵'+fmt(cost);
 }
 function confirmPlace(){
   if(!placing)return;const t=placing.t,sp=freeSpot(t),mv=placing.mode==='move';
   const st=spotState(t,sp.x,sp.y,mv?placing.id:null);if(st.why)return;
+  if(isBld(t)){const c=Math.round(BLD[t].c*perk('build'));if(S.cash<c)return;S.cash-=c;S.bldN=(S.bldN||0)+1;
+    const same=(S.blds||[]).filter(b=>b.k===t).length;const b={id:'bd'+S.bldN,k:t,x:sp.x,y:sp.y,code:BLD[t].pre+(same+1),del:0,con:null,next:S.day+7,cost:c};
+    (S.blds=S.blds||[]).push(b);addBldObj(b);sfx.build();logLedger('build',-c,b.code);
+    toast(L(`${BLD[t].i} ${tt(BLD[t].n)} ${b.code} built. It buys energy from you.`,`${BLD[t].i} ${tt(BLD[t].n)} ${b.code} kuruldu. Senden enerji alıyor.`),'good');
+    stopPlacing();save();setTimeout(()=>askBldContract(b),900);try{trackOnce('bld-'+t);}catch(e){}return;}
+  if(isDeco(t)){const c=DECO[t].c;if(S.cash<c)return;S.cash-=c;const d={k:t,x:sp.x,y:sp.y,r:sp.r||0};(S.deco=S.deco||[]).push(d);addDecoObj(d);sfx.build();
+    try{trackOnce('deco-'+t);}catch(e){}save();return;}      // stay in placing mode: lay the next one
   if(mv){const p=S.plants.find(q=>q.id===placing.id);if(!p)return stopPlacing();const c=moveCost(p);if(S.cash<c)return;
     S.cash-=c;p.x=sp.x;p.y=sp.y;p.q=st.q;
     if(plantObjs[p.id]){plantObjs[p.id].parent&&scene.remove(plantObjs[p.id]);delete plantObjs[p.id];}
@@ -5629,7 +5754,7 @@ function confirmPlace(){
     toast(L(`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} built for ₵${fmt(c)}.`,`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} ₵${fmt(c)} karşılığında kuruldu.`),'good');
     if(PLANT_TYPES[t].kind==='wind')setTimeout(()=>askBrand(np),900);
     try{trackOnce('free-build-'+t);}catch(e){}}
-  stopPlacing();save();
+  stopPlacing();camAim=null;save();
 }
 /* ---- site tips: find the best open spots for a type, fly the camera over each one, mark it
    with a dashed box that fades away, then come back ---- */
@@ -5643,7 +5768,7 @@ function markArea(x,y,w,h,col){
   edge(-W/2,-H/2,W/2,-H/2);edge(W/2,-H/2,W/2,H/2);edge(W/2,H/2,-W/2,H/2);edge(-W/2,H/2,-W/2,-H/2);
   const fill=new THREE.Mesh(new THREE.PlaneGeometry(W,H),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.12,depthWrite:false}));fill.rotation.x=-Math.PI/2;fill.position.y=0.1;g.add(fill);
   const[X,Z]=W3(x,y);g.position.set(X,0,Z);scene.add(g);
-  marks.push({g,mat,fill:fill.material,t0:performance.now(),life:9000,x,y});
+  marks.push({g,mat,fill:fill.material,t0:performance.now(),life:14000,x,y});
 }
 function marksTick(now){
   for(let i=marks.length-1;i>=0;i--){const m=marks[i],a=(now-m.t0)/m.life;
@@ -5659,30 +5784,29 @@ function suggestSpots(t){
   const pick=[];for(const o of out){if(pick.every(p=>Math.hypot(p.x-o.x,p.y-o.y)>320))pick.push(o);if(pick.length>=3)break;}
   return pick;
 }
-let tourT=[];
 function showSuggest(t){
-  const pk=suggestSpots(t);$('mBuild').classList.remove('on');
+  stopPlacing();const pk=suggestSpots(t);$('mBuild').classList.remove('on');
   if(!pk.length){toast(L('No open spot for that right now.','Şu an bunun için açık bir yer yok.'),'');return;}
-  tourT.forEach(clearTimeout);tourT=[];
   const sz=t==='solarfarm'?[220,150]:t==='river'?[160,120]:[150,120];
-  pk.forEach((o,i)=>{tourT.push(setTimeout(()=>{markArea(o.x,o.y,sz[0],sz[1],o.q<0.95?0xF7C948:0x2ECC71);camAim={x:o.x,y:o.y};
-    toast(L(`📍 Spot ${i+1}/${pk.length} for ${tt(PLANT_TYPES[t].name).toLowerCase()} · output ${Math.round(o.q*100)}%`,`📍 ${tt(PLANT_TYPES[t].name)} için ${i+1}/${pk.length}. yer · verim %${Math.round(o.q*100)}`),'');},i*1900));});
-  tourT.push(setTimeout(()=>{camAim=null;},pk.length*1900));
+  pk.forEach(o=>markArea(o.x,o.y,sz[0],sz[1],o.q<0.95?0xF7C948:0x2ECC71));
+  placing={mode:'sugg',t,list:pk,i:0};$('placeBar').hidden=false;sfx.pick();
   try{trackOnce('site-tips-'+t);}catch(e){}
 }
+function nextSuggest(){if(!placing||placing.mode!=='sugg')return;placing.i=(placing.i+1)%placing.list.length;sfx.pick();}
 function renderBuild(){
   $('bldTitle').textContent=L('🏗️ Build','🏗️ İnşa');
   const nm=nearMovable();
   $('bldSub').textContent=L('Pick a type: a see-through copy follows in front of you. Green = good, yellow = less output, red = not here. 📍 shows the best spots on the map.','Bir tür seç: saydam bir kopyası önünde yürür. Yeşil = iyi, sarı = verim düşük, kırmızı = olmaz. 📍 haritadaki en iyi yerleri gösterir.');
-  const types=Object.keys(FREE_BASE).filter(t=>t!=='river'||has('regions'));
+  const types=Object.keys(FREE_BASE);
   $('bldBody').innerHTML=types.map(t=>{const c=freeCost(t),no=S.cash<c;
     return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BUILD_ICON[t]||''} <b>${tt(PLANT_TYPES[t].name)}</b></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">₵${fmt(c)}<button data-tip="${t}" style="padding:4px 8px;min-height:0">📍</button><button class="pri" data-fb="${t}" ${no?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')
     +(nm?`<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm.p.id)}</b></span><button class="pri" data-mv="${nm.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} ₵${fmt(moveCost(nm.p))}</button></div>`
-        :`<p style="font-size:12.5px;margin-top:10px">↔️ ${L('To move a plant, stand next to it and open this again.','Bir santrali taşımak için yanında dur ve burayı tekrar aç.')}</p>`);
+        :`<p style="font-size:12.5px;margin-top:10px">↔️ ${L('To move a plant, stand next to it and open this again.','Bir santrali taşımak için yanında dur ve burayı tekrar aç.')}</p>`)
+    +`<h3 style="margin:12px 0 4px">${L('Roads & decoration','Yol ve süs')}</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">`+Object.keys(DECO).map(k=>`<button data-fb="${k}" ${S.cash<DECO[k].c?'disabled':''} style="padding:6px 4px;min-height:0;font-size:12.5px">${DECO[k].i} ${tt(DECO[k].n)}<br><small>₵${DECO[k].c}</small></button>`).join('')+`</div><h3 style="margin:12px 0 4px">${L('Buildings & contracts','Binalar ve sözleşmeler')}</h3>`+Object.keys(BLD).map(k=>{const c=Math.round(BLD[k].c*perk('build'));return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BLD[k].i} <b>${tt(BLD[k].n)}</b><br><small>${L(`buys ~${fmt(BLD[k].need)}/day`,`günde ~${fmt(BLD[k].need)} alır`)}</small></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">₵${fmt(c)}<button class="pri" data-fb="${k}" ${S.cash<c?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')+`<p style="font-size:12px;margin-top:6px">${L('Roads make you 30% faster. Sheep next to solar panels add 5%. Decorations stay placeable one after another — tap ✕ when done.','Yollar seni %30 hızlandırır. Güneş panellerinin yanındaki koyunlar %5 katar. Süsler art arda yerleştirilir — bitince ✕.')}</p>`;
 }
 const upCost=p=>Math.round(p.base*Math.pow(p.growth,S.up[p.key]));
 const carryCap=()=>8+4*S.up.bag+perk('carry');
-const speed=()=>230*(1+0.12*S.up.boots)*modMult('playerSpeed')*perk('speed');
+const speed=()=>230*(1+0.12*S.up.boots)*modMult('playerSpeed')*perk('speed')*(S.deco&&S.deco.length&&onRoad(S.px,S.py)?1.3:1);
 const batWear=()=>0.0002*(1-0.15*(S.up.bateff||0));
 const batHealth=()=>Math.max(0.5,1-batWear()*(S.batCycles||0));
 const batBonus=()=>1.15+0.03*(S.up.bateff||0);
@@ -6018,7 +6142,7 @@ let clearT=0,repT=0,gridT=0,gsvT=0,gridLock=null,batFixT=0,refurbT=0,padLock=nul
 function update(dt){
   const tscale=(tutOpen||cardOpen)?0:S.speed;
   const t0=hourNow();S.t+=dt*tscale;
-  if(S.t>=DAY_SEC){S.t-=DAY_SEC;try{const r=bilDayEnd();if(r){toast(r.line,r.v>=0?'good':'');if(r.end)setTimeout(()=>toast(r.end,'big'),2500);}}catch(e){}S.day++;DAY=makeDay(S.day);try{ancApplyDay();}catch(e){}try{nukeDay();}catch(e){}onNewDay();save();}
+  if(S.t>=DAY_SEC){S.t-=DAY_SEC;try{const r=bilDayEnd();if(r){toast(r.line,r.v>=0?'good':'');if(r.end)setTimeout(()=>toast(r.end,'big'),2500);}}catch(e){}try{bldDayEnd(false).forEach((l,i)=>setTimeout(()=>toast(l,''),3000+i*1500));}catch(e){}S.day++;DAY=makeDay(S.day);try{ancApplyDay();}catch(e){}try{nukeDay();}catch(e){}onNewDay();save();}
   const t=hourNow(),h=Math.floor(t)%24;if(Math.floor(t0)%24!==h)onHour(h);
   const gdt=dt*tscale;
   for(const p of S.plants){if(PLANT_TYPES[p.type])pileDecay(p);}
@@ -6216,9 +6340,10 @@ let peekT=null;
 function camPeek(p){if(camAim)return;const A=padAt?padAt(p):p;camAim={x:A.x,y:A.y};clearTimeout(peekT);peekT=setTimeout(()=>{camAim=null;},1800);}
 function sellCell(x,y,byPlayer,crew,mk,fromStore){
   const m=mk||{id:'city',mult:1,sat:0.035};
-  let p=priceAt(m);const ct=S.contract;
+  let p=priceAt(m),used=0;const ct=S.contract;
+  if(m.bld){const b=m.bld,c=b.con;if(c&&S.day>=c.from&&S.day<=c.to&&(b.del||0)<c.need){p=c.price;b.del=(b.del||0)+1;used=1;}}
   if(fromStore)p*=batBonus();                 // dispatchable energy pays a premium
-  if(ct&&ct.delivered<ct.need&&gameNow()<ct.until){ct.delivered++;p=ct.price;if(ct.delivered===ct.need){toast(`Deal complete: ${ct.need} cells delivered.`,'good');trackOnce('deal-complete');S.contract=null;}}
+  if(!used&&ct&&ct.delivered<ct.need&&gameNow()<ct.until){ct.delivered++;p=ct.price;if(ct.delivered===ct.need){toast(`Deal complete: ${ct.need} cells delivered.`,'good');trackOnce('deal-complete');S.contract=null;}}
   p*=modMult('income')*(byPlayer?modMult('playerPrice'):1)*perk('price');
   if(S.debt>0){const r=Math.min(S.debt,p*0.25);S.debt-=r;p-=r;if(S.debt<=0.01){S.debt=0;toast(L('Loan fully repaid.','Kredi tamamen ödendi.'),'good');}}
   S.cash+=p;S.earned+=p;S.dayEarned=(S.dayEarned||0)+p;logEarn(p);S.soldCells++;
@@ -6275,6 +6400,7 @@ function onNewDay(quiet){
 function onHour(h){
   try{ancPayHour();}catch(e){}
   try{nukeHour();}catch(e){}
+  try{bldHour(h);}catch(e){}
   try{(S.pxAcc=S.pxAcc||[]).push(basePrice(h,h+0.5));}catch(e){}
   try{if(bilDue()&&h>=10&&h<=20&&!cardOpen&&!tutOpen){bilMakeOffer();
     hint('bil',L('📜 A bilateral contract is a handshake: "for the next two weeks I sell you this much at this price." If the market falls, you win the gap. If it rises, the buyer does. The gap is settled every evening.','📜 İkili anlaşma bir el sıkışmadır: "önümüzdeki iki hafta sana şu kadarını şu fiyattan satacağım." Piyasa düşerse fark senin, yükselirse alıcının. Fark her akşam ödenir.'),'big');
@@ -7486,7 +7612,7 @@ function render(dt,now){
   {const w=S.tw;twGroup.visible=!!w;
    if(w){const[TX,TZ]=W3(w.x,w.y);twGroup.position.set(TX,0,TZ);twGroup.rotation.y=now/200;
      twGroup.children.forEach((c,i)=>{if(c.userData&&c.userData.r){const u=c.userData,a=u.a+now/1000*u.s;c.position.set(Math.cos(a)*u.r*(0.4+u.h/12),u.h,Math.sin(a)*u.r*(0.4+u.h/12));c.rotation.set(a,a*1.3,0);return;}if(i<14){c.position.x=Math.sin(now/260+i*0.55)*0.18*i;c.rotation.y=now/(140+i*20);}});}}
-  try{placeTick();marksTick(now);}catch(e){}
+  try{decoTick();bldTick(now);placeTick();marksTick(now);}catch(e){}
   smokeReset();
   sweepLabels();
   renderer.render(scene,camera);
@@ -8320,7 +8446,7 @@ $('bldClose').onclick=()=>$('mBuild').classList.remove('on');
 $('bldBody').addEventListener('click',e=>{const b=e.target.closest('button[data-fb]');if(b&&!b.disabled){startPlacing('new',b.dataset.fb);return;}
   const tp=e.target.closest('button[data-tip]');if(tp){showSuggest(tp.dataset.tip);return;}
   const mv=e.target.closest('button[data-mv]');if(mv){const p=S.plants.find(q=>q.id===mv.dataset.mv);if(p)startPlacing('move',p.type,p.id);}});
-$('pbGo').onclick=confirmPlace;$('pbNo').onclick=stopPlacing;
+$('pbGo').onclick=confirmPlace;$('pbNo').onclick=stopPlacing;$('pbNext').onclick=nextSuggest;
 $('rankBtn').onclick=()=>{openReport(repMax());trackOnce('ladder-btn');};
 /* Go: the character walks to the job by itself. The joystick always wins (touch it and the
    walk is cancelled), and if a helper finishes the job first the walk stops. */
@@ -8400,6 +8526,13 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.75.0',t:['Build your own customers','Kendi müşterini kur'],l:[
+  ['Build › Buildings & contracts: a factory, an office block or a data centre. Each one is a new place to sell, buying at 95% of the local price.','İnşa › Binalar ve sözleşmeler: fabrika, ofis binası ya da veri merkezi. Her biri yerel fiyatın %95\'inden alan yeni bir satış noktası.'],
+  ['Right after it is built, and again every week, it offers a 7-day supply contract: a daily quota at a premium over the recent average (factory +15%, office +25%, data centre +10%). Cells you, your crew or a grid line sell there fill the quota; each cell short costs half the contract price when the day closes. The tag over the building shows the quota and days left.','Kurulur kurulmaz ve sonra her hafta 7 günlük tedarik sözleşmesi teklif ediyor: son ortalamanın üstünde fiyatla günlük kota (fabrika +%15, ofis +%25, veri merkezi +%10). Senin, ekibinin ya da şebeke hattının orada sattığı hücreler kotayı doldurur; gün kapanınca eksik her hücre sözleşme fiyatının yarısı kadar ceza. Binanın üstündeki etiket kotayı ve kalan günü gösterir.'],
+  ['While you are away a contract is paused: no fines, no premium. The game never signs one for you.','Sen yokken sözleşme askıda: ne ceza ne prim. Oyun senin yerine asla imza atmaz.']]},
+ {v:'0.74.0',t:['Roads, trees and a better 📍','Yol, ağaç ve daha iyi 📍'],l:[
+  ['📍 now shows the plant itself standing on each suggested spot — green or yellow, the way it will look — and gives you Build here right on the bar. › steps to the next spot, ✕ brings the camera back.','📍 artık önerilen her yerde santralin kendisini gösteriyor — yeşil ya da sarı, kurulunca nasıl duracaksa öyle — ve çubukta doğrudan Buraya kur butonu veriyor. › sonraki yere geçer, ✕ kamerayı geri getirir.'],
+  ['Build › Roads & decoration: roads (snap to a grid, turn with you, 30% faster walking on them), trees, flower beds, bushes, sheep and cows. They go down one after another until you tap ✕. Sheep next to solar panels still add their 5%.','İnşa › Yol ve süs: yollar (ızgaraya oturur, yönünle döner, üstünde %30 hızlı yürürsün), ağaç, çiçek tarhı, çalı, koyun ve inek. ✕\'e basana kadar art arda yerleşir. Güneş panellerinin yanındaki koyunlar yine %5 katar.']]},
  {v:'0.73.0',t:['Place, move, and where to build','Yerleştir, taşı ve nereye kurulur'],l:[
   ['🏗️ Build now places: pick a type and a see-through copy walks in front of you — green is a good spot, yellow is allowed but produces less there, red is not allowed and the bar says why. Tap Build when it is right.','🏗️ İnşa artık yerleştiriyor: bir tür seç, saydam bir kopyası önünde yürüsün — yeşil iyi yer, sarı olur ama verimi düşük, kırmızı olmaz ve alttaki çubuk nedenini söyler. Doğru yerdeyken Kur\'a bas.'],
   ['Where a plant stands now matters: wind is 15% stronger on the ridge and loses 20% in another turbine\'s wake or 15% next to the city; solar is 15% stronger in the desert.','Santralin yeri artık önemli: rüzgâr sırtta %15 güçlü, başka türbinin rüzgâr gölgesinde %20, şehrin dibinde %15 kaybeder; güneş çölde %15 güçlü.'],
@@ -9321,6 +9454,7 @@ function offline(secs){
     S.t+=step;tLeft-=step;
     if(S.t>=DAY_SEC-1e-6){
       {const r=bilDayEnd();if(r){lines.push(`${dateLabel(S.day)} · ${r.line}`);if(r.end)lines.push(r.end);}}
+      try{bldDayEnd(true);}catch(e){}
       S.t=0;S.day++;DAY=makeDay(S.day);try{nukeDay();}catch(e){}
       const before=S.event&&S.event.id;
       onNewDay(true);
@@ -9493,7 +9627,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.73.0';
+const GAME_VERSION='0.75.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
