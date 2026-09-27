@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.69.0</div>
+  <div class="t-ver" id="tVer">v0.70.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -648,7 +648,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.69.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.70.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5939,6 +5939,11 @@ function update(dt){
   cellTick-=dt;
   if(cellTick<=0){for(const p of S.plants){if(dist(P,p)<75&&p.pile>=1&&!p.fire&&S.carry<carryCap()){pileTake(p);carryAdd(S);cellTick=0.07;flyers.push({x:p.x,y:p.y,h0:0.5,tx:()=>S.px,ty:()=>S.py,h1:2.2+S.carry*0.3,life:0,kind:'cell'});sfx.pick();break;}}}
   if(!S.moving&&S.carry===0)pitch=0;
+  if(!tutOpen&&!cardOpen){                                     // the rest of the guide, one line at the moment it matters
+    if(S.carry>0)hint('jit-carry',tt(TUT[3].t),'big');
+    else if(S.hints['jit-sale']&&!S.hints['jit-pad']&&has('build')){
+      const pd=PADS.find(q=>q.kind==='build'&&padVisible(q)&&!padDone(q)&&S.cash>=padCost(q));
+      if(pd){hint('jit-pad',tt(TUT[5].t),'big');camPeek(pd);}}}
   // stand at a station: fix the fault, or refurbish a worn battery
   if(built('bat')&&!S.moving){
     const D0=depotsOn().find(D=>dist(P,D)<60);
@@ -6048,6 +6053,14 @@ function update(dt){
 }
 let floatSeq=0;
 function floatTxt(x,y,txt,cls){floats.push({x,y,txt,life:1,rise:0,id:++floatSeq,cls:cls||''});}
+function firstSale(p){                                    // the first coin should feel like one
+  S.hints['jit-sale']=1;sfx.goal();
+  floatTxt(S.px,S.py,'🎉 +₵'+fmt(p));
+  toast(L(`🎉 Your first sale: +₵${fmt(p)}! ${tt(TUT[4].t)}`,`🎉 İlk satışın: +₵${fmt(p)}! ${tt(TUT[4].t)}`),'big');
+  try{trackOnce('first-sale');}catch(e){}
+}
+let peekT=null;
+function camPeek(p){if(camAim)return;const A=padAt?padAt(p):p;camAim={x:A.x,y:A.y};clearTimeout(peekT);peekT=setTimeout(()=>{camAim=null;},1800);}
 function sellCell(x,y,byPlayer,crew,mk,fromStore){
   const m=mk||{id:'city',mult:1,sat:0.035};
   let p=priceAt(m);const ct=S.contract;
@@ -6056,6 +6069,7 @@ function sellCell(x,y,byPlayer,crew,mk,fromStore){
   p*=modMult('income')*(byPlayer?modMult('playerPrice'):1)*perk('price');
   if(S.debt>0){const r=Math.min(S.debt,p*0.25);S.debt-=r;p-=r;if(S.debt<=0.01){S.debt=0;toast(L('Loan fully repaid.','Kredi tamamen ödendi.'),'good');}}
   S.cash+=p;S.earned+=p;S.dayEarned=(S.dayEarned||0)+p;logEarn(p);S.soldCells++;
+  if(byPlayer&&!S.hints['jit-sale'])firstSale(p);
   if(m.id==='city')S.sat=Math.min(4,S.sat+m.sat);else{S.satT=S.satT||{};S.satT[m.id]=Math.min(5,(S.satT[m.id]||0)+m.sat);}
   S.stats.byMkt=S.stats.byMkt||{};const bm=S.stats.byMkt[m.id]=S.stats.byMkt[m.id]||{cells:0,rev:0};bm.cells++;bm.rev+=p;
   if(PEAK_H.includes(Math.floor(hourNow())%24)&&byPlayer)S.stats.peakCells++;
@@ -7723,8 +7737,12 @@ function elaSay(lines,after){                 // same card, different script
   if(src)$('tutImg').src=src;
   showTut();
 }
-function startTutorial(){
-  tutSeq=TUT;tutAfter=null;
+/* The first minute. Ten cards before the first step is where new players leave, so a new
+   game gets three (hello, how to walk, go to the turbine) and the rest arrive one at a time,
+   at the moment they matter: first cells on your back, first sale, first square you can
+   afford. Settings › Guide still plays the whole thing. */
+function startTutorial(full){
+  tutSeq=full===true?TUT:TUT.slice(0,3);tutAfter=null;
   tutI=0;tutOpen=true;$('tut').hidden=false;$('tutDim').hidden=false;$('help').hidden=true;
   const src=(typeof thumbs!=='undefined'&&(thumbs['character-female-d']||Object.values(thumbs)[0]))||'';
   if(src)$('tutImg').src=src;
@@ -7753,7 +7771,7 @@ function endTutorial(done){
 $('tutNext').onclick=()=>{const seq=tutSeq||TUT;if(tutI<seq.length-1){tutI++;showTut();sfx.pick();}else endTutorial(true);};
 $('tutBack').onclick=()=>{if(tutI>0){tutI--;showTut();}};
 $('tutSkip').onclick=()=>endTutorial(false);
-$('sTut').onclick=()=>{$('mSet').classList.remove('on');openLangPick(startTutorial);};
+$('sTut').onclick=()=>{$('mSet').classList.remove('on');openLangPick(()=>startTutorial(true));};
 
 
 
@@ -8179,6 +8197,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.70.0',t:['The first minute','İlk dakika'],l:[
+  ['A new game opens with three guide cards instead of ten: hello, how to walk, go to the turbine. You are moving in seconds.','Yeni oyun on yerine üç rehber kartıyla açılıyor: merhaba, nasıl yürünür, türbine git. Birkaç saniyede yürümeye başlıyorsun.'],
+  ['The rest arrives when it matters: when the first cells jump on your back, at your first sale (with a little celebration), and when you can first afford a square — the camera shows you where it is.','Gerisi zamanı gelince geliyor: ilk hücreler sırtına geçince, ilk satışında (küçük bir kutlamayla) ve ilk kez bir kareyi alabilecek paran olunca — kamera sana yerini gösteriyor.'],
+  ['Settings › Guide still plays the whole thing.','Ayarlar › Rehber hâlâ tamamını oynatıyor.']]},
  {v:'0.69.0',t:['Squares on the bank, a daily report','Kıyıda kareler, günlük rapor'],l:[
   ['River and dam plants are paid for from a square on the west bank, where you can see it, not from the middle of the water.','Akarsu ve baraj santralleri artık suyun ortasından değil, batı kıyısındaki görebildiğin bir kareden ödeniyor.'],
   ['The rival ladder no longer runs off into trillions: the companies still grow, but their growth levels off over about four months. The table is sorted by wealth, and a new 🏆 Ladder button opens it straight away.','Rakip sıralaması artık trilyonlara kaçmıyor: şirketler büyümeye devam ediyor ama büyümeleri yaklaşık dört ayda yavaşlıyor. Tablo zenginliğe göre sıralı ve yeni 🏆 Sıralama butonu doğrudan açıyor.'],
@@ -9012,6 +9034,7 @@ function load(){
     S.crew=Object.assign(fresh().crew,o.crew||{});
     if(!Array.isArray(S.crew.roles))S.crew.roles=[];
     migrateBoxes();applyBoxes();migrateRiver();
+    S.hints=S.hints||{};if((S.earned||0)>50){S.hints['jit-carry']=S.hints['jit-sale']=S.hints['jit-pad']=1;}
     if(!S.lvl)S.lvl=((o.day||0)>=3||(o.earned||0)>1000||(o.goal||0)>0)?MAXLVL:1;   // anyone already playing keeps every feature
     S.plants.forEach(p=>{if(!p.born)p.born=gameNow();if(!p.gen)p.gen=1;if(p.gen>1)p.gen=1;});   // old repower bonus capped at 100%
     if(!S.bat||typeof S.bat!=='object'){S.bat={};}
@@ -9224,7 +9247,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.69.0';
+const GAME_VERSION='0.70.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -9583,7 +9606,7 @@ function beginPlay(){
   last=0;
   const wantTut=$('tutChk').checked;
   try{if(had)offline(bootGap);else if(!wantTut)toast(L('Walk to the wind turbine and grab its energy.','Rüzgâr türbinine yürü ve enerjisini al.'));}catch(e){console.error(e);}
-  if(wantTut)whenNoModal(()=>openLangPick(startTutorial));
+  if(wantTut)whenNoModal(()=>openLangPick(()=>startTutorial(false)));
   else if(!S.tutDone){S.tutDone=true;}
 }
 setTimeout(()=>{if(!started){console.warn('asset load timeout');start(null);}},8000);
