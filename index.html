@@ -434,7 +434,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.78.2</div>
+  <div class="t-ver" id="tVer">v0.79.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -664,7 +664,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.78.2 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.79.3 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4827,7 +4827,8 @@ const ASSETS={"forest":{"Tree_1_A":{"asset":{"generator":"Khronos glTF Blender I
 'use strict';
 /* ======================= CONFIG ======================= */
 const WORLD={w:1700,h:2600}, U=1/20;
-const LAND_H=2440;   // v0.76: below this the coast plain runs into the sea
+const LAND_H=2440;
+const OFF_Y=LAND_H+55, OFF_MAX=4;   // v0.79 offshore wind: one row just off the beach, close enough to collect from the sand   // v0.76: below this the coast plain runs into the sea
 const DAY_SEC=480, HOUR=DAY_SEC/24, P0=10; // 1 game hour = 20 s
 const DEMAND=[0.45,0.42,0.40,0.40,0.43,0.52,0.72,0.95,1.0,0.95,0.86,0.78,0.72,0.72,0.80,0.95,1.2,1.8,2.6,3.3,3.2,2.3,1.4,0.8];
 const AVG_D=DEMAND.reduce((a,b)=>a+b,0)/24;
@@ -4897,6 +4898,7 @@ const PLANT_TYPES={
   river:{name:['Run-of-river','Akarsu santrali'],kind:'hydro',rate:1.35,max:18,scale:1},
   dam:{name:['Dam','Barajlı hidro'],kind:'dam',rate:3.6,max:40,scale:1},
   nuclear:{name:['Nuclear plant','Nükleer santral'],kind:'nuclear',rate:16,max:1,scale:1},
+  offshore:{name:['Offshore wind','Açık deniz rüzgârı'],kind:'wind',rate:7,max:60,scale:2.1},
 };
 /* ---- nuclear: the baseload plant. It runs flat out day and night, sells straight into
        the national grid at the system price (no hauling, no local saturation), and cannot
@@ -5279,7 +5281,7 @@ const PADS=[
   {id:'town3',kind:'build',type:'town',x:480,y:2290,cost:90000,req:'coast'},
   {id:'r6',kind:'build',type:'river',x:1270,y:2290,cost:60000,req:'coast'},
 ];
-const BUILD_ICON={turbine:'🌀',solar:'🔆',battery:'🔋',bigwind:'🌬️',solarfarm:'🌞',river:'🌊',dam:'🏞️',town:'🏘️',nuclear:'⚛️'};
+const BUILD_ICON={turbine:'🌀',solar:'🔆',battery:'🔋',bigwind:'🌬️',solarfarm:'🌞',river:'🌊',dam:'🏞️',town:'🏘️',nuclear:'⚛️',offshore:'⚓'};
 /* the spline decides where the water runs, so anything standing in it reads its x off the spline */
 for(const q of PADS)if(q.kind==='build'&&(q.type==='river'||q.type==='dam'))snapToRiver(q);
 /* the plant stands in the water, but you pay for it from the west bank: the square sits
@@ -5478,7 +5480,8 @@ UNLOCK.gridline=UNLOCK.regions;       // per-plant grid lines arrive with the fa
    the rest by themselves. Competitive is the game as it stands. */
 const COZY_ON={price:1,build:1,codes:1,upgrades:1,battery:1,crew:1,markets:1,regions:1,tips:1};
 function cozy(){return S.mode==='cozy';}
-function has(k){return cozy()?!!COZY_ON[k]:lvl()>=(UNLOCK[k]||0);}
+function has(k){if(cozy())return !!COZY_ON[k];if(S&&S.prest>0&&(k==='report'||k==='report2'||k==='report3'))return true;   // v0.79.1: a rebuilt world already knows its books
+  return lvl()>=(UNLOCK[k]||0);}
 function cozyGuard(){                       // cozy never leaves a decision hanging
   if(!cozy())return;
   S.crew=S.crew||{};S.crew.auto=true;        // helpers sell at today's average, always
@@ -5571,7 +5574,7 @@ const pad=id=>PADS.find(p=>p.id===id)||freePad(id);
    yellow = allowed but it will produce less there, red = not allowed (the bar says why).
    Plants that need a resource (run-of-river needs the river) can only go next to it.
    Any wind/solar/river plant can be moved for 20% of its price. ---- */
-const FREE_BASE={turbine:800,solar:1000,bigwind:16000,solarfarm:80000,river:20000};
+const FREE_BASE={turbine:800,solar:1000,bigwind:16000,solarfarm:80000,river:20000,offshore:250000};
 function freePad(id){if(!S||!S.plants)return undefined;const q=S.plants.find(p=>p.id===id&&p.free);return q?{id:q.id,kind:'build',type:q.type,cost:q.cost,x:q.x,y:q.y}:undefined;}
 function freeCost(t){const n=S.plants.filter(p=>p.free&&p.type===t).length;return Math.round(FREE_BASE[t]*Math.pow(1.25,n)*perk('build'));}
 function freeSpot(t){if(placing&&placing.mode==='sugg')return placing.list[placing.i];
@@ -5579,10 +5582,19 @@ function freeSpot(t){if(placing&&placing.mode==='sugg')return placing.list[placi
   if(isDeco(t)){const f=S.face||0,d=t==='road'?40:t==='axe'?70:45;let x=S.px+Math.sin(f)*d,y=S.py+Math.cos(f)*d;
     if(t==='road'){x=Math.round(x/40)*40;y=Math.round(y/40)*40;}return {x:Math.round(x),y:Math.round(y),r:t==='road'?(Math.abs(Math.cos(f))>Math.abs(Math.sin(f))?1:0):0};}
   const f=S.face||0,d=t==='solarfarm'?95:70;let x=Math.round(S.px+Math.sin(f)*d),y=Math.round(S.py+Math.cos(f)*d);
+  if(t==='offshore')return {x:Math.round(S.px+Math.sin(f)*40),y:OFF_Y};   // always the one row off the beach
   if(t==='river'){const r=riverAt(y);if(Math.abs(x-r.x)<r.w/2+140)x=Math.round(r.x);}return {x,y};}
 function isHydro(p){const T=PLANT_TYPES[p.type];return T&&(T.kind==='hydro'||T.kind==='dam');}
 function freeWhyNot(x,y,t,selfId){
   t=t||'turbine';
+  if(t==='offshore'){
+    if(!S.regions.coast)return L('Open the coast plain first.','Önce kıyı ovasını aç.');
+    if(x<70||x>WORLD.w-70)return L('Too close to the edge of the map.','Haritanın kenarına çok yakın.');
+    if(!S.regions.east&&x>EAST.x0-20)return L('This area is not open yet.','Bu bölge henüz açık değil.');
+    {const r=riverAt(OFF_Y);if(Math.abs(x-r.x)<r.w/2+70)return L('That is the river mouth.','Burası nehir ağzı.');}
+    if(S.plants.filter(q=>q.type==='offshore'&&q.id!==selfId).length>=OFF_MAX)return L('The sea strip takes 4 turbines at most.','Deniz şeridine en fazla 4 türbin sığar.');
+    if(S.plants.some(q=>q.id!==selfId&&q.type==='offshore'&&Math.abs(q.x-x)<150))return L('Too close to another sea turbine.','Başka bir deniz türbinine çok yakın.');
+    return null;}
   if(x<50||x>WORLD.w-50||y<90||y>LAND_H-50)return L('Too close to the edge of the map.','Haritanın kenarına çok yakın.');
   if(regionLocked(y)||(!S.regions.east&&x>EAST.x0-20))return L('This area is not open yet.','Bu bölge henüz açık değil.');
   if(t==='river'){const r=riverAt(y);
@@ -5605,6 +5617,7 @@ function freeWhyNot(x,y,t,selfId){
 /* how well a spot suits the type: 1 = normal. Wind likes the ridge and hates other turbines'
    wake and the city; sun is strongest on the desert. Below 0.95 shows yellow. */
 function siteQ(t,x,y,selfId){
+  if(t==='offshore')return 1;
   const k=PLANT_TYPES[t]&&PLANT_TYPES[t].kind;let q=1;
   if(k==='wind'){if(y>=1230&&y<1620)q=1.15;else if(y>=2000)q=1.1;if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+220)q*=0.85;
     if(S.plants.some(o=>o.id!==selfId&&PLANT_TYPES[o.type]&&PLANT_TYPES[o.type].kind==='wind'&&Math.hypot(o.x-x,o.y-y)<150))q*=0.8;}
@@ -5791,21 +5804,21 @@ function placeTick(){
     const n=Math.min(run.length,Math.floor(S.cash/c));
     $('pbText').textContent=L(`🛣️ ${run.length} pieces drawn. Press again to lay them all.`,`🛣️ ${run.length} parça çizildi. Hepsini döşemek için tekrar bas.`)+(n<run.length?' · '+L(`money for ${n}`,`${n} tanesine para yetiyor`):'');
     const b=$('pbGo');b.disabled=n<1;b.textContent=L(`Lay all ×${n}`,`Hepsini döşe ×${n}`)+' ₵'+fmt(n*c);return;}
-  const st=spotState(placing.t,sp.x,sp.y,placing.mode==='move'?placing.id:null);
+  const st=spotState(placing.t,sp.x,sp.y,placing.mode==='move'?placing.id:placing.moveId||null);
   const g=ghostFor(placing.t,sp.r);g.visible=true;
   if(placing.mode==='sugg'){camAim={x:sp.x,y:sp.y};$('pbNext').hidden=placing.list.length<2;}const[X,Z]=W3(sp.x,sp.y);g.position.set(X,0.05,Z);
   g.rotation.y=placing.t==='river'?riverAt(sp.y).ang:0;
   if(g.userData.c!==st.c)paintGhost(g,st.c);
-  const P=placing.mode==='move'?S.plants.find(q=>q.id===placing.id):null;
+  const P=placing.mode==='move'||placing.moveId?S.plants.find(q=>q.id===(placing.moveId||placing.id)):null;
   const cost=P?moveCost(P):placing.t==='axe'?DECO.axe.c*Math.max(1,treesNear(sp.x,sp.y,AXE_R).length):isDeco(placing.t)?DECO[placing.t].c:isBld(placing.t)?Math.round(BLD[placing.t].c*perk('build')):freeCost(placing.t),poor=S.cash<cost;
   $('pbText').textContent=(placing.mode==='sugg'?`📍 ${placing.i+1}/${placing.list.length} · `:'')+(st.why?'⛔ '+st.why:(st.c==='yellow'?L(`🟡 Allowed, but output ${Math.round(st.q*100)}% here.`,`🟡 Olur ama burada verim %${Math.round(st.q*100)}.`):L(`🟢 Good spot · output ${Math.round(st.q*100)}%`,`🟢 İyi yer · verim %${Math.round(st.q*100)}`)))+(poor?' · '+L('not enough money','para yetmiyor'):'');
-  const b=$('pbGo');b.disabled=!!st.why||poor;b.textContent=(placing.mode==='move'?L('Move','Taşı'):placing.mode==='sugg'?L('Build here','Buraya kur'):placing.t==='road'?L('Draw road','Yolu çiz'):placing.t==='axe'?L('Cut','Kes'):L('Build','Kur'))+(placing.t==='road'?'':' ₵'+fmt(cost));
+  const b=$('pbGo');b.disabled=!!st.why||poor;b.textContent=(placing.mode==='move'?L('Move','Taşı'):placing.moveId?L('Move here','Buraya taşı'):placing.mode==='sugg'?L('Build here','Buraya kur'):placing.t==='road'?L('Draw road','Yolu çiz'):placing.t==='axe'?L('Cut','Kes'):L('Build','Kur'))+(placing.t==='road'?'':' ₵'+fmt(cost));
   if(placing.t==='road'){const n=computeRoadRun().length;b.disabled=!n||S.cash<DECO.road.c;$('pbText').textContent=n?L(`🛣️ ${n} pieces fit this way. Draw them first.`,`🛣️ Bu yöne ${n} parça sığıyor. Önce çiz.`):'⛔ '+L('No room for a road this way.','Bu yönde yola yer yok.');}
   if(placing.t==='axe'&&!st.why)$('pbText').textContent=L(`🪓 ${treesNear(sp.x,sp.y,AXE_R).length} trees in the ring.`,`🪓 Halkada ${treesNear(sp.x,sp.y,AXE_R).length} ağaç var.`)+(poor?' · '+L('not enough money','para yetmiyor'):'');
 }
 function confirmPlace(){
-  if(!placing)return;if(placing.t==='road'){roadGo();return;}const t=placing.t,sp=freeSpot(t),mv=placing.mode==='move';
-  const st=spotState(t,sp.x,sp.y,mv?placing.id:null);if(st.why)return;
+  if(!placing)return;if(placing.t==='road'){roadGo();return;}const t=placing.t,sp=freeSpot(t),mv=placing.mode==='move'||!!placing.moveId,mid=placing.moveId||placing.id;
+  const st=spotState(t,sp.x,sp.y,mv?mid:null);if(st.why)return;
   if(isBld(t)){const c=Math.round(BLD[t].c*perk('build'));if(S.cash<c)return;S.cash-=c;S.bldN=(S.bldN||0)+1;
     const same=(S.blds||[]).filter(b=>b.k===t).length;const b={id:'bd'+S.bldN,k:t,x:sp.x,y:sp.y,code:BLD[t].pre+(same+1),del:0,con:null,next:S.day+7,cost:c};
     (S.blds=S.blds||[]).push(b);addBldObj(b);clearFor(t,sp.x,sp.y);sfx.build();logLedger('build',-c,b.code);
@@ -5815,7 +5828,7 @@ function confirmPlace(){
     toast(L(`🪓 ${n} trees cut for ₵${fmt(c)}.`,`🪓 ${n} ağaç ₵${fmt(c)} karşılığında kesildi.`),'good');try{trackOnce('axe');}catch(e){}save();return;}   // stay in placing mode
   if(isDeco(t)){const c=DECO[t].c;if(S.cash<c)return;S.cash-=c;const d={k:t,x:sp.x,y:sp.y,r:sp.r||0};(S.deco=S.deco||[]).push(d);addDecoObj(d);sfx.build();
     try{trackOnce('deco-'+t);}catch(e){}save();return;}      // stay in placing mode: lay the next one
-  if(mv){const p=S.plants.find(q=>q.id===placing.id);if(!p)return stopPlacing();const c=moveCost(p);if(S.cash<c)return;
+  if(mv){const p=S.plants.find(q=>q.id===mid);if(!p)return stopPlacing();const c=moveCost(p);if(S.cash<c)return;
     S.cash-=c;p.x=sp.x;p.y=sp.y;p.q=st.q;clearFor(p.type,sp.x,sp.y);
     if(plantObjs[p.id]){plantObjs[p.id].parent&&scene.remove(plantObjs[p.id]);delete plantObjs[p.id];}
     sfx.build();logLedger('move',-c,codeOf(p.id));toast(L(`↔️ ${codeOf(p.id)} moved for ₵${fmt(c)}.`,`↔️ ${codeOf(p.id)} ₵${fmt(c)} karşılığında taşındı.`),'good');
@@ -5848,21 +5861,24 @@ function marksTick(now){
     if(a>=1){scene.remove(m.g);marks.splice(i,1);continue;}
     const o=a<0.45?1:1-(a-0.45)/0.55;m.mat.opacity=o;m.fill.opacity=0.12*o;}
 }
-function suggestSpots(t){
+function suggestSpots(t,selfId){
   const out=[];
+  if(t==='offshore'){for(let x=100;x<WORLD.w-90;x+=50){const st=spotState(t,x,OFF_Y,selfId||null);if(!st.why)out.push({x,y:OFF_Y,q:1,d:Math.abs(x-S.px)});}
+    out.sort((a,b)=>a.d-b.d);const pk=[];for(const o of out){if(pk.every(p=>Math.abs(p.x-o.x)>=150))pk.push(o);if(pk.length>=3)break;}return pk;}
   for(let y=110;y<LAND_H-60;y+=45)for(let x=70;x<WORLD.w-60;x+=45){
     let sx=x;if(t==='river'){const r=riverAt(y);sx=Math.round(r.x);if(x!==70)continue;}
-    const st=spotState(t,sx,y,null);if(st.why)continue;out.push({x:sx,y,q:st.q,d:Math.hypot(sx-S.px,y-S.py)});}
+    if(selfId){const me=S.plants.find(q=>q.id===selfId);if(me&&Math.hypot(sx-me.x,y-me.y)<150)continue;}   // a move worth making goes somewhere else
+    const st=spotState(t,sx,y,selfId||null);if(st.why)continue;out.push({x:sx,y,q:st.q,d:Math.hypot(sx-S.px,y-S.py)});}
   out.sort((a,b)=>(b.q-a.q)||(a.d-b.d));
   const pick=[];for(const o of out){if(pick.every(p=>Math.hypot(p.x-o.x,p.y-o.y)>320))pick.push(o);if(pick.length>=3)break;}
   return pick;
 }
-function showSuggest(t){
-  stopPlacing();const pk=suggestSpots(t);$('mBuild').classList.remove('on');
+function showSuggest(t,moveId){
+  stopPlacing();const pk=suggestSpots(t,moveId);$('mBuild').classList.remove('on');
   if(!pk.length){toast(L('No open spot for that right now.','Şu an bunun için açık bir yer yok.'),'');return;}
   const sz=t==='solarfarm'?[220,150]:t==='river'?[160,120]:[150,120];
   pk.forEach(o=>markArea(o.x,o.y,sz[0],sz[1],o.q<0.95?0xF7C948:0x2ECC71));
-  placing={mode:'sugg',t,list:pk,i:0};$('placeBar').hidden=false;sfx.pick();
+  placing={mode:'sugg',t,list:pk,i:0,moveId:moveId||null};$('placeBar').hidden=false;sfx.pick();
   try{trackOnce('site-tips-'+t);}catch(e){}
 }
 function nextSuggest(){if(!placing||placing.mode!=='sugg')return;placing.i=(placing.i+1)%placing.list.length;sfx.pick();}
@@ -5870,10 +5886,13 @@ function renderBuild(){
   $('bldTitle').textContent=L('🏗️ Build','🏗️ İnşa');
   const nm=nearMovable();
   $('bldSub').textContent=L('Pick a type: a see-through copy follows in front of you. Green = good, yellow = less output, red = not here. 📍 shows the best spots on the map.','Bir tür seç: saydam bir kopyası önünde yürür. Yeşil = iyi, sarı = verim düşük, kırmızı = olmaz. 📍 haritadaki en iyi yerleri gösterir.');
-  const types=Object.keys(FREE_BASE);
+  const types=Object.keys(FREE_BASE).filter(t=>t!=='offshore'||S.regions.coast);
+  if(!has('regions')){const nm2=nm;$('bldSub').textContent=L('Stand next to a plant to move it. 📍 shows its best new spots, the way it will look there.','Taşımak için bir santralin yanında dur. 📍 en iyi yeni yerlerini, orada nasıl duracağıyla gösterir.');
+    $('bldBody').innerHTML=(nm2?`<div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm2.p.id)}</b></span><span style="display:flex;gap:6px"><button data-mvtip="${nm2.p.id}" style="padding:4px 8px;min-height:0">📍</button><button class="pri" data-mv="${nm2.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} ₵${fmt(moveCost(nm2.p))}</button></span></div>`:`<p style="font-size:12.5px;margin-top:6px">↔️ ${L('No plant next to you. Walk up to one and open this again.','Yanında santral yok. Birinin yanına yürü ve burayı tekrar aç.')}</p>`)
+      +`<p style="font-size:12.5px;margin-top:10px">🔒 ${L(`Building anywhere, roads, decoration and buildings open at level ${UNLOCK.regions}.`,`Serbest inşa, yol, süs ve binalar Sv${UNLOCK.regions}'de açılır.`)}</p>`;return;}
   $('bldBody').innerHTML=types.map(t=>{const c=freeCost(t),no=S.cash<c;
     return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BUILD_ICON[t]||''} <b>${tt(PLANT_TYPES[t].name)}</b></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">₵${fmt(c)}<button data-tip="${t}" style="padding:4px 8px;min-height:0">📍</button><button class="pri" data-fb="${t}" ${no?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')
-    +(nm?`<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm.p.id)}</b></span><button class="pri" data-mv="${nm.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} ₵${fmt(moveCost(nm.p))}</button></div>`
+    +(nm?`<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm.p.id)}</b></span><span style="display:flex;gap:6px"><button data-mvtip="${nm.p.id}" style="padding:4px 8px;min-height:0">📍</button><button class="pri" data-mv="${nm.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} ₵${fmt(moveCost(nm.p))}</button></span></div>`
         :`<p style="font-size:12.5px;margin-top:10px">↔️ ${L('To move a plant, stand next to it and open this again.','Bir santrali taşımak için yanında dur ve burayı tekrar aç.')}</p>`)
     +`<h3 style="margin:12px 0 4px">${L('Roads & decoration','Yol ve süs')}</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">`+Object.keys(DECO).map(k=>`<button data-fb="${k}" ${S.cash<DECO[k].c?'disabled':''} style="padding:6px 4px;min-height:0;font-size:12.5px">${DECO[k].i} ${tt(DECO[k].n)}<br><small>₵${DECO[k].c}</small></button>`).join('')+`</div><h3 style="margin:12px 0 4px">${L('Buildings & contracts','Binalar ve sözleşmeler')}</h3>`+Object.keys(BLD).map(k=>{const c=Math.round(BLD[k].c*perk('build'));return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BLD[k].i} <b>${tt(BLD[k].n)}</b><br><small>${L(`buys ~${fmt(BLD[k].need)}/day`,`günde ~${fmt(BLD[k].need)} alır`)}</small></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">₵${fmt(c)}<button class="pri" data-fb="${k}" ${S.cash<c?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')+`<p style="font-size:12px;margin-top:6px">${L('Roads make you 30% faster. Sheep next to solar panels add 5%. Decorations stay placeable one after another — tap ✕ when done.','Yollar seni %30 hızlandırır. Güneş panellerinin yanındaki koyunlar %5 katar. Süsler art arda yerleştirilir — bitince ✕.')}</p>`;
 }
@@ -5898,11 +5917,11 @@ function batFill(n,to){let left=n;const list=to?[to]:depotsOn().slice().sort((a,
 const batCap=()=>built('bat')?batCapTotal():0;
 const batUsable=()=>built('bat')&&!S.batFault;
 /* short codes above each asset: W1 W2 · WX1 · S1 · SX1 · B1 · T1 */
-const CODE_PREFIX={turbine:'W',bigwind:'WX',solar:'S',solarfarm:'SX',battery:'B',town:'T',river:'R',dam:'D',nuclear:'N'};
+const CODE_PREFIX={turbine:'W',bigwind:'WX',solar:'S',solarfarm:'SX',battery:'B',town:'T',river:'R',dam:'D',nuclear:'N',offshore:'OW'};
 const ASSET_CODE=(()=>{const m={t1:'W1'},n={W:1};for(const q of PADS){if(q.kind!=='build')continue;const pre=CODE_PREFIX[q.type]||'X';n[pre]=(n[pre]||0)+1;m[q.id]=pre+n[pre];}return m;})();
 const codeOf=id=>ASSET_CODE[id]||((S&&S.plants&&S.plants.find(p=>p.id===id))||{}).code||'';
 /* plant lifetime: after it, output drifts down 1%/day and breakdowns rise */
-const LIFE={turbine:120,solar:150,bigwind:140,solarfarm:180,river:220,dam:300,nuclear:1e9};
+const LIFE={turbine:120,solar:150,bigwind:140,solarfarm:180,river:220,dam:300,nuclear:1e9,offshore:112};   // salt air: offshore wears 25% faster than a big turbine
 function plantAge(p){return Math.max(0,(gameNow()-(p.born||0))/DAY_SEC);}
 function plantLife(p){return LIFE[p.type]||140;}
 function plantEff(p){if(!has('ageing'))return 1;const over=plantAge(p)-plantLife(p);return over<=0?1:Math.max(0.5,1-over*0.005);}   // half the old wear rate
@@ -5965,7 +5984,7 @@ const FIRE_RANGE=340;      // how far it can jump
 function burning(){return S.plants.filter(p=>(p.fire||0)>0);}
 function anyFire(){return burning().length>0||(S.batFire||0)>0;}
 function startFire(p,why){
-  if(!p||p.fire||isNuke(p))return;
+  if(!p||p.fire||isNuke(p)||p.type==='offshore')return;
   p.fire=0.01;p.fireT=0;sfx.warn();
   toast(L(`🔥 Fire at ${codeOf(p.id)}${why?' ('+why+')':''}. Put it out before it spreads.`,`🔥 ${codeOf(p.id)} yanıyor${why?' ('+why+')':''}. Yayılmadan söndür.`),'big');
   trackOnce('fire-started');
@@ -6251,7 +6270,7 @@ function update(dt){
     const T=PLANT_TYPES[p.type];if(!T||p.broken||p.fire)continue;
     if(T.kind==='nuclear'){nukeTick(p,gdt);continue;}
     let cf;
-    if(T.kind==='wind')cf=windCF(t);
+    if(T.kind==='wind'){cf=windCF(t);if(p.type==='offshore')cf=Math.min(1,(0.5*cf+0.3)*(DAY.weather==='stormy'?1.3:1));}   // sea wind: half the swing
     else if(T.kind==='hydro')cf=waterCF()*flowMult(p);
     else if(T.kind==='dam'){
       p.res=Math.min(damCap(p),(p.res||0)+damInflow(p)*gdt);
@@ -6272,7 +6291,7 @@ function update(dt){
       while(p.gsa>=1&&p.pile>0){p.gsa-=1;pileTake(p);gridDeliver(p);}
     }
     p.spin=(p.spin||0)+gdt*(0.6+cf*6);
-    if(has('repair')&&Math.random()<0.0012*gdt*brandOf(p).brk*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){damagePlant(p,DAY.weather==='stormy'?0.35:0.12);const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
+    if(has('repair')&&Math.random()<0.0012*gdt*brandOf(p).brk*(p.type==='offshore'?2:1)*modMult('breakage')*(1+Math.max(0,plantAge(p)-plantLife(p))*0.02)*(T.kind==='wind'?(DAY.weather==='stormy'?3:1)*modMult('windBreak'):T.kind==='hydro'?0.45:T.kind==='dam'?0.55:0.6)){damagePlant(p,DAY.weather==='stormy'?0.35:0.12);const sev=Math.min(1.5,1+T.rate*0.06);addMod('price',sev,1);toast(L(`🔧 ${tt(T.name)} broke down. Supply is short: prices +${Math.round((sev-1)*100)}% for an hour.`,`🔧 ${tt(T.name)} bozuldu. Arz daraldı: fiyatlar 1 saat +%${Math.round((sev-1)*100)}.`));hint('broke',L('A plant broke down. Stand next to it to fix it.','Bir santral bozuldu. Onarmak için yanında dur.'));}
   }
   tickWet(gdt);setRiverFlow();            // the catchment fills and drains, and the river shows it
   if(cozy()&&(cozyT=(cozyT||0)+dt)>2){cozyT=0;cozyGuard();}
@@ -6283,11 +6302,11 @@ function update(dt){
   if(m>0.05)autoGo=null;                                           // the joystick always wins
   else if(autoGo){const tp=jobOpen(autoGo);
     if(!tp)autoGo=null;                                            // done by a helper, or gone
-    else{const dx=tp.x-S.px,dy=tp.y+30-S.py,l=Math.hypot(dx,dy);
+    else{const dx=tp.x-S.px,dy=Math.min(tp.y+30,LAND_H-10)-S.py,l=Math.hypot(dx,dy);
       if(l<40)autoGo=null;else{vx=dx/l;vy=dy/l;m=1;}}}
   const sp=speed()*m;
   let nx=S.px+vx*sp*dt,ny=S.py+vy*sp*dt;
-  nx=Math.max(20,Math.min(WORLD.w-20,nx));ny=Math.max(60,Math.min(LAND_H-20,ny));
+  nx=Math.max(20,Math.min(WORLD.w-20,nx));ny=Math.max(60,Math.min(LAND_H-4,ny));
   for(const r of REGIONS)if(!S.regions[r.id]&&ny>r.y0-16)ny=Math.min(ny,r.y0-16);
   if(!S.regions.east&&nx>EAST.x0-16)nx=Math.min(nx,EAST.x0-16);
   S.moving=m>0.05;if(S.moving)S.face=Math.atan2(vx,vy);
@@ -7284,7 +7303,7 @@ const plantObjs={};
 function plantObj(p){
   if(plantObjs[p.id])return plantObjs[p.id];
   const T=PLANT_TYPES[p.type];let g;
-  if(T.kind==='wind')g=makeTurbine(T.scale);
+  if(T.kind==='wind'){g=makeTurbine(T.scale);if(p.type==='offshore'){g.add(mesh(new THREE.CylinderGeometry(0.26,0.3,0.7,12),M(0xF2C230),0,0.3,0));g.add(mesh(new THREE.CylinderGeometry(0.45,0.45,0.06,16),M(0x5B6472),0,0.04,0));}}
   else if(T.kind==='hydro')g=makeRiver(riverAt(p.y).w*U);
   else if(T.kind==='dam')g=makeDam();
   else if(T.kind==='nuclear')g=makeNuclear();
@@ -7292,7 +7311,7 @@ function plantObj(p){
   const root=new THREE.Group();root.add(g);const[X,Z]=W3(p.x,p.y);root.position.set(X,0,Z);
   if(T.kind==='hydro'||T.kind==='dam')root.rotation.y=riverAt(p.y).ang;   // square to the channel
   if(T.kind==='nuclear')root.rotation.y=Math.PI;                         // intake pipe points back at the river
-  const pile=new THREE.Group();pile.position.set(p.type==='dam'?6.2:p.type==='solarfarm'?4:p.type==='river'?5.2:1.8,0.16,p.type==='dam'?3.4:p.type==='river'?2.6:1.2);root.add(pile);
+  const pile=new THREE.Group();pile.position.set(p.type==='dam'?6.2:p.type==='solarfarm'?4:p.type==='river'?5.2:1.8,0.16,p.type==='dam'?3.4:p.type==='river'?2.6:p.type==='offshore'?-3.2:1.2);root.add(pile);
   root.userData={model:g,pile,cells:[]};scene.add(root);plantObjs[p.id]=root;return root;
 }
 
@@ -7327,16 +7346,16 @@ const FLAME_GEO=new THREE.ConeGeometry(0.34,1.3,7,1,true);FLAME_GEO.translate(0,
 function makeFlame(i){const col=[0xFF4A1C,0xFF8A1E,0xFFC83D][i%3];
   const m=new THREE.Mesh(FLAME_GEO,new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.88,depthWrite:false,side:THREE.DoubleSide}));
   m.castShadow=false;m.receiveShadow=false;m.visible=false;scene.add(m);return m;}
-function flameAt(wx,wz,rad,now,seed,k){           // k 0..1: how big the fire has grown
-  const n=9,sz=0.7+0.9*k;
+function flameAt(wx,wz,rad,now,seed,k,wy,small){   // k 0..1: how big the fire has grown; wy: height of the fire (0 = the ground)
+  const n=small?6:9,sz=(0.7+0.9*k)*(small?0.6:1);wy=wy||0;
   for(let i=0;i<n;i++){
     let o=flamePool[flameUsed];if(!o){o=makeFlame(flamePool.length);flamePool.push(o);}flameUsed++;
     const a=i/n*Math.PI*2+seed,r=(i%3===0?0.25:1)*rad,fl=0.75+0.35*Math.sin(now/70+i*1.7+seed)+0.15*Math.sin(now/37+i);
-    o.visible=true;o.position.set(wx+Math.cos(a)*r,0.02,wz+Math.sin(a)*r);
+    o.visible=true;o.position.set(wx+Math.cos(a)*r,wy+0.02,wz+Math.sin(a)*r);
     o.scale.set(sz*(0.8+0.2*fl),sz*fl*(i%3===0?1.6:1.1),sz*(0.8+0.2*fl));o.rotation.y=now/400+i;
     o.material.opacity=0.65+0.3*fl*0.5;
   }
-  smokeAt(wx,wz,1.4+sz,now,seed);
+  smokeAt(wx,wz,wy+1.4+sz,now,seed);
 }
 function heavyLook(o,p,T,now){
   const hv=!!(p.broken&&p.hv),m=o.userData.model;
@@ -7512,7 +7531,7 @@ function updateBolts(dt,cx,cz){
     sun.position.set(sunHome.x+Math.cos(a)*26,sunHome.y*0.8,sunHome.z+Math.sin(a)*26);sunSwing=0.45;
     sfx.thunder&&sfx.thunder();
     // it can hit a turbine
-    const wp=S.plants.filter(q=>PLANT_TYPES[q.type]&&PLANT_TYPES[q.type].kind==='wind'&&!q.broken);
+    const wp=S.plants.filter(q=>PLANT_TYPES[q.type]&&PLANT_TYPES[q.type].kind==='wind'&&!q.broken&&q.type!=='offshore');   // at sea the bolt goes to the water
     let hitQ=null;
     if(wp.length&&Math.random()<0.25*modMult('breakage')){const q=wp[Math.floor(Math.random()*wp.length)];hitQ=q;
       if(Math.random()<0.45)startFire(q,L('lightning','yıldırım'));
@@ -7595,7 +7614,7 @@ function render(dt,now){
     const pp=pops[p.id]||0;o.scale.setScalar(1+Math.sin(pp*Math.PI)*0.35);
     try{heavyLook(o,p,T,now);}catch(e){}
     setPile(o,p.pile,p);
-    if(p.pile>0)place('pile'+p.id,'cnt'+(p.pile>=T.max?' full':''),p.x+(p.type==='dam'?110:p.type==='solarfarm'?80:p.type==='river'?92:36),p.y+24,Math.min(p.pile,24)/2*CELL_STEP+0.9,p.pile>=T.max?L('FULL','DOLU'):String(p.pile));
+    if(p.pile>0)place('pile'+p.id,'cnt'+(p.pile>=T.max?' full':''),p.x+(p.type==='dam'?110:p.type==='solarfarm'?80:p.type==='river'?92:36),p.y+(p.type==='offshore'?-64:24),Math.min(p.pile,24)/2*CELL_STEP+0.9,p.pile>=T.max?L('FULL','DOLU'):String(p.pile));
     if(p.broken)place('br'+p.id,'wrench'+(heavy(p)?' fire':''),p.x,p.y,T.kind==='wind'?7*T.scale:2.4,p.fix>0?`${heavy(p)?'🛠️':'🔧'} ${Math.round(p.fix*100)}%`:(heavy(p)?'🛠️':'🔧'));
     if(has('codes')){const eff=plantEff(p),old=eff<1;
      place('cd'+p.id,'code'+(old?' worn':''),p.x-(p.type==='solarfarm'?70:30),p.y+22,0.9,codeOf(p.id)+brandOf(p).tag+(old?` ${Math.round(eff*100)}%`:''));}
@@ -7614,8 +7633,9 @@ function render(dt,now){
       setLakeLevel(damCap(p)?damRes(p)/damCap(p):0);
       place('dm'+p.id,'cnt'+(full?' full':''),p.x,p.y-34,3.9,`💧 ${Math.round(damRes(p))}/${damCap(p)}${p.open?' \u26a1':full?' !':''}`);}
     if(p.fire>0){const fl=1;
-      {const[FX,FZ]=W3(p.x,p.y);const big=p.type==='solarfarm'?3.2:p.type==='solar'?1.6:T.kind==='wind'?0.9*T.scale:2.2;flameAt(FX,FZ,big,now,p.x*0.013,Math.min(1,p.fire/FIRE_SPREAD));}
-      const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y+34,1.2*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
+      {const[FX,FZ]=W3(p.x,p.y);const big=p.type==='solarfarm'?3.2:p.type==='solar'?1.6:T.kind==='wind'?0.9*T.scale:2.2;const kf=Math.min(1,p.fire/FIRE_SPREAD);flameAt(FX,FZ,big,now,p.x*0.013,kf);
+       const top=T.kind==='wind'?4.75*T.scale:T.kind==='dam'?3:T.kind==='hydro'?1.8:1.1;flameAt(FX,FZ,T.kind==='wind'?0.3*T.scale:big*0.5,now,p.x*0.017+1,kf,top,true);}   // v0.79.2: and on top of it
+      const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y+34,1.2*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:'🔥');}
     if(snowPanel(p)>0.05)place('sn'+p.id,'wrench',p.x,p.y+6,1.6,p.clr>0?`🧹 ${Math.round(p.clr*100)}%`:`🌨️ ${Math.round(snowPanel(p)*100)}%`);
     if(gridNeedsService(p)&&!p.fire&&p.gsv>0)place('gw'+p.id,'wrench',p.x+(T.kind==='wind'?0:14),p.y+14,T.kind==='wind'?4.4*T.scale:1.2,`🔌 ${Math.round(p.gsv*100)}%`);   // costs live in 🧰 Upkeep
     if(!p.broken&&needsWork(p)&&p.rep>0)place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,`${canRebuild(p)?'🏗️':'♻️'} ${Math.round(p.rep*100)}%`);   // costs live in 🧰 Upkeep
@@ -7725,7 +7745,7 @@ function hud(dt){
   if(!up&&!cozy()&&prestOk()){$('goal').innerHTML=chip+L('⭐ A new world can be opened — tap here','⭐ Yeni dünya açabilirsin — buraya dokun');}else
   $('goal').innerHTML=chip+(G?`${tt(G.t)}${gl?` · 🔒 ${L('opens at Lv','Sv')}${gl}${L('',`'te açılır`)}`:''}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
   {const n=maintList().length;$('mntBtn').hidden=!(has('gridline')||has('ageing'));const b=$('mntN');b.hidden=!n;b.textContent=n>9?'9+':String(n);}
-  $('rankBtn').hidden=!has('report');{const wb=$('worldBtn');wb.hidden=cozy()||!(worldMax()>=1||prestOk());if(!wb.hidden){$('cap-world').textContent=L('Worlds','Dünyalar');wb.classList.toggle('pulse',prestOk());}}$('buildBtn').hidden=!has('regions')||cozy();
+  $('rankBtn').hidden=!has('report');{const wb=$('worldBtn');wb.hidden=cozy()||!(worldMax()>=1||prestOk());if(!wb.hidden){$('cap-world').textContent=L('World','Dünya')+' P'+(S.prest||0);wb.classList.toggle('pulse',prestOk());}}$('buildBtn').hidden=cozy();   // v0.79.3: moving a plant is open from level 1
   $('gridBtn').hidden=!has('gridline');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
@@ -8535,6 +8555,7 @@ $('buildBtn').onclick=()=>{renderBuild();$('mBuild').classList.add('on');};
 $('bldClose').onclick=()=>$('mBuild').classList.remove('on');
 $('bldBody').addEventListener('click',e=>{const b=e.target.closest('button[data-fb]');if(b&&!b.disabled){startPlacing('new',b.dataset.fb);return;}
   const tp=e.target.closest('button[data-tip]');if(tp){showSuggest(tp.dataset.tip);return;}
+  const mt=e.target.closest('button[data-mvtip]');if(mt){const p=S.plants.find(q=>q.id===mt.dataset.mvtip);if(p)showSuggest(p.type,p.id);return;}
   const mv=e.target.closest('button[data-mv]');if(mv){const p=S.plants.find(q=>q.id===mv.dataset.mv);if(p)startPlacing('move',p.type,p.id);}});
 $('pbGo').onclick=confirmPlace;$('pbNo').onclick=stopPlacing;$('pbNext').onclick=nextSuggest;
 $('rankBtn').onclick=()=>{openReport(repMax());trackOnce('ladder-btn');};
@@ -8616,6 +8637,18 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.79.3',t:['Move from day one','İlk günden taşı'],l:[
+  ['🏗️ is on screen from level 1: stand next to a plant to move it. Building anywhere, roads, decoration and buildings still open at level 11.','🏗️ Sv1\'den itibaren ekranda: taşımak için bir santralin yanında dur. Serbest inşa, yol, süs ve binalar yine Sv11\'de açılıyor.'],
+  ['Moving has its own 📍 now: it flies over the best new spots and shows the plant standing there — green or yellow, the way it will look. Move here moves it.','Taşımanın da artık 📍 butonu var: en iyi yeni yerleri gezer, santrali orada nasıl duracaksa öyle gösterir — yeşil ya da sarı. Buraya taşı ile taşınır.']]},
+ {v:'0.79.2',t:['Fire on top','Tepede ateş'],l:[
+  ['A burning plant now has flames on top as well as at its foot. The tag over it shows just 🔥 — the percentage only appears while someone is putting it out (🧯).','Yanan santralin artık dibinin yanında tepesinde de alev var. Üstündeki etiket sadece 🔥 gösteriyor — yüzde yalnızca biri söndürürken (🧯) çıkıyor.']]},
+ {v:'0.79.1',t:['Worlds, tidied','Dünyalar toparlandı'],l:[
+  ['In a rebuilt world the 📊 report and the 🏆 ladder are open from the first minute.','Yeniden kurulan dünyada 📊 rapor ve 🏆 sıralama ilk dakikadan açık.'],
+  ['The 🌍 button shows which world you are in (World P1, P2…).','🌍 butonu hangi dünyada olduğunu yazıyor (Dünya P1, P2…).'],
+  ['A new world starts with no task boxes. Empty boxes already carried into a rebuilt world are removed once.','Yeni dünya görev kutusu olmadan başlıyor. Yeniden kurulan dünyaya taşınmış boş kutular bir kez temizlendi.']]},
+ {v:'0.79.0',t:['Offshore wind','Açık deniz rüzgârı'],l:[
+  ['🏗️ › ⚓ Offshore wind (after the coast plain is open): 7 cells a second, ₵250K. It stands in one row just off the beach, up to four of them; you and your crew collect from the sand.','🏗️ › ⚓ Açık deniz rüzgârı (kıyı ovası açılınca): saniyede 7 hücre, ₵250K. Kumsalın hemen açığında tek sıra halinde durur, en fazla dört tane; sen ve ekibin kumdan toplarsınız.'],
+  ['Sea wind is steadier — about half the swing of a land turbine — and 30% stronger on stormy days. The price: it breaks down twice as often and salt air wears it out 25% sooner. Lightning never sets it on fire.','Deniz rüzgârı daha düzenli — karadaki türbinin yarısı kadar dalgalanır — ve fırtınalı günde %30 güçlü. Bedeli: iki kat sık arızalanır, tuzlu hava onu %25 daha çabuk yıpratır. Yıldırım onu hiç yakmaz.']]},
  {v:'0.78.2',t:['Goals wait for their level','Hedefler seviyesini bekliyor'],l:[
   ['A goal you cannot do yet (the backpack before level 5, the battery before level 6…) is skipped for now; the next goal you can do is shown instead. The skipped one comes back as soon as its level opens.','Henüz yapamayacağın bir hedef (Sv5\'ten önce sırt çantası, Sv6\'dan önce batarya…) şimdilik atlanıyor; yerine yapabileceğin bir sonraki hedef gösteriliyor. Atlanan hedef, seviyesi açılır açılmaz geri geliyor.']]},
  {v:'0.78.1',t:['🌍 on screen','Ekranda 🌍'],l:[
@@ -9505,6 +9538,7 @@ function load(){
     S.stats=Object.assign(fresh().stats,o.stats||{});
     S.crew=Object.assign(fresh().crew,o.crew||{});
     if(!Array.isArray(S.crew.roles))S.crew.roles=[];
+    if((S.prest||0)>0&&!S.boxWiped){if((S.crew.boxes||[]).every(b=>!(b.m||[]).length))S.crew.boxes=[];S.boxWiped=1;}   // v0.79.1: empty boxes carried into a rebuilt world go, once
     migrateBoxes();applyBoxes();migrateRiver();
     {const taken=new Set(Object.values(ASSET_CODE));for(const q of S.plants)if(q.free&&taken.has(q.code))q.code=freeCode(q.type);}   // v0.78: a free plant never shares a code with a map square
     S.hints=S.hints||{};if((S.earned||0)>50){S.hints['jit-carry']=S.hints['jit-sale']=S.hints['jit-pad']=1;}
@@ -9699,7 +9733,7 @@ function doPrestige(){
   const KEEP=['lang','muted','vSfx','vMus','lowFlash','fxOff','notif','shadows','speed','hints','tutDone','tipsSeen','seenVer','progs','prog','progStep','progDone','nick','mode','uiScale','zoom','look','cardPrefs'];
   for(const k of KEEP)if(S[k]!==undefined)f[k]=S[k];
   f.prest=P;f.lvl=1;f.cash=0;f.prestAt=(S.prestAt||[]).concat({p:P,day:S.day,w:Math.round(wealth())});
-  f.crew.boxes=(S.crew.boxes||[]).map(b=>Object.assign({},b,{m:[]}));
+  f.crew.boxes=[];   // v0.79.1: a new world starts with no task boxes
   S.lastSave=Date.now();
   try{localStorage.setItem(wKey(S.prest||0),JSON.stringify(S));}catch(e){toast(L('Not enough room on this phone to keep this world. Nothing changed.','Bu dünyayı saklamaya telefonda yer yok. Hiçbir şey değişmedi.'),'');return;}
   try{localStorage.setItem(SAVE_BACKUP,JSON.stringify(S));}catch(e){}
@@ -9780,7 +9814,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{const mx=worldM
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.78.2';
+const GAME_VERSION='0.79.3';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
