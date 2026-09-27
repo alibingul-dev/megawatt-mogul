@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.71.0</div>
+  <div class="t-ver" id="tVer">v0.72.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -460,6 +460,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
       <button class="rb" id="gridBtn" aria-label="Grid lines" hidden><span>🔌</span><span class="cap" id="cap-grid">Lines</span></button>
       <button class="rb" id="mntBtn" aria-label="Upkeep" hidden><span>🧰</span><span class="cap" id="cap-mnt">Upkeep</span><span class="badge" id="mntN" hidden>0</span></button>
       <button class="rb" id="progIco" aria-label="Program" hidden><span>🎓</span><span class="cap" id="cap-prog">Program</span></button>
+      <button class="rb" id="buildBtn" aria-label="Build here" hidden><span>🏗️</span><span class="cap" id="cap-build">Build</span></button>
       <button class="rb" id="rankBtn" aria-label="Ladder" hidden><span>🏆</span><span class="cap" id="cap-rank">Ladder</span></button>
       <button class="rb" id="repBtn" aria-label="Finance report"><span>📊</span><span class="cap" id="cap-rep">Report</span></button>
       <button class="rb" id="infoBtn" aria-label="Tips"><span>ℹ️</span><span class="cap" id="cap-info">Tips</span><span class="badge" id="infoDot" hidden>!</span></button>
@@ -555,6 +556,12 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div id="gridBody"></div>
   <div class="btns"><button class="pri" id="gridClose" data-i18n="close">Close</button></div>
 </div></div>
+<div class="modal" id="mBuild"><div class="sheet tips">
+  <h2 id="bldTitle">Build here</h2>
+  <p id="bldSub"></p>
+  <div id="bldBody"></div>
+  <div class="btns"><button class="pri" id="bldClose" data-i18n="close">Close</button></div>
+</div></div>
 <div class="modal" id="mMaint"><div class="sheet tips">
   <h2 id="mntTitle">Upkeep</h2>
   <p id="mntSub"></p>
@@ -649,7 +656,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.71.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.72.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5307,6 +5314,7 @@ function dateLabel(d){try{return new Intl.DateTimeFormat(S.lang==='tr'?'tr-TR':'
 function upgSpent(p){let s=0;for(let k=0;k<(S.up[p.key]||0);k++)s+=Math.round(p.base*Math.pow(p.growth,k));return s;}
 function assetsValue(){
   let v=10;
+  for(const q of S.plants)if(q.free)v+=q.cost||0;
   for(const p of PADS){
     if(p.kind==='build'&&S.built[p.id])v+=p.cost;
     else if(p.kind==='gate'&&S.regions[p.region])v+=p.cost;
@@ -5527,7 +5535,45 @@ function fresh(){
     stats:{stored:0,peakCells:0,planned:0,crewCells:0,crewRev:0,byMkt:{},fixSpend:0},hints:{},muted:false,shadows:true,lowFlash:false,speed:1,lastSave:Date.now()};
 }
 const built=id=>!!S.built[id];
-const pad=id=>PADS.find(p=>p.id===id);
+const pad=id=>PADS.find(p=>p.id===id)||freePad(id);
+/* ---- free building: wind and solar anywhere open on the map, at a premium over the fixed
+       squares (which stay the cheap, guided route). Each extra of a type costs 25% more. ---- */
+const FREE_BASE={turbine:800,solar:1000,bigwind:16000,solarfarm:80000};
+function freePad(id){if(!S||!S.plants)return undefined;const q=S.plants.find(p=>p.id===id&&p.free);return q?{id:q.id,kind:'build',type:q.type,cost:q.cost,x:q.x,y:q.y}:undefined;}
+function freeCost(t){const n=S.plants.filter(p=>p.free&&p.type===t).length;return Math.round(FREE_BASE[t]*Math.pow(1.25,n)*perk('build'));}
+function freeSpot(){return {x:Math.round(S.px),y:Math.round(S.py-55)};}
+function freeWhyNot(x,y){
+  if(x<50||x>WORLD.w-50||y<90||y>WORLD.h-50)return L('Too close to the edge of the map.','Haritanın kenarına çok yakın.');
+  if(regionLocked(y)||(!S.regions.east&&x>EAST.x0-20))return L('This area is not open yet.','Bu bölge henüz açık değil.');
+  if(onRiver(x,y,70))return L('Too close to the river.','Nehre çok yakın.');
+  if((Math.abs(x-700)<50&&y>320)||(Math.abs(y-700)<50&&x>250&&x<1140))return L('That is the road.','Burası yol.');
+  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+70||TOWNS.some(t=>Math.hypot(x-t.x,y-t.y)<120)||Math.hypot(x-HQ.x,y-HQ.y)<160||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<140)||Math.hypot(x-NUKE.x,y-NUKE.y)<190)
+    return L('Too close to a building.','Bir binaya çok yakın.');
+  if(PADS.some(q=>{const A=padAt(q);return Math.hypot(x-A.x,y-A.y)<90;}))return L('A building square is here.','Burada bir inşaat karesi var.');
+  if(S.plants.some(q=>Math.hypot(x-q.x,y-q.y)<90))return L('Too close to another plant.','Başka bir santrale çok yakın.');
+  return null;
+}
+function freeCode(t){const pre=CODE_PREFIX[t];let mx=0;
+  for(const c of Object.values(ASSET_CODE).concat(S.plants.map(p=>p.code||''))){const m=c.match(/^([A-Z]+)(\d+)$/);if(m&&m[1]===pre)mx=Math.max(mx,+m[2]);}
+  return pre+(mx+1);}
+function freeBuild(t){
+  const sp=freeSpot(),why=freeWhyNot(sp.x,sp.y),c=freeCost(t);
+  if(why||S.cash<c)return;
+  S.cash-=c;S.freeN=(S.freeN||0)+1;
+  const np={id:'fb'+S.freeN,type:t,x:sp.x,y:sp.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1,free:true,cost:c,code:freeCode(t)};
+  S.plants.push(np);pops[np.id]=1;sfx.build();logLedger('build',-c,np.code);
+  toast(L(`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} built here for ₵${fmt(c)}.`,`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} buraya ₵${fmt(c)} karşılığında kuruldu.`),'good');
+  if(PLANT_TYPES[t].kind==='wind')setTimeout(()=>askBrand(np),900);
+  try{trackOnce('free-build-'+t);}catch(e){}
+  $('mBuild').classList.remove('on');save();
+}
+function renderBuild(){
+  const sp=freeSpot(),why=freeWhyNot(sp.x,sp.y);
+  $('bldTitle').textContent=L('🏗️ Build here','🏗️ Buraya kur');
+  $('bldSub').textContent=why?('⛔ '+why+' '+L('Walk somewhere open and try again.','Açık bir yere yürü ve tekrar dene.')):L('The plant goes just in front of you. The squares on the map stay cheaper.','Santral tam önüne kurulur. Haritadaki kareler daha ucuz kalır.');
+  $('bldBody').innerHTML=Object.keys(FREE_BASE).map(t=>{const c=freeCost(t),no=!!why||S.cash<c;
+    return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BUILD_ICON[t]||''} <b>${tt(PLANT_TYPES[t].name)}</b></span><span style="display:flex;align-items:center;gap:8px;white-space:nowrap;font-weight:700">₵${fmt(c)}<button class="pri" data-fb="${t}" ${no?'disabled':''} style="padding:4px 12px;min-height:0">${L('Build','Kur')}</button></span></div>`;}).join('');
+}
 const upCost=p=>Math.round(p.base*Math.pow(p.growth,S.up[p.key]));
 const carryCap=()=>8+4*S.up.bag+perk('carry');
 const speed=()=>230*(1+0.12*S.up.boots)*modMult('playerSpeed')*perk('speed');
@@ -5551,7 +5597,7 @@ const batUsable=()=>built('bat')&&!S.batFault;
 /* short codes above each asset: W1 W2 · WX1 · S1 · SX1 · B1 · T1 */
 const CODE_PREFIX={turbine:'W',bigwind:'WX',solar:'S',solarfarm:'SX',battery:'B',town:'T',river:'R',dam:'D',nuclear:'N'};
 const ASSET_CODE=(()=>{const m={t1:'W1'},n={W:1};for(const q of PADS){if(q.kind!=='build')continue;const pre=CODE_PREFIX[q.type]||'X';n[pre]=(n[pre]||0)+1;m[q.id]=pre+n[pre];}return m;})();
-const codeOf=id=>ASSET_CODE[id]||'';
+const codeOf=id=>ASSET_CODE[id]||((S&&S.plants&&S.plants.find(p=>p.id===id))||{}).code||'';
 /* plant lifetime: after it, output drifts down 1%/day and breakdowns rise */
 const LIFE={turbine:120,solar:150,bigwind:140,solarfarm:180,river:220,dam:300,nuclear:1e9};
 function plantAge(p){return Math.max(0,(gameNow()-(p.born||0))/DAY_SEC);}
@@ -6089,6 +6135,7 @@ function chargeWages(){
   return w;
 }
 function onNewDay(quiet){
+  if(!quiet&&DAY.weather==='stormy'&&!S.tw&&has('repair')&&!cozy()&&Math.random()<0.25)setTimeout(()=>{try{if(!S.tw)spawnTornado(true);}catch(e){}},(4+Math.random()*10)*1000);
   S.lastDayEarned=S.dayEarned||S.lastDayEarned||0;if(!quiet){S.dayLog=(S.dayLog||[]).concat({day:S.day-1,earn:Math.round(S.dayEarned||0),icons:[WEATHER[makeDay(S.day-1).weather].icon]}).slice(-30);}S.dayEarned=0;
   {const paid=chargeWages();if(!quiet&&paid>0)toast(L(`Crew wages paid: ₵${fmt(paid)}`,`Ekip ücretleri ödendi: ₵${fmt(paid)}`),'');}
   const se=seasonOf(S.day),prev=seasonOf(S.day-1),w=WEATHER[DAY.weather];
@@ -6264,7 +6311,7 @@ function updateHelper(hp,i,dt){
       hp.status='Fighting fire';hp.target=null;hp.state='idle';
       const dx=tgt.x+30-hp.x,dy=tgt.y+30-hp.y,l=Math.hypot(dx,dy);
       if(l>12&&dist(hp,tgt)>70){const st=Math.min(l,sp*dt);hp.x+=dx/l*st;hp.y+=dy/l*st;hp.face=Math.atan2(dx,dy);hp.moving=true;hp.walk+=dt*10;hp.fireT=0;return;}
-      hp.fireT=(hp.fireT||0)+dt/(3*skillSafeT(i));if(tgt.fire!==undefined)tgt.fire=Math.max(0.01,tgt.fire-gdt*1.2);
+      hp.fireT=(hp.fireT||0)+dt/(3*skillSafeT(i));if(tgt.fire!==undefined)tgt.fire=Math.max(0.01,tgt.fire-dt*(S.speed||1)*1.2);
       if(tgt.fire!==undefined)tgt.fireC=Math.min(1,hp.fireT);else S.batFireC=Math.min(1,hp.fireT);
       if(hp.fireT>=1){hp.fireT=0;
         if(tgt.fire!==undefined){tgt.fireC=0;fireOut(tgt);}
@@ -6973,19 +7020,23 @@ function heavyLook(o,p,T,now){
 /* the funnel: it always crosses the map after the storm card, but it only bites
    if the player chose to keep the turbines spinning. */
 const twGroup=new THREE.Group();twGroup.visible=false;scene.add(twGroup);
-for(let i=0;i<8;i++){
-  const r=0.45+i*0.52;
+for(let i=0;i<14;i++){
+  const r=0.35+i*0.42;
   const c=new THREE.Mesh(new THREE.CylinderGeometry(r*0.78,r,1.25,12,1,true),
     new THREE.MeshToonMaterial({color:0x8E99A6,gradientMap:grad,transparent:true,opacity:0.60,
       side:THREE.DoubleSide,depthWrite:false}));
   c.position.y=0.65+i*1.18;c.castShadow=false;twGroup.add(c);
 }
+const twDebris=[];
+for(let i=0;i<22;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(0.28,0.12,0.2),M(i%3?0x6B5A45:0x8C8C80));m.userData={r:1+Math.random()*4.5,h:0.4+Math.random()*9,a:Math.random()*6.3,s:1.5+Math.random()*2.5};twGroup.add(m);twDebris.push(m);}
+{const ring=new THREE.Mesh(new THREE.RingGeometry(1.2,4.2,28),new THREE.MeshBasicMaterial({color:0x9C8A6A,transparent:true,opacity:0.35,side:THREE.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=0.08;twGroup.add(ring);}
 function spawnTornado(bites){
   const wp=(typeof windPlants==='function'?windPlants():S.plants.filter(p=>PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='wind'));
   if(!wp.length)return;
   const a=wp[Math.floor(Math.random()*wp.length)],d=Math.random()<0.5?1:-1;
   S.tw={x0:a.x-d*560,y0:a.y+110,x1:a.x+d*560,y1:a.y-110,x:a.x-d*560,y:a.y+110,t:0,dur:26,hit:!!bites};
   toast(L('🌪️ A funnel is crossing the field.','🌪️ Sahadan bir hortum geçiyor.'),'big');
+  try{if(!camAim){camAim={x:S.tw.x0*0.35+a.x*0.65,y:a.y};setTimeout(()=>{camAim=null;},3200);}}catch(e){}
   try{trackOnce('tornado');}catch(e){}
 }
 function tornadoTick(dt){
@@ -7094,6 +7145,19 @@ const flash=new THREE.DirectionalLight(0xEAF2FF,0);flash.castShadow=false;   // 
 scene.add(flash);scene.add(flash.target);
 let sunHome=null,sunSwing=0;
 let boltT=0,boltNext=6,flashV=0;
+const boltGrp=new THREE.Group();boltGrp.visible=false;scene.add(boltGrp);let boltLife=0;
+const boltMat=new THREE.MeshBasicMaterial({color:0xF4F8FF,transparent:true,opacity:1,depthWrite:false}),boltGlow=new THREE.MeshBasicMaterial({color:0x9CC8FF,transparent:true,opacity:0.45,depthWrite:false});
+function showBolt(X,Z,topY){                                     // jagged segments from the cloud to the ground
+  while(boltGrp.children.length)boltGrp.remove(boltGrp.children[0]);
+  let px=X+(Math.random()-0.5)*6,py=30,pz=Z+(Math.random()-0.5)*6;const n=9;
+  for(let i=1;i<=n;i++){const k=i/n,nx=X+(Math.random()-0.5)*2.4*(1-k),ny=30-(30-topY)*k,nz=Z+(Math.random()-0.5)*2.4*(1-k);
+    const dx=nx-px,dy=ny-py,dz=nz-pz,len=Math.hypot(dx,dy,dz);
+    for(const [mat,r] of [[boltMat,0.09],[boltGlow,0.32]]){const c=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,5,1,true),mat);
+      c.position.set((px+nx)/2,(py+ny)/2,(pz+nz)/2);c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(dx,dy,dz).normalize());boltGrp.add(c);}
+    px=nx;py=ny;pz=nz;}
+  const g=new THREE.Mesh(new THREE.CircleGeometry(1.6,16),boltGlow);g.rotation.x=-Math.PI/2;g.position.set(X,topY+0.05,Z);boltGrp.add(g);
+  boltGrp.visible=true;boltLife=0.32;
+}
 function updateBolts(dt,cx,cz){
   if(DAY.weather!=='stormy'||!playing){flash.intensity=0;$('flashOv').style.opacity=0;if(sunHome&&sunSwing<=0)sun.position.copy(sunHome);return;}
   boltT+=dt;
@@ -7109,11 +7173,14 @@ function updateBolts(dt,cx,cz){
     sfx.thunder&&sfx.thunder();
     // it can hit a turbine
     const wp=S.plants.filter(q=>PLANT_TYPES[q.type]&&PLANT_TYPES[q.type].kind==='wind'&&!q.broken);
-    if(wp.length&&Math.random()<0.25*modMult('breakage')){const q=wp[Math.floor(Math.random()*wp.length)];
+    let hitQ=null;
+    if(wp.length&&Math.random()<0.25*modMult('breakage')){const q=wp[Math.floor(Math.random()*wp.length)];hitQ=q;
       if(Math.random()<0.45)startFire(q,L('lightning','yıldırım'));
       else{damagePlant(q,0.5);sfx.warn();toast(L(`⚡ Lightning hit ${codeOf(q.id)}. It needs a repair.`,`⚡ Yıldırım ${codeOf(q.id)} türbinine düştü. Onarım gerekiyor.`),'big');}}
     if(built('bat')&&!S.batFire&&Math.random()<0.06*modMult('breakage'))startBatFire(L('lightning','yıldırım'));
+    try{if(hitQ){const[HX,HZ]=W3(hitQ.x,hitQ.y);const T=PLANT_TYPES[hitQ.type];showBolt(HX,HZ,T.scale>1?6.4:4.2);}else showBolt(cx+(Math.random()-0.5)*24,cz+(Math.random()-0.5)*18,0);}catch(e){}
   }
+  if(boltLife>0){boltLife-=dt;const k=Math.max(0,boltLife/0.32);boltMat.opacity=k>0.5?1:k*2*(Math.random()<0.7?1:0.2);boltGlow.opacity=0.45*k;if(boltLife<=0)boltGrp.visible=false;}
   if(sunSwing>0){sunSwing-=dt;if(sunSwing<=0&&sunHome)sun.position.copy(sunHome);}
   flashV=Math.max(0,flashV-dt*(S.lowFlash?1.6:3.4));
   const k=S.lowFlash?0.35:1;
@@ -7290,7 +7357,7 @@ function render(dt,now){
   if(S.batFault&&built('bat')){const D=depotsOn()[0];if(D){const[BX,BZ]=W3(D.x,D.y);smokeAt(BX,BZ,1.2,now,0.7);}}
   {const w=S.tw;twGroup.visible=!!w;
    if(w){const[TX,TZ]=W3(w.x,w.y);twGroup.position.set(TX,0,TZ);twGroup.rotation.y=now/200;
-     twGroup.children.forEach((c,i)=>{c.position.x=Math.sin(now/260+i*0.55)*0.22*i;c.rotation.y=now/(140+i*20);});}}
+     twGroup.children.forEach((c,i)=>{if(c.userData&&c.userData.r){const u=c.userData,a=u.a+now/1000*u.s;c.position.set(Math.cos(a)*u.r*(0.4+u.h/12),u.h,Math.sin(a)*u.r*(0.4+u.h/12));c.rotation.set(a,a*1.3,0);return;}if(i<14){c.position.x=Math.sin(now/260+i*0.55)*0.18*i;c.rotation.y=now/(140+i*20);}});}}
   smokeReset();
   sweepLabels();
   renderer.render(scene,camera);
@@ -7313,7 +7380,7 @@ function hud(dt){
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${S.prest?'⭐'+S.prest+' ':''}${L('Lv','Sv')}${lvl()}</b> · `);
   $('goal').innerHTML=chip+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
   {const n=maintList().length;$('mntBtn').hidden=!(has('gridline')||has('ageing'));const b=$('mntN');b.hidden=!n;b.textContent=n>9?'9+':String(n);}
-  $('rankBtn').hidden=!has('report');
+  $('rankBtn').hidden=!has('report');$('buildBtn').hidden=!has('regions')||cozy();
   $('gridBtn').hidden=!has('gridline');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
@@ -8119,6 +8186,9 @@ function renderMaint(){
 }
 function openMaint(){renderMaint();$('mMaint').classList.add('on');trackOnce('maint-panel');}
 $('mntBtn').onclick=openMaint;
+$('buildBtn').onclick=()=>{renderBuild();$('mBuild').classList.add('on');};
+$('bldClose').onclick=()=>$('mBuild').classList.remove('on');
+$('bldBody').addEventListener('click',e=>{const b=e.target.closest('button[data-fb]');if(b&&!b.disabled)freeBuild(b.dataset.fb);});
 $('rankBtn').onclick=()=>{openReport(repMax());trackOnce('ladder-btn');};
 /* Go: the character walks to the job by itself. The joystick always wins (touch it and the
    walk is cancelled), and if a helper finishes the job first the walk stops. */
@@ -8198,6 +8268,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.72.0',t:['Build anywhere, weather you can see','İstediğin yere kur, göreceğin hava'],l:[
+  ['Fixed: a Safety helper reaching a fire crashed the crew update, so everyone froze until the fire went out.','Düzeltildi: yangına ulaşan Afet yardımcısı ekip güncellemesini çökertiyordu; yangın sönene kadar herkes donuyordu.'],
+  ['New 🏗️ Build button (from level 11): put a turbine, big turbine, solar panel or solar farm anywhere open on the map, right in front of you. It costs more than the squares, and each extra of a kind 25% more.','Yeni 🏗️ İnşa butonu (seviye 11\'den): türbin, büyük türbin, güneş paneli ya da güneş çiftliğini haritada açık herhangi bir yere, tam önüne kur. Karelerden pahalı; aynı türden her fazlası %25 daha pahalı.'],
+  ['Lightning now falls as a real bolt from the sky to where it hits. The funnel is taller, spins debris and throws dust, the camera shows it arriving, and a stormy day can now bring one on its own.','Yıldırım artık gökten vurduğu yere inen gerçek bir şimşek. Hortum daha uzun, moloz savuruyor, toz kaldırıyor; geldiğinde kamera gösteriyor ve fırtınalı bir gün artık kendiliğinden hortum getirebiliyor.']]},
  {v:'0.71.0',t:['Prestige: rebuild one rung up','Prestij: bir basamak yukarıdan yeniden kur'],l:[
   ['At level 19 with N1 standing, Settings › Game › ⭐ Rebuild lets you tear it all down and start again. It never happens on its own, and it asks first.','Seviye 19\'da N1 kuruluyken Ayarlar › Oyun › ⭐ Yeniden yapılan her şeyi yıkıp baştan başlamanı sağlar. Kendiliğinden asla olmaz ve önce sorar.'],
   ['Each prestige starts further along: P1 at level 6, P2 at 9, P3 at 12, P4 at 14, P5 at 16, with more starting cash every time. Settings and your task-box layout carry over; the badge ⭐P sits next to your level.','Her prestij daha ileriden başlar: P1 seviye 6, P2 9, P3 12, P4 14, P5 16 ve her seferinde daha fazla başlangıç parası. Ayarların ve görev kutusu düzenin taşınır; seviyenin yanında ⭐P rozeti durur.'],
@@ -9279,7 +9353,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.71.0';
+const GAME_VERSION='0.72.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -9494,7 +9568,7 @@ const PROGRAMS=[
 ];
 function syncCaps(){
   const C=[['cap-prog','Program','Program'],['cap-grid','Lines','Hatlar'],['cap-rep','Report','Rapor'],
-           ['cap-info','Tips','Taktik'],['cap-mnt','Upkeep','Bakım'],['cap-rank','Ladder','Sıralama'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
+           ['cap-info','Tips','Taktik'],['cap-mnt','Upkeep','Bakım'],['cap-rank','Ladder','Sıralama'],['cap-build','Build','İnşa'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
   for(const [id,en,tr] of C){const e=$(id);if(e)e.textContent=L(en,tr);}
 }
 function syncProgBtn(){
