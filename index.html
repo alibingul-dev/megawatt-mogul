@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.70.0</div>
+  <div class="t-ver" id="tVer">v0.71.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -621,6 +621,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="newsBtn">📣 <span id="newsLbl">What's new</span><span class="badge" id="newsDot" hidden>!</span></button>
     <button id="sMode">Mode: Competitive</button>
     <button id="sCode">🔑 Enter a code</button>
+    <button id="sPrest" hidden>⭐ Rebuild</button>
     <button id="sSpeed">Time speed: normal</button>
     <button class="pri setback">‹ Back</button>
   </div>
@@ -648,7 +649,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.70.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.71.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5338,9 +5339,9 @@ function rivalDay(){return Math.max(0,(S.day||0)-(S.rivalDay0||0));}
 /* growth fades out over ~4 months: early on they still pull ahead like before, but they
    never run off into trillions, so the top of the ladder stays a real target */
 const RIVAL_D=120;
-function rivalWealth(i){const r=RIVALS[i];return Math.round(r.base*Math.exp(r.g*RIVAL_D*(1-Math.exp(-rivalDay()/RIVAL_D))));}
+function rivalWealth(i){const r=RIVALS[i];return Math.round((1+0.5*(S.prest||0))*r.base*Math.exp(r.g*RIVAL_D*(1-Math.exp(-rivalDay()/RIVAL_D))));}
 function rivalName(i){return tt(RIVALS[i].n);}
-function rivalBonus(i){return Math.round(RIVALS[i].base*0.10);}
+function rivalBonus(i){return Math.round((1+0.5*(S.prest||0))*RIVALS[i].base*0.10);}
 /* who is above the player right now, cheapest rung first */
 function rivalRank(){
   const w=wealth();let above=0;
@@ -7309,7 +7310,7 @@ function hud(dt){
   $('pnow').textContent='₵'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
   const G=GOALS[S.goal];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
-  const chip=cozy()?`<b class="lvlchip">☕</b> · `:(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${L('Lv','Sv')}${lvl()}</b> · `);
+  const chip=cozy()?`<b class="lvlchip">☕</b> · `:(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${S.prest?'⭐'+S.prest+' ':''}${L('Lv','Sv')}${lvl()}</b> · `);
   $('goal').innerHTML=chip+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
   {const n=maintList().length;$('mntBtn').hidden=!(has('gridline')||has('ageing'));const b=$('mntN');b.hidden=!n;b.textContent=n>9?'9+':String(n);}
   $('rankBtn').hidden=!has('report');
@@ -8197,6 +8198,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.71.0',t:['Prestige: rebuild one rung up','Prestij: bir basamak yukarıdan yeniden kur'],l:[
+  ['At level 19 with N1 standing, Settings › Game › ⭐ Rebuild lets you tear it all down and start again. It never happens on its own, and it asks first.','Seviye 19\'da N1 kuruluyken Ayarlar › Oyun › ⭐ Yeniden yapılan her şeyi yıkıp baştan başlamanı sağlar. Kendiliğinden asla olmaz ve önce sorar.'],
+  ['Each prestige starts further along: P1 at level 6, P2 at 9, P3 at 12, P4 at 14, P5 at 16, with more starting cash every time. Settings and your task-box layout carry over; the badge ⭐P sits next to your level.','Her prestij daha ileriden başlar: P1 seviye 6, P2 9, P3 12, P4 14, P5 16 ve her seferinde daha fazla başlangıç parası. Ayarların ve görev kutusu düzenin taşınır; seviyenin yanında ⭐P rozeti durur.'],
+  ['The rival ladder comes back 50% richer per prestige, and its bonuses grow with it. Your old save stays in the backup slot.','Rakip sıralaması her prestijde %50 daha zengin döner, primleri de onunla büyür. Eski kaydın yedek yuvasında kalır.']]},
  {v:'0.70.0',t:['The first minute','İlk dakika'],l:[
   ['A new game opens with three guide cards instead of ten: hello, how to walk, go to the turbine. You are moving in seconds.','Yeni oyun on yerine üç rehber kartıyla açılıyor: merhaba, nasıl yürünür, türbine git. Birkaç saniyede yürümeye başlıyorsun.'],
   ['The rest arrives when it matters: when the first cells jump on your back, at your first sale (with a little celebration), and when you can first afford a square — the camera shows you where it is.','Gerisi zamanı gelince geliyor: ilk hücreler sırtına geçince, ilk satışında (küçük bir kutlamayla) ve ilk kez bir kareyi alabilecek paran olunca — kamera sana yerini gösteriyor.'],
@@ -9154,7 +9159,8 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){$('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
+function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;b.disabled=!prestOk();b.textContent=`⭐ ${L('Rebuild','Yeniden yapılan')} · P${(S.prest||0)+1}`+(prestOk()?'':` (${L('Lv','Sv')}19 + N1)`);}
+  $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   snd:['setSnd',['🔊','Sound','Ses'],['Effects and music, with sliders','Efektler ve müzik, kaydırıcılı']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Shadows, flashes, panel size','Gölge, parlama, panel boyutu']],
@@ -9203,6 +9209,32 @@ $('musRange').oninput=e=>{S.vMus=+e.target.value;syncVol();};
 $('musRange').onchange=()=>save();
 $('sMusic').onclick=()=>{S.music=(S.music===false);if(S.music!==false&&playing)try{musicStart();musicSwitch(musicPick());}catch(e){}syncSet();save();};
 $('sFx').onclick=()=>{S.fxOff=!S.fxOff;if(S.fxOff)fxEnd();syncSet();save();};
+/* ---- prestige: never automatic. At level 19 with N1 standing you may tear it all down and
+       start again one rung up. What carries over: the prestige number, your settings, your
+       task-box layout (empty) and a level floor, so each run starts further along. The ladder
+       comes back too, 50% richer per prestige. The old save goes to the backup slot first. ---- */
+const PFLOOR=[1,6,9,12,14,16];
+function prestOk(){return !cozy()&&lvl()>=19&&S.plants.some(isNuke);}
+function prestFloor(P){return PFLOOR[Math.min(P,PFLOOR.length-1)];}
+function prestCash(P){return Math.round(LEVELS[prestFloor(P)].need*0.5*(1+P));}
+function prestCard(){const P=(S.prest||0)+1,fl=prestFloor(P);
+  return {id:'prestige',icon:'⭐',ok:()=>false,safe:0,
+    title:[`Rebuild as P${P}?`,`P${P} olarak yeniden yapılan?`],
+    text:[`Everything on the map, your cash and your crew go. You keep P${P}, your settings and your task-box layout. The new run starts at level ${fl} with ₵${fmt(prestCash(P))}, and the rival ladder comes back ${Math.round(50*P)}% richer. Your current save is kept as a backup.`,
+          `Haritadaki her şey, paran ve ekibin gider. P${P}, ayarların ve görev kutusu düzenin kalır. Yeni tur Sv${fl} seviyesinden ve ₵${fmt(prestCash(P))} ile başlar; rakip sıralaması %${Math.round(50*P)} daha zengin döner. Şu anki kaydın yedek olarak saklanır.`],
+    opts:()=>[O('Not now','Şimdi değil','Nothing changes.','Değişiklik yok.',0,NOOP),
+              O(`Rebuild as P${P}`,`P${P} olarak yeniden yapılan`,'This cannot be undone from the game (the backup stays in Settings).','Oyundan geri alınamaz (yedek Ayarlar\'da durur).',0,doPrestige)]};}
+function doPrestige(){
+  if(!prestOk())return;
+  const P=(S.prest||0)+1,f=fresh();
+  const KEEP=['lang','muted','vSfx','vMus','lowFlash','fxOff','notif','shadows','speed','hints','tutDone','tipsSeen','seenVer','progs','prog','progStep','progDone','nick','mode','uiScale','zoom','look','cardPrefs'];
+  for(const k of KEEP)if(S[k]!==undefined)f[k]=S[k];
+  f.prest=P;f.lvl=prestFloor(P);f.cash=prestCash(P);f.prestAt=(S.prestAt||[]).concat({p:P,day:S.day,w:Math.round(wealth())});
+  f.crew.boxes=(S.crew.boxes||[]).map(b=>Object.assign({},b,{m:[]}));
+  try{localStorage.setItem(SAVE_BACKUP,JSON.stringify(S));}catch(e){}
+  try{trackOnce('prestige-'+P);RELOADING=true;removeEventListener('pagehide',save);localStorage.setItem(SAVE_KEY,JSON.stringify(f));location.reload();}catch(e){RELOADING=false;}
+}
+$('sPrest').onclick=()=>{if(!prestOk())return;$('mSet').classList.remove('on');openCard(prestCard());};
 /* ---- daily report notification: nothing leaves the phone. The game leaves a one-line
        note in the local cache when it saves; the service worker shows it at most once a
        day, only if you have not played for 8 hours. Needs Android Chrome's periodic
@@ -9247,7 +9279,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.70.0';
+const GAME_VERSION='0.71.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
