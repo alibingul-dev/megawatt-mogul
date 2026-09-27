@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.72.1</div>
+  <div class="t-ver" id="tVer">v0.73.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -556,6 +556,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <div id="gridBody"></div>
   <div class="btns"><button class="pri" id="gridClose" data-i18n="close">Close</button></div>
 </div></div>
+<div id="placeBar" hidden style="position:fixed;left:50%;transform:translateX(-50%);width:min(94vw,460px);box-sizing:border-box;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;background:#101725;color:#fff;border-radius:16px;padding:10px 12px;display:flex;gap:8px;align-items:center;max-width:94vw;box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:13px"><span id="pbText" style="flex:1;min-width:0"></span><button id="pbNo" style="padding:6px 10px;min-height:0">✕</button><button class="pri" id="pbGo" style="padding:6px 12px;min-height:0;white-space:nowrap">Build</button></div>
 <div class="modal" id="mBuild"><div class="sheet tips">
   <h2 id="bldTitle">Build here</h2>
   <p id="bldSub"></p>
@@ -656,7 +657,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.72.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.73.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5536,43 +5537,148 @@ function fresh(){
 }
 const built=id=>!!S.built[id];
 const pad=id=>PADS.find(p=>p.id===id)||freePad(id);
-/* ---- free building: wind and solar anywhere open on the map, at a premium over the fixed
-       squares (which stay the cheap, guided route). Each extra of a type costs 25% more. ---- */
-const FREE_BASE={turbine:800,solar:1000,bigwind:16000,solarfarm:80000};
+/* ---- free building (v0.73): place, move and get site tips.
+   You pick a type, a see-through copy of it follows in front of you: green = good spot,
+   yellow = allowed but it will produce less there, red = not allowed (the bar says why).
+   Plants that need a resource (run-of-river needs the river) can only go next to it.
+   Any wind/solar/river plant can be moved for 20% of its price. ---- */
+const FREE_BASE={turbine:800,solar:1000,bigwind:16000,solarfarm:80000,river:20000};
 function freePad(id){if(!S||!S.plants)return undefined;const q=S.plants.find(p=>p.id===id&&p.free);return q?{id:q.id,kind:'build',type:q.type,cost:q.cost,x:q.x,y:q.y}:undefined;}
 function freeCost(t){const n=S.plants.filter(p=>p.free&&p.type===t).length;return Math.round(FREE_BASE[t]*Math.pow(1.25,n)*perk('build'));}
-function freeSpot(){return {x:Math.round(S.px),y:Math.round(S.py-55)};}
-function freeWhyNot(x,y){
+function freeSpot(t){const f=S.face||0,d=t==='solarfarm'?95:70;let x=Math.round(S.px+Math.sin(f)*d),y=Math.round(S.py+Math.cos(f)*d);
+  if(t==='river'){const r=riverAt(y);if(Math.abs(x-r.x)<r.w/2+140)x=Math.round(r.x);}return {x,y};}
+function isHydro(p){const T=PLANT_TYPES[p.type];return T&&(T.kind==='hydro'||T.kind==='dam');}
+function freeWhyNot(x,y,t,selfId){
+  t=t||'turbine';
   if(x<50||x>WORLD.w-50||y<90||y>WORLD.h-50)return L('Too close to the edge of the map.','Haritanın kenarına çok yakın.');
   if(regionLocked(y)||(!S.regions.east&&x>EAST.x0-20))return L('This area is not open yet.','Bu bölge henüz açık değil.');
+  if(t==='river'){const r=riverAt(y);
+    if(Math.abs(x-r.x)>4)return L('A run-of-river plant needs the river: stand on the bank facing the water.','Akarsu santrali nehre muhtaç: kıyıda suya dönük dur.');
+    if(y>1470&&y<1700)return L('The reservoir and the dam wall are here.','Burada baraj gölü ve duvarı var.');
+    if(S.plants.some(q=>q.id!==selfId&&isHydro(q)&&Math.abs(q.y-y)<170)||PADS.some(q=>q.kind==='build'&&(q.type==='river'||q.type==='dam')&&Math.abs(q.y-y)<170))
+      return L('Too close to another plant on the river.','Nehirdeki başka bir santrale çok yakın.');
+    return null;}
+  if(REGIONS.some(r=>Math.abs(y-r.y0)<50)||Math.abs(x-EAST.x0)<45)return L('That is a fence line between areas.','Burası bölgeler arasındaki çit hattı.');
   if(onRiver(x,y,70))return L('Too close to the river.','Nehre çok yakın.');
   if((Math.abs(x-700)<50&&y>320)||(Math.abs(y-700)<50&&x>250&&x<1140))return L('That is the road.','Burası yol.');
-  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+70||TOWNS.some(t=>Math.hypot(x-t.x,y-t.y)<120)||Math.hypot(x-HQ.x,y-HQ.y)<160||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<140)||Math.hypot(x-NUKE.x,y-NUKE.y)<190)
+  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+70||TOWNS.some(o=>Math.hypot(x-o.x,y-o.y)<120)||Math.hypot(x-HQ.x,y-HQ.y)<160||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<140)||Math.hypot(x-NUKE.x,y-NUKE.y)<190)
     return L('Too close to a building.','Bir binaya çok yakın.');
-  if(PADS.some(q=>{const A=padAt(q);return Math.hypot(x-A.x,y-A.y)<90;}))return L('A building square is here.','Burada bir inşaat karesi var.');
-  if(S.plants.some(q=>Math.hypot(x-q.x,y-q.y)<90))return L('Too close to another plant.','Başka bir santrale çok yakın.');
+  if(PADS.some(q=>q.id!==selfId&&!padDone(q)&&!(q.kind==='gate'&&S.regions[q.region])&&(()=>{const A=padAt(q);return Math.hypot(x-A.x,y-A.y)<90;})()))return L('A building square is here.','Burada bir inşaat karesi var.');
+  if(S.plants.some(q=>q.id!==selfId&&Math.hypot(x-q.x,y-q.y)<90))return L('Too close to another plant.','Başka bir santrale çok yakın.');
+  if(typeof decoBlock==='function'&&decoBlock(x,y))return L('Something is built here.','Burada bir şey var.');
   return null;
 }
+/* how well a spot suits the type: 1 = normal. Wind likes the ridge and hates other turbines'
+   wake and the city; sun is strongest on the desert. Below 0.95 shows yellow. */
+function siteQ(t,x,y,selfId){
+  const k=PLANT_TYPES[t]&&PLANT_TYPES[t].kind;let q=1;
+  if(k==='wind'){if(y>=1230&&y<1620)q=1.15;if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+220)q*=0.85;
+    if(S.plants.some(o=>o.id!==selfId&&PLANT_TYPES[o.type]&&PLANT_TYPES[o.type].kind==='wind'&&Math.hypot(o.x-x,o.y-y)<150))q*=0.8;}
+  else if(k==='solar'){q=y>=1620?1.15:y>=1230?0.95:0.9;}
+  return Math.round(q*100)/100;
+}
+function spotState(t,x,y,selfId){const why=freeWhyNot(x,y,t,selfId);if(why)return {c:'red',why,q:0};const q=siteQ(t,x,y,selfId);return {c:q<0.95?'yellow':'green',why:null,q};}
 function freeCode(t){const pre=CODE_PREFIX[t];let mx=0;
   for(const c of Object.values(ASSET_CODE).concat(S.plants.map(p=>p.code||''))){const m=c.match(/^([A-Z]+)(\d+)$/);if(m&&m[1]===pre)mx=Math.max(mx,+m[2]);}
   return pre+(mx+1);}
-function freeBuild(t){
-  const sp=freeSpot(),why=freeWhyNot(sp.x,sp.y),c=freeCost(t);
-  if(why||S.cash<c)return;
-  S.cash-=c;S.freeN=(S.freeN||0)+1;
-  const np={id:'fb'+S.freeN,type:t,x:sp.x,y:sp.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1,free:true,cost:c,code:freeCode(t)};
-  S.plants.push(np);pops[np.id]=1;sfx.build();logLedger('build',-c,np.code);
-  toast(L(`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} built here for ₵${fmt(c)}.`,`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} buraya ₵${fmt(c)} karşılığında kuruldu.`),'good');
-  if(PLANT_TYPES[t].kind==='wind')setTimeout(()=>askBrand(np),900);
-  try{trackOnce('free-build-'+t);}catch(e){}
-  $('mBuild').classList.remove('on');save();
+function movable(p){const T=PLANT_TYPES[p.type];return !!T&&(T.kind==='wind'||T.kind==='solar'||T.kind==='hydro')&&!p.fire;}
+function nearMovable(){return S.plants.filter(movable).map(p=>({p,d:Math.hypot(p.x-S.px,p.y-S.py)})).filter(o=>o.d<130).sort((a,b)=>a.d-b.d)[0];}
+function moveCost(p){const pd=pad(p.id);return Math.max(50,Math.round(((pd&&pd.cost)||p.cost||500)*0.2));}
+/* ---- placing mode: the ghost and the bottom bar ---- */
+let placing=null;const ghosts={};
+const ghostMats={green:new THREE.MeshBasicMaterial({color:0x00FF88,transparent:true,opacity:0.6,depthWrite:false}),
+  yellow:new THREE.MeshBasicMaterial({color:0xF7C948,transparent:true,opacity:0.5,depthWrite:false}),
+  red:new THREE.MeshBasicMaterial({color:0xE8364F,transparent:true,opacity:0.5,depthWrite:false})};
+function ghostFor(t){
+  if(ghosts[t])return ghosts[t];const T=PLANT_TYPES[t];let g;
+  if(T.kind==='wind')g=makeTurbine(T.scale);else if(T.kind==='hydro')g=makeRiver(2.6);else g=t==='solarfarm'?makeSolar(5,3):makeSolar(2,2);
+  const root=new THREE.Group();root.add(g);root.visible=false;
+  {const r=t==='solarfarm'?5.2:t==='bigwind'?3.2:t==='solar'?2.6:t==='river'?2.4:2.2;const ring=new THREE.Mesh(new THREE.RingGeometry(r*0.78,r,40),ghostMats.green);ring.rotation.x=-Math.PI/2;ring.position.y=0.08;root.add(ring);}
+  g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+  scene.add(root);ghosts[t]=root;return root;
+}
+function paintGhost(root,c){root.traverse(o=>{if(o.isMesh)o.material=ghostMats[c];});root.userData.c=c;}
+function startPlacing(mode,t,id){
+  placing={mode,t,id};$('mBuild').classList.remove('on');$('placeBar').hidden=false;sfx.pick();
+}
+function stopPlacing(){placing=null;$('placeBar').hidden=true;for(const k in ghosts)ghosts[k].visible=false;}
+function placeTick(){
+  for(const k in ghosts)if(!placing||k!==placing.t)ghosts[k].visible=false;
+  if(!placing)return;
+  const sp=freeSpot(placing.t),st=spotState(placing.t,sp.x,sp.y,placing.mode==='move'?placing.id:null);
+  const g=ghostFor(placing.t);g.visible=true;const[X,Z]=W3(sp.x,sp.y);g.position.set(X,0.05,Z);
+  g.rotation.y=placing.t==='river'?riverAt(sp.y).ang:0;
+  if(g.userData.c!==st.c)paintGhost(g,st.c);
+  const P=placing.mode==='move'?S.plants.find(q=>q.id===placing.id):null;
+  const cost=P?moveCost(P):freeCost(placing.t),poor=S.cash<cost;
+  $('pbText').textContent=(st.why?'⛔ '+st.why:(st.c==='yellow'?L(`🟡 Allowed, but output ${Math.round(st.q*100)}% here.`,`🟡 Olur ama burada verim %${Math.round(st.q*100)}.`):L(`🟢 Good spot · output ${Math.round(st.q*100)}%`,`🟢 İyi yer · verim %${Math.round(st.q*100)}`)))+(poor?' · '+L('not enough money','para yetmiyor'):'');
+  const b=$('pbGo');b.disabled=!!st.why||poor;b.textContent=(placing.mode==='move'?L('Move','Taşı'):L('Build','Kur'))+' ₵'+fmt(cost);
+}
+function confirmPlace(){
+  if(!placing)return;const t=placing.t,sp=freeSpot(t),mv=placing.mode==='move';
+  const st=spotState(t,sp.x,sp.y,mv?placing.id:null);if(st.why)return;
+  if(mv){const p=S.plants.find(q=>q.id===placing.id);if(!p)return stopPlacing();const c=moveCost(p);if(S.cash<c)return;
+    S.cash-=c;p.x=sp.x;p.y=sp.y;p.q=st.q;
+    if(plantObjs[p.id]){plantObjs[p.id].parent&&scene.remove(plantObjs[p.id]);delete plantObjs[p.id];}
+    sfx.build();logLedger('move',-c,codeOf(p.id));toast(L(`↔️ ${codeOf(p.id)} moved for ₵${fmt(c)}.`,`↔️ ${codeOf(p.id)} ₵${fmt(c)} karşılığında taşındı.`),'good');
+    try{trackOnce('plant-move');}catch(e){}
+  }else{const c=freeCost(t);if(S.cash<c)return;
+    S.cash-=c;S.freeN=(S.freeN||0)+1;
+    const np={id:'fb'+S.freeN,type:t,x:sp.x,y:sp.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1,free:true,cost:c,code:freeCode(t),q:st.q};
+    S.plants.push(np);pops[np.id]=1;sfx.build();logLedger('build',-c,np.code);
+    toast(L(`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} built for ₵${fmt(c)}.`,`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} ₵${fmt(c)} karşılığında kuruldu.`),'good');
+    if(PLANT_TYPES[t].kind==='wind')setTimeout(()=>askBrand(np),900);
+    try{trackOnce('free-build-'+t);}catch(e){}}
+  stopPlacing();save();
+}
+/* ---- site tips: find the best open spots for a type, fly the camera over each one, mark it
+   with a dashed box that fades away, then come back ---- */
+const marks=[];
+function markArea(x,y,w,h,col){
+  const g=new THREE.Group(),mat=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:1,depthWrite:false});
+  const W=w*U,H=h*U,dash=0.7,gap=0.45;
+  const edge=(x0,z0,x1,z1)=>{const len=Math.hypot(x1-x0,z1-z0),n=Math.floor(len/(dash+gap));
+    for(let i=0;i<n;i++){const k=(i*(dash+gap)+dash/2)/len;const m=new THREE.Mesh(new THREE.BoxGeometry(x1!==x0?dash:0.16,0.1,z1!==z0?dash:0.16),mat);
+      m.position.set(x0+(x1-x0)*k,0.12,z0+(z1-z0)*k);g.add(m);}};
+  edge(-W/2,-H/2,W/2,-H/2);edge(W/2,-H/2,W/2,H/2);edge(W/2,H/2,-W/2,H/2);edge(-W/2,H/2,-W/2,-H/2);
+  const fill=new THREE.Mesh(new THREE.PlaneGeometry(W,H),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.12,depthWrite:false}));fill.rotation.x=-Math.PI/2;fill.position.y=0.1;g.add(fill);
+  const[X,Z]=W3(x,y);g.position.set(X,0,Z);scene.add(g);
+  marks.push({g,mat,fill:fill.material,t0:performance.now(),life:9000,x,y});
+}
+function marksTick(now){
+  for(let i=marks.length-1;i>=0;i--){const m=marks[i],a=(now-m.t0)/m.life;
+    if(a>=1){scene.remove(m.g);marks.splice(i,1);continue;}
+    const o=a<0.45?1:1-(a-0.45)/0.55;m.mat.opacity=o;m.fill.opacity=0.12*o;}
+}
+function suggestSpots(t){
+  const out=[];
+  for(let y=110;y<WORLD.h-60;y+=45)for(let x=70;x<WORLD.w-60;x+=45){
+    let sx=x;if(t==='river'){const r=riverAt(y);sx=Math.round(r.x);if(x!==70)continue;}
+    const st=spotState(t,sx,y,null);if(st.why)continue;out.push({x:sx,y,q:st.q,d:Math.hypot(sx-S.px,y-S.py)});}
+  out.sort((a,b)=>(b.q-a.q)||(a.d-b.d));
+  const pick=[];for(const o of out){if(pick.every(p=>Math.hypot(p.x-o.x,p.y-o.y)>320))pick.push(o);if(pick.length>=3)break;}
+  return pick;
+}
+let tourT=[];
+function showSuggest(t){
+  const pk=suggestSpots(t);$('mBuild').classList.remove('on');
+  if(!pk.length){toast(L('No open spot for that right now.','Şu an bunun için açık bir yer yok.'),'');return;}
+  tourT.forEach(clearTimeout);tourT=[];
+  const sz=t==='solarfarm'?[220,150]:t==='river'?[160,120]:[150,120];
+  pk.forEach((o,i)=>{tourT.push(setTimeout(()=>{markArea(o.x,o.y,sz[0],sz[1],o.q<0.95?0xF7C948:0x2ECC71);camAim={x:o.x,y:o.y};
+    toast(L(`📍 Spot ${i+1}/${pk.length} for ${tt(PLANT_TYPES[t].name).toLowerCase()} · output ${Math.round(o.q*100)}%`,`📍 ${tt(PLANT_TYPES[t].name)} için ${i+1}/${pk.length}. yer · verim %${Math.round(o.q*100)}`),'');},i*1900));});
+  tourT.push(setTimeout(()=>{camAim=null;},pk.length*1900));
+  try{trackOnce('site-tips-'+t);}catch(e){}
 }
 function renderBuild(){
-  const sp=freeSpot(),why=freeWhyNot(sp.x,sp.y);
-  $('bldTitle').textContent=L('🏗️ Build here','🏗️ Buraya kur');
-  $('bldSub').textContent=why?('⛔ '+why+' '+L('Walk somewhere open and try again.','Açık bir yere yürü ve tekrar dene.')):L('The plant goes just in front of you. The squares on the map stay cheaper.','Santral tam önüne kurulur. Haritadaki kareler daha ucuz kalır.');
-  $('bldBody').innerHTML=Object.keys(FREE_BASE).map(t=>{const c=freeCost(t),no=!!why||S.cash<c;
-    return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BUILD_ICON[t]||''} <b>${tt(PLANT_TYPES[t].name)}</b></span><span style="display:flex;align-items:center;gap:8px;white-space:nowrap;font-weight:700">₵${fmt(c)}<button class="pri" data-fb="${t}" ${no?'disabled':''} style="padding:4px 12px;min-height:0">${L('Build','Kur')}</button></span></div>`;}).join('');
+  $('bldTitle').textContent=L('🏗️ Build','🏗️ İnşa');
+  const nm=nearMovable();
+  $('bldSub').textContent=L('Pick a type: a see-through copy follows in front of you. Green = good, yellow = less output, red = not here. 📍 shows the best spots on the map.','Bir tür seç: saydam bir kopyası önünde yürür. Yeşil = iyi, sarı = verim düşük, kırmızı = olmaz. 📍 haritadaki en iyi yerleri gösterir.');
+  const types=Object.keys(FREE_BASE).filter(t=>t!=='river'||has('regions'));
+  $('bldBody').innerHTML=types.map(t=>{const c=freeCost(t),no=S.cash<c;
+    return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BUILD_ICON[t]||''} <b>${tt(PLANT_TYPES[t].name)}</b></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">₵${fmt(c)}<button data-tip="${t}" style="padding:4px 8px;min-height:0">📍</button><button class="pri" data-fb="${t}" ${no?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')
+    +(nm?`<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm.p.id)}</b></span><button class="pri" data-mv="${nm.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} ₵${fmt(moveCost(nm.p))}</button></div>`
+        :`<p style="font-size:12.5px;margin-top:10px">↔️ ${L('To move a plant, stand next to it and open this again.','Bir santrali taşımak için yanında dur ve burayı tekrar aç.')}</p>`);
 }
 const upCost=p=>Math.round(p.base*Math.pow(p.growth,S.up[p.key]));
 const carryCap=()=>8+4*S.up.bag+perk('carry');
@@ -5952,7 +6058,7 @@ function update(dt){
       cf=p.open?1:0;
     }
     else cf=solarShape(t)*solarMult()*sheepBonus(p)*snowMult(p);
-    p.acc+=T.rate*plantGen(p)*cf*gdt*(1-ancBand(p))*brandOf(p).out;   // the reserved band never reaches the stack
+    p.acc+=T.rate*plantGen(p)*cf*gdt*(1-ancBand(p))*brandOf(p).out*(p.q||1);   // the reserved band never reaches the stack
     while(p.acc>=1){p.acc-=1;
       if(T.kind==='dam'){if((p.res||0)<1){p.acc=0;break;}p.res-=1;}
       if(gridLvl(p)>0){p.gacc=(p.gacc||0)+gridShare(p);
@@ -6267,6 +6373,7 @@ function migrateRiver(){
   for(const q of S.plants){const T=PLANT_TYPES[q.type];if(!T)continue;
     if(T.kind!=='hydro'&&T.kind!=='dam')continue;
     const pd=PADS.find(z=>z.id===q.id);        // the pad is where this plant belongs now
+    if(q.free)continue;
     if(pd){q.x=pd.x;q.y=pd.y;}else snapToRiver(q);
     if(plantObjs[q.id]){plantObjs[q.id].parent&&scene.remove(plantObjs[q.id]);delete plantObjs[q.id];}
   }
@@ -7379,6 +7486,7 @@ function render(dt,now){
   {const w=S.tw;twGroup.visible=!!w;
    if(w){const[TX,TZ]=W3(w.x,w.y);twGroup.position.set(TX,0,TZ);twGroup.rotation.y=now/200;
      twGroup.children.forEach((c,i)=>{if(c.userData&&c.userData.r){const u=c.userData,a=u.a+now/1000*u.s;c.position.set(Math.cos(a)*u.r*(0.4+u.h/12),u.h,Math.sin(a)*u.r*(0.4+u.h/12));c.rotation.set(a,a*1.3,0);return;}if(i<14){c.position.x=Math.sin(now/260+i*0.55)*0.18*i;c.rotation.y=now/(140+i*20);}});}}
+  try{placeTick();marksTick(now);}catch(e){}
   smokeReset();
   sweepLabels();
   renderer.render(scene,camera);
@@ -8209,7 +8317,10 @@ function openMaint(){renderMaint();$('mMaint').classList.add('on');trackOnce('ma
 $('mntBtn').onclick=openMaint;
 $('buildBtn').onclick=()=>{renderBuild();$('mBuild').classList.add('on');};
 $('bldClose').onclick=()=>$('mBuild').classList.remove('on');
-$('bldBody').addEventListener('click',e=>{const b=e.target.closest('button[data-fb]');if(b&&!b.disabled)freeBuild(b.dataset.fb);});
+$('bldBody').addEventListener('click',e=>{const b=e.target.closest('button[data-fb]');if(b&&!b.disabled){startPlacing('new',b.dataset.fb);return;}
+  const tp=e.target.closest('button[data-tip]');if(tp){showSuggest(tp.dataset.tip);return;}
+  const mv=e.target.closest('button[data-mv]');if(mv){const p=S.plants.find(q=>q.id===mv.dataset.mv);if(p)startPlacing('move',p.type,p.id);}});
+$('pbGo').onclick=confirmPlace;$('pbNo').onclick=stopPlacing;
 $('rankBtn').onclick=()=>{openReport(repMax());trackOnce('ladder-btn');};
 /* Go: the character walks to the job by itself. The joystick always wins (touch it and the
    walk is cancelled), and if a helper finishes the job first the walk stops. */
@@ -8289,6 +8400,12 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.73.0',t:['Place, move, and where to build','Yerleştir, taşı ve nereye kurulur'],l:[
+  ['🏗️ Build now places: pick a type and a see-through copy walks in front of you — green is a good spot, yellow is allowed but produces less there, red is not allowed and the bar says why. Tap Build when it is right.','🏗️ İnşa artık yerleştiriyor: bir tür seç, saydam bir kopyası önünde yürüsün — yeşil iyi yer, sarı olur ama verimi düşük, kırmızı olmaz ve alttaki çubuk nedenini söyler. Doğru yerdeyken Kur\'a bas.'],
+  ['Where a plant stands now matters: wind is 15% stronger on the ridge and loses 20% in another turbine\'s wake or 15% next to the city; solar is 15% stronger in the desert.','Santralin yeri artık önemli: rüzgâr sırtta %15 güçlü, başka türbinin rüzgâr gölgesinde %20, şehrin dibinde %15 kaybeder; güneş çölde %15 güçlü.'],
+  ['Run-of-river plants can now be placed too, but only on the river — it is their fuel.','Akarsu santrali de yerleştirilebiliyor ama sadece nehrin üstüne — yakıtı o.'],
+  ['↔️ Stand next to a wind, solar or river plant and open Build to move it, for 20% of its price.','↔️ Bir rüzgâr, güneş ya da akarsu santralinin yanında durup İnşa\'yı açarsan fiyatının %20\'sine taşıyabilirsin.'],
+  ['📍 next to each type flies the camera over the three best open spots, marks each with a dashed box that fades away, and brings you back.','Her türün yanındaki 📍 kamerayı en iyi üç açık yere götürür, her birini yavaşça kaybolan kesikli bir kutuyla işaretler ve seni geri getirir.']]},
  {v:'0.72.1',t:['Fire at the foot','Yangın dipte'],l:[
   ['A fire now burns where it starts — at the foot of the turbine or across the panels — as a ring of flickering flames with smoke rising off it, and grows as it spreads. The 🔥 % tag sits by the base instead of floating over the blades.','Yangın artık başladığı yerde yanıyor — türbinin dibinde ya da panellerin üstünde — titreşen bir alev halkası ve üstünden yükselen dumanla; yayıldıkça büyüyor. 🔥 % etiketi kanatların üstünde değil, dipte duruyor.']]},
  {v:'0.72.0',t:['Build anywhere, weather you can see','İstediğin yere kur, göreceğin hava'],l:[
@@ -9376,7 +9493,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.72.1';
+const GAME_VERSION='0.73.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
