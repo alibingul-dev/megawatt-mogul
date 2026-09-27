@@ -198,8 +198,12 @@ body.far .hlp{display:none}
 .dealc{font-size:11px;font-weight:800;color:#fff;background:#6A5CFF;border-radius:7px;padding:0 6px;margin-top:3px;display:block;width:max-content;max-width:100%}
 #sideCol{position:fixed;right:10px;top:150px;display:flex;flex-direction:column;gap:6px;z-index:4}
 body.title #sideCol{visibility:hidden}
-#mini{position:fixed;left:10px;top:150px;width:74px;height:106px;border-radius:12px;box-shadow:0 4px 10px rgba(10,20,10,.35);pointer-events:auto;z-index:4;background:transparent}
+#mini{position:fixed;left:10px;top:150px;width:74px;height:113px;border-radius:12px;box-shadow:0 4px 10px rgba(10,20,10,.35);pointer-events:auto;z-index:4;background:transparent}
 body.title #mini{visibility:hidden}
+#leftCol{position:fixed;left:10px;top:271px;display:flex;flex-direction:column;gap:6px;z-index:4}
+body.title #leftCol{visibility:hidden}
+#worldBtn.pulse{animation:wpulse 1.4s ease-in-out infinite}
+@keyframes wpulse{0%,100%{box-shadow:0 3px 0 rgba(0,0,0,.18),0 0 0 0 rgba(255,210,63,.9)}50%{box-shadow:0 3px 0 rgba(0,0,0,.18),0 0 0 8px rgba(255,210,63,0)}}
 #mMap canvas{max-width:92vw;max-height:78vh;border-radius:18px;border:3px solid #fff}
 #flashOv{position:fixed;inset:0;background:#EAF2FF;opacity:0;pointer-events:none;z-index:3;transition:opacity .08s linear}
 #toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 150px);width:min(440px,calc(100% - 24px));display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:5}
@@ -430,7 +434,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.78.0</div>
+  <div class="t-ver" id="tVer">v0.78.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -470,6 +474,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   <button class="rb crewb" id="crewBtn" aria-label="Crew plan" hidden><span>👷</span><span class="cnum" id="crewN">1/45</span><span class="badge" id="crewAlert" hidden>!</span></button>
 </div>
 <canvas id="mini" width="90" height="128" aria-label="Mini map. Tap to enlarge."></canvas>
+<div id="leftCol"><button class="rb" id="worldBtn" aria-label="Worlds" hidden><span>🌍</span><span class="cap" id="cap-world">Worlds</span></button></div>
 <div class="modal" id="mMap"><canvas id="bigmap" aria-label="Map"></canvas></div>
 <div id="flashOv"></div>
 <canvas id="fxCanvas" hidden></canvas>
@@ -659,7 +664,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.78.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.78.2 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5404,15 +5409,15 @@ const GOALS=[
   {t:['Build a solar panel','Bir güneş paneli kur'],ok:()=>built('s1'),at:()=>pad('s1'),r:30},
   {t:['Buy a bigger backpack at HQ','Merkezden daha büyük sırt çantası al'],ok:()=>S.up.bag>0,at:()=>pad('bag'),r:40},
   {t:['Build the battery station','Batarya istasyonunu kur'],ok:()=>built('bat'),at:()=>pad('bat'),r:100},
-  {t:['Store energy while prices are low','Fiyat düşükken enerji depola'],ok:()=>S.stats.stored>=5,at:()=>BAT.store,r:80},
+  {t:['Store energy while prices are low','Fiyat düşükken enerji depola'],ok:()=>S.stats.stored>=5,at:()=>BAT.store,r:80,need:()=>built('bat')},
   {t:['Sell at the evening peak (18–22)','Akşam zirvesinde sat (18–22)'],ok:()=>S.stats.peakCells>=8,at:()=>CITY,r:250},
   {t:['Hire a helper at HQ','Merkezden bir yardımcı işe al'],ok:()=>S.up.helper>0,at:()=>pad('helper'),r:200},
-  {t:['Give your helper a plan (👷 button)','Yardımcına plan ver (👷 butonu)'],ok:()=>S.stats.planned>0,at:()=>null,r:100},
+  {t:['Give your helper a plan (👷 button)','Yardımcına plan ver (👷 butonu)'],ok:()=>S.stats.planned>0,at:()=>null,r:100,need:()=>S.up.helper>0},
   {t:['Open the windy ridge','Rüzgârlı sırtı aç'],ok:()=>S.regions.ridge,at:()=>pad('ridge'),r:500},
   {t:['Build a big turbine','Büyük bir türbin kur'],ok:()=>built('w1'),at:()=>pad('w1'),r:800},
   {t:['Open the solar desert','Güneş çölünü aç'],ok:()=>S.regions.desert,at:()=>pad('desert'),r:5000},
   {t:['Grow the crew to 10','Ekibi 10 kişiye çıkar'],ok:()=>S.up.helper>=10,at:()=>pad('helper'),r:3000},
-  {t:['Repower an ageing plant','Yaşlanan bir santrali yenile'],ok:()=>(S.stats.repowered||0)>0,at:()=>S.plants.find(x=>needsWork(x))||null,r:4000},
+  {t:['Repower an ageing plant','Yaşlanan bir santrali yenile'],ok:()=>(S.stats.repowered||0)>0,at:()=>S.plants.find(x=>needsWork(x))||null,r:4000,need:'ageing'},
   {t:['Reach ₵100K in wealth','₵100K servete ulaş'],ok:()=>wealth()>=100000,at:()=>null,r:8000},
   {t:['Grow the crew to 25','Ekibi 25 kişiye çıkar'],ok:()=>S.up.helper>=25,at:()=>pad('helper'),r:20000},
   {t:['Reach ₵1M in wealth','₵1M servete ulaş'],ok:()=>wealth()>=1000000,at:()=>null,r:50000},
@@ -6142,6 +6147,12 @@ function padHelp(p){
   }
   return '';
 }
+/* v0.78.2: a goal whose square is still locked by level waits; the next open goal is shown instead.
+   Goals done out of order are remembered in S.goalOut and skipped when the line reaches them. */
+function goalLocked(G){if(!G||cozy()||G.ok())return false;if(G.need&&!(typeof G.need==='function'?G.need():has(G.need)))return true;const p=G.at&&G.at();return !!(p&&p.kind&&!padVisible(p));}
+function curGoal(){const out=S.goalOut||[];for(let i=S.goal;i<GOALS.length;i++){if(out.includes(i))continue;if(goalLocked(GOALS[i]))continue;return i;}return S.goal;}
+function padNeedLv(p){const k=p.kind==='upg'?({bag:'upgrades',boots:'upgrades',helper:'crew',batcap:'battery',bateff:'battery',grid:'grid'})[p.key]:
+  p.kind==='gate'?(p.region==='east'?'nuclear':'regions'):({battery:'battery',town:'regions',nuclear:'nuclear'})[p.type];return k&&!has(k)?UNLOCK[k]:0;}
 function padVisible(p){
   if(p.kind==='upg'&&(p.key==='bag'||p.key==='boots')&&!has('upgrades'))return false;
   if(p.kind==='upg'&&p.key==='helper'&&!has('crew'))return false;
@@ -6391,8 +6402,9 @@ function update(dt){
   for(const f of floats){f.life-=dt*0.9;f.rise+=dt*1.6;}
   for(let i=floats.length-1;i>=0;i--)if(floats[i].life<=0)floats.splice(i,1);
   for(const k in pops){pops[k]-=dt*1.8;if(pops[k]<=0)delete pops[k];}
-  const G=GOALS[S.goal];
-  if(G&&G.ok()){if(G.r)S.cash+=G.r;trackOnce('goal-'+String(S.goal+1).padStart(2,'0'));S.goal++;sfx.goal();toast(G.r?`${L('Goal done','Hedef tamam')}: +₵${fmt(G.r)}`:L('Goal done','Hedef tamam'),'good');}
+  const gi=curGoal(),G=GOALS[gi];
+  if(G&&G.ok()){if(G.r)S.cash+=G.r;trackOnce('goal-'+String(gi+1).padStart(2,'0'));
+    if(gi===S.goal){S.goal++;S.goalOut=(S.goalOut||[]).filter(i=>i>=S.goal);while((S.goalOut||[]).includes(S.goal)){S.goal++;}}else (S.goalOut=S.goalOut||[]).push(gi);sfx.goal();toast(G.r?`${L('Goal done','Hedef tamam')}: +₵${fmt(G.r)}`:L('Goal done','Hedef tamam'),'good');}
   S.saveT=(S.saveT||0)+dt;if(S.saveT>30){S.saveT=0;save();}
   if(S.saleT>0){S.saleT-=dt;if(S.saleT<=0&&S.saleAcc>0){floatTxt(CITY.x,CITY.y-40,'+₵'+fmt(S.saleAcc));S.saleAcc=0;}}
 }
@@ -7675,7 +7687,7 @@ function render(dt,now){
   // floats
   floats.forEach(f=>{place('fl'+f.id,'fl'+(f.cls?' '+f.cls:''),f.x,f.y,3+f.rise,f.txt);LB['fl'+f.id].el.style.opacity=Math.max(0,f.life);});
   // guide
-  const G=GOALS[S.goal],tg=G?G.at():null;
+  const G=GOALS[curGoal()],tg=G?G.at():null;
   if(tg){
     const d=Math.hypot(tg.x-S.px,tg.y-S.py),a=Math.atan2(tg.x-S.px,tg.y-S.py);
     arrow.visible=d>110;arrow.position.set(PX+Math.sin(a)*1.9,0.35,PZ+Math.cos(a)*1.9);arrow.rotation.set(Math.PI/2,a,0);
@@ -7707,12 +7719,13 @@ function hud(dt){
   $('cash').textContent=fmt(S.cash);$('wealth').textContent=fmt(wealth());{const c=S.contract,d=$('dealC');d.hidden=!c;if(c){const hl=Math.max(0,Math.ceil((c.until-gameNow())/HOUR));d.textContent=`🤝 ${c.delivered}/${c.need} · ${hl}h`;}}{const L=lossLastHour(),e=$('lossC');e.hidden=L<1;if(L>=1)e.textContent=`−${L} ⚡ · ${Math.round(efficiency()*100)}%`;e.title=L>=1?(S.lang==='tr'?'Son bir saatte kaybolan enerji · verimlilik':'Energy lost in the last hour · efficiency'):'';}$('carry').textContent=`${S.carry}/${carryCap()}`;
   $('pnow').textContent='₵'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
-  const G=GOALS[S.goal];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
+  const G=GOALS[curGoal()];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${S.prest?'⭐'+S.prest+' ':''}${L('Lv','Sv')}${lvl()}</b> · `);
+  const gp=G&&G.at();const gl=gp&&gp.kind&&!cozy()?padNeedLv(gp):0;
   if(!up&&!cozy()&&prestOk()){$('goal').innerHTML=chip+L('⭐ A new world can be opened — tap here','⭐ Yeni dünya açabilirsin — buraya dokun');}else
-  $('goal').innerHTML=chip+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
+  $('goal').innerHTML=chip+(G?`${tt(G.t)}${gl?` · 🔒 ${L('opens at Lv','Sv')}${gl}${L('',`'te açılır`)}`:''}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
   {const n=maintList().length;$('mntBtn').hidden=!(has('gridline')||has('ageing'));const b=$('mntN');b.hidden=!n;b.textContent=n>9?'9+':String(n);}
-  $('rankBtn').hidden=!has('report');$('buildBtn').hidden=!has('regions')||cozy();
+  $('rankBtn').hidden=!has('report');{const wb=$('worldBtn');wb.hidden=cozy()||!(worldMax()>=1||prestOk());if(!wb.hidden){$('cap-world').textContent=L('Worlds','Dünyalar');wb.classList.toggle('pulse',prestOk());}}$('buildBtn').hidden=!has('regions')||cozy();
   $('gridBtn').hidden=!has('gridline');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
@@ -8603,6 +8616,12 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.78.2',t:['Goals wait for their level','Hedefler seviyesini bekliyor'],l:[
+  ['A goal you cannot do yet (the backpack before level 5, the battery before level 6…) is skipped for now; the next goal you can do is shown instead. The skipped one comes back as soon as its level opens.','Henüz yapamayacağın bir hedef (Sv5\'ten önce sırt çantası, Sv6\'dan önce batarya…) şimdilik atlanıyor; yerine yapabileceğin bir sonraki hedef gösteriliyor. Atlanan hedef, seviyesi açılır açılmaz geri geliyor.']]},
+ {v:'0.78.1',t:['🌍 on screen','Ekranda 🌍'],l:[
+  ['🌍 Worlds now has its own button on the left, under the minimap. It pulses when a new world can be opened.','🌍 Dünyalar artık sol tarafta, mini haritanın altında kendi butonunda. Yeni dünya açılabildiğinde nabız gibi atıyor.'],
+  ['A goal whose square is still locked now says the level that opens it (the backpack opens at level 5), instead of pointing at an empty spot.','Karesi henüz kilitli bir hedef artık boş bir yeri göstermek yerine hangi seviyede açılacağını söylüyor (sırt çantası Sv5\'te açılır).'],
+  ['Fixed: the minimap was squashed a little since the map grew.','Düzeltme: harita büyüdüğünden beri mini harita biraz basık görünüyordu.']]},
  {v:'0.78.0',t:['Axe, fast roads, new worlds made clear','Balta, hızlı yol, dünyalar netleşti'],l:[
   ['🏗️ › 🪓 Cut trees: a ring shows which trees go; ₵30 a tree. Anything you build or move now clears the trees on its own footprint for free — and plants and buildings already standing under trees get their ground back.','🏗️ › 🪓 Ağaç kes: halka hangi ağaçların gideceğini gösterir; ağaç başı ₵30. Kurduğun ya da taşıdığın her şey artık kendi yerindeki ağaçları bedavaya temizliyor — ağaç altında kalmış santral ve binaların yeri de açıldı.'],
   ['Roads: face the way you want to go and press Draw road — the whole run shows up to the next obstacle (up to 15 pieces). Press again to lay them all at once.','Yol: gitmek istediğin yöne dön, Yolu çiz\'e bas — bir sonraki engele kadar bütün yol görünür (en fazla 15 parça). Tekrar bas, hepsi bir anda döşensin.'],
@@ -9150,7 +9169,7 @@ function drawMap(cv,big){
     g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=1;
     g.strokeRect((S.px-vw/2)*k,(S.py-vh/2)*k,vw*k,vh*k);}
   // goal marker
-  const G=GOALS[S.goal],tg=G?G.at():null;
+  const G=GOALS[curGoal()],tg=G?G.at():null;
   if(tg){const pulse=(performance.now()%1000)/1000;
     g.strokeStyle='rgba(255,210,63,'+(1-pulse).toFixed(2)+')';g.lineWidth=big?3:2;
     g.beginPath();g.arc(tg.x*k,tg.y*k,(big?8:5)+pulse*(big?10:6),0,7);g.stroke();
@@ -9185,7 +9204,7 @@ let miniT=0;
 function updateMini(dt){
   miniT+=dt;if(miniT<0.2)return;miniT=0;
   const hudEl=document.querySelector('.hud');const r=hudEl.getBoundingClientRect();
-  const m=$('mini');m.style.top=(r.bottom+8)+'px';$('sideCol').style.top=(r.bottom+8)+'px';
+  const m=$('mini');m.style.top=(r.bottom+8)+'px';$('sideCol').style.top=(r.bottom+8)+'px';$('leftCol').style.top=(r.bottom+8+(m.style.display==='none'?0:121))+'px';
   const dpr=Math.min(2,devicePixelRatio||1);if(m.width!==74*dpr){m.width=74*dpr;m.height=Math.round(74*dpr*WORLD.h/WORLD.w);}
   drawMap(m,false);
   if($('mMap').classList.contains('on'))drawMap($('bigmap'),true);
@@ -9711,10 +9730,12 @@ function worldsCard(){const cur=S.prest||0,mx=worldMax(),opts=[];
     const o=readSave(wKey(P));
     if(!o){opts.push(O(`P${P} · not kept`,`P${P} · saklanmamış`,'This world was not kept on this phone.','Bu dünya bu telefonda saklanmamış.',0,NOOP));continue;}
     opts.push(O(`Go to P${P} · Lv${o.lvl||1} · ₵${fmt(o.cash||0)}`,`P${P} dünyasına geç · Sv${o.lvl||1} · ₵${fmt(o.cash||0)}`,`Day ${(o.day||0)+1}. Advantage: ${worldPerkTxt(P)}.`,`${(o.day||0)+1}. gün. Avantaj: ${worldPerkTxt(P)}.`,0,()=>switchWorld(P)));}
+  if(prestOk())opts.unshift(O(`⭐ Open world P${mx+1}`,`⭐ P${mx+1} dünyasını aç`,'Starts from scratch; this world is kept.','Sıfırdan başlar; bu dünya saklanır.',0,()=>setTimeout(()=>openCard(prestCard()),350)));
   opts.push(O('Close','Kapat','Stay here.','Burada kal.',0,NOOP));
   return {id:'worlds',icon:'🌍',ok:()=>false,safe:0,title:['Your worlds','Dünyaların'],
     text:[`Each world has its own map, its own ladder and its own advantage. Only the world you are in runs.`,`Her dünyanın kendi haritası, kendi sıralaması ve kendi avantajı var. Sadece içinde olduğun dünya işler.`],opts:()=>opts};}
 $('sWorlds').onclick=()=>{$('mSet').classList.remove('on');openCard(worldsCard());};
+$('worldBtn').onclick=()=>{trackOnce('world-btn');openCard(worldMax()>=1?worldsCard():prestCard());};
 /* ---- daily report notification: nothing leaves the phone. The game leaves a one-line
        note in the local cache when it saves; the service worker shows it at most once a
        day, only if you have not played for 8 hours. Needs Android Chrome's periodic
@@ -9759,7 +9780,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{const mx=worldM
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.78.0';
+const GAME_VERSION='0.78.2';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
