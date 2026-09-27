@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.68.0</div>
+  <div class="t-ver" id="tVer">v0.69.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -460,6 +460,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
       <button class="rb" id="gridBtn" aria-label="Grid lines" hidden><span>🔌</span><span class="cap" id="cap-grid">Lines</span></button>
       <button class="rb" id="mntBtn" aria-label="Upkeep" hidden><span>🧰</span><span class="cap" id="cap-mnt">Upkeep</span><span class="badge" id="mntN" hidden>0</span></button>
       <button class="rb" id="progIco" aria-label="Program" hidden><span>🎓</span><span class="cap" id="cap-prog">Program</span></button>
+      <button class="rb" id="rankBtn" aria-label="Ladder" hidden><span>🏆</span><span class="cap" id="cap-rank">Ladder</span></button>
       <button class="rb" id="repBtn" aria-label="Finance report"><span>📊</span><span class="cap" id="cap-rep">Report</span></button>
       <button class="rb" id="infoBtn" aria-label="Tips"><span>ℹ️</span><span class="cap" id="cap-info">Tips</span><span class="badge" id="infoDot" hidden>!</span></button>
       <button class="rb zb" id="zIn" aria-label="Zoom in"><span>＋</span><span class="cap" id="cap-zin">Closer</span></button>
@@ -634,6 +635,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
   </div>
   <div class="btns setsec" id="setDisp" hidden>
     <button id="sFx">Event scenes: on</button>
+    <button id="sNotif">Daily report: off</button>
     <button id="sShadow">Shadows: on</button>
     <button id="sFlash">Flashes: on</button>
     <button id="sUI">Panel size: 100%</button>
@@ -646,7 +648,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.68.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.69.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5256,6 +5258,11 @@ const PADS=[
 const BUILD_ICON={turbine:'🌀',solar:'🔆',battery:'🔋',bigwind:'🌬️',solarfarm:'🌞',river:'🌊',dam:'🏞️'};
 /* the spline decides where the water runs, so anything standing in it reads its x off the spline */
 for(const q of PADS)if(q.kind==='build'&&(q.type==='river'||q.type==='dam'))snapToRiver(q);
+/* the plant stands in the water, but you pay for it from the west bank: the square sits
+   where you can actually stand and see it. A dam's square goes below the wall. */
+for(const q of PADS)if(q.kind==='build'&&(q.type==='river'||q.type==='dam')){
+  const yy=q.type==='dam'?q.y+62:q.y,r=riverAt(yy);q.sx=Math.round(r.x-r.w/2-50);q.sy=yy;}
+function padAt(p){return p.sx!=null?{x:p.sx,y:p.sy}:p;}
 /* ======================= LANGUAGE ======================= */
 function tt(x){if(Array.isArray(x))return (typeof S!=='undefined'&&S&&S.lang==='tr')?x[1]:x[0];return x;}
 function L(en,trs){return tt([en,trs]);}
@@ -5328,7 +5335,10 @@ const RIVALS=[
   {n:['Lodestar Energy','Kutupyıldızı Enerji'],  base:18000000, g:0.016}
 ];
 function rivalDay(){return Math.max(0,(S.day||0)-(S.rivalDay0||0));}
-function rivalWealth(i){const r=RIVALS[i];return Math.round(r.base*Math.pow(1+r.g,rivalDay()));}
+/* growth fades out over ~4 months: early on they still pull ahead like before, but they
+   never run off into trillions, so the top of the ladder stays a real target */
+const RIVAL_D=120;
+function rivalWealth(i){const r=RIVALS[i];return Math.round(r.base*Math.exp(r.g*RIVAL_D*(1-Math.exp(-rivalDay()/RIVAL_D))));}
 function rivalName(i){return tt(RIVALS[i].n);}
 function rivalBonus(i){return Math.round(RIVALS[i].base*0.10);}
 /* who is above the player right now, cheapest rung first */
@@ -6008,7 +6018,7 @@ function update(dt){
   }
   if(S.up.grid&&batAt('bat')>=1&&PEAK_H.includes(h)&&batUsable()){gridTick-=gdt;if(gridTick<=0){batSet('bat',batAt('bat')-1);sellCell(BAT.x,BAT.y,false,false,nearestMarket(BAT),true);gridTick=0.5;}}
   let on=null;
-  for(const p of PADS){if(padVisible(p)&&!padDone(p)&&Math.abs(S.px-p.x)<40&&Math.abs(S.py-p.y)<40){on=p;break;}}
+  for(const p of PADS){const A=padAt(p);if(padVisible(p)&&!padDone(p)&&Math.abs(S.px-A.x)<40&&Math.abs(S.py-A.y)<40){on=p;break;}}
   if(on!==standPad){standPad=on;standT=0;}
   if(padLock&&(!on||on.id!==padLock))padLock=null;
   if(on&&on.id!==padLock){
@@ -6176,6 +6186,8 @@ function fixSpare(i){                                   // enough fixers already
 function boxOf(i){for(const b of boxes())if(b.m&&b.m.indexOf(i)>=0)return b;return null;}
 function newBox(){return {id:'b'+Date.now().toString(36)+Math.floor(Math.random()*1000),role:'sell',site:'auto',mkt:'auto',sh:0,m:[]};}
 function findBox(id){return boxes().find(b=>b.id===id)||null;}
+const BOXL={sell:['SL','S'],store:['ST','D'],peak:['PK','Z'],fix:['FX','T'],safety:['SF','A']};
+function boxCode(b){const same=boxes().filter(x=>x.role===b.role);return tt(BOXL[b.role]||['B','K'])+(same.indexOf(b)+1);}
 function applyBoxes(){                                   // boxes are the plan; the per-helper arrays stay the runtime truth
   S.crew.sites=S.crew.sites||[];S.crew.mkts=S.crew.mkts||[];S.crew.roles=S.crew.roles||[];
   const seen={};
@@ -6470,7 +6482,7 @@ const groundMats=[];
 /* nature: KayKit models when available, simple cones otherwise */
 function natureSpots(){
   const tr=rng(7),trees=[];
-  for(let i=0;i<140;i++){const x=tr()*1400,y=tr()*1210;if(Math.abs(x-700)<90)continue;if(onRiver(x,y,70))continue;if(y>540&&y<1120&&x>130&&x<1250)continue;if(y<470&&x>470&&x<930)continue;if(Math.hypot(x-NUKE.x,y-NUKE.y)<150)continue;trees.push([x,y,0.8+tr()*0.7]);}
+  for(let i=0;i<140;i++){const x=tr()*1400,y=tr()*1210;if(Math.abs(x-700)<90)continue;if(onRiver(x,y,70))continue;if(y>540&&y<1120&&x>130&&x<1250)continue;if(y<470&&x>470&&x<930)continue;if(Math.hypot(x-NUKE.x,y-NUKE.y)<150)continue;if(PADS.some(q=>q.sx!=null&&Math.hypot(x-q.sx,y-q.sy)<70))continue;trees.push([x,y,0.8+tr()*0.7]);}
   for(let i=0;i<50;i++){const x=-400+tr()*2200,y=-300+tr()*2600;if(x>-20&&x<WORLD.w+20&&y>-20&&y<WORLD.h+20)continue;trees.push([x,y,1+tr()*0.8]);}
   {const te=rng(71);for(let i=0;i<70;i++){const x=EAST.x0+30+te()*(WORLD.w-EAST.x0-50),y=40+te()*1940;
      if(Math.hypot(x-NUKE.x,y-NUKE.y)<190)continue;if(onRiver(x,y,70))continue;trees.push([x,y,0.8+te()*0.7]);}}
@@ -6877,7 +6889,7 @@ function padObj(p){
   const icon=p.kind==='build'?BUILD_ICON[p.type]:p.icon;const key=color+icon+big;
   texCache[key]=texCache[key]||padTex(color,icon,big);
   const w=big?6:3.2,h=3.2;
-  const g=new THREE.Group();const[X,Z]=W3(p.x,p.y);g.position.set(X,padY(p),Z);
+  const g=new THREE.Group();const A=padAt(p);const[X,Z]=W3(A.x,A.y);g.position.set(X,p.sx!=null?0.06:padY(p),Z);
   const plane=mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:texCache[key],transparent:true,depthWrite:false}),0,0,0,false);plane.rotation.x=-Math.PI/2;g.add(plane);
   const fill=mesh(new THREE.PlaneGeometry(w-0.5,h-0.5),new THREE.MeshBasicMaterial({color:0xFFC83D,transparent:true,opacity:0.7,depthWrite:false}),0,-0.01,0,false);fill.rotation.x=-Math.PI/2;g.add(fill);
   if(big){const arm=mesh(new THREE.BoxGeometry(6,0.25,0.25),M(0xE8364F),0,1.1,-1.8);g.add(arm);g.add(mesh(new THREE.BoxGeometry(0.4,1.4,0.4),M(0x444B5E),-3.2,0.7,-1.8));
@@ -7195,9 +7207,10 @@ function render(dt,now){
     const done=padDone(p),left=Math.max(0,Math.ceil(cost-paid));
     let name=p.kind==='build'?(p.type==='town'?L('Town market','Kasaba pazarı'):p.type==='battery'?(p.id==='bat'?L('Battery station','Batarya istasyonu'):L('Field depot','Saha deposu')):tt(PLANT_TYPES[p.type].name)):p.kind==='upg'?`${tt(p.label)}${S.up[p.key]?' '+L('lv','sv')+(S.up[p.key]+1):''}`:tt(p.label);
     if(p.key==='helper')name=`${L('Hire helper','Yardımcı al')} ${S.up.helper+1}/45`;
-    place('pn'+p.id,'nm',p.x,p.y,0.1,name,p.kind==='gate'?-44:-40);
-    place('pc'+p.id,'tag '+(done?'ok':S.cash>=left?'ok':'no'),p.x,p.y,0.1,done?L('MAX','MAKS'):'₵'+fmt(left),p.kind==='gate'?34:34);
-    {const h=padHelp(p);if(h)place('ph'+p.id,'hlp',p.x,p.y,0.1,h,p.kind==='gate'?56:56);}
+    const A=padAt(p);
+    place('pn'+p.id,'nm',A.x,A.y,0.1,name,p.kind==='gate'?-44:-40);
+    place('pc'+p.id,'tag '+(done?'ok':S.cash>=left?'ok':'no'),A.x,A.y,0.1,done?L('MAX','MAKS'):'₵'+fmt(left),p.kind==='gate'?34:34);
+    {const h=padHelp(p);if(h)place('ph'+p.id,'hlp',A.x,A.y,0.1,h,p.kind==='gate'?56:56);}
   }
   // battery
   {const each=batCapEach();
@@ -7285,6 +7298,7 @@ function hud(dt){
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:(up?`<b class="lvlchip">⬆️ ${L('Level up','Seviye atla')} ${lvl()+1}</b> · `:`<b class="lvlchip">${L('Lv','Sv')}${lvl()}</b> · `);
   $('goal').innerHTML=chip+(G?`${tt(G.t)}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.'));
   {const n=maintList().length;$('mntBtn').hidden=!(has('gridline')||has('ageing'));const b=$('mntN');b.hidden=!n;b.textContent=n>9?'9+':String(n);}
+  $('rankBtn').hidden=!has('report');
   $('gridBtn').hidden=!has('gridline');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
@@ -7358,7 +7372,7 @@ function renderCrew(){
     if(boxShut[b.id]===undefined)boxShut[b.id]=true;      // open the panel to a clean list, not a wall of boxes
     const mem=b.m||[];
     html+=`<div class="rule">
-      <button class="boxhead" data-btog="${b.id}"><span>${boxShut[b.id]?'▸':'▾'} ${tt(ROLES[b.role].name)} · ${SHIFTS[b.sh].icon} ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)} · ${mem.length} ${L('person','kişi')}</span><span class="bw">₵${fmt(boxWage(b))}/${L('day','gün')}</span></button>
+      <button class="boxhead" data-btog="${b.id}"><span>${boxShut[b.id]?'▸':'▾'} <b>${boxCode(b)}</b> ${tt(ROLES[b.role].name)} · ${SHIFTS[b.sh].icon} ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)} · ${mem.length} ${L('person','kişi')}</span><span class="bw">₵${fmt(boxWage(b))}/${L('day','gün')}</span></button>
       ${boxShut[b.id]?'':`
       <div class="seg" style="grid-template-columns:repeat(${ROLEKEYS.length},1fr)">${ROLEKEYS.map(k=>`<button data-brole="${b.id}" data-r="${k}" class="${b.role===k?'on':''}" ${(!hasBat&&k!=='sell')?'disabled':''}>${tt(ROLES[k].name)}</button>`).join('')}</div>
       <div class="role-desc">${tt(ROLES[b.role].desc)}</div>
@@ -7744,8 +7758,10 @@ $('sTut').onclick=()=>{$('mSet').classList.remove('on');openLangPick(startTutori
 
 
 /* ======================= FINANCE REPORT ======================= */
-function crewAdvice(){                                   // one concrete move, the most valuable one
-  const R=r=>tt(ROLES[r].name), N=i=>staffOf(i).name;
+let adviceAct=null;                                      // what the Apply button next to the advice does
+function crewAdvice(){adviceAct=null;return crewAdvice0();}
+function crewAdvice0(){                                  // one concrete move, the most valuable one
+  const R=r=>tt(ROLES[r].name), N=i=>staffOf(i).name, BX=b=>`${boxCode(b)} (${tt(ROLES[b.role].name)}, ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)})`;
   const HRS=k=>h2(SHIFTS[k].from)+'–'+h2(SHIFTS[k].to);
   const bx=boxes().filter(b=>b.m);
   if(!S.up.helper)return L('Hire your first helper at HQ, then give them a task box.','Merkezden ilk yardımcını al, sonra ona bir görev kutusu ver.');
@@ -7756,11 +7772,11 @@ function crewAdvice(){                                   // one concrete move, t
   // 1) an empty shift is the biggest hole: fill it
   const gap=[0,1,2].find(k=>!cov[k]);
   if(gap!=null){
-    if(bench.length){const i=bench.slice().sort((a,b)=>staffOf(b).f-staffOf(a).f)[0];
+    if(bench.length){const i=bench.slice().sort((a,b)=>staffOf(b).f-staffOf(a).f)[0];adviceAct={i,make:{role:'sell',sh:gap}};
       return L(`Open a Sell box on ${HRS(gap)} and put ${N(i)} in it — nobody works those hours.`,
                `${HRS(gap)} için bir Sat kutusu aç ve ${N(i)}'i içine koy — o saatlerde kimse çalışmıyor.`);}
     const from=bx.filter(b=>b.m.length>1).sort((a,b)=>b.m.length-a.m.length)[0];
-    if(from){const i=from.m.slice().sort((a,b)=>skillFor(from.role,a)-skillFor(from.role,b))[0];
+    if(from){const i=from.m.slice().sort((a,b)=>skillFor(from.role,a)-skillFor(from.role,b))[0];adviceAct={i,make:{role:from.role,sh:gap}};
       return L(`Move ${N(i)} to ${HRS(gap)} — that shift is empty while ${HRS(from.sh)} has ${from.m.length} people.`,
                `${N(i)}'i ${HRS(gap)} vardiyasına al — o vardiya boşken ${HRS(from.sh)} vardiyasında ${from.m.length} kişi var.`);}
   }
@@ -7768,9 +7784,10 @@ function crewAdvice(){                                   // one concrete move, t
   if(bench.length&&bx.length){
     let best=null;
     for(const i of bench)for(const b of bx){const v=skillFor(b.role,i);if(!best||v>best.v)best={i,b,v};}
-    if(best)return L(`Put ${N(best.i)} in the ${R(best.b.role)} box on ${HRS(best.b.sh)} — ${best.v}★ for that job, and they are drawing wages for nothing.`,
-                     `${N(best.i)}'i ${HRS(best.b.sh)} ${R(best.b.role)} kutusuna koy — o iş için ${best.v}★ ve boş boş maaş alıyor.`);
+    if(best){adviceAct={i:best.i,to:best.b.id};return L(`Put ${N(best.i)} in box ${BX(best.b)} — ${best.v}★ for that job, and they are drawing wages for nothing.`,
+                     `${N(best.i)}'i ${BX(best.b)} kutusuna koy — o iş için ${best.v}★ ve boş boş maaş alıyor.`);}
   }
+  if(bench.length){adviceAct={i:bench[0],make:{role:bestRoleOf(bench[0]),sh:staffOf(bench[0]).sh||0}};}
   if(bench.length)return L(`Make a task box, then drop ${N(bench[0])} into it — the bench earns you nothing.`,
                           `Bir görev kutusu aç ve ${N(bench[0])}'i içine at — boştakiler sana hiçbir şey kazandırmıyor.`);
   // 3) the worst person-in-the-wrong-role, when a better-fitting box exists
@@ -7778,13 +7795,13 @@ function crewAdvice(){                                   // one concrete move, t
   for(const b of bx)for(const i of b.m){const cur=skillFor(b.role,i);
     for(const c of bx){if(c===b)continue;const v=skillFor(c.role,i);
       if(v-cur>=2&&(!move||v-cur>move.g))move={i,from:b,to:c,g:v-cur,v};}}
-  if(move)return L(`Move ${N(move.i)} to the ${R(move.to.role)} box on ${HRS(move.to.sh)} — ${move.v}★ there against ${move.v-move.g}★ where they are now.`,
-                   `${N(move.i)}'i ${HRS(move.to.sh)} ${R(move.to.role)} kutusuna taşı — orada ${move.v}★, şu anki işinde ${move.v-move.g}★.`);
+  if(move){adviceAct={i:move.i,to:move.to.id};return L(`Move ${N(move.i)} from ${boxCode(move.from)} to ${BX(move.to)} — ${move.v}★ there against ${move.v-move.g}★ where they are now.`,
+                   `${N(move.i)}'i ${boxCode(move.from)} kutusundan ${BX(move.to)} kutusuna taşı — orada ${move.v}★, şu anki işinde ${move.v-move.g}★.`);}
   // 4) a whole box in the wrong hands
   let weak=null;
   for(const b of bx){if(!b.m.length)continue;const avg=b.m.reduce((a,i)=>a+skillFor(b.role,i),0)/b.m.length;
     if(avg<3&&(!weak||avg<weak.avg))weak={b,avg};}
-  if(weak){const i=weak.b.m.slice().sort((a,b2)=>skillFor(weak.b.role,a)-skillFor(weak.b.role,b2))[0];
+  if(weak){const i=weak.b.m.slice().sort((a,b2)=>skillFor(weak.b.role,a)-skillFor(weak.b.role,b2))[0];adviceAct={i,make:{role:bestRoleOf(i),sh:weak.b.sh}};
     return L(`${N(i)} is a poor fit for ${R(weak.b.role)} (${skillFor(weak.b.role,i)}★). Their strength is ${R(bestRoleOf(i))} — build a box for that on ${HRS(weak.b.sh)}.`,
              `${N(i)} ${R(weak.b.role)} işine uygun değil (${skillFor(weak.b.role,i)}★). Güçlü olduğu iş ${R(bestRoleOf(i))} — ${HRS(weak.b.sh)} için öyle bir kutu kur.`);}
   // 5) balanced: point at the next lever
@@ -7795,6 +7812,18 @@ function crewAdvice(){                                   // one concrete move, t
            `Kadro iyi kurulmuş. En zayıf vardiya ${HRS(thin)}, ${cov[thin]} kişi — bir sonraki alımı oraya yap.`);
 }
 let repPage=1;
+function applyAdvice(){
+  const a=adviceAct;if(!a)return;
+  for(const b of boxes())b.m=(b.m||[]).filter(x=>x!==a.i);
+  let t=a.to?findBox(a.to):null;
+  if(!t&&a.make){t=boxes().find(b=>b.role===a.make.role&&b.sh===a.make.sh)||null;
+    if(!t){t=newBox();t.role=a.make.role;t.sh=a.make.sh;boxes().push(t);}}
+  if(!t)return;
+  t.m.push(a.i);applyBoxes();for(const h of helpers){h.target=null;h.state='idle';}
+  S.stats.planned=(S.stats.planned||0)+1;sfx.pick();
+  toast(L(`✅ ${staffOf(a.i).name} is now in ${boxCode(t)}.`,`✅ ${staffOf(a.i).name} artık ${boxCode(t)} kutusunda.`),'good');
+  trackOnce('advice-apply');save();openReport(repPage);
+}
 function openReport(page){
   repPage=page||1;
   const bm=S.stats.byMkt||{},log=(S.dayLog||[]).slice(-14);
@@ -7891,7 +7920,7 @@ function openReport(page){
     const shRows=SHIFTS.map(x=>`<tr><td>${x.icon} ${tt(x.name)}</td><td>${h2(x.from)}–${h2(x.to)}</td><td>${cov[x.id]}</td><td>${cov[x.id]?L('ok','iyi'):'⚠️ '+L('empty','boş')}</td></tr>`).join('');
     const bxRows=boxes().map(b=>{const n=(b.m||[]).length;
       const f=n?Math.round((b.m.reduce((a,i)=>a+skillFor(b.role,i),0)/n)/5*100):0;
-      return `<tr><td>${tt(ROLES[b.role].name)} ${roleIcon(b.role)}</td><td>${SHIFTS[b.sh].icon} ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)}</td><td>${n}</td><td>${n?f+'%':'—'}</td><td>₵${fmt(boxWage(b))}</td></tr>`;}).join('');
+      return `<tr><td><b>${boxCode(b)}</b> ${tt(ROLES[b.role].name)} ${roleIcon(b.role)}</td><td>${SHIFTS[b.sh].icon} ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)}</td><td>${n}</td><td>${n?f+'%':'—'}</td><td>₵${fmt(boxWage(b))}</td></tr>`;}).join('');
     const tips=[];
     for(const x of SHIFTS)if(!cov[x.id])tips.push(L(`Nobody works ${x.from}:00–${x.to}:00 — plants keep producing but nobody collects.`,`${h2(x.from)}:00–${h2(x.to)}:00 arası kimse çalışmıyor — santraller üretiyor ama toplayan yok.`));
     if(bench)tips.push(L(`${bench} on the bench draw ₵${fmt(benchList().reduce((a,i)=>a+dailyWage(i),0))}/day and produce nothing.`,`Boştaki ${bench} kişi günde ₵${fmt(benchList().reduce((a,i)=>a+dailyWage(i),0))} alıyor ve hiçbir şey üretmiyor.`));
@@ -7904,7 +7933,7 @@ function openReport(page){
     $('repBody').innerHTML=
       `<table class="rtab"><tr><th>${L('Shift','Vardiya')}</th><th>${L('Hours','Saat')}</th><th>${L('People','Kişi')}</th><th>${L('Status','Durum')}</th></tr>${shRows}</table>`
       +(bxRows?`<table class="rtab"><tr><th>${L('Task box','Görev kutusu')}</th><th>${L('Shift','Vardiya')}</th><th>${L('People','Kişi')}</th><th>${L('Fit','Uyum')}</th><th>${L('Wage','Ücret')}</th></tr>${bxRows}</table>`:`<p style="text-align:center">${L('No task boxes yet.','Henüz görev kutusu yok.')}</p>`)
-      +`<div class="note" style="background:#E1F4EA;border:2px solid #23B26D"><b>💡 ${L('Do this next','Şunu yap')}</b><br>${crewAdvice()}</div>`
+      +`<div class="note" style="background:#E1F4EA;border:2px solid #23B26D"><b>💡 ${L('Do this next','Şunu yap')}</b><br>${crewAdvice()}${adviceAct?`<div style="margin-top:8px;text-align:right"><button class="pri" id="advGo" style="padding:6px 14px;min-height:0">${L('Apply','Uygula')}</button></div>`:''}</div>`
       +(tips.length?`<div class="note">${tips.map(t=>'• '+t).join('<br>')}</div>`:'')
       +`<p style="font-size:12.5px">${L('Efficiency = 40% shift coverage + 40% skill fit + 20% of the crew actually on a task.','Verim = %40 vardiya kapsaması + %40 yetenek uyumu + %20 görevde olan kadro oranı.')}</p>`;
     $('repPrev').hidden=false;$('repNext').hidden=false;
@@ -7926,6 +7955,7 @@ function openReport(page){
     const you=`<tr style="background:#FFF4CC;font-weight:700"><td>🏗️ ${L('You','Sen')}</td><td>₵${fmt(w)}</td><td>#${rank}</td></tr>`;
     const above=[],below=[];
     for(let i=RIVALS.length-1;i>=0;i--){(rivalWealth(i)>w?above:below).push(i);}
+    above.sort((a,b)=>rivalWealth(b)-rivalWealth(a));below.sort((a,b)=>rivalWealth(b)-rivalWealth(a));
     const rowOf=i=>{const rw=rivalWealth(i),done=(S.beat||[]).indexOf(i)>=0;
       return `<tr${done?' style="opacity:.55"':''}><td>${done?'✅ ':''}${rivalName(i)}</td><td>₵${fmt(rw)}</td><td>${done?L('passed','geçildi'):'+₵'+fmt(rivalBonus(i))}</td></tr>`;};
     $('repBody').innerHTML=
@@ -8070,6 +8100,7 @@ function renderMaint(){
 }
 function openMaint(){renderMaint();$('mMaint').classList.add('on');trackOnce('maint-panel');}
 $('mntBtn').onclick=openMaint;
+$('rankBtn').onclick=()=>{openReport(repMax());trackOnce('ladder-btn');};
 /* Go: the character walks to the job by itself. The joystick always wins (touch it and the
    walk is cancelled), and if a helper finishes the job first the walk stops. */
 let autoGo=null;
@@ -8142,11 +8173,17 @@ $('repBtn').onclick=openReport;
 $('repClose').onclick=()=>$('mRep').classList.remove('on');
 const repMax=()=>(has('report3')?3:has('report2')?2:1)+1;   // the ladder is always the last page
 $('repNext').onclick=()=>openReport(Math.min(repMax(),repPage+1));
+$('repBody').addEventListener('click',e=>{if(e.target.closest('#advGo'))applyAdvice();});
 $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.69.0',t:['Squares on the bank, a daily report','Kıyıda kareler, günlük rapor'],l:[
+  ['River and dam plants are paid for from a square on the west bank, where you can see it, not from the middle of the water.','Akarsu ve baraj santralleri artık suyun ortasından değil, batı kıyısındaki görebildiğin bir kareden ödeniyor.'],
+  ['The rival ladder no longer runs off into trillions: the companies still grow, but their growth levels off over about four months. The table is sorted by wealth, and a new 🏆 Ladder button opens it straight away.','Rakip sıralaması artık trilyonlara kaçmıyor: şirketler büyümeye devam ediyor ama büyümeleri yaklaşık dört ayda yavaşlıyor. Tablo zenginliğe göre sıralı ve yeni 🏆 Sıralama butonu doğrudan açıyor.'],
+  ['Settings › Display › Daily report: one line a day when you have been away — what the crew earned, a rival you are about to pass, or five or more plants down. Nothing leaves your phone.','Ayarlar › Görüntü › Günlük rapor: uzaktaysan günde bir satır — ekibin ne kazandığı, geçmek üzere olduğun rakip ya da beş ve üstü duran santral. Telefonundan hiçbir şey çıkmaz.'],
+  ['Every task box has a code — S1, D2, T1 — in the crew screen, the report and the advice. The advice now has an Apply button that makes the move for you.','Her görev kutusunun bir kodu var — S1, D2, T1 — ekip ekranında, raporda ve öneride. Önerinin yanında artık hamleyi senin yerine yapan bir Uygula butonu var.']]},
  {v:'0.68.0',t:['Go to the job','İşe git'],l:[
   ['Turbine makes renamed: Fırıldak, Esinti, Poyrazmatik. The extra for Poyrazmatik and the refund for Fırıldak now follow what the turbine earns in a day, not its pad price — late in the game premium was a free win.','Türbin markalarının adı değişti: Fırıldak, Esinti, Poyrazmatik. Poyrazmatik\'in ek ücreti ve Fırıldak\'ın iadesi artık pad fiyatına değil türbinin bir günde kazandığına göre; oyunun sonlarında premium bedava kazançtı.'],
   ['Three more run-of-river plants along the river: R3 and R4 in the home field once R1 stands, R5 below the dam after R2.','Nehir boyunca üç akarsu santrali daha: R1 kurulunca ana sahada R3 ve R4, R2\'den sonra barajın altında R5.'],
@@ -8938,6 +8975,7 @@ function save(){
   try{
     if(RELOADING)return;
     if(!validSave(S))return;
+    if(S.notif)notifSnap(false);
     S.lastSave=Date.now();S.schema=SAVE_SCHEMA;
     const prev=localStorage.getItem(SAVE_KEY);
     if(prev)localStorage.setItem(SAVE_PREV,prev);
@@ -9093,7 +9131,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
+function syncSet(){$('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   snd:['setSnd',['🔊','Sound','Ses'],['Effects and music, with sliders','Efektler ve müzik, kaydırıcılı']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Shadows, flashes, panel size','Gölge, parlama, panel boyutu']],
@@ -9142,6 +9180,42 @@ $('musRange').oninput=e=>{S.vMus=+e.target.value;syncVol();};
 $('musRange').onchange=()=>save();
 $('sMusic').onclick=()=>{S.music=(S.music===false);if(S.music!==false&&playing)try{musicStart();musicSwitch(musicPick());}catch(e){}syncSet();save();};
 $('sFx').onclick=()=>{S.fxOff=!S.fxOff;if(S.fxOff)fxEnd();syncSet();save();};
+/* ---- daily report notification: nothing leaves the phone. The game leaves a one-line
+       note in the local cache when it saves; the service worker shows it at most once a
+       day, only if you have not played for 8 hours. Needs Android Chrome's periodic
+       background sync, which the phone schedules on its own terms. ---- */
+async function notifOn(){
+  try{
+    if(!('Notification' in window)||!('serviceWorker' in navigator))throw 0;
+    const perm=await Notification.requestPermission();if(perm!=='granted')throw 1;
+    const reg=await navigator.serviceWorker.ready;
+    if(!('periodicSync' in reg))throw 2;
+    await reg.periodicSync.register('mwm-daily',{minInterval:24*3600*1000});
+    S.notif=true;notifSnap(true);toast(L('🔔 Daily report on. At most one a day, only when you have been away.','🔔 Günlük rapor açık. Günde en fazla bir kez, sadece uzaktaysan.'),'good');
+  }catch(e){S.notif=false;
+    toast(e===1?L('Notifications are blocked for the game. Allow them in the phone settings.','Oyunun bildirimleri engelli. Telefon ayarlarından izin ver.')
+               :L('This device cannot schedule a daily report for the game.','Bu cihaz oyun için günlük rapor planlayamıyor.'),'');}
+  syncSet();save();
+}
+async function notifOffNow(){S.notif=false;try{const reg=await navigator.serviceWorker.ready;if(reg.periodicSync)await reg.periodicSync.unregister('mwm-daily');}catch(e){}notifSnap(true);syncSet();save();}
+function notifLine(){
+  const n=S.plants.filter(p=>PLANT_TYPES[p.type]&&(p.broken||p.fire>0)).length;
+  if(n>=5)return L(`🔧 ${n} of your plants are down! The crew cannot keep up — come sort it out.`,`🔧 ${n} santralin durdu! Ekip yetişemiyor, gel toparla.`);
+  const nk=S.plants.some(isNuke)?PLANT_TYPES.nuclear.rate*DAY_SEC*todayAvg()*0.9:0;
+  const est=Math.round(dayIncome()*1.8+nk*3),w=wealth();
+  const i=RIVALS.findIndex((r,k)=>rivalWealth(k)>w);
+  if(i>=0&&w+est>=rivalWealth(i))return L(`🏆 You are about to pass ${rivalName(i)}. Come and collect the ₵${fmt(rivalBonus(i))} bonus.`,`🏆 ${rivalName(i)}'i geçmek üzeresin — gel ₵${fmt(rivalBonus(i))} primini al.`);
+  return L(`💰 Your crew made about ₵${fmt(est)} while you were away. Come and cash in.`,`💰 Sen yokken ekibin yaklaşık ₵${fmt(est)} kazandı. Gel, topla.`);
+}
+let notifT=0;
+function notifSnap(force){
+  if(!('caches' in window))return;
+  if(!force&&Date.now()-notifT<60000)return;notifT=Date.now();
+  let body='';try{body=S.notif?notifLine():'';}catch(e){}
+  caches.open('mwm-snap').then(c=>c.put('./__snap',new Response(JSON.stringify({t:Date.now(),on:!!S.notif,title:'Megawatt Mogul',body}),{headers:{'Content-Type':'application/json'}}))).catch(()=>{});
+}
+addEventListener('visibilitychange',()=>{if(document.hidden&&S&&S.notif)notifSnap(true);});
+$('sNotif').onclick=()=>{if(S.notif)notifOffNow();else notifOn();};
 const UISCALES=[0.85,1,1.15,1.3,1.5];
 function uiScale(){const v=+S.uiScale;return UISCALES.indexOf(v)>=0?v:1;}
 function applyUiScale(){document.documentElement.style.setProperty('--uis',uiScale());}
@@ -9150,7 +9224,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.68.0';
+const GAME_VERSION='0.69.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -9365,7 +9439,7 @@ const PROGRAMS=[
 ];
 function syncCaps(){
   const C=[['cap-prog','Program','Program'],['cap-grid','Lines','Hatlar'],['cap-rep','Report','Rapor'],
-           ['cap-info','Tips','Taktik'],['cap-mnt','Upkeep','Bakım'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
+           ['cap-info','Tips','Taktik'],['cap-mnt','Upkeep','Bakım'],['cap-rank','Ladder','Sıralama'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
   for(const [id,en,tr] of C){const e=$(id);if(e)e.textContent=L(en,tr);}
 }
 function syncProgBtn(){

@@ -5,7 +5,7 @@
    do not. Everything else is cache-first: those files never change without a
    version bump here. */
 
-const CACHE = 'mwmogul-v0.68.0';
+const CACHE = 'mwmogul-v0.69.0';
 const SHELL = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const SHELL = [
   './icon-512-maskable.png'
 ];
 const NET_TIMEOUT = 4000;
+const SNAP = 'mwm-snap';      // the game's own one-line note for the daily report; never leaves the phone
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -28,7 +29,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== SNAP).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -74,4 +75,37 @@ self.addEventListener('fetch', e => {
       return res;
     }).catch(() => hit))
   );
+});
+
+
+/* Daily report. The game writes {t, on, title, body} into the mwm-snap cache when it saves.
+   Android Chrome wakes this worker for periodic background sync on its own schedule; we show
+   the line at most once in 20 hours, and only if the game has not been played for 8 hours. */
+self.addEventListener('periodicsync', e => {
+  if (e.tag === 'mwm-daily') e.waitUntil(dailyNote());
+});
+async function dailyNote() {
+  const c = await caches.open(SNAP);
+  const r = await c.match('./__snap');
+  if (!r) return;
+  const s = await r.json();
+  if (!s.on || !s.body) return;
+  const now = Date.now();
+  if (now - s.t < 8 * 3600e3) return;
+  const l = await c.match('./__last');
+  const last = l ? +(await l.text()) : 0;
+  if (now - last < 20 * 3600e3) return;
+  const wins = await self.clients.matchAll({ type: 'window' });
+  if (wins.some(w => w.visibilityState === 'visible')) return;
+  await c.put('./__last', new Response(String(now)));
+  await self.registration.showNotification(s.title || 'Megawatt Mogul', {
+    body: s.body, icon: './icon-192.png', badge: './icon-192.png', tag: 'mwm-daily'
+  });
+}
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(ws => {
+    for (const w of ws) if ('focus' in w) return w.focus();
+    return self.clients.openWindow('./');
+  }));
 });
