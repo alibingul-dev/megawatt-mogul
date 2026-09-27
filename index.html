@@ -429,7 +429,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.72.0</div>
+  <div class="t-ver" id="tVer">v0.72.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -656,7 +656,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.72.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.72.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6997,7 +6997,26 @@ function smokeAt(wx,wz,baseY,now,seed){
     o.material.opacity=0.5*(1-k);
   }
 }
-function smokeReset(){for(let i=smokeUsed;i<smokePool.length;i++)smokePool[i].visible=false;smokeUsed=0;}
+function smokeReset(){for(let i=smokeUsed;i<smokePool.length;i++)smokePool[i].visible=false;smokeUsed=0;
+  for(let i=flameUsed;i<flamePool.length;i++)flamePool[i].visible=false;flameUsed=0;}
+/* fire burns at the foot of the plant: a ring of flickering tongues, a hot core, and smoke
+   rising off the top. Pooled like the smoke; every tongue has its own material so it can fade. */
+const flamePool=[];let flameUsed=0;
+const FLAME_GEO=new THREE.ConeGeometry(0.34,1.3,7,1,true);FLAME_GEO.translate(0,0.65,0);
+function makeFlame(i){const col=[0xFF4A1C,0xFF8A1E,0xFFC83D][i%3];
+  const m=new THREE.Mesh(FLAME_GEO,new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.88,depthWrite:false,side:THREE.DoubleSide}));
+  m.castShadow=false;m.receiveShadow=false;m.visible=false;scene.add(m);return m;}
+function flameAt(wx,wz,rad,now,seed,k){           // k 0..1: how big the fire has grown
+  const n=9,sz=0.7+0.9*k;
+  for(let i=0;i<n;i++){
+    let o=flamePool[flameUsed];if(!o){o=makeFlame(flamePool.length);flamePool.push(o);}flameUsed++;
+    const a=i/n*Math.PI*2+seed,r=(i%3===0?0.25:1)*rad,fl=0.75+0.35*Math.sin(now/70+i*1.7+seed)+0.15*Math.sin(now/37+i);
+    o.visible=true;o.position.set(wx+Math.cos(a)*r,0.02,wz+Math.sin(a)*r);
+    o.scale.set(sz*(0.8+0.2*fl),sz*fl*(i%3===0?1.6:1.1),sz*(0.8+0.2*fl));o.rotation.y=now/400+i;
+    o.material.opacity=0.65+0.3*fl*0.5;
+  }
+  smokeAt(wx,wz,1.4+sz,now,seed);
+}
 function heavyLook(o,p,T,now){
   const hv=!!(p.broken&&p.hv),m=o.userData.model;
   if(T.kind==='wind'){m.rotation.z=hv?0.34:0;m.rotation.x=hv?0.07:0;m.position.y=hv?-0.25:0;}
@@ -7273,8 +7292,9 @@ function render(dt,now){
     if(T.kind==='dam'){const full=damRes(p)>=damCap(p);
       setLakeLevel(damCap(p)?damRes(p)/damCap(p):0);
       place('dm'+p.id,'cnt'+(full?' full':''),p.x,p.y-34,3.9,`💧 ${Math.round(damRes(p))}/${damCap(p)}${p.open?' \u26a1':full?' !':''}`);}
-    if(p.fire>0){const fl=0.8+Math.sin(performance.now()/90)*0.2;
-      const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y,(T.kind==='wind'?7*T.scale:2.6)*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
+    if(p.fire>0){const fl=1;
+      {const[FX,FZ]=W3(p.x,p.y);const big=p.type==='solarfarm'?3.2:p.type==='solar'?1.6:T.kind==='wind'?0.9*T.scale:2.2;flameAt(FX,FZ,big,now,p.x*0.013,Math.min(1,p.fire/FIRE_SPREAD));}
+      const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y+34,1.2*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:`🔥 ${Math.round(Math.min(100,(p.fire/FIRE_SPREAD)*100))}%`);}
     if(snowPanel(p)>0.05)place('sn'+p.id,'wrench',p.x,p.y+6,1.6,p.clr>0?`🧹 ${Math.round(p.clr*100)}%`:`🌨️ ${Math.round(snowPanel(p)*100)}%`);
     if(gridNeedsService(p)&&!p.fire&&p.gsv>0)place('gw'+p.id,'wrench',p.x+(T.kind==='wind'?0:14),p.y+14,T.kind==='wind'?4.4*T.scale:1.2,`🔌 ${Math.round(p.gsv*100)}%`);   // costs live in 🧰 Upkeep
     if(!p.broken&&needsWork(p)&&p.rep>0)place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,`${canRebuild(p)?'🏗️':'♻️'} ${Math.round(p.rep*100)}%`);   // costs live in 🧰 Upkeep
@@ -7300,7 +7320,8 @@ function render(dt,now){
      o.g.visible=on;o.sp.visible=on;o.tp.visible=on;if(!on)continue;
      const f=each?batAt(D.id)/each:0;o.g.userData.bar.scale.x=Math.max(0.001,f);o.g.userData.bar.position.x=-2.6*(1-f);
      const bp=pops[D.id]||0;o.g.scale.setScalar(1+Math.sin(bp*Math.PI)*0.25);
-     if(S.batFire>0)place('bf'+D.id,'wrench fire',D.x,D.y,4.6,Math.max(S.batFireT||0,S.batFireC||0)>0?`🧯 ${Math.round(Math.max(S.batFireT||0,S.batFireC||0)*100)}%`:'🔥');
+     if(S.batFire>0){const[FX,FZ]=W3(D.x,D.y);flameAt(FX,FZ,2.4,now,0.4,Math.min(1,S.batFire/FIRE_SPREAD));}
+     if(S.batFire>0)place('bf'+D.id,'wrench fire',D.x,D.y+40,1.2,Math.max(S.batFireT||0,S.batFireC||0)>0?`🧯 ${Math.round(Math.max(S.batFireT||0,S.batFireC||0)*100)}%`:'🔥');
      place('dep'+D.id,'tag'+(S.batFault?' bad':' ok'),D.x,D.y,3.2,S.batFault?(batFixT>0?`🔧 ${Math.round(batFixT/1.5*100)}%`:L('🔋 Fault · stand here','🔋 Arıza · burada dur')):`🔋 ${batAt(D.id)} / ${each}`);
      place('bc'+D.id,'code'+(batHealth()<0.9?' worn':''),D.x-42,D.y+26,0.9,`${codeOf(D.id)} ${Math.round(batHealth()*100)}%`);
      if(!S.batFault&&batHealth()<0.995&&D.id==='bat')place('rf'+D.id,'wrench',D.x,D.y-20,4.4,refurbT>0?`♻️ ${Math.round(refurbT/2.5*100)}%`:`♻️ ₵${fmt(refurbCost())}`);}}
@@ -8268,6 +8289,8 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.72.1',t:['Fire at the foot','Yangın dipte'],l:[
+  ['A fire now burns where it starts — at the foot of the turbine or across the panels — as a ring of flickering flames with smoke rising off it, and grows as it spreads. The 🔥 % tag sits by the base instead of floating over the blades.','Yangın artık başladığı yerde yanıyor — türbinin dibinde ya da panellerin üstünde — titreşen bir alev halkası ve üstünden yükselen dumanla; yayıldıkça büyüyor. 🔥 % etiketi kanatların üstünde değil, dipte duruyor.']]},
  {v:'0.72.0',t:['Build anywhere, weather you can see','İstediğin yere kur, göreceğin hava'],l:[
   ['Fixed: a Safety helper reaching a fire crashed the crew update, so everyone froze until the fire went out.','Düzeltildi: yangına ulaşan Afet yardımcısı ekip güncellemesini çökertiyordu; yangın sönene kadar herkes donuyordu.'],
   ['New 🏗️ Build button (from level 11): put a turbine, big turbine, solar panel or solar farm anywhere open on the map, right in front of you. It costs more than the squares, and each extra of a kind 25% more.','Yeni 🏗️ İnşa butonu (seviye 11\'den): türbin, büyük türbin, güneş paneli ya da güneş çiftliğini haritada açık herhangi bir yere, tam önüne kur. Karelerden pahalı; aynı türden her fazlası %25 daha pahalı.'],
@@ -9353,7 +9376,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{localStorage.re
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.72.0';
+const GAME_VERSION='0.72.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
