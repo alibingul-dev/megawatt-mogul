@@ -434,7 +434,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.80.0</div>
+  <div class="t-ver" id="tVer">v0.81.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -665,7 +665,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.80.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.81.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8639,6 +8639,9 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.81.0',t:['Shift streak','Vardiya serisi'],l:[
+  ['Open the game on a new day and a shift bonus waits for you: day 1 pays about an hour of yesterday\'s earnings, day 7 about four hours.','Oyunu yeni bir günde açınca seni bir vardiya primi bekliyor: 1. gün dünkü kazancının yaklaşık bir saatlik kısmı, 7. gün yaklaşık dört saatlik kısmı.'],
+  ['Miss a day and the streak steps back one day — it never resets to zero. The streak belongs to the phone, not the world, so switching worlds pays once.','Bir gün kaçırırsan seri bir gün geri gider — asla sıfırlanmaz. Seri dünyaya değil telefona ait; dünya değiştirmek iki kez ödetmez.']]},
  {v:'0.80.0',t:['Tell us what you think','Ne düşündüğünü söyle'],l:[
   ['Settings › Game › ⭐ Write a review on Play opens the game\'s Play page. The first time you step into a second world the game asks once whether you would like to; Later closes it for good.','Ayarlar › Oyun › ⭐ Play\'de yorum yaz, oyunun Play sayfasını açar. İkinci bir dünyaya ilk geçtiğinde oyun bir kez isteyip istemediğini soruyor; Daha sonra ile bir daha sormuyor.']]},
  {v:'0.79.4',t:['Moves that pay','Kazandıran taşıma'],l:[
@@ -9783,6 +9786,26 @@ function rateCard(){return {id:'rate',icon:'⭐',ok:()=>false,safe:1,title:['Wan
   opts:()=>[O('Yes, I would','Evet, isterim','Opens the game\'s Play page.','Oyunun Play sayfasını açar.',0,openPlayPage),O('Later','Daha sonra','You can always find it in Settings › Game.','Ayarlar › Oyun\'da her zaman bulabilirsin.',0,NOOP)]};}
 function askRateOnce(){try{if(localStorage.getItem(SAVE_KEY+'_rateAsked'))return;localStorage.setItem(SAVE_KEY+'_rateAsked','1');}catch(e){return;}
   const go=()=>{if(cardOpen||tutOpen||document.querySelector('.modal.on')){setTimeout(go,1500);return;}openCard(rateCard());};setTimeout(go,8000);}
+/* v0.81 shift streak: open the game on a new calendar day and a bonus waits. It grows for 7 days;
+   a missed day steps it back by one, it never resets to zero. Kept per device, so switching worlds pays once. */
+const STREAK_MUL=[1,1.5,2,2.5,3,3.5,4];
+function dayKey(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dayGap(a,b){return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);}
+function streakRead(){try{return JSON.parse(localStorage.getItem(SAVE_KEY+'_streak')||'null');}catch(e){return null;}}
+function streakWrite(o){try{localStorage.setItem(SAVE_KEY+'_streak',JSON.stringify(o));}catch(e){}}
+function streakPay(n){const hr=Math.max(50,(S.lastDayEarned||S.dayEarned||0)/24);return Math.round(hr*STREAK_MUL[Math.min(7,n)-1]);}
+function streakCard(n,pay){const dots='●'.repeat(n)+'○'.repeat(7-n),nx=Math.min(7,n+1);
+  return {id:'streak',icon:'🔥',ok:()=>false,safe:0,title:[`Shift streak · day ${n}/7`,`Vardiya serisi · gün ${n}/7`],
+    text:[`${dots}  Open the game every day and the bonus grows. Tomorrow: day ${nx}, about ₵${fmt(streakPay(nx))}. Miss a day and the streak steps back one — it never resets.`,
+          `${dots}  Oyunu her gün aç, prim büyüsün. Yarın: ${nx}. gün, yaklaşık ₵${fmt(streakPay(nx))}. Bir gün kaçırırsan seri bir gün geri gider — sıfırlanmaz.`],
+    opts:()=>[O(`Collect ₵${fmt(pay)}`,`₵${fmt(pay)} al`,'Added to your wallet.','Cüzdanına eklenir.',0,()=>{S.cash+=pay;S.earned+=pay;try{logLedger('streak',pay,L('streak day ','seri günü ')+n);}catch(e){}sfx.goal();floatTxt(S.px,S.py,'+₵'+fmt(pay));save();})]};}
+function streakCheck(){const today=dayKey();let st=streakRead();
+  if(!st){streakWrite({last:today,n:1});return;}                  // the very first day: nothing to show yet
+  if(st.last===today)return;
+  const gap=dayGap(st.last,today);if(gap<=0){st.last=today;streakWrite(st);return;}   // clock moved back: just move on
+  const n=gap===1?Math.min(7,(st.n||1)+1):Math.max(1,(st.n||1)-1);
+  streakWrite({last:today,n});const pay=streakPay(n);
+  const go=()=>{if(cardOpen||tutOpen||document.querySelector('.modal.on')){setTimeout(go,1500);return;}openCard(streakCard(n,pay));try{trackOnce('streak-'+n);}catch(e){}};setTimeout(go,2500);}
 $('sRate').onclick=()=>{$('mSet').classList.remove('on');openPlayPage();};
 $('worldBtn').onclick=()=>{trackOnce('world-btn');openCard(worldMax()>=1?worldsCard():prestCard());};
 /* ---- daily report notification: nothing leaves the phone. The game leaves a one-line
@@ -9829,7 +9852,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{const mx=worldM
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.80.0';
+const GAME_VERSION='0.81.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -9844,7 +9867,7 @@ addEventListener('pagehide',save);
 /* ======================= BOOT ======================= */
 function resize(){renderer.setSize(innerWidth,innerHeight,false);}
 addEventListener('resize',resize);resize();
-const had=load();if(had)worldsInit();if(had&&(S.prest||0)>=1&&!cozy())askRateOnce();const bootGap=had?(Date.now()-S.lastSave)/1000:0;DAY=makeDay(S.day);syncHelpers();
+const had=load();if(had)worldsInit();try{streakCheck();}catch(e){}if(had&&(S.prest||0)>=1&&!cozy())askRateOnce();const bootGap=had?(Date.now()-S.lastSave)/1000:0;DAY=makeDay(S.day);syncHelpers();
 let last=0;
 async function loadKit(){
   __diag('Loading models…');
