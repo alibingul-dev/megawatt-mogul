@@ -434,7 +434,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.79.3</div>
+  <div class="t-ver" id="tVer">v0.79.4</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -664,7 +664,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.79.3 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.79.4 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5862,13 +5862,14 @@ function marksTick(now){
     const o=a<0.45?1:1-(a-0.45)/0.55;m.mat.opacity=o;m.fill.opacity=0.12*o;}
 }
 function suggestSpots(t,selfId){
-  const out=[];
-  if(t==='offshore'){for(let x=100;x<WORLD.w-90;x+=50){const st=spotState(t,x,OFF_Y,selfId||null);if(!st.why)out.push({x,y:OFF_Y,q:1,d:Math.abs(x-S.px)});}
+  const out=[];const meQ=selfId&&S.plants.find(q=>q.id===selfId);const curQ=meQ?siteQ(t,meQ.x,meQ.y,selfId):0;
+  if(t==='offshore'){if(selfId)return [];for(let x=100;x<WORLD.w-90;x+=50){const st=spotState(t,x,OFF_Y,selfId||null);if(!st.why)out.push({x,y:OFF_Y,q:1,d:Math.abs(x-S.px)});}
     out.sort((a,b)=>a.d-b.d);const pk=[];for(const o of out){if(pk.every(p=>Math.abs(p.x-o.x)>=150))pk.push(o);if(pk.length>=3)break;}return pk;}
   for(let y=110;y<LAND_H-60;y+=45)for(let x=70;x<WORLD.w-60;x+=45){
     let sx=x;if(t==='river'){const r=riverAt(y);sx=Math.round(r.x);if(x!==70)continue;}
     if(selfId){const me=S.plants.find(q=>q.id===selfId);if(me&&Math.hypot(sx-me.x,y-me.y)<150)continue;}   // a move worth making goes somewhere else
-    const st=spotState(t,sx,y,selfId||null);if(st.why)continue;out.push({x:sx,y,q:st.q,d:Math.hypot(sx-S.px,y-S.py)});}
+    const st=spotState(t,sx,y,selfId||null);if(st.why)continue;
+    if(selfId&&!(st.q>curQ+0.005))continue;   /* v0.79.4: only suggest a move that raises output */out.push({x:sx,y,q:st.q,d:Math.hypot(sx-S.px,y-S.py)});}
   out.sort((a,b)=>(b.q-a.q)||(a.d-b.d));
   const pick=[];for(const o of out){if(pick.every(p=>Math.hypot(p.x-o.x,p.y-o.y)>320))pick.push(o);if(pick.length>=3)break;}
   return pick;
@@ -5888,11 +5889,11 @@ function renderBuild(){
   $('bldSub').textContent=L('Pick a type: a see-through copy follows in front of you. Green = good, yellow = less output, red = not here. 📍 shows the best spots on the map.','Bir tür seç: saydam bir kopyası önünde yürür. Yeşil = iyi, sarı = verim düşük, kırmızı = olmaz. 📍 haritadaki en iyi yerleri gösterir.');
   const types=Object.keys(FREE_BASE).filter(t=>t!=='offshore'||S.regions.coast);
   if(!has('regions')){const nm2=nm;$('bldSub').textContent=L('Stand next to a plant to move it. 📍 shows its best new spots, the way it will look there.','Taşımak için bir santralin yanında dur. 📍 en iyi yeni yerlerini, orada nasıl duracağıyla gösterir.');
-    $('bldBody').innerHTML=(nm2?`<div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm2.p.id)}</b></span><span style="display:flex;gap:6px"><button data-mvtip="${nm2.p.id}" style="padding:4px 8px;min-height:0">📍</button><button class="pri" data-mv="${nm2.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} ₵${fmt(moveCost(nm2.p))}</button></span></div>`:`<p style="font-size:12.5px;margin-top:6px">↔️ ${L('No plant next to you. Walk up to one and open this again.','Yanında santral yok. Birinin yanına yürü ve burayı tekrar aç.')}</p>`)
+    $('bldBody').innerHTML=(nm2?`<div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm2.p.id)}</b></span><span style="display:flex;gap:6px">${suggestSpots(nm2.p.type,nm2.p.id).length?`<button data-mvtip="${nm2.p.id}" style="padding:4px 8px;min-height:0">📍</button>`:""}<button class="pri" data-mv="${nm2.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} ₵${fmt(moveCost(nm2.p))}</button></span></div>`:`<p style="font-size:12.5px;margin-top:6px">↔️ ${L('No plant next to you. Walk up to one and open this again.','Yanında santral yok. Birinin yanına yürü ve burayı tekrar aç.')}</p>`)
       +`<p style="font-size:12.5px;margin-top:10px">🔒 ${L(`Building anywhere, roads, decoration and buildings open at level ${UNLOCK.regions}.`,`Serbest inşa, yol, süs ve binalar Sv${UNLOCK.regions}'de açılır.`)}</p>`;return;}
   $('bldBody').innerHTML=types.map(t=>{const c=freeCost(t),no=S.cash<c;
     return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BUILD_ICON[t]||''} <b>${tt(PLANT_TYPES[t].name)}</b></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">₵${fmt(c)}<button data-tip="${t}" style="padding:4px 8px;min-height:0">📍</button><button class="pri" data-fb="${t}" ${no?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')
-    +(nm?`<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm.p.id)}</b></span><span style="display:flex;gap:6px"><button data-mvtip="${nm.p.id}" style="padding:4px 8px;min-height:0">📍</button><button class="pri" data-mv="${nm.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} ₵${fmt(moveCost(nm.p))}</button></span></div>`
+    +(nm?`<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm.p.id)}</b></span><span style="display:flex;gap:6px">${suggestSpots(nm.p.type,nm.p.id).length?`<button data-mvtip="${nm.p.id}" style="padding:4px 8px;min-height:0">📍</button>`:""}<button class="pri" data-mv="${nm.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} ₵${fmt(moveCost(nm.p))}</button></span></div>`
         :`<p style="font-size:12.5px;margin-top:10px">↔️ ${L('To move a plant, stand next to it and open this again.','Bir santrali taşımak için yanında dur ve burayı tekrar aç.')}</p>`)
     +`<h3 style="margin:12px 0 4px">${L('Roads & decoration','Yol ve süs')}</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">`+Object.keys(DECO).map(k=>`<button data-fb="${k}" ${S.cash<DECO[k].c?'disabled':''} style="padding:6px 4px;min-height:0;font-size:12.5px">${DECO[k].i} ${tt(DECO[k].n)}<br><small>₵${DECO[k].c}</small></button>`).join('')+`</div><h3 style="margin:12px 0 4px">${L('Buildings & contracts','Binalar ve sözleşmeler')}</h3>`+Object.keys(BLD).map(k=>{const c=Math.round(BLD[k].c*perk('build'));return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BLD[k].i} <b>${tt(BLD[k].n)}</b><br><small>${L(`buys ~${fmt(BLD[k].need)}/day`,`günde ~${fmt(BLD[k].need)} alır`)}</small></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">₵${fmt(c)}<button class="pri" data-fb="${k}" ${S.cash<c?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')+`<p style="font-size:12px;margin-top:6px">${L('Roads make you 30% faster. Sheep next to solar panels add 5%. Decorations stay placeable one after another — tap ✕ when done.','Yollar seni %30 hızlandırır. Güneş panellerinin yanındaki koyunlar %5 katar. Süsler art arda yerleştirilir — bitince ✕.')}</p>`;
 }
@@ -8637,6 +8638,8 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.79.4',t:['Moves that pay','Kazandıran taşıma'],l:[
+  ['📍 for moving a plant now only suggests spots where it makes more than where it stands; if there is none, the 📍 button is not shown. No more moving back and forth for the same output.','Santral taşımada 📍 artık sadece şu anki yerinden daha fazla üreteceği yerleri öneriyor; öyle bir yer yoksa 📍 butonu görünmüyor. Aynı verim için ileri geri taşıma bitti.']]},
  {v:'0.79.3',t:['Move from day one','İlk günden taşı'],l:[
   ['🏗️ is on screen from level 1: stand next to a plant to move it. Building anywhere, roads, decoration and buildings still open at level 11.','🏗️ Sv1\'den itibaren ekranda: taşımak için bir santralin yanında dur. Serbest inşa, yol, süs ve binalar yine Sv11\'de açılıyor.'],
   ['Moving has its own 📍 now: it flies over the best new spots and shows the plant standing there — green or yellow, the way it will look. Move here moves it.','Taşımanın da artık 📍 butonu var: en iyi yeni yerleri gezer, santrali orada nasıl duracaksa öyle gösterir — yeşil ya da sarı. Buraya taşı ile taşınır.']]},
@@ -9814,7 +9817,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{const mx=worldM
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.79.3';
+const GAME_VERSION='0.79.4';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
