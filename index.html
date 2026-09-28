@@ -434,7 +434,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.82.0</div>
+  <div class="t-ver" id="tVer">v0.82.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -666,7 +666,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.82.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.82.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5279,7 +5279,7 @@ const PADS=[
   {id:'r5',kind:'build',type:'river',x:1296,y:1760,cost:24000,req:'r2'},
   {id:'east',kind:'gate',region:'east',label:['Open the east bank','Doğu kıyısını aç'],icon:'🌉',x:1225,y:1110,cost:300000,req:null},
   {id:'n1',kind:'build',type:'nuclear',x:NUKE.x,y:NUKE.y,cost:1200000,req:'east'},
-  {id:'coast',kind:'gate',region:'coast',label:['Open the coast plain','Kıyı ovasını aç'],icon:'🚧',x:890,y:1960,cost:800000,req:'f3'},
+  {id:'coast',kind:'gate',region:'coast',label:['Open the coast plain','Kıyı ovasını aç'],icon:'🚧',x:890,y:1960,cost:800000,req:'desert'},
   {id:'town3',kind:'build',type:'town',x:480,y:2290,cost:90000,req:'coast'},
   {id:'r6',kind:'build',type:'river',x:1270,y:2290,cost:60000,req:'coast'},
 ];
@@ -8664,6 +8664,9 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.82.1',t:['Coast plain square','Kıyı ovası karesi'],l:[
+  ['The coast plain square no longer waits for the third solar farm pad. With free building you may never use those pads; opening the solar desert is enough now.','Kıyı ovası karesi artık üçüncü güneş tarlası karesini beklemiyor. Serbest inşayla o kareleri hiç kullanmayabilirsin; güneş çölünü açmış olmak yeterli.'],
+ ]},
  {v:'0.82.0',t:['Levels','Seviyeler'],l:[
   ['The game is now climbed in levels, and every level adds one thing you have to plan for. Level 1 · Basics: carry, sell, store, grow — no breakdowns, no fires, no shifts, no ageing. Level 2 · Maintenance: breakdowns, repairs, fire. Level 3 · Shifts & people: three shifts, wages, severance. Level 4 · Investment: ageing and repowering. More are on the way.','Oyun artık seviyelerle tırmanılıyor ve her seviye planlaman gereken bir şey ekliyor. Seviye 1 · Temel: taşı, sat, depola, büyü — arıza, yangın, vardiya, yaşlanma yok. Seviye 2 · Bakım: arıza, tamir, yangın. Seviye 3 · Vardiya ve İK: üç vardiya, maaş, kıdem. Seviye 4 · Yatırım: yaşlanma ve yenileme. Yenileri yolda.'],
   ['Your current game is Level 1 (a game you already rebuilt keeps its number: P1 is Level 2 and so on). Its money and plants stay; the mechanics that now belong to higher levels are switched off there.','Mevcut oyunun Seviye 1 (daha önce yeniden kurduğun oyun sırasını korur: P1 artık Seviye 2 vb.). Parası ve santralleri kalıyor; artık üst seviyelere ait olan mekanikler orada kapanıyor.'],
@@ -9903,7 +9906,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{const mx=worldM
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.82.0';
+const GAME_VERSION='0.82.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
