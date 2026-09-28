@@ -434,7 +434,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.79.4</div>
+  <div class="t-ver" id="tVer">v0.80.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -637,6 +637,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="sCode">🔑 Enter a code</button>
     <button id="sPrest" hidden>⭐ Rebuild</button>
     <button id="sWorlds" hidden>🌍 Worlds</button>
+    <button id="sRate">⭐ Write a review on Play</button>
     <button id="sSpeed">Time speed: normal</button>
     <button class="pri setback">‹ Back</button>
   </div>
@@ -664,7 +665,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.79.4 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.80.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8638,6 +8639,8 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.80.0',t:['Tell us what you think','Ne düşündüğünü söyle'],l:[
+  ['Settings › Game › ⭐ Write a review on Play opens the game\'s Play page. The first time you step into a second world the game asks once whether you would like to; Later closes it for good.','Ayarlar › Oyun › ⭐ Play\'de yorum yaz, oyunun Play sayfasını açar. İkinci bir dünyaya ilk geçtiğinde oyun bir kez isteyip istemediğini soruyor; Daha sonra ile bir daha sormuyor.']]},
  {v:'0.79.4',t:['Moves that pay','Kazandıran taşıma'],l:[
   ['📍 for moving a plant now only suggests spots where it makes more than where it stands; if there is none, the 📍 button is not shown. No more moving back and forth for the same output.','Santral taşımada 📍 artık sadece şu anki yerinden daha fazla üreteceği yerleri öneriyor; öyle bir yer yoksa 📍 butonu görünmüyor. Aynı verim için ileri geri taşıma bitti.']]},
  {v:'0.79.3',t:['Move from day one','İlk günden taşı'],l:[
@@ -9665,7 +9668,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`🌍 ${L('Worlds','Dünyalar')} · P0–P${worldMax()}`;}b.disabled=!prestOk();b.textContent=`⭐ ${L('Open a new world','Yeni dünya aç')} · P${(S.prest||0)+1}`+(prestOk()?'':` (${L('Lv','Sv')}19 + N1)`);}
+function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`🌍 ${L('Worlds','Dünyalar')} · P0–P${worldMax()}`;}b.disabled=!prestOk();b.textContent=`⭐ ${L('Open a new world','Yeni dünya aç')} · P${(S.prest||0)+1}`+(prestOk()?'':` (${L('Lv','Sv')}19 + N1)`);}
   $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   snd:['setSnd',['🔊','Sound','Ses'],['Effects and music, with sliders','Efektler ve müzik, kaydırıcılı']],
@@ -9772,6 +9775,15 @@ function worldsCard(){const cur=S.prest||0,mx=worldMax(),opts=[];
   return {id:'worlds',icon:'🌍',ok:()=>false,safe:0,title:['Your worlds','Dünyaların'],
     text:[`Each world has its own map, its own ladder and its own advantage. Only the world you are in runs.`,`Her dünyanın kendi haritası, kendi sıralaması ve kendi avantajı var. Sadece içinde olduğun dünya işler.`],opts:()=>opts};}
 $('sWorlds').onclick=()=>{$('mSet').classList.remove('on');openCard(worldsCard());};
+/* v0.80: a review link, never a reward. Asked once, on the first visit to a second world; always in Settings. */
+const PLAY_URL='https://play.google.com/store/apps/details?id=games.baseload.megawattmogul';
+function openPlayPage(){try{trackOnce('rate-open');}catch(e){}try{window.open(PLAY_URL,'_blank');}catch(e){location.href=PLAY_URL;}}
+function rateCard(){return {id:'rate',icon:'⭐',ok:()=>false,safe:1,title:['Want to leave a review?','Yorum yazmak ister misin?'],
+  text:['If you would like to tell us what you think, the Play page is one tap away. Every comment helps us make the game better.','Ne düşündüğünü yazmak istersen Play sayfamız bir dokunuş uzağında. Her yorum oyunu geliştirmemize yardım ediyor.'],
+  opts:()=>[O('Yes, I would','Evet, isterim','Opens the game\'s Play page.','Oyunun Play sayfasını açar.',0,openPlayPage),O('Later','Daha sonra','You can always find it in Settings › Game.','Ayarlar › Oyun\'da her zaman bulabilirsin.',0,NOOP)]};}
+function askRateOnce(){try{if(localStorage.getItem(SAVE_KEY+'_rateAsked'))return;localStorage.setItem(SAVE_KEY+'_rateAsked','1');}catch(e){return;}
+  const go=()=>{if(cardOpen||tutOpen||document.querySelector('.modal.on')){setTimeout(go,1500);return;}openCard(rateCard());};setTimeout(go,8000);}
+$('sRate').onclick=()=>{$('mSet').classList.remove('on');openPlayPage();};
 $('worldBtn').onclick=()=>{trackOnce('world-btn');openCard(worldMax()>=1?worldsCard():prestCard());};
 /* ---- daily report notification: nothing leaves the phone. The game leaves a one-line
        note in the local cache when it saves; the service worker shows it at most once a
@@ -9817,7 +9829,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{const mx=worldM
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.79.4';
+const GAME_VERSION='0.80.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -9832,7 +9844,7 @@ addEventListener('pagehide',save);
 /* ======================= BOOT ======================= */
 function resize(){renderer.setSize(innerWidth,innerHeight,false);}
 addEventListener('resize',resize);resize();
-const had=load();if(had)worldsInit();const bootGap=had?(Date.now()-S.lastSave)/1000:0;DAY=makeDay(S.day);syncHelpers();
+const had=load();if(had)worldsInit();if(had&&(S.prest||0)>=1&&!cozy())askRateOnce();const bootGap=had?(Date.now()-S.lastSave)/1000:0;DAY=makeDay(S.day);syncHelpers();
 let last=0;
 async function loadKit(){
   __diag('Loading models…');
