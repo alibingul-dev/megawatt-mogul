@@ -403,6 +403,8 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .pgi b{display:block;font-weight:400;font-family:var(--disp);font-size:16px;line-height:1.25}
 .pgi small{color:var(--soft);font-size:13px;line-height:1.35}
 .pgcode{font:17px/1.4 monospace;background:#1D2433;color:#FFD23F;padding:11px;border-radius:10px;letter-spacing:2px;text-align:center;margin:8px 0;user-select:all;-webkit-user-select:all}
+.pgh{margin:10px 2px 2px;font-family:var(--disp);font-size:15px;color:var(--soft)}
+.pgact{display:block;margin-top:7px;padding:8px 12px;border-radius:10px;background:#6A5CFF;color:#fff;font-family:var(--disp);font-size:15px;font-weight:400}
 .pgcopy{width:100%;padding:11px;border-radius:12px;background:#23B26D;color:#fff;font-family:var(--disp);font-size:16px;font-weight:400}
 .vol{background:#F2F5F9;border-radius:12px;padding:9px 12px 4px;text-align:left}
 .vol .row1{display:flex;justify-content:space-between;align-items:center;font-family:var(--disp);font-size:15px;font-weight:400;color:#1D2433}
@@ -434,7 +436,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.82.1</div>
+  <div class="t-ver" id="tVer">v0.83.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -634,6 +636,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="sTut" data-i18n="sTut">Replay the tutorial</button>
     <button id="newsBtn">📣 <span id="newsLbl">What's new</span><span class="badge" id="newsDot" hidden>!</span></button>
     <button id="sMode">Mode: Competitive</button>
+    <button id="sOnb">🎓 Orientation · Part 1</button>
     <button id="sCode">🔑 Enter a code</button>
     <button id="sPrest" hidden>⭐ Rebuild</button>
     <button id="sWorlds" hidden>⭐ Levels</button>
@@ -666,7 +669,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.82.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.83.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5603,7 +5606,7 @@ const pad=id=>PADS.find(p=>p.id===id)||freePad(id);
    Any wind/solar/river plant can be moved for 20% of its price. ---- */
 const FREE_BASE={turbine:800,solar:1000,bigwind:16000,solarfarm:80000,river:20000,offshore:250000};
 function freePad(id){if(!S||!S.plants)return undefined;const q=S.plants.find(p=>p.id===id&&p.free);return q?{id:q.id,kind:'build',type:q.type,cost:q.cost,x:q.x,y:q.y}:undefined;}
-function freeCost(t){const n=S.plants.filter(p=>p.free&&p.type===t).length;return Math.round(FREE_BASE[t]*Math.pow(1.25,n)*perk('build'));}
+function freeCost(t){const n=S.plants.filter(p=>p.free&&!p.prog&&p.type===t).length;return Math.round(FREE_BASE[t]*Math.pow(1.25,n)*perk('build'));}
 function freeSpot(t){if(placing&&placing.mode==='sugg')return placing.list[placing.i];
   if(isBld(t)){const f=S.face||0;return {x:Math.round(S.px+Math.sin(f)*120),y:Math.round(S.py+Math.cos(f)*120)};}
   if(isDeco(t)){const f=S.face||0,d=t==='road'?40:t==='axe'?70:45;let x=S.px+Math.sin(f)*d,y=S.py+Math.cos(f)*d;
@@ -5837,7 +5840,7 @@ function placeTick(){
   g.rotation.y=placing.t==='river'?riverAt(sp.y).ang:0;
   if(g.userData.c!==st.c)paintGhost(g,st.c);
   const P=placing.mode==='move'||placing.moveId?S.plants.find(q=>q.id===(placing.moveId||placing.id)):null;
-  const cost=P?moveCost(P):placing.t==='axe'?DECO.axe.c*Math.max(1,treesNear(sp.x,sp.y,AXE_R).length):isDeco(placing.t)?DECO[placing.t].c:isBld(placing.t)?Math.round(BLD[placing.t].c*perk('build')):freeCost(placing.t),poor=S.cash<cost;
+  const cost=P?moveCost(P):placing.t==='axe'?DECO.axe.c*Math.max(1,treesNear(sp.x,sp.y,AXE_R).length):isDeco(placing.t)?DECO[placing.t].c:isBld(placing.t)?Math.round(BLD[placing.t].c*perk('build')):placing.prog?0:freeCost(placing.t),poor=S.cash<cost;
   $('pbText').textContent=(placing.mode==='sugg'?`📍 ${placing.i+1}/${placing.list.length} · `:'')+(st.why?'⛔ '+st.why:(st.c==='yellow'?L(`🟡 Allowed, but output ${Math.round(st.q*100)}% here.`,`🟡 Olur ama burada verim %${Math.round(st.q*100)}.`):L(`🟢 Good spot · output ${Math.round(st.q*100)}%`,`🟢 İyi yer · verim %${Math.round(st.q*100)}`)))+(poor?' · '+L('not enough money','para yetmiyor'):'');
   const b=$('pbGo');b.disabled=!!st.why||poor;b.textContent=(placing.mode==='move'?L('Move','Taşı'):placing.moveId?L('Move here','Buraya taşı'):placing.mode==='sugg'?L('Build here','Buraya kur'):placing.t==='road'?L('Draw road','Yolu çiz'):placing.t==='axe'?L('Cut','Kes'):L('Build','Kur'))+(placing.t==='road'?'':' ₵'+fmt(cost));
   if(placing.t==='road'){const n=computeRoadRun().length;b.disabled=!n||S.cash<DECO.road.c;$('pbText').textContent=n?L(`🛣️ ${n} pieces fit this way. Draw them first.`,`🛣️ Bu yöne ${n} parça sığıyor. Önce çiz.`):'⛔ '+L('No room for a road this way.','Bu yönde yola yer yok.');}
@@ -5860,12 +5863,13 @@ function confirmPlace(){
     if(plantObjs[p.id]){plantObjs[p.id].parent&&scene.remove(plantObjs[p.id]);delete plantObjs[p.id];}
     sfx.build();logLedger('move',-c,codeOf(p.id));toast(L(`↔️ ${codeOf(p.id)} moved for ₵${fmt(c)}.`,`↔️ ${codeOf(p.id)} ₵${fmt(c)} karşılığında taşındı.`),'good');
     try{trackOnce('plant-move');}catch(e){}
-  }else{const c=freeCost(t);if(S.cash<c)return;
+  }else{const pg=placing.prog||null,c=pg?0:freeCost(t);if(S.cash<c)return;
     S.cash-=c;S.freeN=(S.freeN||0)+1;
-    const np={id:'fb'+S.freeN,type:t,x:sp.x,y:sp.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1,free:true,cost:c,code:freeCode(t),q:st.q};
+    const np={id:'fb'+S.freeN,type:t,x:sp.x,y:sp.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1,free:true,cost:c,code:pg?pg.key:freeCode(t),q:st.q};
+    if(pg){np.prog=pg.key;(S.progPlants=S.progPlants||{})[pg.pid+':'+pg.key]=np.id;setTimeout(()=>progAfter(pg,np),0);}
     S.plants.push(np);pops[np.id]=1;clearFor(t,sp.x,sp.y);sfx.build();logLedger('build',-c,np.code);
     toast(L(`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} built for ₵${fmt(c)}.`,`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} ₵${fmt(c)} karşılığında kuruldu.`),'good');
-    if(PLANT_TYPES[t].kind==='wind')setTimeout(()=>askBrand(np),900);
+    if(PLANT_TYPES[t].kind==='wind'&&!pg)setTimeout(()=>askBrand(np),900);
     try{trackOnce('free-build-'+t);}catch(e){}}
   stopPlacing();camAim=null;save();
 }
@@ -8664,6 +8668,12 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.83.0',t:['Orientation, in two parts','Oryantasyon, iki bölüm'],l:[
+  ['Orientation Part 1 — the electricity business — is open to everyone now: Settings › Game › 🎓. No code needed.','Oryantasyon Bölüm 1 — elektrik işi — artık herkese açık: Ayarlar › Oyun › 🎓. Kod gerekmez.'],
+  ['A company can have its own Part 2: its plants built in the order it built them, told by Ela, with a short knowledge check. It opens only with that company’s code.','Bir şirketin kendi Bölüm 2’si olabilir: santralleri, şirketin kurduğu sırayla kurulur, Ela anlatır, sonunda kısa bir bilgi kontrolü var. Sadece o şirketin koduyla açılır.'],
+  ['Company material is stored encrypted inside the game and the code is the key. Without the code there is nothing to read.','Şirket içeriği oyunun içinde şifreli durur, kod anahtarıdır. Kod olmadan okunacak bir şey yok.'],
+  ['The result code now includes the knowledge check score. The game still sends nothing anywhere.','Sonuç kodu artık bilgi kontrolü puanını da içeriyor. Oyun hâlâ hiçbir yere bir şey göndermiyor.'],
+ ]},
  {v:'0.82.1',t:['Coast plain square','Kıyı ovası karesi'],l:[
   ['The coast plain square no longer waits for the third solar farm pad. With free building you may never use those pads; opening the solar desert is enough now.','Kıyı ovası karesi artık üçüncü güneş tarlası karesini beklemiyor. Serbest inşayla o kareleri hiç kullanmayabilirsin; güneş çölünü açmış olmak yeterli.'],
  ]},
@@ -9706,7 +9716,7 @@ function drawEarnChart(cv,pts){
 
 /* ======================= SETTINGS ======================= */
 function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
-  $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
+  $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');$('sOnb').textContent='🎓 '+(S.prog?tt((PROGRAMS.find(x=>x.id===S.prog)||{name:['Program','Program']}).name):L('Orientation · Part 1','Oryantasyon · Bölüm 1'));try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   snd:['setSnd',['🔊','Sound','Ses'],['Effects and music, with sliders','Efektler ve müzik, kaydırıcılı']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Shadows, flashes, panel size','Gölge, parlama, panel boyutu']],
@@ -9906,7 +9916,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{const mx=worldM
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.82.1';
+const GAME_VERSION='0.83.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10120,6 +10130,52 @@ const PROGRAMS=[
     w:['An instruction nobody wrote down is an instruction nobody follows. Same here, same at work.','Yazılmayan talimat uygulanmaz. Burada da, işte de.'],
     ok:()=>(S.stats.planned||0)>0}]}
 ];
+/* v0.83 company packs. A company's own material never ships readable: it sits here as
+   AES-GCM ciphertext and the access code is the key (PBKDF2). No code, no text — not in
+   the menu, not in the source. A pack builds on a public program ("inc") and adds a second
+   part: plants to build in the order the company built them, Ela's story, a short check. */
+const PACKS=[{s:'K/VXbJpXOK0osdxGx/yUJA==',iv:'TfVAwawL3FDu6EFE',d:'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'}];
+const PACK_KEY=SAVE_KEY+'_pk';
+async function packOpen(code,P){
+  const t=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,''),b=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+  const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(t),'PBKDF2',false,['deriveKey']);
+  const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b(P.s),iterations:150000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b(P.iv)},k,b(P.d));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function packHydrate(J){
+  const B=PROGRAMS.find(x=>x.id===J.inc)||{lessons:[],steps:[],gloss:[],cash:0},id=J.id,f=(o,k)=>!!((S[o]||{})[id+':'+k]);
+  const st=(J.steps||[]).map(s=>Object.assign({},s,{ok:s.k==='build'?()=>f('progPlants',s.key):s.k==='quiz'?()=>!!(S.progQuiz||{})[id]:()=>f('progSeen',s.key)}));
+  return {id,icon:J.icon,name:J.name,sub:J.sub,cash:B.cash,pack:1,lessons:B.lessons,c2:J.intro||[],ch:J.ch,
+    more:(J.intro||[]).concat(...(J.steps||[]).map(s=>s.say||[])),gloss:(B.gloss||[]).concat(J.gloss||[]),steps:B.steps.concat(st),ch1n:B.steps.length};
+}
+function packAdd(J){let p=PROGRAMS.find(x=>x.id===J.id);if(!p){p=packHydrate(J);PROGRAMS.push(p);}return p;}
+function packStore(J){try{const a=JSON.parse(localStorage.getItem(PACK_KEY)||'[]').filter(x=>x.id!==J.id);a.push(J);localStorage.setItem(PACK_KEY,JSON.stringify(a));}catch(e){}}
+try{for(const J of JSON.parse(localStorage.getItem(PACK_KEY)||'[]'))packAdd(J);}catch(e){}   // opened once on this phone: stays open
+function progPlaceOk(p,i){for(let j=0;j<i;j++)if(!progOk(p,j))return false;return true;}
+function progAct(p,i){
+  const s=p.steps[i];if(!s||!s.k)return;$('mProgram').classList.remove('on');
+  if(s.k==='build'){showSuggest(s.type);if(!placing)return;placing.prog={pid:p.id,key:s.key,i};
+    toast(L('Pick a spot and build it. The company pays for this one.','Bir yer seç ve kur. Bu santralin parası şirketten.'),'');return;}
+  if(s.k==='read'){elaSay((s.say||[]).map(b=>({b})),()=>{(S.progSeen=S.progSeen||{})[p.id+':'+s.key]=1;save();progCheck();pgTab='steps';openProgram();});return;}
+  if(s.k==='quiz')quizRun(p,s,0,0);
+}
+function progAfter(pg,np){
+  const p=PROGRAMS.find(x=>x.id===pg.pid),s=p&&p.steps[pg.i];if(!s)return;
+  const go=()=>{if(tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,600);return;}
+    elaSay((s.after||[]).map(b=>({b,cam:()=>({x:np.x,y:np.y})})),()=>{progCheck();pgTab='steps';if(!(S.progDone||{})[p.id])openProgram();});};
+  setTimeout(go,900);
+}
+function quizRun(p,s,i,sc){
+  const Q=(s.q||[])[i];
+  if(!Q){(S.progQuiz=S.progQuiz||{})[p.id]={s:sc,n:s.q.length};save();
+    toast(L(`📝 ${sc}/${s.q.length} correct`,`📝 ${sc}/${s.q.length} doğru`),'big');progCheck();pgTab='steps';openProgram();return;}
+  const ord=Q.a.map((a,j)=>j);for(let j=ord.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[ord[j],ord[r]]=[ord[r],ord[j]];}
+  openCard({id:'quiz',icon:'📝',ok:()=>false,safe:1,title:[`Question ${i+1} of ${s.q.length}`,`Soru ${i+1} / ${s.q.length}`],text:Q.q,
+    opts:()=>ord.map(j=>({t:Q.a[j],d:['',''],cost:0,go:()=>{const ok=j===Q.c;
+      toast(ok?L('✅ Correct','✅ Doğru'):L('❌ The answer: ','❌ Doğrusu: ')+tt(Q.a[Q.c]),ok?'good':'');
+      setTimeout(()=>quizRun(p,s,i+1,sc+(ok?1:0)),700);}}))});
+}
 function syncCaps(){
   const C=[['cap-prog','Program','Program'],['cap-grid','Lines','Hatlar'],['cap-rep','Report','Rapor'],
            ['cap-info','Tips','Taktik'],['cap-mnt','Upkeep','Bakım'],['cap-rank','Ladder','Sıralama'],['cap-build','Build','İnşa'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
@@ -10145,8 +10201,12 @@ function progCheck(){
   let n=0;for(let i=0;i<p.steps.length;i++)if(progOk(p,i))n++;
   if(n>before){try{sfx.goal();}catch(e){}
     toast(`🎓 ${n}/${p.steps.length} · ${tt(p.steps[n-1].t)}`);}
+  if(p.ch1n&&(p.c2||[]).length){S.progSeen=S.progSeen||{};const k=p.id+':c2';
+    if(!S.progSeen[k]&&progPlaceOk(p,p.ch1n)){S.progSeen[k]=1;save();
+      const go=()=>{if(!playing||tutOpen||cardOpen||placing||document.querySelector('.modal.on')){setTimeout(go,800);return;}
+        elaSay(p.c2.map(b=>({b})),()=>{pgTab='steps';openProgram();});};setTimeout(go,1500);}}
   if(n>=p.steps.length){
-    S.progDone[p.id]={day:S.day,code:progCode(p.id)};save();syncProgBtn();pgTab='steps';
+    {const qz=(S.progQuiz||{})[p.id];S.progDone[p.id]={day:S.day,code:progCode(p.id+(qz?'|q'+qz.s:'')),q:qz||null};}save();syncProgBtn();pgTab='steps';
     try{trackOnce('prog-done-'+p.id);}catch(e){}
     openProgram();
   }
@@ -10155,10 +10215,14 @@ let pgTab='learn';
 function pgStepsHtml(p){
   const done=(S.progDone||{})[p.id];
   let html=p.steps.map((st,i)=>{const ok=progOk(p,i);
-    return `<div class="pgi${ok?' on':''}"><span class="ck">${ok?'✅':'⬜'}</span><span><b>${tt(st.t)}</b><small>${tt(st.w)}</small></span></div>`;}).join('');
+    const hd=p.ch1n&&i===0?`<div class="pgh">${L('Part 1 · The electricity business','Bölüm 1 · Elektrik işi')}</div>`:p.ch1n&&i===p.ch1n?`<div class="pgh">${tt(p.ch||['Part 2','Bölüm 2'])}</div>`:'';
+    const cur=!ok&&st.k&&progPlaceOk(p,i)&&!(p.ch1n&&!(S.progSeen||{})[p.id+':c2']);
+    const btn=cur?`<button class="pgact" data-act="${i}">${st.k==='build'?'🏗️ '+L('Build it — the company pays','Kur — parası şirketten'):st.k==='quiz'?'📝 '+L('Start','Başla'):'▶ '+L('Let Ela tell it','Ela anlatsın')}</button>`:'';
+    return hd+`<div class="pgi${ok?' on':''}"><span class="ck">${ok?'✅':'⬜'}</span><span><b>${tt(st.t)}</b><small>${tt(st.w)}</small>${btn}</span></div>`;}).join('');
   if(done){
     html+=`<div class="pgi on"><span class="ck">🏁</span><span><b>${L('Programme complete','Program tamamlandı')}</b>`
       +`<small>${L('Send this code to whoever gave you the access code. The game sends nothing by itself.','Bu kodu sana erişim kodunu veren kişiye ilet. Oyun kendiliğinden hiçbir şey göndermez.')}</small></span></div>`
+      +(done.q?`<div class="pgh">📝 ${L('Knowledge check','Bilgi kontrolü')}: ${done.q.s}/${done.q.n}</div>`:'')
       +`<div class="pgcode" id="pgCode">${done.code}</div>`
       +`<button class="pgcopy" id="pgCopy">\ud83d\udccb ${L('Copy the code','Kodu kopyala')}</button>`;
   }
@@ -10167,7 +10231,8 @@ function pgStepsHtml(p){
 function pgLearnHtml(p){
   if(!(p.lessons||[]).length)return `<div class="pgl"><p>${L('No briefing in this program.','Bu programda anlatım yok.')}</p></div>`;
   return `<button class="pgreplay" id="pgReplay">▶ ${L('Let Ela tell it again','Ela tekrar anlatsın')}</button>`
-    +p.lessons.map(l=>`<div class="pgl"><b>${tt(l.t)}</b><p>${tt(l.b)}</p></div>`).join('');
+    +p.lessons.map(l=>`<div class="pgl"><b>${tt(l.t)}</b><p>${tt(l.b)}</p></div>`).join('')
+    +((p.more||[]).length?`<div class="pgh">${tt(p.ch||['Part 2','Bölüm 2'])}</div>`+p.more.map(b=>`<div class="pgl"><p>${tt(b)}</p></div>`).join(''):'');
 }
 function pgGlossHtml(p){
   return (p.gloss||[]).map(g=>{const k=Array.isArray(g.k)?tt(g.k):g.k,off=/EV|Elektrikli/.test(k)?' off':'';
@@ -10182,6 +10247,7 @@ function openProgram(){
   $('pgTabs').innerHTML=tabs.map(([k,t])=>`<button data-t="${k}"${pgTab===k?' class="on"':''}>${t}</button>`).join('');
   $('pgTabs').onclick=e=>{const b=e.target.closest('button[data-t]');if(!b)return;pgTab=b.dataset.t;openProgram();};
   $('pgList').innerHTML=pgTab==='steps'?pgStepsHtml(p):pgTab==='gloss'?pgGlossHtml(p):pgLearnHtml(p);
+  $('pgList').onclick=e=>{const b=e.target.closest('button[data-act]');if(b)progAct(p,+b.dataset.act);};
   const rp=$('pgReplay');if(rp)rp.onclick=()=>{$('mProgram').classList.remove('on');elaSay(p.lessons,()=>openProgram());};
   const cb=$('pgCopy');if(cb)cb.onclick=()=>{
     const txt=(($('pgCode')||{}).textContent||'').trim();if(!txt)return;
@@ -10191,7 +10257,7 @@ function openProgram(){
       document.execCommand('copy');ta.remove();done();}catch(e){toast(L('Copy failed — select the code by hand.','Kopyalanamadı — kodu elle seç.'));}};
     try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,fallback);else fallback();}catch(e){fallback();}
   };
-  $('pgList').scrollTop=0;
+  {const L0=$('pgList'),ab=pgTab==='steps'&&L0.querySelector('.pgact');L0.scrollTop=0;if(ab)L0.scrollTop=Math.max(0,ab.closest('.pgi').getBoundingClientRect().top-L0.getBoundingClientRect().top-70);}   // open on the step that is up next
   $('pgQuit').textContent=L('Leave this program','Bu programdan çık');
   $('pgClose').textContent=L('Close','Kapat');
   $('mProgram').classList.add('on');
@@ -10217,10 +10283,12 @@ function startProgram(p){
   $('mSet').classList.remove('on');$('mProgram').classList.remove('on');
   const go=()=>{if(document.querySelector('.modal.on')||tutOpen){setTimeout(go,400);return;}elaSay(p.lessons||[],()=>openProgram());};go();
 }
-$('sCode').onclick=()=>{
+$('sCode').onclick=async()=>{
   const v=prompt(L('Enter your access code','Erişim kodunu gir'));
   if(v===null)return;
-  const p=PROGRAMS.find(x=>x.h===codeHash(v));
+  let p=PROGRAMS.find(x=>x.h&&x.h===codeHash(v));
+  if(!p&&String(v).replace(/[^A-Za-z0-9]/g,'').length>=8&&window.crypto&&crypto.subtle){
+    for(const P of PACKS){try{const J=await packOpen(v,P);packStore(J);p=packAdd(J);break;}catch(e){}}}
   if(!p){toast(L('That code did not work.','Bu kod çalışmadı.'));return;}
   if(S.prog===p.id){openProgram();return;}
   toast(L('Unlocked: ','Açıldı: ')+tt(p.name),'big');
@@ -10234,6 +10302,7 @@ $('progBtn').onclick=()=>{                 // on the title screen this is a way 
   setTimeout(go,500);
 };
 $('progIco').onclick=openProgram;
+$('sOnb').onclick=()=>{$('mSet').classList.remove('on');if(S.prog){openProgram();return;}const p=PROGRAMS.find(x=>x.id==='onb');if(p)startProgram(p);};
 $('pgClose').onclick=()=>$('mProgram').classList.remove('on');
 $('pgQuit').onclick=()=>{S.prog=null;S.progs=[];save();syncProgBtn();$('mProgram').classList.remove('on');};
 
