@@ -256,6 +256,8 @@ body.title #leftCol{visibility:hidden}
 .tut-btns{display:flex;gap:6px}
 .tut-btns button{padding:8px 12px;border-radius:10px;background:#EEF1F6;color:#1D2433;font-weight:800;font-size:13px}
 .tut-btns .pri{background:#1D2433;color:#fff}
+.fnew{position:relative}
+.fnew::after{content:'';position:absolute;top:3px;left:3px;width:10px;height:10px;border-radius:50%;background:#23D18B;box-shadow:0 0 0 2px #fff}
 .tut-hl{animation:tuthl 1s ease-in-out infinite;position:relative;z-index:6}
 @keyframes tuthl{50%{box-shadow:0 0 0 4px #FFD23F,0 3px 0 rgba(0,0,0,.18)}}
 .langbig button{font-size:17px}
@@ -436,7 +438,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.83.0</div>
+  <div class="t-ver" id="tVer">v0.84.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -637,6 +639,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="newsBtn">📣 <span id="newsLbl">What's new</span><span class="badge" id="newsDot" hidden>!</span></button>
     <button id="sMode">Mode: Competitive</button>
     <button id="sOnb">🎓 Orientation · Part 1</button>
+    <button id="sLearn">📚 What you have learned</button>
     <button id="sCode">🔑 Enter a code</button>
     <button id="sPrest" hidden>⭐ Rebuild</button>
     <button id="sWorlds" hidden>⭐ Levels</button>
@@ -669,7 +672,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.83.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.84.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5452,6 +5455,7 @@ const OPENTXT={
   ageing:[['Ageing','Yaşlanma'],['Plants wear out. Repower them, rebuild when the ceiling drops too low.','Santraller yıpranır. Yenile, tavan çok düşünce söküp yeniden kur.']],
   skills:[['Skills and wages','Yetenek ve ücret'],['Helpers have star ratings and cost a daily wage.','Yardımcıların yıldızları var ve günlük ücret alıyorlar.']],
   grid:[['Grid link','Şebeke bağlantısı'],['The battery can sell by itself at the peak.','Batarya zirvede kendi başına satabilir.']],
+  gridline:[['Grid lines','Şebeke hatları'],['A line carries part of a plant’s output by itself.','Hat, santralin üretiminin bir kısmını kendi taşır.']],
   nuclear:[['Nuclear','Nükleer'],['A plant that never sleeps, across the river on the east bank. Open the bank first. It sells straight to the grid.','Nehrin karşısında, doğu kıyısında hiç uyumayan bir santral. Önce kıyıyı aç. Doğrudan şebekeye satar.']],
 };
 const LEVELS=[null,
@@ -8221,7 +8225,7 @@ function showTut(){
   $('tutText').textContent=tt(st.b||st.t);   // a programme line carries its body in .b
   $('tutStep').textContent=`${tutI+1}/${seq.length}`;
   $('tutSkip').textContent=L('Skip','Geç');$('tutBack').textContent=L('Back','Geri');$('tutBack').hidden=tutI===0;
-  $('tutNext').textContent=tutI===seq.length-1?L("Let's play!",'Hadi başlayalım!'):L('Next','İleri');
+  $('tutNext').textContent=tutI===seq.length-1?(seq.okLbl?tt(seq.okLbl):L("Let's play!",'Hadi başlayalım!')):L('Next','İleri');
   if(st.hl){const e=document.querySelector(st.hl);if(e&&!e.hidden)e.classList.add('tut-hl');}
 }
 function endTutorial(done){
@@ -8486,11 +8490,67 @@ function openLevel(){
   $('lvlCur').textContent=L('Now: ','Şu an: ')+now.join(' · ');
   $('mLvl').classList.add('on');trackOnce('level-panel');
 }
+/* v0.84 one thing at a time. When a feature opens, Ela explains it in two lines and points at
+   its button; at most one every 3 minutes, never over a card, a window or placement. What was
+   already open in an older save is introduced the same way, from the basics up. Every
+   explanation can be heard again from Settings › Game › 📚. */
+const FEAT=[
+ {k:'price',hl:'#mktBox',l:[["The box up top is the price. It moves all day: Cheap, Normal, Peak.","Üstteki kutu fiyat. Gün boyu oynar: Ucuz, Normal, Zirve."],["Carry energy to the city when it says Peak. The same cell earns much more.","Zirve yazınca enerjiyi şehre taşı. Aynı hücre çok daha fazla kazandırır."]]},
+ {k:'build',hl:'#buildBtn',l:[["You can build now. Stand on a blue square and it fills a little at a time.","Artık inşaat yapabilirsin. Mavi karenin üstünde dur, azar azar dolar."],["The 🏗️ button builds anywhere you like, and shows the best spots.","🏗️ butonu istediğin yere kurar ve en iyi yerleri gösterir."]]},
+ {k:'codes',l:[["Every plant has a code: W1, S1, B1… It is written under it on the map.","Her santralin bir kodu var: W1, S1, B1… Haritada altında yazıyor."],["Reports, repairs and crew orders all use these codes.","Raporlar, tamirler ve ekip emirleri hep bu kodları kullanır."]]},
+ {k:'upgrades',hl:'#infoBtn',l:[["At HQ there are two new squares: backpack (carry more) and boots (walk faster).","Merkezde iki yeni kare var: sırt çantası (daha çok taşı) ve bot (daha hızlı yürü)."],["The ℹ️ button collects tips that make you money.","ℹ️ butonu para kazandıran taktikleri toplar."]]},
+ {k:'battery',cam:()=>pad('bat'),l:[["The battery keeps energy for later. It makes nothing by itself.","Batarya enerjiyi sonraya saklar. Kendisi hiçbir şey üretmez."],["Drop cells on the green square when it is Cheap, take them from the red one at Peak.","Ucuzken yeşil kareye bırak, Zirvede kırmızı kareden al."]]},
+ {k:'crew',hl:'#crewBtn',l:[["You can hire helpers at HQ. They carry for you.","Merkezden yardımcı alabilirsin. Senin yerine taşırlar."],["The 👷 button tells them what to do and when to sell.","👷 butonu onlara ne yapacaklarını ve ne zaman satacaklarını söyler."]]},
+ {k:'markets',hl:'#mktBox',l:[["There is more than one buyer now. Towns and depots pay different prices.","Artık tek alıcı yok. Kasabalar ve depolar farklı fiyat öder."],["Tap the price box to compare every market side by side.","Fiyat kutusuna dokun, tüm pazarları yan yana karşılaştır."]]},
+ {k:'cards',l:[["From now on the market has news: good days, bad days, and decisions.","Bundan sonra piyasanın haberleri var: iyi günler, kötü günler ve kararlar."],["A card pauses the game until you pick. Read the small line under each choice.","Kart, sen seçene kadar oyunu durdurur. Her seçeneğin altındaki küçük satırı oku."]]},
+ {k:'roles',hl:'#repBtn',l:[["Helpers can take roles now: one stores in the battery, one chases the peak.","Yardımcılar artık rol alabilir: biri bataryaya depolar, biri zirveyi kovalar."],["The 📊 report shows where every coin came from and where it went.","📊 rapor her kuruşun nereden gelip nereye gittiğini gösterir."]]},
+ {k:'regions',l:[["The map grows: far fields behind gates. Each gate is a square you pay for.","Harita büyüyor: kapıların ardında uzak sahalar. Her kapı ödediğin bir kare."],["New areas bring town markets and depots closer to your plants.","Yeni bölgeler kasaba pazarlarını ve depoları santrallerine yaklaştırır."]]},
+ {k:'gridline',hl:'#gridBtn',l:[["A grid line carries part of a plant's output by itself — no walking.","Şebeke hattı santralin üretiminin bir kısmını kendi taşır — yürümeden."],["The 🔌 button lists your lines. A worn line carries less; service it at the plant.","🔌 butonu hatlarını listeler. Yıpranan hat daha az taşır; santralde bakımını yap."]]},
+ {k:'repair',hl:'#mntBtn',l:[["Plants can break now. A broken plant makes nothing until it is fixed.","Santraller artık bozulabilir. Bozuk santral tamir edilene kadar hiçbir şey üretmez."],["The 🧰 button lists every job with its price. Go walks you there.","🧰 butonu her işi fiyatıyla listeler. Git'e basınca seni oraya yürütür."]]},
+ {k:'fire',hl:'#mntBtn',l:[["Lightning and wear can start a fire. A burning plant stops and gets damaged.","Yıldırım ve yıpranma yangın çıkarabilir. Yanan santral durur ve hasar alır."],["Stand next to it to put it out, or give a helper the Safety role.","Söndürmek için yanında dur ya da bir yardımcıya Afet rolü ver."]]},
+ {k:'shifts',hl:'#crewBtn',l:[["Your crew now works three shifts. At any hour only a third of them is on duty.","Ekibin artık üç vardiya çalışıyor. Her saatte sadece üçte biri görevde."],["Plan the evening peak: put your best people on the shift that covers it.","Akşam zirvesini planla: en iyi insanlarını onu kapsayan vardiyaya koy."]]},
+ {k:'ageing',hl:'#mntBtn',l:[["Plants get old. Output slowly drops as they age.","Santraller yaşlanır. Yaşlandıkça üretim yavaşça düşer."],["Repower in 🧰 to get it back. When even that is not enough, rebuild.","🧰'dan yenileyerek geri al. O da yetmezse söküp yeniden kur."]]},
+ {k:'skills',hl:'#crewBtn',l:[["Helpers have stars now, and every one draws a daily wage.","Yardımcıların artık yıldızları var ve her biri günlük ücret alıyor."],["More stars work faster but cost more. A big crew doing nothing is money burning.","Çok yıldızlı daha hızlı çalışır ama pahalıdır. Boşta duran kalabalık ekip para yakar."]]},
+ {k:'grid',hl:'#gridBtn',l:[["The battery can now sell straight to the grid at the peak, by itself.","Batarya artık zirvede kendi başına doğrudan şebekeye satabilir."],["You can also set part of it aside as a reserve band and get paid every hour for being ready.","Bir kısmını rezerv bandına da ayırabilirsin; hazır beklediğin her saat için para alırsın."]]},
+ {k:'nuclear',cam:()=>NUKE,l:[["Across the river, on the east bank, there is room for a nuclear plant.","Nehrin karşısında, doğu kıyısında nükleer santral için yer var."],["It never sleeps and sells straight to the grid — but a SCRAM can stop it at any hour.","Hiç uyumaz ve doğrudan şebekeye satar — ama bir SCRAM onu her an durdurabilir."]]},
+];
+const FEAT_GAP=180000;let featAt=Date.now()-FEAT_GAP+25000;   // first one ~25 s into a session
+function featOpen(f){try{return has(f.k);}catch(e){return false;}}
+function featSay(f,after){
+  const seq=f.l.map((b,i)=>({b,hl:i===f.l.length-1?f.hl:null,cam:f.cam||null}));seq.okLbl=['Got it','Anladım'];elaSay(seq,after||null);
+}
+function featTick(){
+  if(!playing||tutOpen||cardOpen||placing||document.body.classList.contains('title')||document.querySelector('.modal.on'))return;
+  if(Date.now()-featAt<FEAT_GAP)return;
+  S.feat=S.feat||{};const f=FEAT.find(x=>!S.feat[x.k]&&featOpen(x));if(!f)return;
+  S.feat[f.k]=1;featAt=Date.now();save();
+  if(f.hl){(S.featNew=S.featNew||{})[f.hl]=1;}
+  featSay(f,()=>featDots());try{trackOnce('feat-'+f.k);}catch(e){}
+}
+function featDots(){
+  const on=S.featNew||{};document.querySelectorAll('.fnew').forEach(e=>{if(!on['#'+e.id])e.classList.remove('fnew');});
+  for(const sel in on){const e=document.querySelector(sel);if(e)e.classList.add('fnew');}
+}
+document.addEventListener('pointerdown',e=>{const on=S&&S.featNew;if(!on)return;
+  for(const sel in on){const el=document.querySelector(sel);if(el&&el.contains(e.target)){delete on[sel];el.classList.remove('fnew');}}},true);
+setInterval(()=>{try{featTick();}catch(e){}},2000);
+function openLearned(){
+  const list=FEAT.filter(f=>(S.feat||{})[f.k]);
+  $('stTitle').textContent=L('What you have learned','Öğrendiklerin');
+  $('stSub').textContent=L('Tap one and Ela tells it again.','Birine dokun, Ela tekrar anlatsın.');
+  $('stOpts').innerHTML=(list.length?list.map(f=>{const o=OPENTXT[f.k]||[[f.k,f.k]];
+    return `<button data-f="${f.k}"><b>${tt(o[0])}</b><small>${tt(f.l[0])}</small></button>`;}).join('')
+    :`<button data-f=""><b>${L('Nothing yet','Henüz yok')}</b><small>${L('Ela explains each new thing when it opens.','Ela her yeni şeyi açıldığında anlatır.')}</small></button>`)
+    +`<button data-f=""><b>${L('Close','Kapat')}</b><small>${L('Back to the game.','Oyuna dön.')}</small></button>`;
+  $('stOpts').onclick=e=>{const b=e.target.closest('button[data-f]');if(!b)return;$('mStart').classList.remove('on');
+    const f=FEAT.find(x=>x.k===b.dataset.f);if(f)featSay(f);};
+  $('mStart').classList.add('on');
+}
 function doLevelUp(auto){
   if(!canLevel())return;
   S.lvl=lvl()+1;save();sfx.goal();
   const n=LEVELS[lvl()],o=n.open&&OPENTXT[n.open];
-  if(o&&!(HARD_SEV[n.open]&&!has(n.open))){toast('🔓 '+tt(o[0]),'big');toast(tt(o[1]),'good');}
+  if(o&&!(HARD_SEV[n.open]&&!has(n.open))){toast('🔓 '+tt(o[0]),'big');if(Date.now()-featAt>45000)featAt=Date.now()-FEAT_GAP+4000;}   // v0.84: Ela explains it in a moment
   trackOnce('level-up-'+lvl());
   // v0.82: growth is quiet — no level panel
 }
@@ -8668,6 +8728,12 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.84.0',t:['One thing at a time','Her şey sırayla'],l:[
+  ['When something new opens, Ela now explains it in two short lines and points at its button — one at a time, at most one every three minutes, never over a card or a window.','Yeni bir şey açıldığında Ela artık onu iki kısa cümleyle anlatıyor ve butonunu gösteriyor — tek tek, en fazla üç dakikada bir, asla bir kartın ya da pencerenin üstüne değil.'],
+  ['A small green dot stays on that button until you tap it once.','O butonun üstünde, bir kez dokunana kadar küçük yeşil bir nokta kalıyor.'],
+  ['Already playing? Everything you have opened so far is introduced the same way, starting from the basics. Skip any of them if you know it.','Zaten oynuyor musun? Şimdiye kadar açtığın her şey aynı şekilde, en temelden başlayarak tanıtılıyor. Bildiklerini Geç ile atla.'],
+  ['Settings › Game › 📚 What you have learned: every explanation, ready to hear again.','Ayarlar › Oyun › 📚 Öğrendiklerin: her anlatım, tekrar dinlemeye hazır.'],
+ ]},
  {v:'0.83.0',t:['Orientation, in two parts','Oryantasyon, iki bölüm'],l:[
   ['Orientation Part 1 — the electricity business — is open to everyone now: Settings › Game › 🎓. No code needed.','Oryantasyon Bölüm 1 — elektrik işi — artık herkese açık: Ayarlar › Oyun › 🎓. Kod gerekmez.'],
   ['A company can have its own Part 2: its plants built in the order it built them, told by Ela, with a short knowledge check. It opens only with that company’s code.','Bir şirketin kendi Bölüm 2’si olabilir: santralleri, şirketin kurduğu sırayla kurulur, Ela anlatır, sonunda kısa bir bilgi kontrolü var. Sadece o şirketin koduyla açılır.'],
@@ -9716,7 +9782,7 @@ function drawEarnChart(cv,pts){
 
 /* ======================= SETTINGS ======================= */
 function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
-  $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');$('sOnb').textContent='🎓 '+(S.prog?tt((PROGRAMS.find(x=>x.id===S.prog)||{name:['Program','Program']}).name):L('Orientation · Part 1','Oryantasyon · Bölüm 1'));try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
+  $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');$('sLearn').textContent='📚 '+L('What you have learned','Öğrendiklerin');$('sOnb').textContent='🎓 '+(S.prog?tt((PROGRAMS.find(x=>x.id===S.prog)||{name:['Program','Program']}).name):L('Orientation · Part 1','Oryantasyon · Bölüm 1'));try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   snd:['setSnd',['🔊','Sound','Ses'],['Effects and music, with sliders','Efektler ve müzik, kaydırıcılı']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Shadows, flashes, panel size','Gölge, parlama, panel boyutu']],
@@ -9916,7 +9982,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{const mx=worldM
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.83.0';
+const GAME_VERSION='0.84.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10302,6 +10368,7 @@ $('progBtn').onclick=()=>{                 // on the title screen this is a way 
   setTimeout(go,500);
 };
 $('progIco').onclick=openProgram;
+$('sLearn').onclick=()=>{$('mSet').classList.remove('on');openLearned();};
 $('sOnb').onclick=()=>{$('mSet').classList.remove('on');if(S.prog){openProgram();return;}const p=PROGRAMS.find(x=>x.id==='onb');if(p)startProgram(p);};
 $('pgClose').onclick=()=>$('mProgram').classList.remove('on');
 $('pgQuit').onclick=()=>{S.prog=null;S.progs=[];save();syncProgBtn();$('mProgram').classList.remove('on');};
