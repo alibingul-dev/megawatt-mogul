@@ -439,7 +439,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.86.1</div>
+  <div class="t-ver" id="tVer">v0.86.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -673,7 +673,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.86.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.86.3 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5456,6 +5456,7 @@ const OPENTXT={
   ageing:[['Ageing','Yaşlanma'],['Plants wear out. Repower them, rebuild when the ceiling drops too low.','Santraller yıpranır. Yenile, tavan çok düşünce söküp yeniden kur.']],
   skills:[['Skills and wages','Yetenek ve ücret'],['Helpers have star ratings and cost a daily wage.','Yardımcıların yıldızları var ve günlük ücret alıyorlar.']],
   grid:[['Grid link','Şebeke bağlantısı'],['The battery can sell by itself at the peak.','Batarya zirvede kendi başına satabilir.']],
+  report:[['Finance report','Finans raporu'],['Every coin and where it came from.','Her kuruş ve nereden geldiği.']],
   svcplan:[['Maintenance plan','Bakım planı'],['Service each plant at cheap hours before it breaks.','Her santrale bozulmadan, ucuz saatlerde bakım yap.']],
   river:[['Run-of-river','Akarsu'],['Plants in the river that work day and night.','Nehirde gece gündüz çalışan santraller.']],
   big:[['Big plants','Büyük santraller'],['Big turbines and solar farms.','Büyük türbinler ve güneş tarlaları.']],
@@ -5507,7 +5508,7 @@ function cozy(){return S.mode==='cozy';}
    the player still decides when to go. Worlds from before the ladder live on as "Classic". */
 const G_=(t,v,n)=>({t,v,n});
 const SEV=[null,
- {n:['Basics','Temel'],k:['build','codes','upgrades','tips','freebuild'],w:['A fixed price. You build, you carry, you sell.','Sabit fiyat. Kendin kurarsın, taşırsın, satarsın.'],
+ {n:['Basics','Temel'],k:['build','codes','upgrades','tips','freebuild','report'],w:['A fixed price. You build, you carry, you sell.','Sabit fiyat. Kendin kurarsın, taşırsın, satarsın.'],
   ela:[["Welcome to level 1. Here the price is fixed: every cell pays the same at any hour.","Seviye 1'e hoş geldin. Burada fiyat sabit: her hücre her saatte aynı parayı eder."],["Only wind turbines and solar panels. Build, carry to the city, sell — and learn the map.","Sadece rüzgâr türbini ve güneş paneli var. Kur, şehre taşı, sat — haritayı öğren."]],
   goal:G_(['Sell 30 cells','30 hücre sat'],()=>S.soldCells||0,30)},
  {n:['Market','Piyasa'],k:['price','battery'],w:['The price moves through the day, and the battery.','Fiyat gün içinde oynar; bir de batarya.'],
@@ -5516,7 +5517,7 @@ const SEV=[null,
  {n:['Crew','Ekip'],k:['crew'],w:['Helpers who carry for you, around the clock.','Senin yerine 7/24 taşıyan yardımcılar.'],
   ela:[["You are not alone any more: helpers work day and night. No shifts, no wages yet.","Artık yalnız değilsin: yardımcılar gece gündüz çalışır. Henüz vardiya da maaş da yok."]],
   goal:G_(['Have 3 helpers','3 yardımcın olsun'],()=>S.up.helper||0,3)},
- {n:['Breakdowns','Arızalar'],k:['repair'],w:['Rare, light breakdowns.','Seyrek, hafif arızalar.'],
+ {n:['Breakdowns','Arızalar'],k:['repair','report2'],w:['Rare, light breakdowns.','Seyrek, hafif arızalar.'],
   ela:[["Plants can break now — rarely, and only lightly. A broken plant makes nothing until it is fixed.","Santraller artık bozulabilir — seyrek ve hafif. Bozuk santral tamir edilene kadar üretmez."]],
   goal:G_(['Fix 3 breakdowns','3 arıza tamir et'],()=>S.stats.fixN||0,3)},
  {n:['News','Haberler'],k:['cards'],w:['Market news and decision cards.','Piyasa haberleri ve karar kartları.'],
@@ -5525,14 +5526,14 @@ const SEV=[null,
  {n:['River','Akarsu'],k:['river'],w:['Run-of-river plants.','Akarsu santralleri.'],
   ela:[["The river can work for you now: run-of-river plants produce day and night, as much as the water allows.","Nehir artık senin için çalışabilir: akarsu santralleri gece gündüz, suyun izin verdiği kadar üretir."]],
   goal:G_(['Build a run-of-river plant','Bir akarsu santrali kur'],()=>S.plants.filter(p=>p.type==='river').length,1)},
- {n:['Shifts','Vardiya'],k:['shifts'],w:['Three shifts: only a third of the crew at any hour.','Üç vardiya: her saatte ekibin üçte biri.'],
+ {n:['Shifts','Vardiya'],k:['shifts','report3'],w:['Three shifts: only a third of the crew at any hour.','Üç vardiya: her saatte ekibin üçte biri.'],
   ela:[["Your crew works three shifts now. At any hour only a third of them is on duty.","Ekibin artık üç vardiya çalışıyor. Her saatte sadece üçte biri görevde."]],
   goal:G_(['Have 6 helpers','6 yardımcın olsun'],()=>S.up.helper||0,6)},
  {n:['Regions','Bölgeler'],k:['markets','regions'],w:['Far fields, town markets and depots.','Uzak sahalar, kasaba pazarları ve depolar.'],
   ela:[["The map opens up: gates to far fields, towns that buy energy, depots that store it.","Harita açılıyor: uzak sahalara kapılar, enerji alan kasabalar, saklayan depolar."]],
   goal:G_(['Open a new region','Yeni bir bölge aç'],()=>['ridge','desert','coast'].filter(k=>S.regions[k]).length,1)},
- {n:['Roles','Roller'],k:['roles','report','report2','report3'],w:['Helper roles and the finance report.','Yardımcı rolleri ve finans raporu.'],
-  ela:[["Helpers can take roles now, and the report shows where every coin came from.","Yardımcılar artık rol alabilir; rapor her kuruşun nereden geldiğini gösterir."]],
+ {n:['Roles','Roller'],k:['roles'],w:['Helper roles: store, chase the peak.','Yardımcı rolleri: depola, zirveyi kovala.'],
+  ela:[["Helpers can take roles now: one fills the battery, another waits for the peak.","Yardımcılar artık rol alabilir: biri bataryayı doldurur, biri zirveyi bekler."]],
   goal:G_(['Give 2 helpers a role','2 yardımcıya rol ver'],()=>(S.crew.roles||[]).filter(r=>r&&r!=='sell').length,2)},
  {n:['Big plants','Büyük santraller'],k:['big'],w:['Big turbines and solar farms.','Büyük türbinler ve güneş tarlaları.'],
   ela:[["Big plants now: a big turbine or a solar farm makes several times what a small one does.","Artık büyük santraller var: büyük türbin ya da güneş tarlası küçüğünün birkaç katı üretir."]],
@@ -6299,7 +6300,7 @@ function padVisible(p){
   if(p.kind==='gate'&&p.region==='east'&&!has('nuclear'))return false;
   if(p.kind==='build'&&built(p.id))return false;
   if(p.kind==='gate'&&S.regions[p.region])return false;
-  if(p.req&&!(built(p.req)||S.regions[p.req]||(pad(p.req)&&pad(p.req).kind==='upg'&&S.up[pad(p.req).key]>0)))return false;
+  if(p.req&&!(p.id==='helper'&&!inClassic())&&!(built(p.req)||S.regions[p.req]||(pad(p.req)&&pad(p.req).kind==='upg'&&S.up[pad(p.req).key]>0)))return false;   // v0.86.3: Crew level = the hire square, battery or not
   if(regionLocked(p.y)&&p.kind!=='gate')return false;
   return true;
 }
@@ -7330,6 +7331,7 @@ const sellRing=mesh(new THREE.RingGeometry(CITY.r*U-0.25,CITY.r*U,48),new THREE.
 const depotObjs={};
 /* the two words painted on the ground are UI, so they follow the language switch */
 function padWord(k){return k==='store'?L('STORE','DEPOLA'):L('TAKE','BOŞALT');}
+let padLang=null;
 function relabelPads(){
   for(const id in depotObjs){const d=depotObjs[id];if(!d)continue;
     for(const [m,k,c] of [[d.sp,'store','#23B26D'],[d.tp,'take','#E8364F']]){
@@ -7785,8 +7787,8 @@ function render(dt,now){
   {const n=helpers.filter(h=>h.inside).length;
    if(n)place('hqrest','tag no',HQ_DOOR.x,HQ_DOOR.y-6,0.1,`😴 ${n}`);else if(LB['hqrest']){LB['hqrest'].el.remove();delete LB['hqrest'];}}
   // regions
-  for(const r of REGIONS){fenceObjs[r.id].visible=!S.regions[r.id];if(!S.regions[r.id])place('rg'+r.id,'big',700,(r.y0+r.y1)/2,0.3,`🔒 ${tt(r.name)}`);}
-  if(fenceObjs.east){fenceObjs.east.visible=!S.regions.east;if(!S.regions.east)place('rgeast','big',(EAST.x0+WORLD.w)/2,640,0.3,`🔒 ${tt(EAST.name)}${has('nuclear')?'':' · ⚛️'}`);}
+  for(const r of REGIONS){fenceObjs[r.id].visible=!S.regions[r.id];if(!S.regions[r.id]&&has('regions'))place('rg'+r.id,'big',700,(r.y0+r.y1)/2,0.3,`🔒 ${tt(r.name)}`);}   // v0.86.3: no sign for what this level cannot open
+  if(fenceObjs.east){fenceObjs.east.visible=!S.regions.east;if(!S.regions.east&&(has('nuclear')||inClassic()))place('rgeast','big',(EAST.x0+WORLD.w)/2,640,0.3,`🔒 ${tt(EAST.name)}${has('nuclear')?'':' · ⚛️'}`);}
   // city label
   place('city','tag '+lv[1],CITY.x,CITY.y+CITY.r+10,0.1,L(`SELL · ₵${pr.toFixed(1)} each`,`SAT · tanesi ₵${pr.toFixed(1)}`));
   for(const T of TOWNS){const g=townObjs[T.id];if(g)g.visible=built(T.id);
@@ -7862,6 +7864,8 @@ function hud(dt){
   $('goal').innerHTML=chip+(G?`${tt(G.t)}${gl?` · 🔒 ${L('opens as you grow','büyüdükçe açılır')}`:''}${G.r?`<small>+₵${fmt(G.r)}</small>`:''}`:(!cozy()&&!inClassic()&&!inProg()&&sev()<SEV_MAX?'🎯 '+ladProgTxt():L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.')));
   {const n=maintList().length;$('mntBtn').hidden=!(has('gridline')||has('ageing')||has('repair'));const b=$('mntN');b.hidden=!n;b.textContent=n>9?'9+':String(n);}
   $('rankBtn').hidden=!has('report');{const wb=$('worldBtn');wb.hidden=cozy()||inProg()||!(worldMax()>=1||prestOk()||S.lad||inClassic());if(!wb.hidden){$('cap-world').textContent=inClassic()?L('Classic','Klasik'):L('Level','Seviye')+' '+sev();wb.classList.toggle('pulse',prestOk());}}$('buildBtn').hidden=cozy();   // v0.79.3: moving a plant is open from level 1
+  if(S.lang!==padLang){padLang=S.lang;try{relabelPads();}catch(e){}}
+  if(S.up.helper>0)try{crewAll();}catch(e){}
   if(inProg()&&S.progStay){if(S.cash>S.progCap)S.cash=S.progCap;else S.progCap=S.cash;}
   {const pe=$('progExit');pe.hidden=!(inProg()&&S.progStay);if(!pe.hidden)$('cap-pexit').textContent=L('Close mode','Modu kapat');}
   $('gridBtn').hidden=!has('gridline');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
@@ -7891,7 +7895,19 @@ function hud(dt){
 
 /* ======================= CREW PANEL ======================= */
 function openCrew(){trackOnce('opened-crew-plan');renderCrew();$('mCrew').classList.add('on');}
+function crewSimple(){return !cozy()&&!inClassic()&&!has('shifts')&&!has('roles');}
+function crewAll(){       // v0.86.3: before shifts and roles the crew is one team — nobody waits on the bench
+  if(!crewSimple())return;const B=boxes();
+  if(B.length!==1||(B[0].m||[]).length!==S.up.helper||B[0].role!=='sell'||B[0].sh){const b=B[0]||newBox();b.role='sell';b.site='auto';b.mkt='auto';b.sh=0;b.m=[];for(let i=0;i<S.up.helper;i++)b.m.push(i);S.crew.boxes=[b];applyBoxes();}}
 function renderCrew(){
+  if(crewSimple()){crewAll();
+    $('crewList').innerHTML=`<div class="rule" style="text-align:center"><div class="row1" style="justify-content:center"><span>👷 ${L(`Your crew: ${S.up.helper}`,`Ekibin: ${S.up.helper} kişi`)}</span></div>
+      <p style="margin-top:8px;line-height:1.5">${L('They carry from every plant and sell in the city, day and night. Set the lowest price they may sell at with the slider above.','Her santralden taşıyıp şehirde satıyorlar, gece gündüz. Satabilecekleri en düşük fiyatı yukarıdaki çubukla ayarla.')}</p>
+      <p style="margin-top:10px;color:var(--soft);font-size:13px">${L('Shifts, task boxes and roles come at later levels.','Vardiya, görev kutuları ve roller sonraki seviyelerde gelir.')}</p></div>`;
+    for(const id of ['minRange','minAuto'])if($(id))$(id).closest('.rule').hidden=!has('price');
+    if(has('price')){const vals=todayCurve(),lo=Math.min(...vals),hi=Math.max(...vals),avg=todayAvg();const r=$('minRange');r.min=0;r.max=Math.ceil(hi*1.1);r.value=S.crew.auto?avg.toFixed(1):S.crew.min;r.disabled=S.crew.auto;$('minAuto').checked=S.crew.auto;
+      $('scLo').textContent=`${L('low','düşük')} ₵${lo.toFixed(1)}`;$('scAvg').textContent=`${L('avg','ort')} ₵${avg.toFixed(1)}`;$('scHi').textContent=`${L('high','yüksek')} ₵${hi.toFixed(1)}`;}
+    return;}
   if(cozy()){
     $('crewList').innerHTML=
       `<div class="rule" style="text-align:center">
@@ -8267,7 +8283,7 @@ function openCard(c0){
 /* ======================= TUTORIAL ======================= */
 const TUT=[
  {t:["Hi! I'm Ela, your field engineer. Your goal: build the richest energy company. 👛 Wallet is your cash, 🏛️ Wealth is cash plus everything you built.","Merhaba! Ben Ela, saha mühendisin. Amacın: en zengin enerji şirketini kurmak. 👛 Cüzdan nakit paran, 🏛️ Zenginlik ise nakit artı kurduğun her şey."],hl:'.bar .box'},
- {t:["Put your finger anywhere on the screen and drag to walk. On a computer, use WASD or the arrow keys. Try it now: time is paused while we talk.","Yürümek için parmağını ekranın herhangi bir yerine koyup sürükle. Bilgisayarda WASD veya ok tuşlarını kullan. Şimdi dene: biz konuşurken zaman duruyor."]},
+ {t:(('ontouchstart' in window)||navigator.maxTouchPoints>0)?["Put your finger anywhere on the screen and drag to walk. Try it now: time is paused while we talk.","Yürümek için parmağını ekranın herhangi bir yerine koyup sürükle. Şimdi dene: biz konuşurken zaman duruyor."]:["Hold the mouse anywhere and drag to walk, or use WASD / the arrow keys. Try it now: time is paused while we talk.","Yürümek için fareyi basılı tutup sürükle ya da WASD / ok tuşlarını kullan. Şimdi dene: biz konuşurken zaman duruyor."]},
  {t:["Walk next to a wind turbine. The ⚡ cells it produced jump onto your back automatically.","Bir rüzgâr türbininin yanına yürü. Ürettiği ⚡ hücreler otomatik olarak sırtına geçer."],cam:()=>S.plants[0]},
  {t:["Carry them into the ring next to the city to sell. The price changes every hour. The evening peak (18–22) pays the most.","Satmak için şehrin yanındaki halkaya taşı. Fiyat her saat değişir. En çok akşam zirvesi (18–22) kazandırır."],hl:'.market',cam:()=>CITY},
  {t:["Energy doesn't last: yellow cells are fresh, orange ones are ageing, red ones are about to vanish. Sell them or store them in time.","Enerji bekletilmez: sarı hücre taze, turuncu eskiyor, kırmızı kaybolmak üzere. Zamanında sat ya da depola."]},
@@ -8587,6 +8603,7 @@ function openLevel(){
 const FEAT=[
  {k:'price',hl:'#mktBox',sh:()=>openMarkets(),l:[["The box up top is the price. It moves all day: Cheap, Normal, Peak.","Üstteki kutu fiyat. Gün boyu oynar: Ucuz, Normal, Zirve."],["Carry energy to the city when it says Peak. The same cell earns much more.","Zirve yazınca enerjiyi şehre taşı. Aynı hücre çok daha fazla kazandırır."]]},
  {k:'build',hl:'#buildBtn',l:[["You can build now. Stand on a blue square and it fills a little at a time.","Artık inşaat yapabilirsin. Mavi karenin üstünde dur, azar azar dolar."],["The 🏗️ button builds anywhere you like, and shows the best spots.","🏗️ butonu istediğin yere kurar ve en iyi yerleri gösterir."]]},
+ {k:'report',hl:'#repBtn',sh:()=>openReport(1),l:[["📊 is your finance report: every coin you made and where it came from.","📊 finans raporun: kazandığın her kuruş ve nereden geldiği."],["Check it after a day: it shows which plant pays and which one only looks busy.","Bir gün sonra bak: hangi santralin kazandırdığını, hangisinin sadece meşgul göründüğünü gösterir."]]},
  {k:'codes',l:[["Every plant has a code: W1, S1, B1… It is written under it on the map.","Her santralin bir kodu var: W1, S1, B1… Haritada altında yazıyor."],["Reports, repairs and crew orders all use these codes.","Raporlar, tamirler ve ekip emirleri hep bu kodları kullanır."]]},
  {k:'upgrades',hl:'#infoBtn',l:[["At HQ there are two new squares: backpack (carry more) and boots (walk faster).","Merkezde iki yeni kare var: sırt çantası (daha çok taşı) ve bot (daha hızlı yürü)."],["The ℹ️ button collects tips that make you money.","ℹ️ butonu para kazandıran taktikleri toplar."]]},
  {k:'battery',cam:()=>pad('bat'),l:[["The battery keeps energy for later. It makes nothing by itself.","Batarya enerjiyi sonraya saklar. Kendisi hiçbir şey üretmez."],["Drop cells on the green square when it is Cheap, take them from the red one at Peak.","Ucuzken yeşil kareye bırak, Zirvede kırmızı kareden al."]]},
@@ -8622,7 +8639,7 @@ function ladIntro(n){
              {b:["Your old games are safe: ⭐ Levels › 🏛️ Classic. They play exactly as before.","Eski oyunların güvende: ⭐ Seviyeler › 🏛️ Klasik. Aynen eskisi gibi oynanır."],hl:'#worldBtn'});}
   for(const b of s.ela||[])seq.push({b});
   S.feat=S.feat||{};
-  for(const k of s.k){const f=FEAT.find(x=>x.k===k);if(!f||S.feat[k])continue;S.feat[k]=1;
+  for(const k of s.k){const f=FEAT.find(x=>x.k===k);if(!f)continue;S.feat[k]=1;
     f.l.forEach((b,i)=>seq.push({b,hl:i===f.l.length-1&&!f.sh?f.hl:null,show:i===f.l.length-1?f.sh||null:null,cam:f.cam||null}));}
   if(s.goal)seq.push({b:[`This level's goal: ${s.goal.t[0]}. Play at least ${LAD_DAYS} days, then ⭐ opens level ${n+1}.`,`Bu seviyenin hedefi: ${s.goal.t[1]}. En az ${LAD_DAYS} gün oyna, sonra ⭐ Seviye ${n+1}'i açar.`],hl:'#worldBtn'});
   seq.okLbl=['Got it','Anladım'];featAt=Date.now();elaSay(seq,()=>save());
@@ -8883,6 +8900,18 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.86.3',t:['Level fixes','Seviye düzeltmeleri'],l:[
+  ['📊 The finance report is open from level 1. The health page comes with breakdowns, the crew page with shifts.','📊 Finans raporu Seviye 1’den açık. Sağlık sayfası arızalarla, ekip sayfası vardiyayla gelir.'],
+  ['When Ela explains a level she always opens the panel she talks about — the price table included.','Ela bir seviyeyi anlatırken bahsettiği paneli her zaman açıyor — fiyat tablosu dahil.'],
+  ['The battery squares speak your language from the first moment.','Batarya kareleri ilk andan itibaren senin dilinde.'],
+  ['Until shifts and roles open, the crew is one team: no task boxes, nobody on the bench.','Vardiya ve roller açılana kadar ekip tek takım: görev kutusu yok, boşta bekleyen yok.'],
+  ['Areas your level cannot open show no lock sign on the map.','Seviyenin açamayacağı alanlar haritada kilit işaretiyle görünmüyor.'],
+  ['On a phone Ela no longer mentions keys.','Telefonda Ela artık tuşlardan bahsetmiyor.'],
+  ['At the Crew level the hire square appears even without a battery.','Ekip seviyesinde işe alma karesi batarya olmadan da görünüyor.'],
+ ]},
+ {v:'0.86.2',t:['Back to level 1','Seviye 1’e dönüş'],l:[
+  ['If an older copy of the game saved last, your old level 2 could be read as ladder level 2. Now a save from before the ladder is always filed as 🏛️ Classic, and the ladder starts from level 1.','Oyunun eski bir kopyası son kaydı yaptıysa eski Seviye 2’n merdivenin 2. seviyesi gibi okunabiliyordu. Artık merdivenden önceki her kayıt 🏛️ Klasik’e konuyor ve merdiven Seviye 1’den başlıyor.'],
+ ]},
  {v:'0.86.1',t:['Levels, not worlds','Dünya değil, seviye'],l:[
   ['The last places that still said “world” now say level or Classic.','Hâlâ “dünya” yazan son yerler artık seviye ya da Klasik diyor.'],
  ]},
@@ -9485,8 +9514,8 @@ function drawMap(cv,big){
     for(let x=-H;x<W+H;x+=Math.max(7,k*26)){g.beginPath();g.moveTo(x,y0);g.lineTo(x+hh,y0+hh);g.stroke();}
     g.restore();
     g.fillStyle='rgba(255,255,255,.92)';g.textAlign='center';
-    if(big){g.font='bold '+Math.round(FS*1.25)+'px sans-serif';g.fillText('🔒 '+tt(r.name),W/2,y0+hh/2);}
-    else{g.font='bold '+Math.max(9,Math.round(k*90))+'px sans-serif';g.fillText('🔒',W/2,y0+hh/2+3);}}
+    if(has('regions')){if(big){g.font='bold '+Math.round(FS*1.25)+'px sans-serif';g.fillText('🔒 '+tt(r.name),W/2,y0+hh/2);}
+    else{g.font='bold '+Math.max(9,Math.round(k*90))+'px sans-serif';g.fillText('🔒',W/2,y0+hh/2+3);}}}
   // camera view box
   if(!big){const ZL=ZOOMS[S.zoom==null?1:S.zoom],vw=15*ZL*20,vh=vw*1.6;
     g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=1;
@@ -10043,17 +10072,26 @@ function curSlot(){return inProg()?PROG_KEY:inClassic()?cKey(S.classic):wKey(S.p
 /* v0.86 first run: every world made before the ladder becomes a Classic world, kept exactly as it
    was, and the ladder starts at level 1. Cozy saves have no ladder and are left alone. */
 function ladderInit(had){
-  try{if(localStorage.getItem(LAD_KEY))return false;
-    if(!had||S.lad||S.mode==='cozy'){S.lad=1;setLadMeta({classic:[],cur:0});return false;}
-    const P=S.prest||0,mx=Math.max(P,(()=>{try{const m=JSON.parse(localStorage.getItem(SAVE_KEY+'_worlds')||'null');return m&&m.max||0;}catch(e){return 0;}})()),cl=[];
-    for(let i=0;i<=mx;i++){const src=i===P?S:readSave(wKey(i));if(!src)continue;const o=JSON.parse(JSON.stringify(src));
-      o.classic=i;o.lastSave=Date.now();o.prog=null;o.progs=[];localStorage.setItem(cKey(i),JSON.stringify(o));cl.push(i);}
-    for(let i=0;i<=mx;i++)localStorage.removeItem(wKey(i));
-    localStorage.removeItem(SAVE_KEY+'_worlds');
-    const f=fresh();for(const k of LAD_KEEP)if(S[k]!==undefined)f[k]=S[k];f.lad=1;f.prest=0;
-    setLadMeta({classic:cl,cur:0,moved:1});
+  try{
+    /* the save itself says whether it belongs to the ladder — not the phone's meta, which an older copy of the game can leave behind */
+    if(!had||S.lad||S.classic!=null||S.progWorld||S.mode==='cozy'){if(S.classic==null&&!S.progWorld)S.lad=1;if(!localStorage.getItem(LAD_KEY))setLadMeta({classic:[],cur:0});return false;}
+    const hadMeta=!!localStorage.getItem(LAD_KEY),meta=ladMeta();meta.classic=meta.classic||[];
+    const put=(src,i)=>{let k=i;for(;;){const c=readSave(cKey(k));if(!c||c.seed===src.seed)break;k++;}   // same game → same Classic slot
+      const o=JSON.parse(JSON.stringify(src));o.classic=k;o.lastSave=Date.now();o.prog=null;o.progs=[];delete o.lad;
+      localStorage.setItem(cKey(k),JSON.stringify(o));if(!meta.classic.includes(k))meta.classic.push(k);};
+    const P=S.prest||0;
+    if(!hadMeta){
+      const mx=Math.max(P,(()=>{try{const m=JSON.parse(localStorage.getItem(SAVE_KEY+'_worlds')||'null');return m&&m.max||0;}catch(e){return 0;}})());
+      for(let i=0;i<=mx;i++){const src=i===P?S:readSave(wKey(i));if(src)put(src,i);}
+      for(let i=0;i<=mx;i++)localStorage.removeItem(wKey(i));
+      localStorage.removeItem(SAVE_KEY+'_worlds');
+    }else put(S,P);   // a pre-ladder save came back over the ladder (an old copy of the game saved last): file it as Classic
+    const lw=hadMeta?readSave(wKey(meta.cur||0)):null;
+    let f;if(lw&&lw.lad&&lw.classic==null&&!lw.progWorld)f=lw;
+    else{f=fresh();for(const k of LAD_KEEP)if(S[k]!==undefined)f[k]=S[k];f.lad=1;f.prest=0;meta.cur=0;}
+    f.lastSave=Date.now();meta.moved=1;setLadMeta(meta);
     RELOADING=true;removeEventListener('pagehide',save);localStorage.setItem(SAVE_KEY,JSON.stringify(f));location.reload();return true;
-  }catch(e){RELOADING=false;return false;}}
+  }catch(e){console.error('ladder init',e);RELOADING=false;return false;}}
 function switchTo(key,after){
   if(key===curSlot())return;
   const o=readSave(key);if(!o){toast(L('That level was not kept on this phone.','O seviye bu telefonda saklanmamış.'),'');return;}
@@ -10185,7 +10223,7 @@ $('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{RELOADING=true;
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.86.1';
+const GAME_VERSION='0.86.3';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
