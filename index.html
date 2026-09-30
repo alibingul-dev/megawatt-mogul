@@ -447,7 +447,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.4</div>
+  <div class="t-ver" id="tVer">v0.87.5</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -678,10 +678,11 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
     <button id="sExport" data-i18n="sExport">Copy save code</button>
     <button id="sImport" data-i18n="sImport">Load a save code</button>
     <button id="sRestore">Restore a backup</button>
-    <button class="danger" id="sReset" data-i18n="sReset">Delete progress</button>
+    <button class="danger" id="sReset" data-i18n="sReset">Delete progress in this level</button>
+    <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.4 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.5 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5332,7 +5333,7 @@ const DICT={
   sImport:['Load a save code','Kayıt kodu yükle'],
   sLook:['Change your look','Görünümünü değiştir'],
   sTut:['Replay the tutorial','Rehberi yeniden izle'],
-  sReset:['Delete progress','İlerlemeyi sil'],
+  sReset:['Delete progress in this level','Bu seviyedeki ilerlemeyi sil'],
 };
 function applyLang(){
   document.documentElement.lang=S.lang==='tr'?'tr':'en';
@@ -8929,6 +8930,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.87.5',t:['Two kinds of reset','İki tür sıfırlama'],l:[
+  ['Settings › “Delete progress in this level” starts only the level you are in again. Other levels, Classic games and settings stay.','Ayarlar › “Bu seviyedeki ilerlemeyi sil” sadece içinde olduğun seviyeyi baştan başlatır. Diğer seviyeler, Klasik oyunlar ve ayarlar kalır.'],
+  ['“Reset the whole game” deletes everything, as before.','“Bütün oyunu sıfırla” eskisi gibi her şeyi siler.'],
+ ]},
  {v:'0.87.4',t:['Ela says it once','Ela bir kez söylüyor'],l:[
   ['At the start of a level Ela no longer says the same thing twice: a one-line title, then what is new.','Seviye başında Ela aynı şeyi iki kez söylemiyor: bir satırlık başlık, ardından neler yeni.'],
   ['A card can no longer lock you in: free choices stay open even when your wallet is in the red, and when you can afford nothing a “Do nothing (worst case)” choice appears.','Kart artık seni kilitleyemiyor: cüzdan ekside olsa da ücretsiz seçenekler açık kalıyor; hiçbirine paran yetmiyorsa “Hiçbir şey yapma (en kötüsü)” seçeneği çıkıyor.'],
@@ -10054,7 +10059,7 @@ function drawEarnChart(cv,pts){
 
 /* ======================= SETTINGS ======================= */
 function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
-  $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');$('sLearn').textContent='📚 '+L('What you have learned','Öğrendiklerin');$('sOnb').textContent='🎓 '+(S.prog?tt((PROGRAMS.find(x=>x.id===S.prog)||{name:['Program','Program']}).name):L('Orientation · Part 1','Oryantasyon · Bölüm 1'));try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
+  $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');$('sWipe').textContent=L('Reset the whole game','Bütün oyunu sıfırla');$('sLearn').textContent='📚 '+L('What you have learned','Öğrendiklerin');$('sOnb').textContent='🎓 '+(S.prog?tt((PROGRAMS.find(x=>x.id===S.prog)||{name:['Program','Program']}).name):L('Orientation · Part 1','Oryantasyon · Bölüm 1'));try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   snd:['setSnd',['🔊','Sound','Ses'],['Effects and music, with sliders','Efektler ve müzik, kaydırıcılı']],
   disp:['setDisp',['🖥️','Display','Görüntü'],['Shadows, flashes, panel size','Gölge, parlama, panel boyutu']],
@@ -10320,11 +10325,23 @@ const UISCALES=[0.85,1,1.15,1.3,1.5];
 function uiScale(){const v=+S.uiScale;return UISCALES.indexOf(v)>=0?v:1;}
 function applyUiScale(){document.documentElement.style.setProperty('--uis',uiScale());}
 $('sUI').onclick=()=>{const k=(UISCALES.indexOf(uiScale())+1)%UISCALES.length;S.uiScale=UISCALES[k];applyUiScale();syncSet();save();};
-$('sReset').onclick=()=>{if(confirm('Delete all progress?')){try{RELOADING=true;removeEventListener('pagehide',save);const mx=worldMax(),m=ladMeta();localStorage.removeItem(SAVE_KEY);for(let P=0;P<=Math.max(mx,m.cur||0);P++)localStorage.removeItem(wKey(P));for(const i of m.classic||[])localStorage.removeItem(cKey(i));localStorage.removeItem(PROG_KEY);localStorage.removeItem(LAD_KEY);localStorage.removeItem((SAVE_KEY+'_worlds'));}catch(e){}location.reload();}};
+/* v0.87.5: two resets. “This level” starts only the level you are in again (cash, plants, rivals);
+   every other level, your Classic games and your settings stay. “The whole game” wipes everything. */
+$('sReset').onclick=()=>{
+  if(inProg()){toast(L('Leave the program with its own button.','Programdan kendi butonuyla çık.'),'');return;}
+  const nm=inClassic()?L('this Classic game','bu Klasik oyun'):L(`level ${sev()}`,`Seviye ${sev()}`);
+  if(!confirm(L(`Start ${nm} again from scratch? Cash, plants and rivals of this level go back to the start. Other levels and your settings stay.`,`${nm} sıfırdan başlasın mı? Bu seviyenin parası, santralleri ve rakipleri başa döner. Diğer seviyeler ve ayarların kalır.`)))return;
+  const f=fresh();for(const k of LAD_KEEP)if(S[k]!==undefined)f[k]=S[k];
+  if(inClassic()){f.classic=S.classic;f.prest=S.prest||0;delete f.lad;}else{f.lad=1;f.prest=S.prest||0;}
+  f.lastSave=Date.now();$('mSet').classList.remove('on');
+  try{trackOnce('level-reset');RELOADING=true;removeEventListener('pagehide',save);localStorage.setItem(SAVE_KEY,JSON.stringify(f));lvlGo(lvlLabel(f),true);}catch(e){RELOADING=false;}
+};
+$('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Classic games and all progress are deleted. This cannot be undone.','Bütün oyun sıfırlansın mı? Tüm seviyeler, Klasik oyunların ve bütün ilerleme silinir. Geri alınamaz.'))){try{RELOADING=true;removeEventListener('pagehide',save);   // everything of this game, backups included, so nothing comes back; company packs stay
+    for(const k of Object.keys(localStorage))if(k.startsWith(SAVE_KEY)&&k!==SAVE_KEY+'_pk')localStorage.removeItem(k);try{sessionStorage.removeItem('mwm_go');}catch(e){}}catch(e){}location.reload();}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.4';
+const GAME_VERSION='0.87.5';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
