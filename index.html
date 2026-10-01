@@ -450,7 +450,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.10</div>
+  <div class="t-ver" id="tVer">v0.87.13</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -685,7 +685,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.10 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.13 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -7710,13 +7710,14 @@ function sweepLabels(){for(const k in LB){if(LB[k].seen!==frameNo){LB[k].el.styl
 /* ======================= RENDER ======================= */
 const SKY=[[0,0x0F1A3A],[5,0x1C2A55],[6.5,0xF3B08C],[8,0x9ED5F5],[16.5,0xA8D8F2],[18.5,0xF4A259],[20,0x4B3F7A],[21.5,0x121C3E],[24,0x0F1A3A]];
 const cA=new THREE.Color(),cB=new THREE.Color();
+let tutNightK=0;
 function skyCol(t){for(let i=0;i<SKY.length-1;i++){const[t0,a]=SKY[i],[t1,b]=SKY[i+1];if(t>=t0&&t<=t1){cA.setHex(a);cB.setHex(b);return cA.lerp(cB,(t-t0)/(t1-t0));}}return cA.setHex(0x9ED5F5);}
 function nightK(t){if(t>=7.5&&t<=18)return 0;if(t>=20.5||t<=5)return 1;if(t<7.5)return(7.5-t)/2.5;return(t-18)/2.5;}
 let camPos=new THREE.Vector3(),camInit=false,shadowZoom=0;
 function render(dt,now){
   frameNo++;
   cellPool.forEach(o=>o.visible=false);coinPool.forEach(o=>o.visible=false);smokeUsed=0;
-  const t=hourNow(),nk=nightK(t);
+  const t=hourNow();let nk=nightK(t);
   // camera
   const asp=innerWidth/innerHeight;camera.aspect=asp;
   const ZL=camAim?ZOOMS[0]:ZOOMS[S.zoom==null?1:S.zoom];const wantW=(asp<1?15:28)*ZL;const hf=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*asp);
@@ -7730,7 +7731,9 @@ function render(dt,now){
   if(!camInit){camPos.copy(want);camInit=true;}else camPos.lerp(want,Math.min(1,dt*6));
   camera.position.copy(camPos);camera.lookAt(camPos.x,0,camPos.z-Math.cos(ang)*distc);camera.updateProjectionMatrix();
   // lights
-  const sky=skyCol(t);scene.background=sky;scene.fog.color.copy(sky);
+  tutNightK+=((camAim&&camAim.night?1:0)-tutNightK)*Math.min(1,dt*2.5);   // v0.87.13: Ela's evening — the sky goes dark while she talks
+  const sky=skyCol(t).clone();if(tutNightK>0.01){const nc=skyCol(20.6).clone();sky.lerp(nc,tutNightK);}scene.background=sky;scene.fog.color.copy(sky);
+  const nk0=nk;nk=nk+(nightK(20.6)-nk)*tutNightK;
   scene.fog.near=distc*0.9;scene.fog.far=distc*2.4;
   const sa=Math.PI*(t-6)/12;
   sun.position.set(CX+Math.cos(sa)*30,Math.max(6,Math.sin(Math.max(0.15,Math.min(Math.PI-0.15,sa)))*40),CZ+14);
@@ -7745,7 +7748,7 @@ function render(dt,now){
   sun.castShadow=S.shadows;
   lamp.intensity=nk*3.1;lamp.position.set(PX,3.4,PZ);
   {const fa=S.face||0;lamp.target.position.set(PX+Math.sin(fa)*11,0,PZ+Math.cos(fa)*11);lamp.target.updateMatrixWorld();}
-  winMats.forEach(m=>m.emissiveIntensity=nk);
+  winMats.forEach(m=>m.emissiveIntensity=nk);nk=nk0;
   // city ring
   const pr=priceNow(),lv=level(pr);
   sellDisc.material.color.set(lv[2]);sellRing.material.color.set(lv[2]);
@@ -8354,7 +8357,7 @@ function showTut(){
   const keep=!!(st.show&&tutModal&&st.show===tutShowFn);   // v0.86.7: the same panel stays open across Ela's lines about it
   if(!keep)tutHide();
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
-  camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y};}catch(e){}}
+  camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y,night:!!a.night};}catch(e){}}
   $('tutName').textContent=L('Ela · Field engineer','Ela · Saha mühendisi');
   $('tutText').textContent=tt(st.b||st.t);   // a programme line carries its body in .b
   $('tutStep').textContent=`${tutI+1}/${seq.length}`;
@@ -8695,7 +8698,7 @@ function ladIntro(n){
   seq.okLbl=['Got it','Anladım'];featAt=Date.now();elaSay(seq,()=>save());
 }
 function featTick(){
-  if(!playing||tutOpen||cardOpen||placing||document.body.classList.contains('title')||document.querySelector('.modal.on'))return;
+  if(!playing||tutOpen||cardOpen||placing||inProg()||document.body.classList.contains('title')||document.querySelector('.modal.on'))return;   // v0.87.13: a program tells its own story
   if(Date.now()-featAt<FEAT_GAP)return;
   S.feat=S.feat||{};const f=FEAT.find(x=>!S.feat[x.k]&&featOpen(x));if(!f)return;
   S.feat[f.k]=1;featAt=Date.now();save();
@@ -8952,6 +8955,13 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.87.13',t:['Evening in the city','Şehirde akşam'],l:[
+  ['In orientation, when Ela says everyone comes home in the evening, the camera goes to the city and the sky goes dark.','Oryantasyonda Ela akşam herkesin eve geldiğini anlatırken kamera şehre gider, hava kararır.'],
+  ['Inside a program Ela no longer drops in the normal game’s feature notes.','Program içinde Ela artık normal oyunun özellik notlarını araya sokmuyor.'],
+ ]},
+ {v:'0.87.12',t:['Ela points at the square','Ela kareyi gösteriyor'],l:[
+  ['In orientation, before you build them, Ela sends you to the solar and battery squares instead of talking about panels that are not there yet.','Oryantasyonda, sen kurmadan önce Ela henüz olmayan panelleri anlatmıyor; seni güneş ve batarya logolu kutucuklara yönlendiriyor.'],
+ ]},
  {v:'0.87.10',t:['Orientation map','Oryantasyon haritası'],l:[
   ['In a program, the solar, battery and helper squares are on the map from the start, so Ela can show what she talks about.','Programda güneş, batarya ve yardımcı kareleri baştan haritada; Ela anlattığını gösterebiliyor.'],
  ]},
@@ -10383,7 +10393,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.10';
+const GAME_VERSION='0.87.13';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10540,11 +10550,13 @@ const PROGRAMS=[
    {t:['The spinning one','Dönen şey'],
     b:["That tall spinning thing is a wind turbine. When the wind blows, it makes electricity. We cannot make the wind blow. The wind decides.","Şu uzun dönen şey bir rüzgâr türbini. Rüzgâr estiğinde elektrik üretir. Rüzgârı biz estiremeyiz. Ona rüzgâr karar verir."],cam:()=>S.plants[0]},
    {t:['The blue boards','Mavi levhalar'],
-    b:["Those blue boards are solar panels. While the sun is up they make electricity. When the sun goes down, they stop. Every evening.","Şu mavi levhalar güneş paneli. Güneş varken elektrik üretir. Güneş batınca durur. Her akşam."],cam:()=>S.plants.find(x=>x.type==='solar')||pad('s1')},
+    get b(){return S.plants.some(x=>x.type==='solar')?this.b0:["Walk to the square with the sun logo. Stand on it and it gets paid bit by bit: a solar panel appears — blue boards that make electricity while the sun is up. When the sun goes down, they stop. Every evening.","Güneş logolu kutucuğa yürü. Üstünde durunca parası azar azar ödenir ve güneş paneli çıkar: güneş varken elektrik üreten mavi levhalar. Güneş batınca durur. Her akşam."];},
+    b0:["Those blue boards are solar panels. While the sun is up they make electricity. When the sun goes down, they stop. Every evening.","Şu mavi levhalar güneş paneli. Güneş varken elektrik üretir. Güneş batınca durur. Her akşam."],cam:()=>S.plants.find(x=>x.type==='solar')||pad('s1')},
    {t:['And here is the problem','İşte sorun burada'],
-    b:["In the evening everyone comes home and turns the lights on. That is when electricity is needed most. And that is exactly when the sun goes down.","Akşam olunca herkes eve gelir, ışıkları yakar. Elektriğe en çok o saat ihtiyaç olur. Güneş de tam o saat batar."]},
+    b:["In the evening everyone comes home and turns the lights on. That is when electricity is needed most. And that is exactly when the sun goes down.","Akşam olunca herkes eve gelir, ışıkları yakar. Elektriğe en çok o saat ihtiyaç olur. Güneş de tam o saat batar."],cam:()=>({x:CITY.x,y:CITY.y,night:1})},
    {t:['So we use a battery','Bu yüzden batarya var'],
-    b:["A battery is a box for hours. We put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya, saatleri saklayan bir kutu gibi. Gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."],cam:()=>pad('bat')},
+    get b(){return S.plants.some(x=>x.type==='battery')?this.b0:["Later you will walk to the square with the battery logo. A battery is a box for hours: we put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Sonra batarya logolu kutucuğa yürüyeceksin. Batarya, saatleri saklayan bir kutu gibi: gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."];},
+    b0:["A battery is a box for hours. We put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya, saatleri saklayan bir kutu gibi. Gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."],cam:()=>pad('bat')},
    {t:['The price moves','Fiyat oynar'],
     b:["Electricity does not cost the same all day. At night it is cheap. In the evening it is expensive. Same electricity, different hour, different money.","Elektrik gün boyu aynı para etmez. Gece ucuzdur. Akşam pahalıdır. Aynı elektrik, farklı saat, farklı para."],cam:()=>CITY},
    {t:['That is our job','Bizim işimiz bu'],
