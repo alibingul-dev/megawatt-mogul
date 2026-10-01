@@ -450,7 +450,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.13</div>
+  <div class="t-ver" id="tVer">v0.87.14</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -685,7 +685,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.13 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.14 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8367,6 +8367,7 @@ function showTut(){
   if(st.show&&!keep){const before=new Set(document.querySelectorAll('.modal.on'));try{st.show();}catch(e){}
     tutModal=[...document.querySelectorAll('.modal.on')].find(m=>!before.has(m))||null;if(tutModal){tutModal.classList.add('tutshow');tutShowFn=st.show;}}   // v0.86: Ela opens what she explains
 }
+setInterval(()=>{try{if(!tutOpen)return;const st=(tutSeq||TUT)[tutI];if(!st||!st.live)return;const x=tt(st.b||st.t);if($('tutText').textContent!==x){$('tutText').textContent=x;sfx.goal();}}catch(e){}},400);
 function endTutorial(done){
   tutHide();
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
@@ -8955,7 +8956,8 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
- {v:'0.87.13',t:['Evening in the city','Şehirde akşam'],l:[
+ {v:'0.87.14',t:['Evening in the city','Şehirde akşam'],l:[
+  ['In orientation you can walk while Ela asks you to go to the sun square; when the panel is up she says so.','Oryantasyonda Ela güneş kutucuğuna yürümeni isterken yürüyebiliyorsun; panel kurulunca Ela bunu söylüyor.'],
   ['In orientation, when Ela says everyone comes home in the evening, the camera goes to the city and the sky goes dark.','Oryantasyonda Ela akşam herkesin eve geldiğini anlatırken kamera şehre gider, hava kararır.'],
   ['Inside a program Ela no longer drops in the normal game’s feature notes.','Program içinde Ela artık normal oyunun özellik notlarını araya sokmuyor.'],
  ]},
@@ -10393,7 +10395,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.13';
+const GAME_VERSION='0.87.14';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10550,6 +10552,7 @@ const PROGRAMS=[
    {t:['The spinning one','Dönen şey'],
     b:["That tall spinning thing is a wind turbine. When the wind blows, it makes electricity. We cannot make the wind blow. The wind decides.","Şu uzun dönen şey bir rüzgâr türbini. Rüzgâr estiğinde elektrik üretir. Rüzgârı biz estiremeyiz. Ona rüzgâr karar verir."],cam:()=>S.plants[0]},
    {t:['The blue boards','Mavi levhalar'],
+    live:1,get move(){return !S.plants.some(x=>x.type==='solar');},   // v0.87.14: you can walk on this line, and her words change when the panel is up
     get b(){return S.plants.some(x=>x.type==='solar')?this.b0:["Walk to the square with the sun logo. Stand on it and it gets paid bit by bit: a solar panel appears — blue boards that make electricity while the sun is up. When the sun goes down, they stop. Every evening.","Güneş logolu kutucuğa yürü. Üstünde durunca parası azar azar ödenir ve güneş paneli çıkar: güneş varken elektrik üreten mavi levhalar. Güneş batınca durur. Her akşam."];},
     b0:["Those blue boards are solar panels. While the sun is up they make electricity. When the sun goes down, they stop. Every evening.","Şu mavi levhalar güneş paneli. Güneş varken elektrik üretir. Güneş batınca durur. Her akşam."],cam:()=>S.plants.find(x=>x.type==='solar')||pad('s1')},
    {t:['And here is the problem','İşte sorun burada'],
