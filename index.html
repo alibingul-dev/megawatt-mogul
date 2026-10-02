@@ -450,7 +450,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.16</div>
+  <div class="t-ver" id="tVer">v0.87.18</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -685,7 +685,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.16 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.18 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6547,7 +6547,7 @@ function update(dt){
   if(padLock&&(!on||on.id!==padLock))padLock=null;
   if(on&&on.id!==padLock){
     standT+=dt;
-    if(on.pg){if(standT>0.5){padLock=on.id;pgBuild(on);}}else{
+    if(on.pg){if(standT>0.5){padLock=on.id;if(pgLocked(on))toast(pgLockTxt(on),'');else pgBuild(on);}}else{
     let _g=0;while(!padDone(on)&&(S.paid[on.id]||0)>=padCost(on)-0.001&&_g++<30)completePad(on);
     const cost=padCost(on),paid=S.paid[on.id]||0,need=cost-paid;
     if(standT>0.3&&S.cash>0.0001&&need>0){
@@ -7722,10 +7722,11 @@ function render(dt,now){
   const t=hourNow();let nk=nightK(t);
   // camera
   const asp=innerWidth/innerHeight;camera.aspect=asp;
-  const ZL=camAim?ZOOMS[0]:ZOOMS[S.zoom==null?1:S.zoom];const wantW=(asp<1?15:28)*ZL;const hf=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*asp);
+  const camMv=!!(camAim&&camAim.move),camD=camMv?Math.hypot(S.px-camAim.x,S.py-camAim.y):0;   // v0.87.18: on a 'walk there' line both you and the target stay in the shot
+  const ZL=camAim?(camMv?ZOOMS[camD>700?3:camD>420?2:camD>200?1:0]:ZOOMS[0]):ZOOMS[S.zoom==null?1:S.zoom];const wantW=(asp<1?15:28)*ZL;const hf=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*asp);
   const distc=Math.min(190,Math.max(26,(wantW/2)/Math.tan(hf/2)));
   const PX=S.px*U,PZ=S.py*U;
-  const CX=camAim?camAim.x*U:PX, CZ=camAim?camAim.y*U:PZ;      // she points, the camera goes
+  const CX=camAim?(camMv?(S.px+camAim.x)/2:camAim.x)*U:PX, CZ=camAim?(camMv?(S.py+camAim.y)/2:camAim.y)*U:PZ;      // she points, the camera goes
   const halfW=Math.min(WORLD.w*U/2-1,wantW*0.48);const tx=Math.max(halfW,Math.min(WORLD.w*U-halfW+6,CX)),tz=Math.max(12,Math.min(LAND_H*U-2,CZ+(camAim?3:0)));   // lift the subject clear of Ela's card
   if(shadowZoom!==ZL){shadowZoom=ZL;const e=26*ZL;Object.assign(sun.shadow.camera,{left:-e,right:e,top:e,bottom:-e});sun.shadow.camera.updateProjectionMatrix();document.body.classList.toggle('far',ZL>=2);}
   const ang=THREE.MathUtils.degToRad(54);
@@ -7802,7 +7803,7 @@ function render(dt,now){
     const A=padAt(p);
     if(p.pg)name=p.nm;
     place('pn'+p.id,'nm',A.x,A.y,0.1,name,p.kind==='gate'?-44:-40);
-    place('pc'+p.id,'tag '+(p.pg||done?'ok':S.cash>=left?'ok':'no'),A.x,A.y,0.1,p.pg?L('Company pays','Şirketten'):done?L('MAX','MAKS'):'$'+fmt(left),p.kind==='gate'?34:34);
+    place('pc'+p.id,'tag '+(p.pg?(pgLocked(p)?'no':'ok'):done?'ok':S.cash>=left?'ok':'no'),A.x,A.y,0.1,p.pg?(pgLocked(p)?pgLockTxt(p):L('Company pays','Şirketten')):done?L('MAX','MAKS'):'$'+fmt(left),p.kind==='gate'?34:34);
     {const h=padHelp(p);if(h)place('ph'+p.id,'hlp',A.x,A.y,0.1,h,p.kind==='gate'?56:56);}
   }
   // battery
@@ -8360,7 +8361,7 @@ function showTut(){
   const keep=!!(st.show&&tutModal&&st.show===tutShowFn);   // v0.86.7: the same panel stays open across Ela's lines about it
   if(!keep)tutHide();
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
-  camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y,night:!!a.night};}catch(e){}}
+  camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y,night:!!a.night,move:!!st.move};}catch(e){}}
   $('tutName').textContent=L('Ela · Field engineer','Ela · Saha mühendisi');
   $('tutText').textContent=tt(st.b||st.t);   // a programme line carries its body in .b
   $('tutStep').textContent=`${tutI+1}/${seq.length}`;
@@ -8959,7 +8960,9 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
- {v:'0.87.16',t:['Part 2 on the map','Bölüm 2 haritada'],l:[
+ {v:'0.87.18',t:['Part 2 on the map','Bölüm 2 haritada'],l:[
+  ['When Ela says “walk there”, the camera keeps both you and the square in view and zooms out if they are far apart.','Ela “oraya yürü” dediğinde kamera seni ve kutucuğu birlikte gösterir; uzaksanız uzaklaşır.'],
+  ['With the code, all Part 2 plant squares are on the map from the start, with their year. The next one is open; the others show 🔒 and what comes first.','Kodla birlikte Bölüm 2’nin bütün santral kutucukları yıllarıyla baştan haritada. Sıradaki açık; diğerlerinde 🔒 ve önce ne gerektiği yazıyor.'],
   ['In Part 2 each company plant has its own square on the map. Walk onto it: it is built, the camera turns to it and Ela tells its history.','Bölüm 2’de her şirket santralinin haritada kendi kutucuğu var. Üstüne yürü: kurulur, kamera ona döner ve Ela tarihçesini anlatır.'],
  ]},
  {v:'0.87.15',t:['Evening in the city','Şehirde akşam'],l:[
@@ -10402,7 +10405,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.16';
+const GAME_VERSION='0.87.18';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10647,12 +10650,18 @@ function packAdd(J){let p=PROGRAMS.find(x=>x.id===J.id);if(!p){p=packHydrate(J);
    company pays), the camera turns to it and Ela tells its story. One square at a time, in order. */
 function pgName(s){return tt(s.t).replace(/^\d{4}\s*·\s*/,'').replace(/^Build\s+/,'').replace(/[’'][a-zçğıöşü]*\s+kur$/i,'').replace(/\s+kur$/i,'');}
 function pgPadsAdd(P){(P.steps||[]).forEach((s,i)=>{if(s.k!=='build'||PADS.some(x=>x.id==='pg_'+s.key))return;
-  PADS.push({id:'pg_'+s.key,kind:'build',type:s.type,cost:0,req:null,pg:{pid:P.id,key:s.key,i},nm:pgName(s)});});}
+  const yr=(tt(s.t).match(/^(\d{4})/)||[])[1];
+  PADS.push({id:'pg_'+s.key,kind:'build',type:s.type,cost:0,req:null,pg:{pid:P.id,key:s.key,i},nm:(yr?yr+' · ':'')+pgName(s)});});}
+function pgLocked(p){const P=PROGRAMS.find(x=>x.id===p.pg.pid);return !P||!progPlaceOk(P,p.pg.i);}
+function pgLockTxt(p){const P=PROGRAMS.find(x=>x.id===p.pg.pid);if(!P)return '';
+  if(P.ch1n&&!progPlaceOk(P,P.ch1n))return L('🔒 after Part 1','🔒 Bölüm 1 bitince');
+  const prev=PADS.find(x=>x.pg&&x.pg.pid===p.pg.pid&&x.pg.i<p.pg.i&&!progOk(P,x.pg.i));return prev?'🔒 '+L('after ','önce ')+prev.nm.replace(/^\d{4} · /,''):'🔒';}
 function pgPadVis(p){
   if(!inProg()||S.prog!==p.pg.pid)return false;const P=PROGRAMS.find(x=>x.id===p.pg.pid);
-  if(!P||!progPlaceOk(P,p.pg.i)||progOk(P,p.pg.i))return false;
+  if(!P||progOk(P,p.pg.i))return false;   // v0.87.17: every Part 2 square is on the map from the start; the next one is open, the rest locked
   if(p.x==null){S.pgSpot=S.pgSpot||{};let sp=S.pgSpot[p.pg.key];
-    if(!sp){try{sp=suggestSpots(p.type)[0];}catch(e){}if(!sp)return false;sp={x:sp.x,y:sp.y};S.pgSpot[p.pg.key]=sp;save();}
+    if(!sp){const taken=Object.values(S.pgSpot);let L2=[];try{L2=suggestSpots(p.type);}catch(e){}
+      sp=L2.find(o=>taken.every(t=>Math.hypot(t.x-o.x,t.y-o.y)>170))||L2[0];if(!sp)return false;sp={x:sp.x,y:sp.y};S.pgSpot[p.pg.key]=sp;save();}
     p.x=sp.x;p.y=sp.y;}
   return true;}
 function pgBuild(p){
