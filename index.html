@@ -450,7 +450,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.18</div>
+  <div class="t-ver" id="tVer">v0.87.20</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -685,7 +685,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.18 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.20 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -7803,7 +7803,7 @@ function render(dt,now){
     const A=padAt(p);
     if(p.pg)name=p.nm;
     place('pn'+p.id,'nm',A.x,A.y,0.1,name,p.kind==='gate'?-44:-40);
-    place('pc'+p.id,'tag '+(p.pg?(pgLocked(p)?'no':'ok'):done?'ok':S.cash>=left?'ok':'no'),A.x,A.y,0.1,p.pg?(pgLocked(p)?pgLockTxt(p):L('Company pays','Şirketten')):done?L('MAX','MAKS'):'$'+fmt(left),p.kind==='gate'?34:34);
+    place('pc'+p.id,'tag '+(p.pg?(pgLocked(p)?'no':'ok'):done?'ok':S.cash>=left?'ok':'no'),A.x,A.y,0.1,p.pg?(pgLocked(p)?pgLockTxt(p):L('Walk on','Üstüne yürü')):done?L('MAX','MAKS'):'$'+fmt(left),p.kind==='gate'?34:34);
     {const h=padHelp(p);if(h)place('ph'+p.id,'hlp',A.x,A.y,0.1,h,p.kind==='gate'?56:56);}
   }
   // battery
@@ -7858,7 +7858,7 @@ function render(dt,now){
   // floats
   floats.forEach(f=>{place('fl'+f.id,'fl'+(f.cls?' '+f.cls:''),f.x,f.y,3+f.rise,f.txt);LB['fl'+f.id].el.style.opacity=Math.max(0,f.life);});
   // guide
-  const G=GOALS[curGoal()],tg=G?G.at():null;
+  const G=progGoalObj()||GOALS[curGoal()],tg=G?G.at():null;
   if(tg){
     const d=Math.hypot(tg.x-S.px,tg.y-S.py),a=Math.atan2(tg.x-S.px,tg.y-S.py);
     arrow.visible=d>110;arrow.position.set(PX+Math.sin(a)*1.9,0.35,PZ+Math.cos(a)*1.9);arrow.rotation.set(Math.PI/2,a,0);
@@ -7890,7 +7890,7 @@ function hud(dt){
   $('cash').textContent=fmt(S.cash);$('wealth').textContent=fmt(wealth());{const c=S.contract,d=$('dealC');d.hidden=!c;if(c){const hl=Math.max(0,Math.ceil((c.until-gameNow())/HOUR));d.textContent=`🤝 ${c.delivered}/${c.need} · ${hl}h`;}}{const L=lossLastHour(),e=$('lossC');e.hidden=L<1;if(L>=1)e.textContent=`−${L} ⚡ · ${Math.round(efficiency()*100)}%`;e.title=L>=1?(S.lang==='tr'?'Son bir saatte kaybolan enerji · verimlilik':'Energy lost in the last hour · efficiency'):'';}$('carry').textContent=`${S.carry}/${carryCap()}`;
   $('pnow').textContent='$'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
-  const G=GOALS[curGoal()];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
+  const G=progGoalObj()||GOALS[curGoal()];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:inProg()?`<b class="lvlchip">🎓</b> · `:inClassic()?`<b class="lvlchip">🏛️ ${L('Classic','Klasik')}</b> · `:`<b class="lvlchip">${L('Level','Seviye')} ${sev()}</b> · `;
   const gp=G&&G.at();const gl=gp&&gp.kind&&!cozy()?padNeedLv(gp):0;
   if(!up&&!cozy()&&prestOk()){$('goal').innerHTML=chip+L(`⭐ Level ${sev()+1} · ${sevName(sev()+1)} can be opened — tap here`,`⭐ Seviye ${sev()+1} · ${sevName(sev()+1)} açılabilir — dokun`);}else
@@ -8960,7 +8960,9 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
- {v:'0.87.18',t:['Part 2 on the map','Bölüm 2 haritada'],l:[
+ {v:'0.87.20',t:['Part 2 on the map','Bölüm 2 haritada'],l:[
+  ['Part 2 is orientation: no more “the company pays”. Squares say “Walk on”, the step button says “Show on the map”.','Bölüm 2 bir oryantasyon: “parası şirketten” ifadeleri kalktı. Kutucuklarda “Üstüne yürü”, adım butonunda “Haritada göster” yazıyor.'],
+  ['With a company code, Part 1 is Ela’s briefing only: no Part 1 tasks. Part 2 starts as soon as she finishes, and the camera goes to the first plant square.','Şirket koduyla Bölüm 1 sadece Ela’nın anlatımı: Bölüm 1 görevleri yok. Ela bitirince Bölüm 2 başlar, kamera ilk santral kutucuğuna gider.'],
   ['When Ela says “walk there”, the camera keeps both you and the square in view and zooms out if they are far apart.','Ela “oraya yürü” dediğinde kamera seni ve kutucuğu birlikte gösterir; uzaksanız uzaklaşır.'],
   ['With the code, all Part 2 plant squares are on the map from the start, with their year. The next one is open; the others show 🔒 and what comes first.','Kodla birlikte Bölüm 2’nin bütün santral kutucukları yıllarıyla baştan haritada. Sıradaki açık; diğerlerinde 🔒 ve önce ne gerektiği yazıyor.'],
   ['In Part 2 each company plant has its own square on the map. Walk onto it: it is built, the camera turns to it and Ela tells its history.','Bölüm 2’de her şirket santralinin haritada kendi kutucuğu var. Üstüne yürü: kurulur, kamera ona döner ve Ela tarihçesini anlatır.'],
@@ -9661,7 +9663,7 @@ function drawMap(cv,big){
     g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=1;
     g.strokeRect((S.px-vw/2)*k,(S.py-vh/2)*k,vw*k,vh*k);}
   // goal marker
-  const G=GOALS[curGoal()],tg=G?G.at():null;
+  const G=progGoalObj()||GOALS[curGoal()],tg=G?G.at():null;
   if(tg){const pulse=(performance.now()%1000)/1000;
     g.strokeStyle='rgba(255,210,63,'+(1-pulse).toFixed(2)+')';g.lineWidth=big?3:2;
     g.beginPath();g.arc(tg.x*k,tg.y*k,(big?8:5)+pulse*(big?10:6),0,7);g.stroke();
@@ -10405,7 +10407,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.18';
+const GAME_VERSION='0.87.20';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10639,11 +10641,24 @@ async function packOpen(code,P){
   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b(P.iv)},k,b(P.d));
   return JSON.parse(new TextDecoder().decode(pt));
 }
+/* v0.87.19: in a company pack Part 1 is Ela's briefing only (no Part 1 tasks); her Part 2 opening
+   follows straight on and her last line turns the camera to the first plant square. */
+function progGoalObj(){   // v0.87.19: in a company pack the goal strip and the yellow arrow follow the pack's own steps
+  if(!inProg())return null;const P=PROGRAMS.find(x=>x.id===S.prog);if(!P||!P.pack)return null;
+  const i=P.steps.findIndex((s,j)=>!progOk(P,j));if(i<0)return null;const s=P.steps[i];
+  return {t:s.t,ok:()=>false,at:()=>{const q=s.k==='build'&&PADS.find(x=>x.id==='pg_'+s.key);return q&&padVisible(q)?q:null;}};}
+function packLessons(BL,J){
+  const fix=x=>String(x).replace('Open the Steps tab and build it.','Its square is on the map: walk onto it.').replace('Adımlar sekmesini aç ve kur.','Kutucuğu haritada: üstüne yürü.').replace(/\s*The company pays\.?/,'').replace(/\s*Parası şirketten\.?/,'');   // v0.87.20: orientation, no money talk
+  const out=(BL||[]).map(l=>l.t&&l.t[0]==='That is our job'?{t:l.t,b:['Make it, keep it for the right hour, sell it when it is expensive. That is the whole job.','Üret, doğru saate sakla, pahalıyken sat. İşin tamamı bu.']}:l);
+  const fb=(J.steps||[]).find(s=>s.k==='build'),c2=(J.intro||[]).map(b=>Array.isArray(b)?b.map(fix):b);
+  c2.forEach((b,i)=>{const last=i===c2.length-1&&fb;
+    out.push(last?{t:J.ch||['Part 2','Bölüm 2'],b,move:true,cam:()=>{const q=PADS.find(x=>x.id==='pg_'+fb.key);return q&&padVisible(q)?{x:q.x,y:q.y}:null;}}:{t:J.ch||['Part 2','Bölüm 2'],b});});
+  return out;}
 function packHydrate(J){
   const B=PROGRAMS.find(x=>x.id===J.inc)||{lessons:[],steps:[],gloss:[],cash:0},id=J.id,f=(o,k)=>!!((S[o]||{})[id+':'+k]);
   const st=(J.steps||[]).map(s=>Object.assign({},s,{ok:s.k==='build'?()=>f('progPlants',s.key):s.k==='quiz'?()=>!!(S.progQuiz||{})[id]:()=>f('progSeen',s.key)}));
   return {id,icon:J.icon,name:J.name,sub:J.sub,cash:B.cash,pack:1,lessons:B.lessons,c2:(J.intro||[]).map(b=>Array.isArray(b)?b.map(x=>String(x).replace('Open the Steps tab and build it.','Its square is on the map: walk onto it.').replace('Adımlar sekmesini aç ve kur.','Kutucuğu haritada: üstüne yürü.')):b),ch:J.ch,
-    more:(J.intro||[]).concat(...(J.steps||[]).map(s=>s.say||[])),gloss:(B.gloss||[]).concat(J.gloss||[]),steps:B.steps.concat(st),ch1n:B.steps.length};
+    more:(J.intro||[]).concat(...(J.steps||[]).map(s=>s.say||[])),gloss:(B.gloss||[]).concat(J.gloss||[]),steps:st,ch1n:0,lessons:packLessons(B.lessons,J)};   // v0.87.19: Part 1 is told, not played — Part 2 starts right after Ela
 }
 function packAdd(J){let p=PROGRAMS.find(x=>x.id===J.id);if(!p){p=packHydrate(J);PROGRAMS.push(p);pgPadsAdd(p);}return p;}
 /* v0.87.16: Part 2 plants sit on the map as their own squares. Walk onto one, it is built (the
@@ -10679,9 +10694,9 @@ function progPlaceOk(p,i){for(let j=0;j<i;j++)if(!progOk(p,j))return false;retur
 function progAct(p,i){
   const s=p.steps[i];if(!s||!s.k)return;$('mProgram').classList.remove('on');
   if(s.k==='build'){const q=PADS.find(x=>x.id==='pg_'+s.key);
-    if(q&&padVisible(q)){elaSay(Object.assign([{b:[`The ${q.nm} square is on the map. Walk onto it — the company pays.`,`${q.nm} kutucuğu haritada. Üstüne yürü — parası şirketten.`],cam:()=>({x:q.x,y:q.y}),move:true}],{okLbl:['OK','Tamam']}));return;}
+    if(q&&padVisible(q)){elaSay(Object.assign([{b:[`The ${q.nm} square is on the map. Walk onto it.`,`${q.nm} kutucuğu haritada. Üstüne yürü.`],cam:()=>({x:q.x,y:q.y}),move:true}],{okLbl:['OK','Tamam']}));return;}
     showSuggest(s.type);if(!placing)return;placing.prog={pid:p.id,key:s.key,i};   // no room for a square: pick the spot by hand
-    toast(L('Pick a spot and build it. The company pays for this one.','Bir yer seç ve kur. Bu santralin parası şirketten.'),'');return;}
+    toast(L('Pick a spot and build it.','Bir yer seç ve kur.'),'');return;}
   if(s.k==='read'){elaSay((s.say||[]).map(b=>({b})),()=>{(S.progSeen=S.progSeen||{})[p.id+':'+s.key]=1;save();progCheck();pgTab='steps';openProgram();});return;}
   if(s.k==='quiz')quizRun(p,s,0,0);
 }
@@ -10742,7 +10757,7 @@ function pgStepsHtml(p){
   let html=p.steps.map((st,i)=>{const ok=progOk(p,i);
     const hd=p.ch1n&&i===0?`<div class="pgh">${L('Part 1 · The electricity business','Bölüm 1 · Elektrik işi')}</div>`:p.ch1n&&i===p.ch1n?`<div class="pgh">${tt(p.ch||['Part 2','Bölüm 2'])}</div>`:'';
     const cur=!ok&&st.k&&progPlaceOk(p,i)&&!(p.ch1n&&!(S.progSeen||{})[p.id+':c2']);
-    const btn=cur?`<button class="pgact" data-act="${i}">${st.k==='build'?'🏗️ '+L('Build it — the company pays','Kur — parası şirketten'):st.k==='quiz'?'📝 '+L('Start','Başla'):'▶ '+L('Let Ela tell it','Ela anlatsın')}</button>`:'';
+    const btn=cur?`<button class="pgact" data-act="${i}">${st.k==='build'?'🏗️ '+L('Show on the map','Haritada göster'):st.k==='quiz'?'📝 '+L('Start','Başla'):'▶ '+L('Let Ela tell it','Ela anlatsın')}</button>`:'';
     return hd+`<div class="pgi${ok?' on':''}"><span class="ck">${ok?'✅':'⬜'}</span><span><b>${tt(st.t)}</b><small>${tt(st.w)}</small>${btn}</span></div>`;}).join('');
   if(done){
     html+=`<div class="pgi on"><span class="ck">🏁</span><span><b>${L('Programme complete','Program tamamlandı')}</b>`
@@ -10820,7 +10835,7 @@ function startProgram(p){
   pgTab='learn';save();syncProgBtn();
   try{trackOnce('prog-start-'+p.id);}catch(e){}
   $('mSet').classList.remove('on');$('mProgram').classList.remove('on');
-  const go=()=>{if(document.querySelector('.modal.on')||tutOpen){setTimeout(go,400);return;}elaSay(p.lessons||[],()=>openProgram());};go();
+  const go=()=>{if(document.querySelector('.modal.on')||tutOpen){setTimeout(go,400);return;}elaSay(p.lessons||[],p.pack?null:()=>openProgram());};go();
 }
 $('sCode').onclick=async()=>{
   const v=prompt(L('Enter your access code','Erişim kodunu gir'));
