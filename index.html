@@ -260,6 +260,11 @@ body.title #leftCol{visibility:hidden}
 .fnew{position:relative}
 .fnew::after{content:'';position:absolute;top:3px;left:3px;width:10px;height:10px;border-radius:50%;background:#23D18B;box-shadow:0 0 0 2px #fff}
 .modal.tutshow{z-index:24;align-items:flex-start}
+.mkteach{background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 0 0 3px #FFC83D}
+.mkt-h{font-weight:800;margin-bottom:4px}.mkt-cv{width:100%;display:block}
+.mkt-legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;margin-top:4px}
+.mkt-arrow{font-weight:800;color:#B07800;font-size:13px;animation:mktb 1s ease-in-out infinite alternate}
+@keyframes mktb{from{transform:translateY(0)}to{transform:translateY(-3px)}}
 #lvlVeil{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#23324F,#0E1526);opacity:0;pointer-events:none;transition:opacity .4s}
 #lvlVeil.on{opacity:1;pointer-events:auto}
 #lvlVeil .lv-card{background:#fff;border-radius:22px;padding:26px 30px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35);max-width:86vw}
@@ -450,7 +455,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.21</div>
+  <div class="t-ver" id="tVer">v0.87.23</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -685,7 +690,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.21 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.23 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -7721,7 +7726,7 @@ let camPos=new THREE.Vector3(),camInit=false,shadowZoom=0;
 function render(dt,now){
   frameNo++;
   cellPool.forEach(o=>o.visible=false);coinPool.forEach(o=>o.visible=false);smokeUsed=0;
-  const t=hourNow();let nk=nightK(t);
+  const t=inProg()?12.5:hourNow();let nk=nightK(t);   // v0.87.23: a program is always lit as midday; only Ela's evening line darkens it
   // camera
   const asp=innerWidth/innerHeight;camera.aspect=asp;
   const camMv=!!(camAim&&camAim.move),camD=camMv?Math.hypot(S.px-camAim.x,S.py-camAim.y):0;   // v0.87.18: on a 'walk there' line both you and the target stay in the shot
@@ -8916,6 +8921,25 @@ $('gridBody').addEventListener('click',e=>{
     toast(L(`${codeOf(x.id)} line speed ${gridSpd(x)}: it now clears ${gridRate(x).toFixed(2)} cells a second off the stack.`,`${codeOf(x.id)} hat hızı ${gridSpd(x)}: yığından saniyede ${gridRate(x).toFixed(2)} hücre çekiyor.`),'good');
     trackOnce('gridspeed');save();renderGrid();}
 });
+/* v0.87.22: Ela's price lesson — the markets card opens with today's 24-hour price drawn large and
+   arrows on what matters: the price now, night (cheap), evening (expensive). */
+function mktTeach(){
+  openMarkets();const body=$('mktBody');if(!body)return;
+  const cur=todayCurve(),h=Math.floor(hourNow())%24,lo=cur.indexOf(Math.min(...cur)),hi=cur.indexOf(Math.max(...cur));
+  const box=document.createElement('div');box.className='mkteach';
+  box.innerHTML=`<div class="mkt-h">${L('Today, hour by hour','Bugün, saat saat')}</div><div class="mkt-wrap"><canvas class="mkt-cv"></canvas></div>`
+    +`<div class="mkt-legend"><span>⬇ <b style="color:#23B26D">${L('Night: cheap','Gece: ucuz')}</b> ${hh(lo)} · $${cur[lo].toFixed(1)}</span><span>⬇ <b style="color:#E8364F">${L('Evening: expensive','Akşam: pahalı')}</b> ${hh(hi)} · $${cur[hi].toFixed(1)}</span><span>▲ <b>${L('Now','Şimdi')}</b> ${hh(h)}</span></div>`;
+  body.prepend(box);
+  const pn=body.querySelector('.mktcard .pnow');if(pn&&!pn.parentNode.querySelector('.mkt-arrow')){const a=document.createElement('div');a.className='mkt-arrow';a.textContent=L('⬆ the price right now','⬆ şu anki fiyat');pn.parentNode.appendChild(a);}
+  const cv=box.querySelector('canvas'),dpr=Math.min(2,devicePixelRatio||1),W=cv.clientWidth||300,H=120;cv.width=W*dpr;cv.height=H*dpr;cv.style.height=H+'px';
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);const mx=Math.max(...cur)*1.12,top=26,bh=H-top-16,bw=W/24;
+  c.font='bold 13px Nunito, sans-serif';c.textAlign='center';
+  cur.forEach((v,i)=>{const y=top+bh*(1-v/mx);c.fillStyle=level(v)[2];c.globalAlpha=i===h?1:0.75;c.fillRect(i*bw+1,y,bw-2,top+bh-y);c.globalAlpha=1;
+    if(i%6===0){c.fillStyle='#5C6B84';c.font='11px Nunito, sans-serif';c.fillText(hh(i),i*bw+bw/2,H-2);}});
+  const arrow=(i,col,txt)=>{const x=i*bw+bw/2,y=top+bh*(1-cur[i]/mx)-4;c.fillStyle=col;c.font='bold 18px sans-serif';c.fillText('⬇',x,y);c.font='bold 11px Nunito, sans-serif';c.fillText(txt,Math.min(W-30,Math.max(30,x)),y-18);};
+  arrow(lo,'#23B26D',L('cheap','ucuz'));arrow(hi,'#E8364F',L('expensive','pahalı'));
+  {const x=h*bw+bw/2;c.fillStyle='#1D2433';c.font='bold 14px sans-serif';c.fillText('▲',x,top+bh+12);}
+}
 function openMarkets(){
   const avg=todayAvg(),h=Math.floor(hourNow())%24,t=hourNow(),P={x:S.px,y:S.py};
   const rows=markets().map(m=>{
@@ -8962,7 +8986,11 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
- {v:'0.87.21',t:['Part 2 on the map','Bölüm 2 haritada'],l:[
+ {v:'0.87.23',t:['Part 2 on the map','Bölüm 2 haritada'],l:[
+  ['Orientation is always shown in daylight; only Ela’s evening-in-the-city line goes dark.','Oryantasyon hep gündüz ışığında; sadece Ela’nın şehirde akşam satırında hava kararıyor.'],
+  ['Company code: after a plant’s story Ela says “Let’s continue” and the steps panel no longer pops up. The next square is live on the map; the history and the check start by themselves. The panel is still behind 🎓 Program.','Şirket kodu: santral anlatımı bitince Ela “Devam edelim” der, adımlar paneli artık açılmaz. Sıradaki kutucuk haritada hazırdır; tarihçe ve bilgi kontrolü kendiliğinden başlar. Panel 🎓 Program butonunda duruyor.'],
+  ['Part 2 plant squares now keep clear of the battery pads, HQ, the city and other plants; a square already placed on top of something moves. After a plant’s story the button says “Continue”.','Bölüm 2 santral kutucukları artık batarya alanlarından, merkezden, şehirden ve diğer santrallerden uzakta çıkıyor; üst üste çıkmış olan yer değiştiriyor. Santral anlatımının sonunda buton “Devam” yazıyor.'],
+  ['Orientation: when Ela says the price moves, the markets card opens with today’s hour-by-hour price and arrows on night (cheap), evening (expensive) and now.','Oryantasyon: Ela fiyatın oynadığını anlatırken piyasa kartı açılır; bugünün saat saat fiyatı ve gece (ucuz), akşam (pahalı) ve şimdi için oklar görünür.'],
   ['With a company code the map shows one square at a time: the solar and battery squares only while Ela talks about them, then only the plant whose story is next.','Şirket koduyla haritada aynı anda tek kutucuk var: güneş ve batarya kutucukları sadece Ela onları anlatırken, sonra sadece sıradaki santral.'],
   ['Part 2 is orientation: no more “the company pays”. Squares say “Walk on”, the step button says “Show on the map”.','Bölüm 2 bir oryantasyon: “parası şirketten” ifadeleri kalktı. Kutucuklarda “Üstüne yürü”, adım butonunda “Haritada göster” yazıyor.'],
   ['With a company code, Part 1 is Ela’s briefing only: no Part 1 tasks. Part 2 starts as soon as she finishes, and the camera goes to the first plant square.','Şirket koduyla Bölüm 1 sadece Ela’nın anlatımı: Bölüm 1 görevleri yok. Ela bitirince Bölüm 2 başlar, kamera ilk santral kutucuğuna gider.'],
@@ -10410,7 +10438,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.21';
+const GAME_VERSION='0.87.23';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10578,7 +10606,7 @@ const PROGRAMS=[
     get b(){return (built('bat')||S.plants.some(x=>x.type==='battery'))?this.b0:["Walk to the square with the battery logo. Stand on it and it gets paid bit by bit. A battery is a box for hours: we put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya logolu kutucuğa yürü. Üstünde durunca parası azar azar ödenir. Batarya, saatleri saklayan bir kutu gibi: gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."];},
     b0:["A battery is a box for hours. We put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya, saatleri saklayan bir kutu gibi. Gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."],cam:()=>pad('bat')},
    {t:['The price moves','Fiyat oynar'],
-    b:["Electricity does not cost the same all day. At night it is cheap. In the evening it is expensive. Same electricity, different hour, different money.","Elektrik gün boyu aynı para etmez. Gece ucuzdur. Akşam pahalıdır. Aynı elektrik, farklı saat, farklı para."],cam:()=>CITY},
+    b:["Electricity does not cost the same all day. At night it is cheap. In the evening it is expensive. Same electricity, different hour, different money.","Elektrik gün boyu aynı para etmez. Gece ucuzdur. Akşam pahalıdır. Aynı elektrik, farklı saat, farklı para."],show:()=>mktTeach()},
    {t:['That is our job','Bizim işimiz bu'],
     b:["Make it, keep it for the right hour, sell it when it is expensive. That is the whole job. I left you enough money for two turbines and a panel — go build.","Üret, doğru saate sakla, pahalıyken sat. İşin tamamı bu. Sana iki türbin ve bir panel kuracak kadar para bıraktım — hadi kur."]}],
   gloss:[
@@ -10670,6 +10698,18 @@ function pgName(s){return tt(s.t).replace(/^\d{4}\s*·\s*/,'').replace(/^Build\s
 function pgPadsAdd(P){(P.steps||[]).forEach((s,i)=>{if(s.k!=='build'||PADS.some(x=>x.id==='pg_'+s.key))return;
   const yr=(tt(s.t).match(/^(\d{4})/)||[])[1];
   PADS.push({id:'pg_'+s.key,kind:'build',type:s.type,cost:0,req:null,pg:{pid:P.id,key:s.key,i},nm:(yr?yr+' · ':'')+pgName(s)});});}
+function pgSpotFree(x,y,selfId){
+  const far=(a,b,d)=>Math.hypot(a-x,b-y)>=d;
+  if(!far(CITY.x,CITY.y,CITY.r+150)||!far(HQ.x,HQ.y,170)||!far(BAT.x,BAT.y,170)||!far(BAT.store.x,BAT.store.y,150)||!far(BAT.take.x,BAT.take.y,150))return false;
+  for(const q of PADS)if(q.id!==selfId&&q.x!=null&&!far(q.x,q.y,150))return false;
+  for(const q of S.plants)if(!far(q.x,q.y,150))return false;
+  for(const d of (typeof DEPOTS!=='undefined'?DEPOTS:[]))if(!far(d.x,d.y,150))return false;
+  return true;}
+function pgFindSpot(p){
+  const out=[];for(let y=480;y<1150;y+=30)for(let x=120;x<1250;x+=30){if(!pgSpotFree(x,y,p.id))continue;
+    let st;try{st=spotState(p.type,x,y,null);}catch(e){continue;}if(st.why)continue;try{if(regionLocked(y))continue;}catch(e){}
+    out.push({x,y,q:st.q||0,d:Math.hypot(x-S.px,y-S.py)});}
+  out.sort((a,b)=>(b.q-a.q)||(a.d-b.d));return out[0]?{x:out[0].x,y:out[0].y}:null;}
 function pgLocked(p){const P=PROGRAMS.find(x=>x.id===p.pg.pid);return !P||!progPlaceOk(P,p.pg.i);}
 function pgLockTxt(p){const P=PROGRAMS.find(x=>x.id===p.pg.pid);if(!P)return '';
   if(P.ch1n&&!progPlaceOk(P,P.ch1n))return L('🔒 after Part 1','🔒 Bölüm 1 bitince');
@@ -10680,8 +10720,8 @@ function pgPadVis(p){
   if(!(S.progSeen||{})[p.pg.pid+':intro']&&tutPadId!==p.id)return false;   // v0.87.21: one square, and only once Ela has introduced it
   // v0.87.17: every Part 2 square is on the map from the start; the next one is open, the rest locked
   if(p.x==null){S.pgSpot=S.pgSpot||{};let sp=S.pgSpot[p.pg.key];
-    if(!sp){const taken=Object.values(S.pgSpot);let L2=[];try{L2=suggestSpots(p.type);}catch(e){}
-      sp=L2.find(o=>taken.every(t=>Math.hypot(t.x-o.x,t.y-o.y)>170))||L2[0];if(!sp)return false;sp={x:sp.x,y:sp.y};S.pgSpot[p.pg.key]=sp;save();}
+    if(sp&&!pgSpotFree(sp.x,sp.y,p.id))sp=null;      // v0.87.22: an old spot on top of something is moved
+    if(!sp){sp=pgFindSpot(p);if(!sp)return false;S.pgSpot[p.pg.key]=sp;save();}
     p.x=sp.x;p.y=sp.y;}
   return true;}
 function pgBuild(p){
@@ -10702,13 +10742,18 @@ function progAct(p,i){
     if(q&&padVisible(q)){elaSay(Object.assign([{b:[`The ${q.nm} square is on the map. Walk onto it.`,`${q.nm} kutucuğu haritada. Üstüne yürü.`],cam:()=>({x:q.x,y:q.y}),move:true}],{okLbl:['OK','Tamam']}));return;}
     showSuggest(s.type);if(!placing)return;placing.prog={pid:p.id,key:s.key,i};   // no room for a square: pick the spot by hand
     toast(L('Pick a spot and build it.','Bir yer seç ve kur.'),'');return;}
-  if(s.k==='read'){elaSay((s.say||[]).map(b=>({b})),()=>{(S.progSeen=S.progSeen||{})[p.id+':'+s.key]=1;save();progCheck();pgTab='steps';openProgram();});return;}
+  if(s.k==='read'){elaSay(Object.assign((s.say||[]).map(b=>({b})),{okLbl:["Let's continue",'Devam edelim']}),()=>{(S.progSeen=S.progSeen||{})[p.id+':'+s.key]=1;save();progCheck();if(p.pack){packNext(p);return;}pgTab='steps';openProgram();});return;}
   if(s.k==='quiz')quizRun(p,s,0,0);
 }
+/* v0.87.23: in a company pack the story moves on by itself — the next plant square is simply live on
+   the map (goal strip + arrow point at it), the history and the check start on their own. The steps
+   panel stays behind the 🎓 button for anyone who loses the thread. */
+function packNext(p){if((S.progDone||{})[p.id])return;const i=p.steps.findIndex((s,j)=>!progOk(p,j));if(i<0)return;
+  if(p.steps[i].k!=='build')setTimeout(()=>{if(!tutOpen&&!cardOpen)progAct(p,i);},500);}
 function progAfter(pg,np){
   const p=PROGRAMS.find(x=>x.id===pg.pid),s=p&&p.steps[pg.i];if(!s)return;
   const go=()=>{if(tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,600);return;}
-    elaSay((s.after||[]).map(b=>({b,cam:()=>({x:np.x,y:np.y})})),()=>{progCheck();pgTab='steps';if(!(S.progDone||{})[p.id])openProgram();});};
+    elaSay(Object.assign((s.after||[]).map(b=>({b,cam:()=>({x:np.x,y:np.y})})),{okLbl:["Let's continue",'Devam edelim']}),()=>{progCheck();if(p.pack){packNext(p);return;}pgTab='steps';if(!(S.progDone||{})[p.id])openProgram();});};
   setTimeout(go,900);
 }
 function quizRun(p,s,i,sc){
