@@ -450,7 +450,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.20</div>
+  <div class="t-ver" id="tVer">v0.87.21</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -685,7 +685,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.20 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.21 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6313,7 +6313,8 @@ function curGoal(){const out=S.goalOut||[];for(let i=S.goal;i<GOALS.length;i++){
 function padNeedLv(p){const k=p.kind==='upg'?({bag:'upgrades',boots:'upgrades',helper:'crew',batcap:'battery',bateff:'battery',grid:'grid'})[p.key]:
   p.kind==='gate'?(p.region==='east'?'nuclear':'regions'):({battery:'battery',town:'regions',nuclear:'nuclear'})[p.type];return k&&!has(k)?UNLOCK[k]:0;}
 function padVisible(p){
-  if(p.pg)return pgPadVis(p);                                  // v0.87.16: a Part 2 plant square
+  if(p.pg)return pgPadVis(p);
+  if(inPack()&&p.id!==tutPadId)return false;                  // v0.87.21: no stray squares in a company pack                                  // v0.87.16: a Part 2 plant square
   if(p.kind==='build'&&!typeOk(p.type))return false;          // v0.86: this plant type opens at a later level
   if(p.kind==='build'&&FREE_BASE[p.type]&&fbLad())return false;   // v0.87.9: build anywhere = no plant squares
   if(p.kind==='upg'&&(p.key==='bag'||p.key==='boots')&&!has('upgrades'))return false;
@@ -7712,7 +7713,8 @@ function sweepLabels(){for(const k in LB){if(LB[k].seen!==frameNo){LB[k].el.styl
 /* ======================= RENDER ======================= */
 const SKY=[[0,0x0F1A3A],[5,0x1C2A55],[6.5,0xF3B08C],[8,0x9ED5F5],[16.5,0xA8D8F2],[18.5,0xF4A259],[20,0x4B3F7A],[21.5,0x121C3E],[24,0x0F1A3A]];
 const cA=new THREE.Color(),cB=new THREE.Color();
-let tutNightK=0;
+let tutNightK=0,tutPadId=null;   // v0.87.21: in a company pack a square exists only while Ela talks about it
+function inPack(){if(!inProg())return false;const P=PROGRAMS.find(x=>x.id===S.prog);return !!(P&&P.pack);}
 function skyCol(t){for(let i=0;i<SKY.length-1;i++){const[t0,a]=SKY[i],[t1,b]=SKY[i+1];if(t>=t0&&t<=t1){cA.setHex(a);cB.setHex(b);return cA.lerp(cB,(t-t0)/(t1-t0));}}return cA.setHex(0x9ED5F5);}
 function nightK(t){if(t>=7.5&&t<=18)return 0;if(t>=20.5||t<=5)return 1;if(t<7.5)return(7.5-t)/2.5;return(t-18)/2.5;}
 let camPos=new THREE.Vector3(),camInit=false,shadowZoom=0;
@@ -8361,7 +8363,7 @@ function showTut(){
   const keep=!!(st.show&&tutModal&&st.show===tutShowFn);   // v0.86.7: the same panel stays open across Ela's lines about it
   if(!keep)tutHide();
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
-  camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y,night:!!a.night,move:!!st.move};}catch(e){}}
+  tutPadId=st.pad||null;camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y,night:!!a.night,move:!!st.move};}catch(e){}}
   $('tutName').textContent=L('Ela · Field engineer','Ela · Saha mühendisi');
   $('tutText').textContent=tt(st.b||st.t);   // a programme line carries its body in .b
   $('tutStep').textContent=`${tutI+1}/${seq.length}`;
@@ -8375,7 +8377,7 @@ setInterval(()=>{try{if(!tutOpen)return;const st=(tutSeq||TUT)[tutI];if(!st||!st
 function endTutorial(done){
   tutHide();
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
-  $('tut').hidden=true;$('tutDim').hidden=true;tutOpen=false;camAim=null;last=0;
+  $('tut').hidden=true;$('tutDim').hidden=true;tutOpen=false;camAim=null;tutPadId=null;last=0;
   const wasGame=(tutSeq===TUT||tutSeq===null||!!(tutSeq&&tutSeq.isGame)),after=tutAfter;
   tutSeq=null;tutAfter=null;
   if(wasGame){S.tutDone=true;trackOnce(done?'tutorial-finished':'tutorial-skipped');}
@@ -8960,7 +8962,8 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
- {v:'0.87.20',t:['Part 2 on the map','Bölüm 2 haritada'],l:[
+ {v:'0.87.21',t:['Part 2 on the map','Bölüm 2 haritada'],l:[
+  ['With a company code the map shows one square at a time: the solar and battery squares only while Ela talks about them, then only the plant whose story is next.','Şirket koduyla haritada aynı anda tek kutucuk var: güneş ve batarya kutucukları sadece Ela onları anlatırken, sonra sadece sıradaki santral.'],
   ['Part 2 is orientation: no more “the company pays”. Squares say “Walk on”, the step button says “Show on the map”.','Bölüm 2 bir oryantasyon: “parası şirketten” ifadeleri kalktı. Kutucuklarda “Üstüne yürü”, adım butonunda “Haritada göster” yazıyor.'],
   ['With a company code, Part 1 is Ela’s briefing only: no Part 1 tasks. Part 2 starts as soon as she finishes, and the camera goes to the first plant square.','Şirket koduyla Bölüm 1 sadece Ela’nın anlatımı: Bölüm 1 görevleri yok. Ela bitirince Bölüm 2 başlar, kamera ilk santral kutucuğuna gider.'],
   ['When Ela says “walk there”, the camera keeps both you and the square in view and zooms out if they are far apart.','Ela “oraya yürü” dediğinde kamera seni ve kutucuğu birlikte gösterir; uzaksanız uzaklaşır.'],
@@ -10407,7 +10410,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.20';
+const GAME_VERSION='0.87.21';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10565,13 +10568,13 @@ const PROGRAMS=[
    {t:['The spinning one','Dönen şey'],
     b:["That tall spinning thing is a wind turbine. When the wind blows, it makes electricity. We cannot make the wind blow. The wind decides.","Şu uzun dönen şey bir rüzgâr türbini. Rüzgâr estiğinde elektrik üretir. Rüzgârı biz estiremeyiz. Ona rüzgâr karar verir."],cam:()=>S.plants[0]},
    {t:['The blue boards','Mavi levhalar'],
-    live:1,get move(){return !S.plants.some(x=>x.type==='solar');},   // v0.87.14: you can walk on this line, and her words change when the panel is up
+    live:1,pad:'s1',get move(){return !S.plants.some(x=>x.type==='solar');},   // v0.87.14: you can walk on this line, and her words change when the panel is up
     get b(){return S.plants.some(x=>x.type==='solar')?this.b0:["Walk to the square with the sun logo. Stand on it and it gets paid bit by bit: a solar panel appears — blue boards that make electricity while the sun is up. When the sun goes down, they stop. Every evening.","Güneş logolu kutucuğa yürü. Üstünde durunca parası azar azar ödenir ve güneş paneli çıkar: güneş varken elektrik üreten mavi levhalar. Güneş batınca durur. Her akşam."];},
     b0:["Those blue boards are solar panels. While the sun is up they make electricity. When the sun goes down, they stop. Every evening.","Şu mavi levhalar güneş paneli. Güneş varken elektrik üretir. Güneş batınca durur. Her akşam."],cam:()=>S.plants.find(x=>x.type==='solar')||pad('s1')},
    {t:['And here is the problem','İşte sorun burada'],
     b:["In the evening everyone comes home and turns the lights on. That is when electricity is needed most. And that is exactly when the sun goes down.","Akşam olunca herkes eve gelir, ışıkları yakar. Elektriğe en çok o saat ihtiyaç olur. Güneş de tam o saat batar."],cam:()=>({x:CITY.x,y:CITY.y,night:1})},
    {t:['So we use a battery','Bu yüzden batarya var'],
-    live:1,get move(){return !(built('bat')||S.plants.some(x=>x.type==='battery'));},   // v0.87.15: walk to it while she talks
+    live:1,pad:'bat',get move(){return !(built('bat')||S.plants.some(x=>x.type==='battery'));},   // v0.87.15: walk to it while she talks
     get b(){return (built('bat')||S.plants.some(x=>x.type==='battery'))?this.b0:["Walk to the square with the battery logo. Stand on it and it gets paid bit by bit. A battery is a box for hours: we put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya logolu kutucuğa yürü. Üstünde durunca parası azar azar ödenir. Batarya, saatleri saklayan bir kutu gibi: gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."];},
     b0:["A battery is a box for hours. We put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya, saatleri saklayan bir kutu gibi. Gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."],cam:()=>pad('bat')},
    {t:['The price moves','Fiyat oynar'],
@@ -10652,7 +10655,7 @@ function packLessons(BL,J){
   const out=(BL||[]).map(l=>l.t&&l.t[0]==='That is our job'?{t:l.t,b:['Make it, keep it for the right hour, sell it when it is expensive. That is the whole job.','Üret, doğru saate sakla, pahalıyken sat. İşin tamamı bu.']}:l);
   const fb=(J.steps||[]).find(s=>s.k==='build'),c2=(J.intro||[]).map(b=>Array.isArray(b)?b.map(fix):b);
   c2.forEach((b,i)=>{const last=i===c2.length-1&&fb;
-    out.push(last?{t:J.ch||['Part 2','Bölüm 2'],b,move:true,cam:()=>{const q=PADS.find(x=>x.id==='pg_'+fb.key);return q&&padVisible(q)?{x:q.x,y:q.y}:null;}}:{t:J.ch||['Part 2','Bölüm 2'],b});});
+    out.push(last?{t:J.ch||['Part 2','Bölüm 2'],b,move:true,pad:'pg_'+fb.key,cam:()=>{const q=PADS.find(x=>x.id==='pg_'+fb.key);return q&&padVisible(q)?{x:q.x,y:q.y}:null;}}:{t:J.ch||['Part 2','Bölüm 2'],b});});
   return out;}
 function packHydrate(J){
   const B=PROGRAMS.find(x=>x.id===J.inc)||{lessons:[],steps:[],gloss:[],cash:0},id=J.id,f=(o,k)=>!!((S[o]||{})[id+':'+k]);
@@ -10673,7 +10676,9 @@ function pgLockTxt(p){const P=PROGRAMS.find(x=>x.id===p.pg.pid);if(!P)return '';
   const prev=PADS.find(x=>x.pg&&x.pg.pid===p.pg.pid&&x.pg.i<p.pg.i&&!progOk(P,x.pg.i));return prev?'🔒 '+L('after ','önce ')+prev.nm.replace(/^\d{4} · /,''):'🔒';}
 function pgPadVis(p){
   if(!inProg()||S.prog!==p.pg.pid)return false;const P=PROGRAMS.find(x=>x.id===p.pg.pid);
-  if(!P||progOk(P,p.pg.i))return false;   // v0.87.17: every Part 2 square is on the map from the start; the next one is open, the rest locked
+  if(!P||progOk(P,p.pg.i)||!progPlaceOk(P,p.pg.i))return false;
+  if(!(S.progSeen||{})[p.pg.pid+':intro']&&tutPadId!==p.id)return false;   // v0.87.21: one square, and only once Ela has introduced it
+  // v0.87.17: every Part 2 square is on the map from the start; the next one is open, the rest locked
   if(p.x==null){S.pgSpot=S.pgSpot||{};let sp=S.pgSpot[p.pg.key];
     if(!sp){const taken=Object.values(S.pgSpot);let L2=[];try{L2=suggestSpots(p.type);}catch(e){}
       sp=L2.find(o=>taken.every(t=>Math.hypot(t.x-o.x,t.y-o.y)>170))||L2[0];if(!sp)return false;sp={x:sp.x,y:sp.y};S.pgSpot[p.pg.key]=sp;save();}
@@ -10693,7 +10698,7 @@ try{for(const J of JSON.parse(localStorage.getItem(PACK_KEY)||'[]'))packAdd(J);}
 function progPlaceOk(p,i){for(let j=0;j<i;j++)if(!progOk(p,j))return false;return true;}
 function progAct(p,i){
   const s=p.steps[i];if(!s||!s.k)return;$('mProgram').classList.remove('on');
-  if(s.k==='build'){const q=PADS.find(x=>x.id==='pg_'+s.key);
+  if(s.k==='build'){const q=PADS.find(x=>x.id==='pg_'+s.key);(S.progSeen=S.progSeen||{})[p.id+':intro']=1;
     if(q&&padVisible(q)){elaSay(Object.assign([{b:[`The ${q.nm} square is on the map. Walk onto it.`,`${q.nm} kutucuğu haritada. Üstüne yürü.`],cam:()=>({x:q.x,y:q.y}),move:true}],{okLbl:['OK','Tamam']}));return;}
     showSuggest(s.type);if(!placing)return;placing.prog={pid:p.id,key:s.key,i};   // no room for a square: pick the spot by hand
     toast(L('Pick a spot and build it.','Bir yer seç ve kur.'),'');return;}
@@ -10835,7 +10840,7 @@ function startProgram(p){
   pgTab='learn';save();syncProgBtn();
   try{trackOnce('prog-start-'+p.id);}catch(e){}
   $('mSet').classList.remove('on');$('mProgram').classList.remove('on');
-  const go=()=>{if(document.querySelector('.modal.on')||tutOpen){setTimeout(go,400);return;}elaSay(p.lessons||[],p.pack?null:()=>openProgram());};go();
+  const go=()=>{if(document.querySelector('.modal.on')||tutOpen){setTimeout(go,400);return;}elaSay(p.lessons||[],p.pack?()=>{(S.progSeen=S.progSeen||{})[p.id+':intro']=1;save();}:()=>openProgram());};go();
 }
 $('sCode').onclick=async()=>{
   const v=prompt(L('Enter your access code','Erişim kodunu gir'));
