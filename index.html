@@ -235,6 +235,7 @@ body.title #leftCol{visibility:hidden}
 .copts button small{display:block;color:#4A5568;font-size:12.5px;margin-top:2px}
 .copts button:disabled{opacity:1;background:#E9ECF3;border-color:#CBD3DE;border-style:dashed}
 .copts button:disabled b,.copts button:disabled small{color:#6B7689}
+.copts button.qok,.copts button.qno{border-style:solid}.copts button.qok b,.copts button.qno b{color:#fff!important}   /* v0.87.27: quiz answers */
 .copts .nomoney{display:block;font-size:11.5px;font-weight:800;color:var(--peak);margin-top:4px}
 .offlog{list-style:none;text-align:left;margin:8px 0;padding:0;max-height:30vh;overflow:auto}
 .offlog li{font-size:13px;padding:6px 8px;border-radius:10px;background:#F4F6FA;color:#1D2433;margin-bottom:5px}
@@ -455,7 +456,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.26</div>
+  <div class="t-ver" id="tVer">v0.87.29</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -690,7 +691,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.26 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.29 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6185,7 +6186,8 @@ function dowOf(d){return dateOf(d).getUTCDay();}            // 0 = Sunday
 function weekendMult(d){const w=dowOf(d);return w===0?0.75:w===6?0.85:1;}
 function curtailWindow(d){return has('shocks')&&dowOf(d)===0?[11,15]:null;}  // Sunday midday dispatch order
 function curtailNow(){const w=curtailWindow(S.day);if(!w)return false;const h=hourNow();return h>=w[0]&&h<w[1];}
-const seasonOf=d=>{const m=dateOf(d).getUTCMonth();return SEASONS[m>=2&&m<=4?0:m>=5&&m<=7?1:m>=8&&m<=10?2:3];};
+const seasonOf=d=>{if(typeof S!=='undefined'&&S&&S.progWorld)return SEASONS[1];   // v0.87.28: a program is always summer
+  const m=dateOf(d).getUTCMonth();return SEASONS[m>=2&&m<=4?0:m>=5&&m<=7?1:m>=8&&m<=10?2:3];};
 const WEATHER={
   sunny:{name:['Sunny','Güneşli'],icon:'☀️',solar:1.0, wind:0.9},
   cloudy:{name:['Cloudy','Bulutlu'],icon:'⛅',solar:0.55,wind:1.0},
@@ -6252,7 +6254,7 @@ function makeDay(i){
   }
   const se=seasonOf(i),wr=r();let weather='sunny';
   const winter=(()=>{const m=new Date(CAL0+i*86400000).getUTCMonth();return m===11||m===0||m===1;})();
-  if(i>=3){if(winter&&wr<se.rain*0.8)weather='snowy';else if(wr<se.rain*0.25)weather='stormy';else if(wr<se.rain)weather='rainy';else if(wr<se.rain+0.25)weather='cloudy';}
+  if(i>=3&&!inProg()){if(winter&&wr<se.rain*0.8)weather='snowy';else if(wr<se.rain*0.25)weather='stormy';else if(wr<se.rain)weather='rainy';else if(wr<se.rain+0.25)weather='cloudy';}
   return{noise,wind,shock:has('shocks')?shock:null,weather};   // v0.86.8: spikes, crashes and cap/floor series come with the News level
 }
 let DAY;
@@ -6574,7 +6576,7 @@ function update(dt){
   for(const f of floats){f.life-=dt*0.9;f.rise+=dt*1.6;}
   for(let i=floats.length-1;i>=0;i--)if(floats[i].life<=0)floats.splice(i,1);
   for(const k in pops){pops[k]-=dt*1.8;if(pops[k]<=0)delete pops[k];}
-  const gi=curGoal(),G=GOALS[gi];
+  const gi=curGoal(),G=inProg()?null:GOALS[gi];   // v0.87.29: game goals do not run inside a program
   if(G&&G.ok()){if(G.r)S.cash+=G.r;trackOnce('goal-'+String(gi+1).padStart(2,'0'));
     if(gi===S.goal){S.goal++;S.goalOut=(S.goalOut||[]).filter(i=>i>=S.goal);while((S.goalOut||[]).includes(S.goal)){S.goal++;}}else (S.goalOut=S.goalOut||[]).push(gi);sfx.goal();toast(G.r?`${L('Goal done','Hedef tamam')}: +$${fmt(G.r)}`:L('Goal done','Hedef tamam'),'good');}
   S.saveT=(S.saveT||0)+dt;if(S.saveT>30){S.saveT=0;save();}
@@ -7728,6 +7730,7 @@ let camPos=new THREE.Vector3(),camInit=false,shadowZoom=0;
 function render(dt,now){
   frameNo++;
   cellPool.forEach(o=>o.visible=false);coinPool.forEach(o=>o.visible=false);smokeUsed=0;
+  if(DAY&&DAY.weather!=='sunny'&&inProg())DAY.weather='sunny';   // v0.87.28: always sunny in a program
   const t=inProg()?12.5:hourNow();let nk=nightK(t);   // v0.87.23: a program is always lit as midday; only Ela's evening line darkens it
   // camera
   const asp=innerWidth/innerHeight;camera.aspect=asp;
@@ -8990,7 +8993,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
- {v:'0.87.26',t:['The check','Bilgi kontrolü'],l:[
+ {v:'0.87.29',t:['The check','Bilgi kontrolü'],l:[
+  ['Orientation never shows the game’s own quests (“walk to the turbine…”); the strip shows only the program’s step, and nothing once it is finished.','Oryantasyonda oyunun kendi görevleri (“türbine yürü…”) çıkmaz; şerit sadece programın adımını gösterir, program bitince boş kalır.'],
+  ['Orientation: the season never changes (summer) and the weather is always sunny.','Oryantasyon: mevsim değişmez (yaz), hava hep güneşli.'],
+  ['Red and green answers now have white text.','Kırmızı ve yeşil cevapların yazısı artık beyaz.'],
   ['Company orientation is quieter: the price box and the city sell ring show only while Ela explains the price; no energy cells pile up by the plants; the battery has no STORE/TAKE pads.','Şirket oryantasyonu sadeleşti: fiyat kutusu ve şehirdeki satış çemberi sadece Ela fiyatı anlatırken görünür; santrallerin yanında enerji birikmez; bataryada DEPOLA/BOŞALT alanları yok.'],
   ['Company code: the strip at the top shows a task only when Ela asks for one (walk to the sun square, the battery square, the next plant); while she only explains, it is empty.','Şirket kodu: üstteki şerit sadece Ela bir şey yapmanı istediğinde görev gösterir (güneş kutucuğu, batarya kutucuğu, sıradaki santral); sadece anlatırken boş kalır.'],
   ['A wrong answer turns red and you try again; the right one turns green and the next question follows after a moment.','Yanlış cevap kırmızı olur, tekrar denersin; doğru cevap yeşil olur ve kısa süre sonra sıradaki soru gelir.'],
@@ -10448,7 +10454,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.26';
+const GAME_VERSION='0.87.29';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10685,13 +10691,15 @@ async function packOpen(code,P){
 /* v0.87.19: in a company pack Part 1 is Ela's briefing only (no Part 1 tasks); her Part 2 opening
    follows straight on and her last line turns the camera to the first plant square. */
 function progGoalObj(){   // v0.87.19: in a company pack the goal strip and the yellow arrow follow the pack's own steps
-  if(!inProg())return null;const P=PROGRAMS.find(x=>x.id===S.prog);if(!P||!P.pack)return null;
+  if(!inProg())return null;const P=PROGRAMS.find(x=>x.id===S.prog);const HIDE={hide:1,t:['',''],ok:()=>false,at:()=>null};
+  if(!P||(S.progDone||{})[P.id])return HIDE;   // v0.87.29: no game quests in a program — only the program's own steps
+  if(!P.pack){const k=P.steps.findIndex((s,j)=>!progOk(P,j));return k<0?HIDE:{t:P.steps[k].t,ok:()=>false,at:()=>null};}
   // v0.87.25: the strip shows only what Ela has asked for; while she just talks, it stays empty
   if(tutOpen&&tutPadId){const q=PADS.find(x=>x.id===tutPadId);if(q&&q.pg)return {t:q.nm?[q.nm,q.nm]:['',''],ok:()=>false,at:()=>q};
     const T={s1:['Walk to the sun square','Güneş logolu kutucuğa yürü'],bat:['Walk to the battery square','Batarya logolu kutucuğa yürü']}[tutPadId];
     if(T&&q&&padVisible(q))return {t:T,ok:()=>false,at:()=>q};}
   if(!(S.progSeen||{})[P.id+':intro']||tutOpen)return {hide:1,t:['',''],ok:()=>false,at:()=>null};
-  const i=P.steps.findIndex((s,j)=>!progOk(P,j));if(i<0)return null;const s=P.steps[i];
+  const i=P.steps.findIndex((s,j)=>!progOk(P,j));if(i<0)return HIDE;const s=P.steps[i];
   return {t:s.t,ok:()=>false,at:()=>{const q=s.k==='build'&&PADS.find(x=>x.id==='pg_'+s.key);return q&&padVisible(q)?q:null;}};}
 function packLessons(BL,J){
   const fix=x=>String(x).replace('Open the Steps tab and build it.','Its square is on the map: walk onto it.').replace('Adımlar sekmesini aç ve kur.','Kutucuğu haritada: üstüne yürü.').replace(/\s*The company pays\.?/,'').replace(/\s*Parası şirketten\.?/,'');   // v0.87.20: orientation, no money talk
@@ -10782,9 +10790,9 @@ function quizRun(p,s,i,sc){
   $('cardOpts').innerHTML=ord.map(j=>`<button data-q="${j}"><b>${tt(Q.a[j])}</b></button>`).join('');
   let first=true,done=false;
   $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-q]');if(!b||b.disabled||done)return;const j=+b.dataset.q;
-    if(j===Q.c){done=true;b.style.background='#23B26D';b.style.color='#fff';b.style.borderColor='#1A8F57';sfx.goal();
+    if(j===Q.c){done=true;b.classList.add('qok');b.style.background='#23B26D';b.style.color='#fff';b.style.borderColor='#1A8F57';sfx.goal();
       $('cardOpts').querySelectorAll('button').forEach(x=>x.disabled=true);b.style.opacity='1';setTimeout(()=>quizRun(p,s,i+1,sc+(first?1:0)),1500);}
-    else{first=false;b.style.background='#E8364F';b.style.color='#fff';b.style.borderColor='#B8243A';b.disabled=true;b.style.opacity='1';try{sfx.warn();}catch(e){}}};
+    else{first=false;b.classList.add('qno');b.style.background='#E8364F';b.style.color='#fff';b.style.borderColor='#B8243A';b.disabled=true;b.style.opacity='1';try{sfx.warn();}catch(e){}}};
   $('mCard').classList.add('on');
 }
 /* The result code hides the first-try score: decode the 6 characters after the dash as base-36,
