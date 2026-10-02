@@ -455,7 +455,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.23</div>
+  <div class="t-ver" id="tVer">v0.87.24</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -690,7 +690,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.23 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.24 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8986,6 +8986,10 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.87.24',t:['The check','Bilgi kontrolü'],l:[
+  ['A wrong answer turns red and you try again; the right one turns green and the next question follows after a moment.','Yanlış cevap kırmızı olur, tekrar denersin; doğru cevap yeşil olur ve kısa süre sonra sıradaki soru gelir.'],
+  ['With a company code, the end is one card: your result code and a Copy button.','Şirket kodunda sonunda tek kart var: sonuç kodun ve Kopyala butonu.'],
+ ]},
  {v:'0.87.23',t:['Part 2 on the map','Bölüm 2 haritada'],l:[
   ['Orientation is always shown in daylight; only Ela’s evening-in-the-city line goes dark.','Oryantasyon hep gündüz ışığında; sadece Ela’nın şehirde akşam satırında hava kararıyor.'],
   ['Company code: after a plant’s story Ela says “Let’s continue” and the steps panel no longer pops up. The next square is live on the map; the history and the check start by themselves. The panel is still behind 🎓 Program.','Şirket kodu: santral anlatımı bitince Ela “Devam edelim” der, adımlar paneli artık açılmaz. Sıradaki kutucuk haritada hazırdır; tarihçe ve bilgi kontrolü kendiliğinden başlar. Panel 🎓 Program butonunda duruyor.'],
@@ -10438,7 +10442,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.23';
+const GAME_VERSION='0.87.24';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10756,16 +10760,36 @@ function progAfter(pg,np){
     elaSay(Object.assign((s.after||[]).map(b=>({b,cam:()=>({x:np.x,y:np.y})})),{okLbl:["Let's continue",'Devam edelim']}),()=>{progCheck();if(p.pack){packNext(p);return;}pgTab='steps';if(!(S.progDone||{})[p.id])openProgram();});};
   setTimeout(go,900);
 }
+/* v0.87.24: the check. A wrong pick turns red and you try again; the right one turns green and the
+   next question follows. Only answers right on the first try count. */
 function quizRun(p,s,i,sc){
   const Q=(s.q||[])[i];
   if(!Q){(S.progQuiz=S.progQuiz||{})[p.id]={s:sc,n:s.q.length};save();
-    toast(L(`📝 ${sc}/${s.q.length} correct`,`📝 ${sc}/${s.q.length} doğru`),'big');progCheck();pgTab='steps';openProgram();return;}
+    $('mCard').classList.remove('on');cardOpen=false;progCheck();if(!p.pack){pgTab='steps';openProgram();}return;}
   const ord=Q.a.map((a,j)=>j);for(let j=ord.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[ord[j],ord[r]]=[ord[r],ord[j]];}
-  openCard({id:'quiz',icon:'📝',ok:()=>false,safe:1,title:[`Question ${i+1} of ${s.q.length}`,`Soru ${i+1} / ${s.q.length}`],text:Q.q,
-    opts:()=>ord.map(j=>({t:Q.a[j],d:['',''],cost:0,go:()=>{const ok=j===Q.c;
-      toast(ok?L('✅ Correct','✅ Doğru'):L('❌ The answer: ','❌ Doğrusu: ')+tt(Q.a[Q.c]),ok?'good':'');
-      setTimeout(()=>quizRun(p,s,i+1,sc+(ok?1:0)),700);}}))});
+  cardOpen=true;$('cardIcon').textContent='📝';$('cardTitle').textContent=L(`Question ${i+1} of ${s.q.length}`,`Soru ${i+1} / ${s.q.length}`);$('cardText').textContent=tt(Q.q);
+  $('cardOpts').innerHTML=ord.map(j=>`<button data-q="${j}"><b>${tt(Q.a[j])}</b></button>`).join('');
+  let first=true,done=false;
+  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-q]');if(!b||b.disabled||done)return;const j=+b.dataset.q;
+    if(j===Q.c){done=true;b.style.background='#23B26D';b.style.color='#fff';b.style.borderColor='#1A8F57';sfx.goal();
+      $('cardOpts').querySelectorAll('button').forEach(x=>x.disabled=true);b.style.opacity='1';setTimeout(()=>quizRun(p,s,i+1,sc+(first?1:0)),1500);}
+    else{first=false;b.style.background='#E8364F';b.style.color='#fff';b.style.borderColor='#B8243A';b.disabled=true;b.style.opacity='1';try{sfx.warn();}catch(e){}}};
+  $('mCard').classList.add('on');
 }
+/* The result code hides the first-try score: decode the 6 characters after the dash as base-36,
+   take the remainder after dividing by (number of questions + 1). Nothing else in the code means anything. */
+function packResCode(p,sc,n){const pre=String(p.id||'').toUpperCase().slice(0,3);
+  let N=1679616+Math.floor(Math.random()*(60466175-1679616));N=N-(N%(n+1))+sc;if(N>60466175)N-=n+1;
+  return pre+'-'+N.toString(36).toUpperCase().padStart(6,'0');}
+function packCodeCard(p){const d=(S.progDone||{})[p.id];if(!d)return;
+  const go=()=>{if(tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,500);return;}
+    cardOpen=true;$('cardIcon').textContent='🎓';$('cardTitle').textContent=L('Orientation complete','Oryantasyon tamamlandı');
+    $('cardText').innerHTML=`${L('Your result code:','Sonuç kodun:')}<div style="font-family:var(--disp);font-size:30px;letter-spacing:2px;margin:10px 0;user-select:all">${d.code}</div>${L('Send it to whoever gave you the access code.','Bu kodu sana erişim kodunu veren kişiye ilet.')}`;
+    $('cardOpts').innerHTML=`<button data-c="1"><b>📋 ${L('Copy the code','Kodu kopyala')}</b></button>`;
+    $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-c]');if(!b)return;
+      const ok=()=>{toast(L('Copied','Kopyalandı'),'good');$('mCard').classList.remove('on');cardOpen=false;};
+      try{navigator.clipboard.writeText(d.code).then(ok,ok);}catch(err){ok();}};
+    $('mCard').classList.add('on');};go();}
 function syncCaps(){
   const C=[['cap-prog','Program','Program'],['cap-grid','Lines','Hatlar'],['cap-rep','Report','Rapor'],
            ['cap-info','Tips','Taktik'],['cap-mnt','Upkeep','Bakım'],['cap-rank','Ladder','Sıralama'],['cap-build','Build','İnşa'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
@@ -10796,8 +10820,10 @@ function progCheck(){
       const go=()=>{if(!playing||tutOpen||cardOpen||placing||document.querySelector('.modal.on')){setTimeout(go,800);return;}
         elaSay(p.c2.map(b=>({b})),()=>{pgTab='steps';openProgram();});};setTimeout(go,1500);}}
   if(n>=p.steps.length){
-    {const qz=(S.progQuiz||{})[p.id];S.progDone[p.id]={day:S.day,code:progCode(p.id+(qz?'|q'+qz.s:'')),q:qz||null};}save();syncProgBtn();pgTab='steps';
+    if((S.progDone||{})[p.id])return;
+    {const qz=(S.progQuiz||{})[p.id];S.progDone[p.id]={day:S.day,code:p.pack&&qz?packResCode(p,qz.s,qz.n):progCode(p.id+(qz?'|q'+qz.s:'')),q:qz||null};}save();syncProgBtn();pgTab='steps';
     try{trackOnce('prog-done-'+p.id);}catch(e){}
+    if(p.pack){packCodeCard(p);return;}
     openProgram();
   }
 }
