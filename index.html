@@ -456,7 +456,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.30</div>
+  <div class="t-ver" id="tVer">v0.87.31</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -691,7 +691,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.30 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.31 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8381,12 +8381,15 @@ function showTut(){
   $('tutText').textContent=tt(st.b||st.t);   // a programme line carries its body in .b
   $('tutStep').textContent=`${tutI+1}/${seq.length}`;
   $('tutSkip').textContent=L('Skip','Geç');$('tutBack').textContent=L('Back','Geri');$('tutBack').hidden=tutI===0;
+  tutGate(st);
   $('tutNext').textContent=tutI===seq.length-1?(seq.okLbl?tt(seq.okLbl):L("Let's play!",'Hadi başlayalım!')):L('Next','İleri');
   if(st.hl){const e=document.querySelector(st.hl);if(e&&!e.hidden)e.classList.add('tut-hl');}
   if(st.show&&!keep){const before=new Set(document.querySelectorAll('.modal.on'));try{st.show();}catch(e){}
     tutModal=[...document.querySelectorAll('.modal.on')].find(m=>!before.has(m))||null;if(tutModal){tutModal.classList.add('tutshow');tutShowFn=st.show;}}   // v0.86: Ela opens what she explains
 }
-setInterval(()=>{try{if(!tutOpen)return;const st=(tutSeq||TUT)[tutI];if(!st||!st.live)return;const x=tt(st.b||st.t);if($('tutText').textContent!==x){$('tutText').textContent=x;sfx.goal();}}catch(e){}},400);
+/* v0.87.31: a line that asks you to build something keeps Next and Skip away until it stands */
+function tutGate(st){const g=st&&st.gate,ok=!g||!!g();$('tutNext').disabled=!ok;$('tutNext').style.visibility=ok?'':'hidden';$('tutSkip').style.visibility=ok?'':'hidden';}
+setInterval(()=>{try{if(!tutOpen)return;const st=(tutSeq||TUT)[tutI];tutGate(st);if(!st||!st.live)return;const x=tt(st.b||st.t);if($('tutText').textContent!==x){$('tutText').textContent=x;sfx.goal();}}catch(e){}},400);
 function endTutorial(done){
   tutHide();
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
@@ -8994,7 +8997,8 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
- {v:'0.87.30',t:['Orientation fixes','Oryantasyon düzeltmeleri'],l:[
+ {v:'0.87.31',t:['Orientation fixes','Oryantasyon düzeltmeleri'],l:[
+  ['When Ela asks you to build something (solar panel, battery, a company plant), Next and Skip appear only once it is built.','Ela bir şey kurmanı istediğinde (güneş paneli, batarya, şirket santrali) İleri ve Geç butonları ancak o yapı kurulunca çıkar.'],
   ['Company orientation: no peak banner, price messages or market news at all.','Şirket oryantasyonu: zirve şeridi, fiyat mesajı ve piyasa haberi hiç yok.'],
   ['A plant square that ended up under another plant moves to a clear spot.','Başka bir santralin altında kalan santral kutucuğu boş bir yere taşınıyor.'],
  ]},
@@ -10459,7 +10463,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.30';
+const GAME_VERSION='0.87.31';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10617,13 +10621,13 @@ const PROGRAMS=[
    {t:['The spinning one','Dönen şey'],
     b:["That tall spinning thing is a wind turbine. When the wind blows, it makes electricity. We cannot make the wind blow. The wind decides.","Şu uzun dönen şey bir rüzgâr türbini. Rüzgâr estiğinde elektrik üretir. Rüzgârı biz estiremeyiz. Ona rüzgâr karar verir."],cam:()=>S.plants[0]},
    {t:['The blue boards','Mavi levhalar'],
-    live:1,pad:'s1',get move(){return !S.plants.some(x=>x.type==='solar');},   // v0.87.14: you can walk on this line, and her words change when the panel is up
+    live:1,pad:'s1',gate:()=>S.plants.some(x=>x.type==='solar'),get move(){return !S.plants.some(x=>x.type==='solar');},   // v0.87.14: you can walk on this line, and her words change when the panel is up
     get b(){return S.plants.some(x=>x.type==='solar')?this.b0:["Walk to the square with the sun logo. Stand on it and it gets paid bit by bit: a solar panel appears — blue boards that make electricity while the sun is up. When the sun goes down, they stop. Every evening.","Güneş logolu kutucuğa yürü. Üstünde durunca parası azar azar ödenir ve güneş paneli çıkar: güneş varken elektrik üreten mavi levhalar. Güneş batınca durur. Her akşam."];},
     b0:["Those blue boards are solar panels. While the sun is up they make electricity. When the sun goes down, they stop. Every evening.","Şu mavi levhalar güneş paneli. Güneş varken elektrik üretir. Güneş batınca durur. Her akşam."],cam:()=>S.plants.find(x=>x.type==='solar')||pad('s1')},
    {t:['And here is the problem','İşte sorun burada'],
     b:["In the evening everyone comes home and turns the lights on. That is when electricity is needed most. And that is exactly when the sun goes down.","Akşam olunca herkes eve gelir, ışıkları yakar. Elektriğe en çok o saat ihtiyaç olur. Güneş de tam o saat batar."],cam:()=>({x:CITY.x,y:CITY.y,night:1})},
    {t:['So we use a battery','Bu yüzden batarya var'],
-    live:1,pad:'bat',get move(){return !(built('bat')||S.plants.some(x=>x.type==='battery'));},   // v0.87.15: walk to it while she talks
+    live:1,pad:'bat',gate:()=>built('bat')||S.plants.some(x=>x.type==='battery'),get move(){return !(built('bat')||S.plants.some(x=>x.type==='battery'));},   // v0.87.15: walk to it while she talks
     get b(){return (built('bat')||S.plants.some(x=>x.type==='battery'))?this.b0:["Walk to the square with the battery logo. Stand on it and it gets paid bit by bit. A battery is a box for hours: we put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya logolu kutucuğa yürü. Üstünde durunca parası azar azar ödenir. Batarya, saatleri saklayan bir kutu gibi: gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."];},
     b0:["A battery is a box for hours. We put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya, saatleri saklayan bir kutu gibi. Gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."],cam:()=>pad('bat')},
    {t:['The price moves','Fiyat oynar'],
@@ -10711,7 +10715,7 @@ function packLessons(BL,J){
   const out=(BL||[]).map(l=>l.t&&l.t[0]==='That is our job'?{t:l.t,b:['Make it, keep it for the right hour, sell it when it is expensive. That is the whole job.','Üret, doğru saate sakla, pahalıyken sat. İşin tamamı bu.']}:l);
   const fb=(J.steps||[]).find(s=>s.k==='build'),c2=(J.intro||[]).map(b=>Array.isArray(b)?b.map(fix):b);
   c2.forEach((b,i)=>{const last=i===c2.length-1&&fb;
-    out.push(last?{t:J.ch||['Part 2','Bölüm 2'],b,move:true,pad:'pg_'+fb.key,cam:()=>{const q=PADS.find(x=>x.id==='pg_'+fb.key);return q&&padVisible(q)?{x:q.x,y:q.y}:null;}}:{t:J.ch||['Part 2','Bölüm 2'],b});});
+    out.push(last?{t:J.ch||['Part 2','Bölüm 2'],b,move:true,gate:()=>false,pad:'pg_'+fb.key,cam:()=>{const q=PADS.find(x=>x.id==='pg_'+fb.key);return q&&padVisible(q)?{x:q.x,y:q.y}:null;}}:{t:J.ch||['Part 2','Bölüm 2'],b});});
   return out;}
 function packHydrate(J){
   const B=PROGRAMS.find(x=>x.id===J.inc)||{lessons:[],steps:[],gloss:[],cash:0},id=J.id,f=(o,k)=>!!((S[o]||{})[id+':'+k]);
@@ -10768,7 +10772,7 @@ function progPlaceOk(p,i){for(let j=0;j<i;j++)if(!progOk(p,j))return false;retur
 function progAct(p,i){
   const s=p.steps[i];if(!s||!s.k)return;$('mProgram').classList.remove('on');
   if(s.k==='build'){const q=PADS.find(x=>x.id==='pg_'+s.key);(S.progSeen=S.progSeen||{})[p.id+':intro']=1;
-    if(q&&padVisible(q)){elaSay(Object.assign([{b:[`The ${q.nm} square is on the map. Walk onto it.`,`${q.nm} kutucuğu haritada. Üstüne yürü.`],cam:()=>({x:q.x,y:q.y}),move:true}],{okLbl:['OK','Tamam']}));return;}
+    if(q&&padVisible(q)){elaSay(Object.assign([{b:[`The ${q.nm} square is on the map. Walk onto it.`,`${q.nm} kutucuğu haritada. Üstüne yürü.`],cam:()=>({x:q.x,y:q.y}),move:true,gate:()=>false}],{okLbl:['OK','Tamam']}));return;}
     showSuggest(s.type);if(!placing)return;placing.prog={pid:p.id,key:s.key,i};   // no room for a square: pick the spot by hand
     toast(L('Pick a spot and build it.','Bir yer seç ve kur.'),'');return;}
   if(s.k==='read'){elaSay(Object.assign((s.say||[]).map(b=>({b})),{okLbl:["Let's continue",'Devam edelim']}),()=>{(S.progSeen=S.progSeen||{})[p.id+':'+s.key]=1;save();progCheck();if(p.pack){packNext(p);return;}pgTab='steps';openProgram();});return;}
