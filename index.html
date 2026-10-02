@@ -455,7 +455,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.24</div>
+  <div class="t-ver" id="tVer">v0.87.26</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -690,7 +690,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.24 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.87.26 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6430,11 +6430,13 @@ function update(dt){
       cf=p.open?1:0;
     }
     else cf=solarShape(t)*solarMult()*sheepBonus(p)*snowMult(p);
+    if(p.pile&&inPack()){p.pile=0;p.ages=[];}
     p.acc+=T.rate*plantGen(p)*cf*gdt*(1-ancBand(p))*brandOf(p).out*(p.q||1);   // the reserved band never reaches the stack
     while(p.acc>=1){p.acc-=1;
       if(T.kind==='dam'){if((p.res||0)<1){p.acc=0;break;}p.res-=1;}
       if(gridLvl(p)>0){p.gacc=(p.gacc||0)+gridShare(p);
         if(p.gacc>=1){p.gacc-=1;gridDeliver(p);continue;}}
+      if(inPack()){p.pile=0;p.ages=[];continue;}          // v0.87.26: company orientation shows plants, not cells
       if(p.pile<T.max)pileAdd(p);else logLoss(1);}
     if(gridLvl(p)>0&&gridSpd(p)>0&&p.pile>0&&!p.broken&&!p.fire){   // the line also empties what is already stacked
       p.gsa=(p.gsa||0)+gridRate(p)*gdt;
@@ -7761,6 +7763,8 @@ function render(dt,now){
   winMats.forEach(m=>m.emissiveIntensity=nk);nk=nk0;
   // city ring
   const pr=priceNow(),lv=level(pr);
+  const pv=!inPack()||!!(tutOpen&&((tutSeq||TUT)[tutI]||{}).price);   // v0.87.26: company orientation: price and the sell ring only on Ela's price line
+  sellDisc.visible=sellRing.visible=pv;
   sellDisc.material.color.set(lv[2]);sellRing.material.color.set(lv[2]);
   sellRing.rotation.z+=dt*0.3;
   // plants
@@ -7816,7 +7820,7 @@ function render(dt,now){
   // battery
   {const each=batCapEach();
    for(const D of DEPOTS){const o=depotObjs[D.id];if(!o)continue;const on=built(D.id)&&built('bat');
-     o.g.visible=on;o.sp.visible=on;o.tp.visible=on;if(!on)continue;
+     o.g.visible=on;o.sp.visible=o.tp.visible=on&&!inPack();if(!on)continue;
      const f=each?batAt(D.id)/each:0;o.g.userData.bar.scale.x=Math.max(0.001,f);o.g.userData.bar.position.x=-2.6*(1-f);
      const bp=pops[D.id]||0;o.g.scale.setScalar(1+Math.sin(bp*Math.PI)*0.25);
      if(S.batFire>0){const[FX,FZ]=W3(D.x,D.y);flameAt(FX,FZ,2.4,now,0.4,Math.min(1,S.batFire/FIRE_SPREAD));}
@@ -7830,7 +7834,7 @@ function render(dt,now){
   for(const r of REGIONS){fenceObjs[r.id].visible=!S.regions[r.id];if(!S.regions[r.id]&&has('regions'))place('rg'+r.id,'big',700,(r.y0+r.y1)/2,0.3,`🔒 ${tt(r.name)}`);}   // v0.86.3: no sign for what this level cannot open
   if(fenceObjs.east){fenceObjs.east.visible=!S.regions.east;if(!S.regions.east&&(has('nuclear')||inClassic()))place('rgeast','big',(EAST.x0+WORLD.w)/2,640,0.3,`🔒 ${tt(EAST.name)}${has('nuclear')?'':' · ⚛️'}`);}
   // city label
-  place('city','tag '+lv[1],CITY.x,CITY.y+CITY.r+10,0.1,L(`SELL · $${pr.toFixed(1)} each`,`SAT · tanesi $${pr.toFixed(1)}`));
+  if(pv)place('city','tag '+lv[1],CITY.x,CITY.y+CITY.r+10,0.1,L(`SELL · $${pr.toFixed(1)} each`,`SAT · tanesi $${pr.toFixed(1)}`));
   for(const T of TOWNS){const g=townObjs[T.id];if(g)g.visible=built(T.id);
     if(built(T.id)){const tp=priceAt(T),tl=level(tp);
       place('tc'+T.id,'code',T.x-40,T.y+26,0.9,codeOf(T.id));
@@ -7897,7 +7901,7 @@ function hud(dt){
   $('cash').textContent=fmt(S.cash);$('wealth').textContent=fmt(wealth());{const c=S.contract,d=$('dealC');d.hidden=!c;if(c){const hl=Math.max(0,Math.ceil((c.until-gameNow())/HOUR));d.textContent=`🤝 ${c.delivered}/${c.need} · ${hl}h`;}}{const L=lossLastHour(),e=$('lossC');e.hidden=L<1;if(L>=1)e.textContent=`−${L} ⚡ · ${Math.round(efficiency()*100)}%`;e.title=L>=1?(S.lang==='tr'?'Son bir saatte kaybolan enerji · verimlilik':'Energy lost in the last hour · efficiency'):'';}$('carry').textContent=`${S.carry}/${carryCap()}`;
   $('pnow').textContent='$'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
-  const G=progGoalObj()||GOALS[curGoal()];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');
+  const G=progGoalObj()||GOALS[curGoal()];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');$('goal').style.display=G&&G.hide?'none':'';
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:inProg()?`<b class="lvlchip">🎓</b> · `:inClassic()?`<b class="lvlchip">🏛️ ${L('Classic','Klasik')}</b> · `:`<b class="lvlchip">${L('Level','Seviye')} ${sev()}</b> · `;
   const gp=G&&G.at();const gl=gp&&gp.kind&&!cozy()?padNeedLv(gp):0;
   if(!up&&!cozy()&&prestOk()){$('goal').innerHTML=chip+L(`⭐ Level ${sev()+1} · ${sevName(sev()+1)} can be opened — tap here`,`⭐ Seviye ${sev()+1} · ${sevName(sev()+1)} açılabilir — dokun`);}else
@@ -7911,7 +7915,7 @@ function hud(dt){
   $('gridBtn').hidden=!has('gridline');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
   $('mini').style.display=has('build')?'':'none';
-  document.querySelector('.market').style.visibility=has('price')?'':'hidden';
+  document.querySelector('.market').style.visibility=has('price')&&(!inPack()||!!(tutOpen&&((tutSeq||TUT)[tutI]||{}).price))?'':'hidden';
   $('crewBtn').hidden=S.up.helper<1||!has('crew');$('crewN').textContent=`${L('Crew','Ekip')} ${S.up.helper}/45`;try{syncCaps();}catch(e){}
   const alertOn=helpers.some(h=>(h.waitT||0)>15)||(S.up.helper>0&&benchList().length>0);$('crewAlert').hidden=!alertOn;$('crewBtn').setAttribute('aria-label',alertOn?'Crew plan: a helper is stuck waiting':'Crew plan');
   const bn=$('banner');
@@ -8368,7 +8372,7 @@ function showTut(){
   const keep=!!(st.show&&tutModal&&st.show===tutShowFn);   // v0.86.7: the same panel stays open across Ela's lines about it
   if(!keep)tutHide();
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
-  tutPadId=st.pad||null;camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y,night:!!a.night,move:!!st.move};}catch(e){}}
+  tutPadId=st.pad||null;try{if(inPack()){const G=progGoalObj();$('goal').style.display=G&&G.hide?'none':'';if(G&&!G.hide)$('goal').innerHTML='<b class="lvlchip">🎓</b> · '+tt(G.t);}}catch(e){}camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y,night:!!a.night,move:!!st.move};}catch(e){}}
   $('tutName').textContent=L('Ela · Field engineer','Ela · Saha mühendisi');
   $('tutText').textContent=tt(st.b||st.t);   // a programme line carries its body in .b
   $('tutStep').textContent=`${tutI+1}/${seq.length}`;
@@ -8986,7 +8990,9 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
- {v:'0.87.24',t:['The check','Bilgi kontrolü'],l:[
+ {v:'0.87.26',t:['The check','Bilgi kontrolü'],l:[
+  ['Company orientation is quieter: the price box and the city sell ring show only while Ela explains the price; no energy cells pile up by the plants; the battery has no STORE/TAKE pads.','Şirket oryantasyonu sadeleşti: fiyat kutusu ve şehirdeki satış çemberi sadece Ela fiyatı anlatırken görünür; santrallerin yanında enerji birikmez; bataryada DEPOLA/BOŞALT alanları yok.'],
+  ['Company code: the strip at the top shows a task only when Ela asks for one (walk to the sun square, the battery square, the next plant); while she only explains, it is empty.','Şirket kodu: üstteki şerit sadece Ela bir şey yapmanı istediğinde görev gösterir (güneş kutucuğu, batarya kutucuğu, sıradaki santral); sadece anlatırken boş kalır.'],
   ['A wrong answer turns red and you try again; the right one turns green and the next question follows after a moment.','Yanlış cevap kırmızı olur, tekrar denersin; doğru cevap yeşil olur ve kısa süre sonra sıradaki soru gelir.'],
   ['With a company code, the end is one card: your result code and a Copy button.','Şirket kodunda sonunda tek kart var: sonuç kodun ve Kopyala butonu.'],
  ]},
@@ -10442,7 +10448,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.24';
+const GAME_VERSION='0.87.26';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10610,7 +10616,7 @@ const PROGRAMS=[
     get b(){return (built('bat')||S.plants.some(x=>x.type==='battery'))?this.b0:["Walk to the square with the battery logo. Stand on it and it gets paid bit by bit. A battery is a box for hours: we put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya logolu kutucuğa yürü. Üstünde durunca parası azar azar ödenir. Batarya, saatleri saklayan bir kutu gibi: gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."];},
     b0:["A battery is a box for hours. We put the extra electricity in during the day and take it out in the evening. It makes nothing by itself. It only changes the hour.","Batarya, saatleri saklayan bir kutu gibi. Gündüz fazla elektriği içine koyarız, akşam çıkarırız. Kendisi hiçbir şey üretmez. Sadece saatini değiştirir."],cam:()=>pad('bat')},
    {t:['The price moves','Fiyat oynar'],
-    b:["Electricity does not cost the same all day. At night it is cheap. In the evening it is expensive. Same electricity, different hour, different money.","Elektrik gün boyu aynı para etmez. Gece ucuzdur. Akşam pahalıdır. Aynı elektrik, farklı saat, farklı para."],show:()=>mktTeach()},
+    b:["Electricity does not cost the same all day. At night it is cheap. In the evening it is expensive. Same electricity, different hour, different money.","Elektrik gün boyu aynı para etmez. Gece ucuzdur. Akşam pahalıdır. Aynı elektrik, farklı saat, farklı para."],price:1,show:()=>mktTeach()},
    {t:['That is our job','Bizim işimiz bu'],
     b:["Make it, keep it for the right hour, sell it when it is expensive. That is the whole job. I left you enough money for two turbines and a panel — go build.","Üret, doğru saate sakla, pahalıyken sat. İşin tamamı bu. Sana iki türbin ve bir panel kuracak kadar para bıraktım — hadi kur."]}],
   gloss:[
@@ -10680,6 +10686,11 @@ async function packOpen(code,P){
    follows straight on and her last line turns the camera to the first plant square. */
 function progGoalObj(){   // v0.87.19: in a company pack the goal strip and the yellow arrow follow the pack's own steps
   if(!inProg())return null;const P=PROGRAMS.find(x=>x.id===S.prog);if(!P||!P.pack)return null;
+  // v0.87.25: the strip shows only what Ela has asked for; while she just talks, it stays empty
+  if(tutOpen&&tutPadId){const q=PADS.find(x=>x.id===tutPadId);if(q&&q.pg)return {t:q.nm?[q.nm,q.nm]:['',''],ok:()=>false,at:()=>q};
+    const T={s1:['Walk to the sun square','Güneş logolu kutucuğa yürü'],bat:['Walk to the battery square','Batarya logolu kutucuğa yürü']}[tutPadId];
+    if(T&&q&&padVisible(q))return {t:T,ok:()=>false,at:()=>q};}
+  if(!(S.progSeen||{})[P.id+':intro']||tutOpen)return {hide:1,t:['',''],ok:()=>false,at:()=>null};
   const i=P.steps.findIndex((s,j)=>!progOk(P,j));if(i<0)return null;const s=P.steps[i];
   return {t:s.t,ok:()=>false,at:()=>{const q=s.k==='build'&&PADS.find(x=>x.id==='pg_'+s.key);return q&&padVisible(q)?q:null;}};}
 function packLessons(BL,J){
