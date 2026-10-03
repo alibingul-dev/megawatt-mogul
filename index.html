@@ -456,7 +456,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.87.31</div>
+  <div class="t-ver" id="tVer">v0.88.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -691,7 +691,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.87.31 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.88.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5458,6 +5458,12 @@ const GOALS=[
 /* ---- levels: opt-in. Wealth unlocks the offer, the player decides when to take it.
        Every level opens one system (often harder) and grants one permanent perk. ---- */
 const OPENTXT={
+  drought:[['Dry days','Kurak günler'],['On a dry day river and dam output drops to 40%.','Kurak günde akarsu ve baraj üretimi %40’a düşer.']],
+  imbalance:[['Imbalance','Dengesizlik'],['Big plants pay for every hour their output misses the forecast.','Büyük santraller üretim tahmini ıskaladıkça her saat bedel öder.']],
+  rivaldump:[['Rival dumping','Rakip fiyat kırma'],['Some days rivals crash the price for a few hours.','Bazı günler rakipler fiyatı birkaç saat kırar.']],
+  pricecap:[['Price cap','Tavan fiyat'],['The peak has a ceiling.','Zirvenin bir tavanı var.']],
+  mktfee:[['Market fee','Piyasa ücreti'],['5% of every sale goes to the market operator.','Her satışın %5’i piyasa işletmecisine gider.']],
+  saltwear:[['Salt air','Tuzlu hava'],['Sea turbines age faster.','Deniz türbinleri daha hızlı yaşlanır.']],
   price:[['Price levels','Fiyat seviyeleri'],['The price box is up top. Cheap, Normal, Peak — sell on Peak.','Üstte fiyat kutusu var. Ucuz, Normal, Zirve — Zirvede sat.']],
   build:[['Building','İnşaat'],['Stand on a blue pad to pay for it a little at a time.','Mavi alanın üstünde dur, azar azar ödeyerek kur.']],
   codes:[['Plant codes','Santral kodları'],['Every plant carries a code like W1 or S1. You will need them later.','Her santralin W1, S1 gibi bir kodu var. İleride lazım olacak.']],
@@ -5528,70 +5534,69 @@ function cozy(){return S.mode==='cozy';}
    A level opens the next one only after at least LAD_DAYS game days AND its mastery goal, and
    the player still decides when to go. Worlds from before the ladder live on as "Classic". */
 const G_=(t,v,n)=>({t,v,n});
+/* v0.88: every level brings one plus and one minus, or one feature that cuts both ways —
+   reason to stay, reason to go. 18 levels. */
 const SEV=[null,
- {n:['Basics','Temel'],k:['build','codes','upgrades','tips','report'],w:['A fixed price. You build, you carry, you sell.','Sabit fiyat. Kendin kurarsın, taşırsın, satarsın.'],
+{n:['Basics','Temel'],k:['build','codes','upgrades','tips','report'],w:['A fixed price. You build, you carry, you sell.','Sabit fiyat. Kendin kurarsın, taşırsın, satarsın.'],
   ela:[["Welcome to level 1. Here the price is fixed: every cell pays the same at any hour.","Seviye 1'e hoş geldin. Burada fiyat sabit: her hücre her saatte aynı parayı eder."],["Only wind turbines and solar panels. Build, carry to the city, sell — and learn the map.","Sadece rüzgâr türbini ve güneş paneli var. Kur, şehre taşı, sat — haritayı öğren."]],
   goal:G_(['Sell 30 cells','30 hücre sat'],()=>S.soldCells||0,30)},
- {n:['Market','Piyasa'],k:['price','battery','freebuild'],w:['The price moves through the day, the battery, and building anywhere.','Fiyat gün içinde oynar; batarya ve istediğin yere inşaat.'],
+ {n:['Build anywhere','Serbest inşa'],k:['freebuild','repair','report2'],w:['➕ Build plants anywhere. ➖ Plants can break down.','➕ Santrali istediğin yere kur. ➖ Santraller bozulabilir.'],
+  ela:[["Two things change: you can build anywhere now — and plants can break down.","İki şey değişiyor: artık istediğin yere kurabilirsin — ve santraller bozulabilir."],["A broken plant makes nothing until it is fixed.","Bozuk santral tamir edilene kadar hiçbir şey üretmez."]],
+  goal:G_(['Fix 3 breakdowns','3 arıza tamir et'],()=>S.stats.fixN||0,3)},
+ {n:['Hourly price','Saatlik fiyat'],k:['price'],w:['± The price moves through the day: cheap nights, expensive evenings.','± Fiyat gün içinde oynar: ucuz geceler, pahalı akşamlar.'],
   ela:[["From now on the price moves. Same energy, different hour, different money.","Artık fiyat oynuyor. Aynı enerji, farklı saat, farklı para."]],
   goal:G_(['Sell 20 cells at the peak','Zirvede 20 hücre sat'],()=>S.stats.peakCells||0,20)},
- {n:['Crew','Ekip'],k:['crew'],w:['Helpers who carry for you, around the clock.','Senin yerine 7/24 taşıyan yardımcılar.'],
-  ela:[["You are not alone any more: helpers work day and night. No shifts, no wages yet.","Artık yalnız değilsin: yardımcılar gece gündüz çalışır. Henüz vardiya da maaş da yok."]],
+ {n:['Battery','Batarya'],k:['battery','shocks'],w:['➕ A battery to keep energy for the right hour. ➖ Price shocks and dispatch orders.','➕ Enerjiyi doğru saate saklayan batarya. ➖ Fiyat şokları ve yük atma talimatları.'],
+  ela:[["You get a battery — and the market gets nervous: spikes, crashes and dispatch orders.","Bir bataryan oluyor — piyasa da sinirleniyor: sıçramalar, çöküşler ve yük atma talimatları."]],
+  goal:G_(['Store 20 cells','20 hücre depola'],()=>S.stats.stored||0,20)},
+ {n:['Crew','Ekip'],k:['crew','skills'],w:['➕ Helpers who carry for you. ➖ Every helper draws a daily wage.','➕ Senin yerine taşıyan yardımcılar. ➖ Her yardımcı günlük ücret alır.'],
+  ela:[["You are not alone any more: helpers carry for you. But each one draws a daily wage.","Artık yalnız değilsin: yardımcılar senin yerine taşır. Ama her biri günlük ücret alır."]],
   goal:G_(['Have 3 helpers','3 yardımcın olsun'],()=>S.up.helper||0,3)},
- {n:['Breakdowns','Arızalar'],k:['repair','report2'],w:['Rare, light breakdowns.','Seyrek, hafif arızalar.'],
-  ela:[["Plants can break now — rarely, and only lightly. A broken plant makes nothing until it is fixed.","Santraller artık bozulabilir — seyrek ve hafif. Bozuk santral tamir edilene kadar üretmez."]],
-  goal:G_(['Fix 3 breakdowns','3 arıza tamir et'],()=>S.stats.fixN||0,3)},
- {n:['News','Haberler'],k:['cards','shocks'],w:['Market news, decision cards, price shocks and dispatch orders.','Piyasa haberleri, karar kartları, fiyat şokları ve yük atma talimatları.'],
+ {n:['News','Haberler'],k:['cards'],w:['± Market news and decision cards: every choice has a price.','± Piyasa haberleri ve karar kartları: her seçimin bir bedeli var.'],
   ela:[["The market has news now: good days, bad days, and decisions. A card stops the game until you choose.","Piyasanın artık haberleri var: iyi günler, kötü günler ve kararlar. Kart, sen seçene kadar oyunu durdurur."]],
   goal:G_(['Decide 3 cards','3 kart kararı ver'],()=>S.stats.cardsN||0,3)},
- {n:['River','Akarsu'],k:['river'],w:['Run-of-river plants.','Akarsu santralleri.'],
-  ela:[["The river can work for you now: run-of-river plants produce day and night, as much as the water allows.","Nehir artık senin için çalışabilir: akarsu santralleri gece gündüz, suyun izin verdiği kadar üretir."]],
+ {n:['River','Akarsu'],k:['river','drought'],w:['➕ Run-of-river plants, day and night. ➖ Dry days cut river output.','➕ Gece gündüz çalışan akarsu santralleri. ➖ Kurak günlerde akarsu üretimi düşer.'],
+  ela:[["The river can work for you now, day and night. But on dry days the water drops — and so does the output.","Nehir artık gece gündüz senin için çalışabilir. Ama kurak günlerde su azalır — üretim de."]],
   goal:G_(['Build a run-of-river plant','Bir akarsu santrali kur'],()=>S.plants.filter(p=>p.type==='river').length,1)},
- {n:['Shifts','Vardiya'],k:['shifts','report3'],w:['Three shifts: only a third of the crew at any hour.','Üç vardiya: her saatte ekibin üçte biri.'],
+ {n:['Shifts','Vardiya'],k:['shifts','report3'],w:['± Three shifts: night crews cost more, only a third works at any hour.','± Üç vardiya: gece ekibi pahalı, her saatte üçte biri çalışır.'],
   ela:[["Your crew works three shifts now. At any hour only a third of them is on duty.","Ekibin artık üç vardiya çalışıyor. Her saatte sadece üçte biri görevde."]],
   goal:G_(['Have 6 helpers','6 yardımcın olsun'],()=>S.up.helper||0,6)},
- {n:['Regions','Bölgeler'],k:['markets','regions'],w:['Far fields, town markets and depots.','Uzak sahalar, kasaba pazarları ve depolar.'],
-  ela:[["The map opens up: gates to far fields, towns that buy energy, depots that store it.","Harita açılıyor: uzak sahalara kapılar, enerji alan kasabalar, saklayan depolar."]],
+ {n:['Regions','Bölgeler'],k:['markets','regions','ageing'],w:['➕ Far fields, town markets and depots. ➖ Plants age and lose output.','➕ Uzak sahalar, kasaba pazarları ve depolar. ➖ Santraller yaşlanır, verimi düşer.'],
+  ela:[["The map opens up: far fields, towns that buy energy, depots. And your plants start to age.","Harita açılıyor: uzak sahalar, enerji alan kasabalar, depolar. Santrallerin de yaşlanmaya başlıyor."]],
   goal:G_(['Open a new region','Yeni bir bölge aç'],()=>['ridge','desert','coast'].filter(k=>S.regions[k]).length,1)},
- {n:['Roles','Roller'],k:['roles'],w:['Helper roles: store, chase the peak.','Yardımcı rolleri: depola, zirveyi kovala.'],
-  ela:[["Helpers can take roles now: one fills the battery, another waits for the peak.","Yardımcılar artık rol alabilir: biri bataryayı doldurur, biri zirveyi bekler."]],
-  goal:G_(['Give 2 helpers a role','2 yardımcıya rol ver'],()=>(S.crew.roles||[]).filter(r=>r&&r!=='sell').length,2)},
- {n:['Big plants','Büyük santraller'],k:['big'],w:['Big turbines and solar farms.','Büyük türbinler ve güneş tarlaları.'],
-  ela:[["Big plants now: a big turbine or a solar farm makes several times what a small one does.","Artık büyük santraller var: büyük türbin ya da güneş tarlası küçüğünün birkaç katı üretir."]],
-  goal:G_(['Build a big plant','Bir büyük santral kur'],()=>S.plants.filter(p=>p.type==='bigwind'||p.type==='solarfarm').length,1)},
- {n:['Grid lines','Şebeke hatları'],k:['gridline'],w:['Lines that carry output by themselves.','Üretimi kendi taşıyan hatlar.'],
-  ela:[["Grid lines now: part of a plant's output travels by itself. But a line wears as it works.","Artık şebeke hatları var: santralin üretiminin bir kısmı kendi gider. Ama hat çalıştıkça yıpranır."]],
-  goal:G_(['Connect 3 lines','3 hat bağla'],()=>S.plants.filter(p=>(p.grid||0)>0).length,3)},
- {n:['Storms','Fırtınalar'],k:['fire','heavy','brands'],w:['Fire, heavy breakdowns, storms — and turbine brands.','Yangın, ağır arıza, fırtına — ve türbin markaları.'],
-  ela:[["The weather gets serious: storms, lightning, fire. A breakdown can now be a heavy wreck.","Hava ciddileşiyor: fırtına, yıldırım, yangın. Arıza artık ağır bir hasar da olabilir."]],
-  goal:G_(['Give a helper the Safety role','Bir yardımcıya Afet rolü ver'],()=>(S.crew.roles||[]).filter(r=>r==='safety').length,1)},
- {n:['Maintenance plan','Bakım planı'],k:['svcplan'],w:['Plan each plant\'s service.','Her santralin bakımını planla.'],
+ {n:['Maintenance plan','Bakım planı'],k:['svcplan'],w:['± Plan each plant\'s service: stop it at cheap hours or let it break at any hour.','± Her santralin bakımını planla: ucuz saatte durdur ya da herhangi bir saatte bozulsun.'],
   ela:[["Plants that are never serviced break more. Now you plan the service yourself.","Bakım görmeyen santral daha çok bozulur. Artık bakımı sen planlıyorsun."]],
   goal:G_(['Finish 3 planned services','3 planlı bakım tamamla'],()=>S.stats.svcDone||0,3)},
- {n:['Ageing','Yaşlanma'],k:['ageing'],w:['Plants age and need repowering.','Santraller yaşlanır, yenileme ister.'],
-  ela:[["Every plant gets old, and past its life its output falls. Repowering brings it back — for a price.","Her santral yaşlanır; ömrünü doldurunca verimi düşer. Yenileme geri getirir — bir bedelle."]],
-  goal:G_(['Repower a plant (or play 8 days)','Bir santral yenile (ya da 8 gün oyna)'],()=>Math.min(1,(S.stats.repowered||0)+(S.day>=8?1:0)),1)},
- {n:['People','İK'],k:['skills'],w:['Stars and daily wages.','Yıldızlar ve günlük ücret.'],
-  ela:[["Helpers have stars now, and each one draws a daily wage. A crew doing nothing costs money.","Yardımcıların artık yıldızları var ve her biri günlük ücret alıyor. Boşta duran ekip para yakar."]],
-  goal:G_(['Have 10 helpers','10 yardımcın olsun'],()=>S.up.helper||0,10)},
- {n:['Dam','Baraj'],k:['dam'],w:['A dam: water you can keep for the peak.','Baraj: zirveye saklayabildiğin su.'],
-  ela:[["A dam keeps water behind its wall. You decide when the gates open.","Baraj suyu duvarının arkasında tutar. Kapakların ne zaman açılacağına sen karar verirsin."]],
+ {n:['Big plants','Büyük santraller'],k:['big','imbalance'],w:['➕ Big turbines and solar farms. ➖ Imbalance: their forecast error is charged every hour.','➕ Büyük türbinler ve güneş tarlaları. ➖ Dengesizlik: tahmin hataları her saat faturalanır.'],
+  ela:[["Big plants now — and big plants are declared to the grid. Every hour their output misses the forecast, you pay imbalance.","Artık büyük santraller var — ve büyük santraller şebekeye bildirilir. Üretim tahmini her saat ıskaladıkça dengesizlik bedeli ödersin."],["A charged battery covers part of the gap.","Dolu bir batarya farkın bir kısmını kapatır."]],
+  goal:G_(['Build a big plant','Bir büyük santral kur'],()=>S.plants.filter(p=>p.type==='bigwind'||p.type==='solarfarm').length,1)},
+ {n:['Roles','Roller'],k:['roles','fire','heavy'],w:['➕ Helper roles: store, chase the peak, safety. ➖ Storms, fire and heavy wrecks.','➕ Yardımcı rolleri: depola, zirveyi kovala, afet. ➖ Fırtına, yangın ve ağır hasar.'],
+  ela:[["Helpers can take roles now — and you will need a Safety one: storms, lightning and fire arrive.","Yardımcılar artık rol alabilir — bir Afet rolüne de ihtiyacın olacak: fırtına, yıldırım ve yangın geliyor."]],
+  goal:G_(['Give a helper the Safety role','Bir yardımcıya Afet rolü ver'],()=>(S.crew.roles||[]).filter(r=>r==='safety').length,1)},
+ {n:['Brands','Markalar'],k:['brands'],w:['± Turbine brands: cheap ones break more, premium ones cost more.','± Türbin markaları: ucuz olan sık bozulur, premium olan pahalıdır.'],
+  ela:[["A new turbine now comes with a choice of brand: price against reliability.","Yeni türbin artık marka seçimiyle geliyor: fiyata karşı güvenilirlik."]],
+  goal:G_(['Pick a brand for a turbine','Bir türbine marka seç'],()=>S.plants.filter(p=>p.brand&&p.brand!=='std').length,1)},
+ {n:['Grid lines','Şebeke hatları'],k:['gridline','rivaldump'],w:['➕ Lines that carry output by themselves. ➖ Rivals dump energy and crash the price for hours.','➕ Üretimi kendi taşıyan hatlar. ➖ Rakipler enerji boşaltıp fiyatı saatlerce kırar.'],
+  ela:[["Grid lines now: part of a plant's output travels by itself. But your rivals use the grid too — some days they dump and the price falls.","Artık şebeke hatları var: üretimin bir kısmı kendi gider. Ama rakiplerin de şebekeyi kullanıyor — bazı günler boşaltırlar, fiyat düşer."]],
+  goal:G_(['Connect 3 lines','3 hat bağla'],()=>S.plants.filter(p=>(p.grid||0)>0).length,3)},
+ {n:['Dam','Baraj'],k:['dam','pricecap'],w:['➕ A dam: water you keep for the peak. ➖ A price cap: the peak can only go so high.','➕ Baraj: zirveye saklayabildiğin su. ➖ Tavan fiyat: zirve belli bir yerden yukarı çıkamaz.'],
+  ela:[["A dam keeps water for the hour you choose. But the regulator caps the price now: the peak has a ceiling.","Baraj suyu senin seçtiğin saate saklar. Ama düzenleyici artık fiyata tavan koydu: zirvenin bir sınırı var."]],
   goal:G_(['Build a dam','Bir baraj kur'],()=>S.plants.filter(p=>p.type==='dam').length,1)},
- {n:['Grid market','Şebeke piyasası'],k:['grid'],w:['The battery sells to the grid; the reserve band.','Batarya şebekeye satar; rezerv bandı.'],
-  ela:[["Your battery can sell straight to the grid now, and part of it can be held back as a paid reserve.","Bataryan artık doğrudan şebekeye satabilir; bir kısmını ücretli rezerv olarak da ayırabilirsin."]],
+ {n:['Grid market','Şebeke piyasası'],k:['grid','mktfee'],w:['➕ The battery sells to the grid; the reserve band. ➖ A market fee on every sale.','➕ Batarya şebekeye satar; rezerv bandı. ➖ Her satıştan piyasa işletim ücreti.'],
+  ela:[["Your battery can sell straight to the grid now. Being in the market has a fee: a small cut of every sale.","Bataryan artık doğrudan şebekeye satabilir. Piyasada olmanın bir ücreti var: her satıştan küçük bir pay."]],
   goal:G_(['Build the grid link','Şebeke bağlantısını kur'],()=>S.up.grid||0,1)},
- {n:['Offshore','Deniz rüzgârı'],k:['coast'],w:['Turbines at sea.','Denizde türbinler.'],
-  ela:[["Off the coast the wind is steadier. Sea turbines are strong — and costly to repair.","Kıyıdan açıkta rüzgâr daha istikrarlı. Deniz türbinleri güçlü — ama tamiri pahalı."]],
+ {n:['Offshore','Deniz rüzgârı'],k:['coast','saltwear'],w:['➕ Turbines at sea, with steadier wind. ➖ Salt air: sea turbines age faster.','➕ Denizde, daha istikrarlı rüzgârla türbinler. ➖ Tuzlu hava: deniz türbinleri daha hızlı yaşlanır.'],
+  ela:[["Off the coast the wind is steadier. But salt eats steel: sea turbines age faster.","Kıyıdan açıkta rüzgâr daha istikrarlı. Ama tuz çeliği yer: deniz türbinleri daha hızlı yaşlanır."]],
   goal:G_(['Build a sea turbine','Bir deniz türbini kur'],()=>S.plants.filter(p=>p.type==='offshore').length,1)},
- {n:['Nuclear','Nükleer'],k:['nuclear'],w:['A plant that never sleeps.','Hiç uyumayan bir santral.'],
+{n:['Nuclear','Nükleer'],k:['nuclear'],w:['± A plant that never sleeps — until a SCRAM stops it.','± Hiç uyumayan bir santral — ta ki bir SCRAM onu durdurana kadar.'],
   ela:[["The last rung for now: nuclear, across the river. It never sleeps — until a SCRAM stops it.","Şimdilik son basamak: nehrin karşısında nükleer. Hiç uyumaz — ta ki bir SCRAM onu durdurana kadar."]]},
 ];
 const SEV_MAX=SEV.length-1, LAD_DAYS=2;
 const FSEV={};SEV.forEach((s,i)=>{if(s)for(const k of s.k)FSEV[k]=i;});
-const TYPE_SEV={turbine:1,solar:1,battery:2,river:6,town:8,bigwind:10,solarfarm:10,dam:16,offshore:18,nuclear:19};
+const TYPE_SEV={turbine:1,solar:1,battery:4,river:7,town:9,bigwind:11,solarfarm:11,dam:15,offshore:17,nuclear:18};
 /* the four levels of v0.82–0.85, kept for Classic worlds */
 const HARD_SEV={repair:2,fire:2,shifts:3,skills:3,ageing:4},CLASSIC_SEV=[null,['Basics','Temel'],['Maintenance','Bakım'],['Shifts & people','Vardiya ve İK'],['Investment','Yatırım']];
-const PROG_OFF={shocks:1,repair:1,fire:1,heavy:1,cards:1,shifts:1,skills:1,ageing:1,svcplan:1,nuclear:1,regions:1,gridline:1,grid:1,report:1,report2:1,report3:1,roles:1,coast:1,dam:1,river:1,big:1};
+const PROG_OFF={drought:1,imbalance:1,rivaldump:1,pricecap:1,mktfee:1,saltwear:1,shocks:1,repair:1,fire:1,heavy:1,cards:1,shifts:1,skills:1,ageing:1,svcplan:1,nuclear:1,regions:1,gridline:1,grid:1,report:1,report2:1,report3:1,roles:1,coast:1,dam:1,river:1,big:1};
 function sev(){return (typeof S!=='undefined'&&S&&S.prest||0)+1;}
 function sevName(n){if(typeof S!=='undefined'&&S&&S.classic!=null)return CLASSIC_SEV[n]?tt(CLASSIC_SEV[n]):L('Classic','Klasik');return SEV[n]?tt(SEV[n].n):'?';}
 function inClassic(){return typeof S!=='undefined'&&!!S&&S.classic!=null;}
@@ -6065,7 +6070,7 @@ const ASSET_CODE=(()=>{const m={t1:'W1'},n={W:1};for(const q of PADS){if(q.kind!
 const codeOf=id=>ASSET_CODE[id]||((S&&S.plants&&S.plants.find(p=>p.id===id))||{}).code||'';
 /* plant lifetime: after it, output drifts down 1%/day and breakdowns rise */
 const LIFE={turbine:120,solar:150,bigwind:140,solarfarm:180,river:220,dam:300,nuclear:1e9,offshore:112};   // salt air: offshore wears 25% faster than a big turbine
-function plantAge(p){return Math.max(0,(gameNow()-(p.born||0))/DAY_SEC);}
+function plantAge(p){const a=Math.max(0,(gameNow()-(p.born||0))/DAY_SEC);return p&&p.type==='offshore'&&has('saltwear')?a*1.6:a;}   // v0.88 L17: salt air
 function plantLife(p){return LIFE[p.type]||140;}
 function plantEff(p){if(!has('ageing'))return 1;const over=plantAge(p)-plantLife(p);return over<=0?1:Math.max(0.5,1-over*0.005);}   // half the old wear rate
 function plantCap(p){return Math.min(1,p.gen==null?1:p.gen);}      // condition ceiling: every repower costs 5 points
@@ -6262,6 +6267,19 @@ const hourNow=()=>S.t/HOUR;
 function solarShape(t){if(t<6.5||t>19.5)return 0;return Math.pow(Math.max(0,Math.sin(Math.PI*(t-6.5)/13)),1.3);}
 function windCF(t){if(modActive('windOff'))return 0;const h=Math.floor(t)%24,f=t-Math.floor(t);return Math.min(1,(DAY.wind[h]*(1-f)+DAY.wind[(h+1)%24]*f)*windMult());}
 function solarOut(t){let s=0;for(const p of S.plants){const T=PLANT_TYPES[p.type];if(T&&T.kind==='solar'&&!p.broken)s+=T.rate*plantGen(p);}return s*solarShape(t)*solarMult();}
+/* v0.88 the minus side of the new levels */
+function dayRng(salt){return rng((S.seed||1)+S.day*7919+salt);}
+function droughtOn(){return has('drought')&&!inProg()&&dayRng(131)()<0.3;}            // L7: dry days
+function droughtMult(){return droughtOn()?0.4:1;}
+function dumpWin(){if(!has('rivaldump')||inProg())return null;const r=dayRng(257);if(r()>=0.35)return null;const a=10+Math.floor(r()*9);return [a,a+2+Math.floor(r()*2)];}   // L14
+function priceCap(){return has('pricecap')&&!inProg()?P0*AVG_D*1.9:Infinity;}           // L15
+function mktFee(){return has('mktfee')&&!inProg()?0.95:1;}                               // L16
+function imbalanceHour(h){                                                               // L11
+  if(!has('imbalance')||inProg())return;
+  const big=S.plants.filter(p=>(p.type==='bigwind'||p.type==='solarfarm')&&!p.broken&&!p.fire);if(!big.length)return;
+  let c=0,cov=0;for(const p of big){let x=(0.1+Math.random()*0.2)*basePrice(h,h+0.5)*(p.type==='bigwind'?1.2:0.9);
+    if(batAt('bat')>=1){batSet('bat',batAt('bat')-1);x*=0.4;cov++;}c+=x;}
+  c=Math.round(c);if(c<=0)return;S.cash=Math.max(0,S.cash-c);S.imbDay=(S.imbDay||0)+c;S.imbCov=(S.imbCov||0)+cov;try{logLedger('imbalance',-c,'imb');}catch(e){}}
 function basePrice(h,t){
   if(!has('price'))return FIXED_P;               // v0.86 level 1: one price, all day
   const ev=eventNow();
@@ -6269,7 +6287,8 @@ function basePrice(h,t){
   const cw=curtailWindow(S.day);if(cw&&h>=cw[0]&&h<cw[1])p*=0.04;
   if(DAY.shock){const sh=DAY.shock,len=sh.len||1,d=h-sh.hour;
     if(d>=0&&d<len)p*=sh.mult;else if(d===-1||d===len)p*=1+(sh.mult-1)*0.35;}
-  const so=solarOut(t===undefined?h+0.5:t);p*=1-0.5*so/(so+1.5);return p;
+  {const dw=dumpWin();if(dw&&h>=dw[0]&&h<dw[1])p*=0.55;}
+  const so=solarOut(t===undefined?h+0.5:t);p*=1-0.5*so/(so+1.5);return Math.min(p,priceCap());
 }
 const FIXED_P=Math.round(P0*AVG_D*0.94*10)/10;   // v0.86.5: the median daily average of a normal game (measured over 28 days)
 function priceNow(){if(!has('price'))return FIXED_P;const t=hourNow();const ev=eventNow();return Math.max(1,basePrice(Math.floor(t)%24,t)/(1+0.5*S.sat*(ev&&ev.sat||1)));}
@@ -6315,7 +6334,8 @@ function padHelp(p){
 }
 /* v0.78.2: a goal whose square is still locked by level waits; the next open goal is shown instead.
    Goals done out of order are remembered in S.goalOut and skipped when the line reaches them. */
-function goalLocked(G){if(!G||cozy()||G.ok())return false;if(G.need&&!(typeof G.need==='function'?G.need():has(G.need)))return true;const p=G.at&&G.at();return !!(p&&p.kind&&!padVisible(p));}
+function goalLocked(G){if(!G||cozy()||G.ok())return false;if(!inClassic()&&!inProg()&&/^Grow your wealth/.test(G.t[0]))return true;   // v0.88: no wealth goals on the ladder
+  if(G.need&&!(typeof G.need==='function'?G.need():has(G.need)))return true;const p=G.at&&G.at();return !!(p&&p.kind&&!padVisible(p));}
 function curGoal(){const out=S.goalOut||[];for(let i=S.goal;i<GOALS.length;i++){if(out.includes(i))continue;if(goalLocked(GOALS[i]))continue;return i;}return inClassic()||cozy()?S.goal:-1;}   // v0.86: nothing doable → the level goal shows
 function padNeedLv(p){const k=p.kind==='upg'?({bag:'upgrades',boots:'upgrades',helper:'crew',batcap:'battery',bateff:'battery',grid:'grid'})[p.key]:
   p.kind==='gate'?(p.region==='east'?'nuclear':'regions'):({battery:'battery',town:'regions',nuclear:'nuclear'})[p.type];return k&&!has(k)?UNLOCK[k]:0;}
@@ -6423,9 +6443,9 @@ function update(dt){
     if(svcTick(p))continue;                                  // v0.85: planned maintenance
     let cf;
     if(T.kind==='wind'){cf=windCF(t);if(p.type==='offshore')cf=Math.min(1,(0.5*cf+0.3)*(DAY.weather==='stormy'?1.3:1));}   // sea wind: half the swing
-    else if(T.kind==='hydro')cf=waterCF()*flowMult(p);
+    else if(T.kind==='hydro')cf=waterCF()*flowMult(p)*droughtMult();
     else if(T.kind==='dam'){
-      p.res=Math.min(damCap(p),(p.res||0)+damInflow(p)*gdt);
+      p.res=Math.min(damCap(p),(p.res||0)+damInflow(p)*gdt*droughtMult());
       const was=!!p.open;
       p.open=damOpen(p)&&p.res>=1;
       if(p.open&&!was)p.openUntil=gameNow()+HOUR*DAM_MINRUN;
@@ -6598,7 +6618,7 @@ function sellCell(x,y,byPlayer,crew,mk,fromStore){
   if(m.bld){const b=m.bld,c=b.con;if(c&&S.day>=c.from&&S.day<=c.to&&(b.del||0)<c.need){p=c.price;b.del=(b.del||0)+1;used=1;}}
   if(fromStore)p*=batBonus();                 // dispatchable energy pays a premium
   if(!used&&ct&&ct.delivered<ct.need&&gameNow()<ct.until){ct.delivered++;p=ct.price;if(ct.delivered===ct.need){toast(`Deal complete: ${ct.need} cells delivered.`,'good');trackOnce('deal-complete');S.contract=null;}}
-  p*=modMult('income')*(byPlayer?modMult('playerPrice'):1)*perk('price');
+  p*=modMult('income')*(byPlayer?modMult('playerPrice'):1)*perk('price')*mktFee();
   if(S.debt>0){const r=Math.min(S.debt,p*0.25);S.debt-=r;p-=r;if(S.debt<=0.01){S.debt=0;toast(L('Loan fully repaid.','Kredi tamamen ödendi.'),'good');}}
   S.cash+=p;S.earned+=p;S.dayEarned=(S.dayEarned||0)+p;logEarn(p);S.soldCells++;
   if(byPlayer&&!S.hints['jit-sale'])firstSale(p);
@@ -6657,6 +6677,10 @@ function onHour(h){
   try{bldHour(h);}catch(e){}
   try{(S.pxAcc=S.pxAcc||[]).push(basePrice(h,h+0.5));}catch(e){}
   if(inPack())return;   // v0.87.30: company orientation — no market news, peaks or offers
+  try{imbalanceHour(h);}catch(e){}
+  if(h===23&&S.imbDay){toast(L(`⚖️ Imbalance today: −$${fmt(S.imbDay)}. The battery covered ${S.imbCov||0} hours.`,`⚖️ Bugünkü dengesizlik bedeli: −$${fmt(S.imbDay)}. Batarya ${S.imbCov||0} saati karşıladı.`),'');S.imbDay=0;S.imbCov=0;}
+  if(h===6&&droughtOn())toast(L('🏜️ A dry day: river and dam output is down to 40% today.','🏜️ Kurak gün: akarsu ve baraj üretimi bugün %40’a düştü.'),'');
+  {const dw=dumpWin();if(dw&&h===dw[0]-1){sfx.warn();toast(L(`📉 Rivals are dumping energy ${dw[0]}:00–${dw[1]}:00. Prices −45%. Store, don't sell.`,`📉 Rakipler ${dw[0]}:00–${dw[1]}:00 arası enerji boşaltıyor. Fiyatlar −%45. Satma, depola.`),'big');}}
   try{if(bilDue()&&h>=10&&h<=20&&!cardOpen&&!tutOpen){bilMakeOffer();
     hint('bil',L('📜 A bilateral contract is a handshake: "for the next two weeks I sell you this much at this price." If the market falls, you win the gap. If it rises, the buyer does. The gap is settled every evening.','📜 İkili anlaşma bir el sıkışmadır: "önümüzdeki iki hafta sana şu kadarını şu fiyattan satacağım." Piyasa düşerse fark senin, yükselirse alıcının. Fark her akşam ödenir.'),'big');
     if(isActive())openCard(BILCARD);else{const r=autoCard(BILCARD);if(r)toast('📋 '+r,'');}}}catch(e){}
@@ -7930,6 +7954,7 @@ function hud(dt){
    else if(sh.type==='floor')bn.textContent=L(`🔻 Floor price series · ${len}h · store, don't sell`,`🔻 Taban fiyat serisi · ${len} saat · satma, depola`);
    else bn.textContent=sh.type==='spike'?L(`⚡ Price spike ${sh.hour}:00–${end}:00 · ×${sh.mult.toFixed(1)}. Sell now!`,`⚡ ${sh.hour}:00–${end}:00 fiyat sıçraması · ×${sh.mult.toFixed(1)}. Şimdi sat!`):L(`Price crash ${sh.hour}:00–${end}:00. Store, don't sell`,`${sh.hour}:00–${end}:00 fiyat çöküşü. Satma, depola`);}}
   else if(eventNow()){const E=eventNow(),left=S.event.start+S.event.days-S.day;bn.hidden=false;bn.className='banner news';bn.textContent=`${E.icon} ${tt(E.name)} · ${evHead(E)} · ${L(left+' day'+(left>1?'s':'')+' left',left+' gün kaldı')}`;}
+  else if(dumpWin()&&h>=dumpWin()[0]&&h<dumpWin()[1]){bn.hidden=false;bn.className='banner cheap';bn.textContent=L(`📉 Rivals dumping until ${dumpWin()[1]}:00 · prices −45%`,`📉 ${dumpWin()[1]}:00'e kadar rakipler boşaltıyor · fiyatlar −%45`);}
   else if(PEAK_H.includes(h)){bn.hidden=false;bn.className='banner';bn.textContent=L(`Peak hours until 22:00 · prices ×${(pr/(P0*AVG_D)).toFixed(1)}`,`22:00'ye kadar zirve · fiyatlar ×${(pr/(P0*AVG_D)).toFixed(1)}`);}
   else bn.hidden=true;
   const dpr=Math.min(2,devicePixelRatio||1),w=spark.clientWidth,hg=spark.clientHeight;
@@ -8685,6 +8710,12 @@ const FEAT=[
  {k:'brands',l:[["From now on a new turbine comes with a choice of brand: the cheap one breaks more, the premium one less.","Artık yeni türbin kurarken marka seçiyorsun: ucuz olan daha sık bozulur, pahalı olan daha az."],["With storms around, a reliable turbine can be worth its price.","Fırtınalar varken güvenilir türbin parasını çıkarabilir."]]},
  {k:'dam',l:[["A dam keeps water behind its wall and lets it through when the gates open.","Baraj suyu duvarının arkasında tutar, kapaklar açılınca bırakır."],["Open the gates at the peak: that is when water is worth most. The 🔌 panel sets the gates.","Kapakları zirvede aç: suyun en çok para ettiği an o. Kapakları 🔌 panelinden ayarlarsın."]]},
  {k:'coast',l:[["Sea turbines stand in the strip off the coast. The sea wind is steadier.","Deniz türbinleri kıyının açığındaki şeritte durur. Deniz rüzgârı daha istikrarlı."],["They break twice as often as land turbines — plan their service.","Karadakilerin iki katı sık bozulurlar — bakımlarını planla."]]},
+ {k:'drought',l:[["Some days are dry now. On a dry day river and dam output drops to 40%.","Artık bazı günler kurak. Kurak günde akarsu ve baraj üretimi %40'a düşer."],["Ela warns you at 06:00. Plan on wind and sun that day.","Ela sabah 06:00'da haber verir. O gün rüzgâra ve güneşe güven."]]},
+ {k:'imbalance',l:[["Big plants are declared to the grid. Every hour their output misses the forecast, an imbalance charge is taken.","Büyük santraller şebekeye bildirilir. Üretim tahmini her saat ıskaladıkça dengesizlik bedeli kesilir."],["A charged battery covers part of it: keep a few cells in the battery.","Dolu batarya bunun bir kısmını karşılar: bataryada birkaç hücre tut."]]},
+ {k:'rivaldump',hl:'#banner',l:[["Some days your rivals dump energy into the grid for a few hours. The price falls by almost half.","Bazı günler rakiplerin birkaç saat şebekeye enerji boşaltır. Fiyat neredeyse yarıya düşer."],["You get a warning an hour before. Store then, sell later.","Bir saat önce uyarı gelir. O sırada depola, sonra sat."]]},
+ {k:'pricecap',hl:'#mktBox',l:[["The regulator has capped the price. The peak cannot go above a ceiling any more.","Düzenleyici fiyata tavan koydu. Zirve artık bir sınırın üstüne çıkamaz."],["Big spikes are smaller now — steady output matters more than lucky hours.","Büyük sıçramalar artık küçük — şanslı saatlerden çok istikrarlı üretim önemli."]]},
+ {k:'mktfee',l:[["Being in the market has a fee: 5% of every sale goes to the market operator.","Piyasada olmanın bir ücreti var: her satışın %5'i piyasa işletmecisine gider."]]},
+ {k:'saltwear',l:[["Salt air eats steel: sea turbines age 1.6× faster than turbines on land.","Tuzlu hava çeliği yer: deniz türbinleri karadakilerden 1,6 kat hızlı yaşlanır."],["Plan their repowering earlier.","Yenilemelerini daha erken planla."]]},
  {k:'nuclear',cam:()=>NUKE,l:[["Across the river, on the east bank, there is room for a nuclear plant.","Nehrin karşısında, doğu kıyısında nükleer santral için yer var."],["It never sleeps and sells straight to the grid — but a SCRAM can stop it at any hour.","Hiç uyumaz ve doğrudan şebekeye satar — ama bir SCRAM onu her an durdurabilir."]]},
 ];
 const FEAT_GAP=180000;let featAt=Date.now()-FEAT_GAP+25000;   // first one ~25 s into a session
@@ -8997,6 +9028,13 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.88.0',t:['A new ladder: plus and minus','Yeni merdiven: artı ve eksi'],l:[
+  ['18 levels. Each brings one plus and one minus — or one thing that cuts both ways — so there is a reason to stay and a reason to go.','18 seviye. Her biri bir artı ve bir eksi getirir — ya da iki yönlü tek bir şey — kalmak için de gitmek için de bir sebep olsun.'],
+  ['New minuses: dry days (river), imbalance (big plants), rival dumping (grid lines), price cap (dam), market fee (grid market), salt air (offshore).','Yeni eksiler: kurak günler (akarsu), dengesizlik (büyük santraller), rakip fiyat kırma (şebeke hatları), tavan fiyat (baraj), piyasa ücreti (şebeke piyasası), tuzlu hava (deniz rüzgârı).'],
+  ['Wages now come with the crew (level 5); ageing with the regions (level 9).','Ücretler artık ekiple (seviye 5), yaşlanma bölgelerle (seviye 9) geliyor.'],
+  ['Your kept levels move to the new level that has their features; nothing is lost.','Saklı seviyelerin, özelliklerini içeren yeni seviyeye taşınır; hiçbir şey kaybolmaz.'],
+  ['On the ladder the top strip no longer shows wealth goals.','Merdivende üst şerit artık servet hedefi göstermiyor.'],
+ ]},
  {v:'0.87.31',t:['Orientation fixes','Oryantasyon düzeltmeleri'],l:[
   ['When Ela asks you to build something (solar panel, battery, a company plant), Next and Skip appear only once it is built.','Ela bir şey kurmanı istediğinde (güneş paneli, batarya, şirket santrali) İleri ve Geç butonları ancak o yapı kurulunca çıkar.'],
   ['Company orientation: no peak banner, price messages or market news at all.','Şirket oryantasyonu: zirve şeridi, fiyat mesajı ve piyasa haberi hiç yok.'],
@@ -10291,6 +10329,18 @@ function lvlArrive(G){
   $('lvStart').onclick=()=>{try{startFlow();}catch(e){}setTimeout(lvlVeilOff,300);};
 }
 function wKey(P){return SAVE_KEY+'_w'+P;}
+/* v0.88: the ladder was rebuilt (19 → 18 levels, new order). Each kept level moves, in order, to the
+   first new level that has all of its features; nothing is dropped. Runs once per phone. */
+const LAD_REMAP=[0,3,4,4,5,6,7,8,11,11,13,13,13,13,13,14,15,16,17];
+function ladRemap(){try{const m=ladMeta();if(m.v>=2)return;
+  const curLad=!!(S&&S.lad&&S.classic==null&&!S.progWorld),mx=Math.max(worldMax(),18),src=[];
+  for(let i=0;i<=mx;i++){const o=(curLad&&(S.prest||0)===i)?S:readSave(wKey(i));if(o)src.push([i,o]);}
+  const map={};let last=-1;for(const [i] of src){const j=Math.min(17,Math.max(LAD_REMAP[i]!=null?LAD_REMAP[i]:17,last+1));map[i]=j;last=j;}
+  for(let i=0;i<=mx;i++)localStorage.removeItem(wKey(i));
+  let top=0;for(const [i,o] of src){const j=map[i];o.prest=j;top=Math.max(top,j);if(o!==S)localStorage.setItem(wKey(j),JSON.stringify(o));}
+  m.cur=curLad?S.prest:(m.cur!=null&&map[m.cur]!=null?map[m.cur]:Math.min(17,LAD_REMAP[m.cur||0]||0));
+  m.v=2;setLadMeta(m);localStorage.setItem(SAVE_KEY+'_worlds',JSON.stringify({max:top}));
+  if(curLad)S.prestAsked=0;}catch(e){console.error('ladder remap',e);}}
 function cKey(i){return SAVE_KEY+'_c'+i;}
 const PROG_KEY=SAVE_KEY+'_prog',LAD_KEY=SAVE_KEY+'_lad';
 const LAD_KEEP=['music','lang','muted','vSfx','vMus','lowFlash','fxOff','notif','shadows','speed','hints','tutDone','tipsSeen','seenVer','nick','mode','uiScale','zoom','look','cardPrefs','feat'];
@@ -10463,7 +10513,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.87.31';
+const GAME_VERSION='0.88.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10479,7 +10529,7 @@ addEventListener('pagehide',save);
 function resize(){renderer.setSize(innerWidth,innerHeight,false);}
 addEventListener('resize',resize);resize();
 const had=load();let GO_IN=null;try{GO_IN=JSON.parse(sessionStorage.getItem('mwm_go')||'null');}catch(e){}if(GO_IN)lvlVeil(GO_IN.t);
-const LAD_MOVING=ladderInit(had);if(had&&!LAD_MOVING)worldsInit();if(!inProg()&&S.prog){S.prog=null;S.progs=[];}   // v0.86: programs live in their own worldif(had){if(!has('repair')){S.batFault=false;for(const p of S.plants){p.broken=false;p.hv=false;}}if(!has('fire')){S.batFire=0;for(const p of S.plants)p.fire=0;}}   // a level without that mechanic starts clean
+const LAD_MOVING=ladderInit(had);if(had&&!LAD_MOVING)worldsInit();if(!LAD_MOVING)ladRemap();if(!inProg()&&S.prog){S.prog=null;S.progs=[];}   // v0.86: programs live in their own worldif(had){if(!has('repair')){S.batFault=false;for(const p of S.plants){p.broken=false;p.hv=false;}}if(!has('fire')){S.batFire=0;for(const p of S.plants)p.fire=0;}}   // a level without that mechanic starts clean
 if(!inProg())try{streakCheck();}catch(e){}if(had&&!cozy()&&!inClassic()&&!inProg()&&SEV[sev()]&&!S.sevIntro){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,1200);return;}S.sevIntro=1;ladIntro(sev());};setTimeout(go,2000);}if(inProg()&&S.progPending){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,800);return;}const p=PROGRAMS.find(x=>x.id===S.progPending);S.progPending=null;if(p)startProgram(p);};setTimeout(go,1200);}if(had&&(S.prest||0)>=1&&!cozy()){const gr=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(gr,1500);return;}askRateOnce();};setTimeout(gr,4000);}const bootGap=had?(Date.now()-S.lastSave)/1000:0;DAY=makeDay(S.day);syncHelpers();
 let last=0;
 async function loadKit(){
