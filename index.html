@@ -456,7 +456,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.88.0</div>
+  <div class="t-ver" id="tVer">v0.88.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -691,7 +691,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.88.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.88.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5575,23 +5575,24 @@ const SEV=[null,
   goal:G_(['Give a helper the Safety role','Bir yardımcıya Afet rolü ver'],()=>(S.crew.roles||[]).filter(r=>r==='safety').length,1)},
  {n:['Brands','Markalar'],k:['brands'],w:['± Turbine brands: cheap ones break more, premium ones cost more.','± Türbin markaları: ucuz olan sık bozulur, premium olan pahalıdır.'],
   ela:[["A new turbine now comes with a choice of brand: price against reliability.","Yeni türbin artık marka seçimiyle geliyor: fiyata karşı güvenilirlik."]],
-  goal:G_(['Pick a brand for a turbine','Bir türbine marka seç'],()=>S.plants.filter(p=>p.brand&&p.brand!=='std').length,1)},
+  goal:G_(['Build 3 branded turbines','Markalı 3 türbin kur'],()=>S.plants.filter(p=>p.brand&&p.brand!=='std').length,3)},
  {n:['Grid lines','Şebeke hatları'],k:['gridline','rivaldump'],w:['➕ Lines that carry output by themselves. ➖ Rivals dump energy and crash the price for hours.','➕ Üretimi kendi taşıyan hatlar. ➖ Rakipler enerji boşaltıp fiyatı saatlerce kırar.'],
   ela:[["Grid lines now: part of a plant's output travels by itself. But your rivals use the grid too — some days they dump and the price falls.","Artık şebeke hatları var: üretimin bir kısmı kendi gider. Ama rakiplerin de şebekeyi kullanıyor — bazı günler boşaltırlar, fiyat düşer."]],
-  goal:G_(['Connect 3 lines','3 hat bağla'],()=>S.plants.filter(p=>(p.grid||0)>0).length,3)},
+  goal:G_(['Connect 6 lines','6 hat bağla'],()=>S.plants.filter(p=>(p.grid||0)>0).length,6)},
  {n:['Dam','Baraj'],k:['dam','pricecap'],w:['➕ A dam: water you keep for the peak. ➖ A price cap: the peak can only go so high.','➕ Baraj: zirveye saklayabildiğin su. ➖ Tavan fiyat: zirve belli bir yerden yukarı çıkamaz.'],
   ela:[["A dam keeps water for the hour you choose. But the regulator caps the price now: the peak has a ceiling.","Baraj suyu senin seçtiğin saate saklar. Ama düzenleyici artık fiyata tavan koydu: zirvenin bir sınırı var."]],
-  goal:G_(['Build a dam','Bir baraj kur'],()=>S.plants.filter(p=>p.type==='dam').length,1)},
+  goal:G_(['Sell 40 cells at the peak','Zirvede 40 hücre sat'],()=>S.stats.peakCells||0,40)},
  {n:['Grid market','Şebeke piyasası'],k:['grid','mktfee'],w:['➕ The battery sells to the grid; the reserve band. ➖ A market fee on every sale.','➕ Batarya şebekeye satar; rezerv bandı. ➖ Her satıştan piyasa işletim ücreti.'],
   ela:[["Your battery can sell straight to the grid now. Being in the market has a fee: a small cut of every sale.","Bataryan artık doğrudan şebekeye satabilir. Piyasada olmanın bir ücreti var: her satıştan küçük bir pay."]],
-  goal:G_(['Build the grid link','Şebeke bağlantısını kur'],()=>S.up.grid||0,1)},
+  goal:G_(['Raise the grid link to level 2','Şebeke bağlantısını 2. seviyeye çıkar'],()=>S.up.grid||0,2)},
  {n:['Offshore','Deniz rüzgârı'],k:['coast','saltwear'],w:['➕ Turbines at sea, with steadier wind. ➖ Salt air: sea turbines age faster.','➕ Denizde, daha istikrarlı rüzgârla türbinler. ➖ Tuzlu hava: deniz türbinleri daha hızlı yaşlanır.'],
   ela:[["Off the coast the wind is steadier. But salt eats steel: sea turbines age faster.","Kıyıdan açıkta rüzgâr daha istikrarlı. Ama tuz çeliği yer: deniz türbinleri daha hızlı yaşlanır."]],
-  goal:G_(['Build a sea turbine','Bir deniz türbini kur'],()=>S.plants.filter(p=>p.type==='offshore').length,1)},
+  goal:G_(['Build 3 sea turbines','3 deniz türbini kur'],()=>S.plants.filter(p=>p.type==='offshore').length,3)},
 {n:['Nuclear','Nükleer'],k:['nuclear'],w:['± A plant that never sleeps — until a SCRAM stops it.','± Hiç uyumayan bir santral — ta ki bir SCRAM onu durdurana kadar.'],
   ela:[["The last rung for now: nuclear, across the river. It never sleeps — until a SCRAM stops it.","Şimdilik son basamak: nehrin karşısında nükleer. Hiç uyumaz — ta ki bir SCRAM onu durdurana kadar."]]},
 ];
 const SEV_MAX=SEV.length-1, LAD_DAYS=2;
+function ladDays(n){n=n||sev();return n<=4?2:n<=8?3:n<=12?4:5;}   // v0.88.1: the higher the level, the longer you live in it
 const FSEV={};SEV.forEach((s,i)=>{if(s)for(const k of s.k)FSEV[k]=i;});
 const TYPE_SEV={turbine:1,solar:1,battery:4,river:7,town:9,bigwind:11,solarfarm:11,dam:15,offshore:17,nuclear:18};
 /* the four levels of v0.82–0.85, kept for Classic worlds */
@@ -5605,9 +5606,9 @@ function typeOk(t){if(cozy()||inClassic())return true;
   if(inProg())return t==='turbine'||t==='solar'||t==='battery'||(PROGRAMS.find(x=>x.id===S.prog)||{steps:[]}).steps.some(s=>s.type===t);
   return sev()>=(TYPE_SEV[t]||1);}
 function ladGoal(){const s=SEV[sev()];return s&&s.goal||null;}
-function ladTimeOk(){return gameNow()>=LAD_DAYS*DAY_SEC;}
+function ladTimeOk(){return gameNow()>=ladDays()*DAY_SEC;}
 function ladGoalOk(){const g=ladGoal();if(!g)return true;try{return g.v()>=g.n;}catch(e){return false;}}
-function ladProgTxt(){const g=ladGoal(),d=Math.min(LAD_DAYS,gameNow()/DAY_SEC);
+function ladProgTxt(){const g=ladGoal(),LAD_DAYS=ladDays(),d=Math.min(LAD_DAYS,gameNow()/DAY_SEC);
   const gt=g?`${tt(g.t)} ${ladGoalOk()?'✅':`(${Math.min(g.n,Math.floor(g.v()))}/${g.n})`}`:'';
   return L(`Goal: ${gt} · time: ${ladTimeOk()?'✅':d.toFixed(1)+'/'+LAD_DAYS+' days'}`,`Hedef: ${gt} · süre: ${ladTimeOk()?'✅':d.toFixed(1)+'/'+LAD_DAYS+' gün'}`);}
 function has(k){
@@ -5634,7 +5635,7 @@ function perk(kind){
 /* v0.77 worlds: every rebuild is its own world with one advantage of its own. They do not stack —
    going back to an older world gives you that world's advantage, not the newest one's. */
 const WORLD_PERKS=[{price:0.10},{carry:2},{build:-0.15},{speed:0.10}];
-function worldPerk(P){if(!P)return null;const b=WORLD_PERKS[(P-1)%4],m=1+Math.floor((P-1)/4)*0.5,o={};
+function worldPerk(P){if(!P)return null;const b=WORLD_PERKS[(P-1)%4],m=1+Math.min(1,Math.floor((P-1)/4))*0.5,o={};   // v0.88.1: advantages stop growing after level 5
   for(const k in b)o[k]=k==='carry'?Math.round(b[k]*m):Math.round(b[k]*m*100)/100;return o;}
 function worldPerkTxt(P){const w=worldPerk(P);if(!w)return L('no advantage','avantaj yok');
   if(w.price)return L(`sale price +${Math.round(w.price*100)}%`,`satış fiyatı +%${Math.round(w.price*100)}`);
@@ -8748,7 +8749,7 @@ function ladIntro(n){
   if(fs.length&&n>1)seq.push({b:[`Level ${n}: ${s.n[0]}. Here is what is new.`,`Seviye ${n}: ${s.n[1]}. Neler yeni, anlatayım.`]});
   else for(const b of s.ela||[])seq.push({b});
   seq.push(...fs);
-  if(s.goal)seq.push({b:[`This level's goal: ${s.goal.t[0]}. Play at least ${LAD_DAYS} days, then ⭐ opens level ${n+1}.`,`Bu seviyenin hedefi: ${s.goal.t[1]}. En az ${LAD_DAYS} gün oyna, sonra ⭐ Seviye ${n+1}'i açar.`],hl:'#worldBtn'});
+  if(s.goal)seq.push({b:[`This level's goal: ${s.goal.t[0]}. Play at least ${ladDays(n)} days, then ⭐ opens level ${n+1}.`,`Bu seviyenin hedefi: ${s.goal.t[1]}. En az ${ladDays(n)} gün oyna, sonra ⭐ Seviye ${n+1}'i açar.`],hl:'#worldBtn'});
   seq.okLbl=['Got it','Anladım'];featAt=Date.now();elaSay(seq,()=>save());
 }
 function featTick(){
@@ -9028,6 +9029,11 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.88.1',t:['Live in each level','Her seviyede yaşa'],l:[
+  ['Minimum stay grows with the ladder: 2 days (levels 1–4), 3 (5–8), 4 (9–12), 5 (13–18).','Asgari kalma süresi merdivenle uzar: 2 gün (seviye 1–4), 3 (5–8), 4 (9–12), 5 (13–18).'],
+  ['Level advantages no longer keep growing: at most ×1.5 from level 5 on.','Seviye avantajları artık büyümeye devam etmiyor: 5. seviyeden sonra en fazla ×1,5.'],
+  ['Goals from level 13 ask for more: 3 branded turbines, 6 lines, 40 peak cells, grid link level 2, 3 sea turbines.','13. seviyeden itibaren hedefler büyüdü: 3 markalı türbin, 6 hat, zirvede 40 hücre, şebeke bağlantısı 2. seviye, 3 deniz türbini.'],
+ ]},
  {v:'0.88.0',t:['A new ladder: plus and minus','Yeni merdiven: artı ve eksi'],l:[
   ['18 levels. Each brings one plus and one minus — or one thing that cuts both ways — so there is a reason to stay and a reason to go.','18 seviye. Her biri bir artı ve bir eksi getirir — ya da iki yönlü tek bir şey — kalmak için de gitmek için de bir sebep olsun.'],
   ['New minuses: dry days (river), imbalance (big plants), rival dumping (grid lines), price cap (dam), market fee (grid market), salt air (offshore).','Yeni eksiler: kurak günler (akarsu), dengesizlik (büyük santraller), rakip fiyat kırma (şebeke hatları), tavan fiyat (baraj), piyasa ücreti (şebeke piyasası), tuzlu hava (deniz rüzgârı).'],
@@ -10319,7 +10325,7 @@ function lvlArrive(G){
     rows.push(G.fresh?L('A new level starts from scratch: $0, an empty map — and your rivals start from $0 too.','Yeni seviye sıfırdan başlar: $0, boş harita — rakiplerin de $0’dan başlıyor.')
                      :L(`Where you left it: $${fmt(S.cash)}, day ${S.day+1}.`,`Bıraktığın yerden: $${fmt(S.cash)}, ${S.day+1}. gün.`));
     if(s.w)rows.push('🆕 '+L('New here: ','Burada yeni: ')+tt(s.w));
-    if(s.goal)rows.push('🎯 '+L('Goal: ','Hedef: ')+tt(s.goal.t)+L(` · at least ${LAD_DAYS} days`,` · en az ${LAD_DAYS} gün`));
+    if(s.goal)rows.push('🎯 '+L('Goal: ','Hedef: ')+tt(s.goal.t)+L(` · at least ${ladDays(n)} days`,` · en az ${ladDays(n)} gün`));
     if(n>1)rows.push('⭐ '+L('Advantage of this level: ','Bu seviyenin avantajı: ')+worldPerkTxt(n-1));
   }else rows.push(inClassic()?L('Your game from before the ladder, as you left it.','Merdivenden önceki oyunun, bıraktığın gibi.'):L('Your program, in its own space.','Programın, kendi alanında.'));
   v.innerHTML=`<div class="lv-card"><div class="lv-k">${G.fresh?L('NEW LEVEL','YENİ SEVİYE'):L('LEVEL','SEVİYE')}</div><div class="lv-t">${G.t}</div>`
@@ -10406,7 +10412,7 @@ function worldsCard(){const cur=S.prest||0,mx=worldMax(),opts=[],meta=ladMeta();
   opts.push(O('📤 Share my score card','📤 Skor kartımı paylaş','WhatsApp, Instagram or anywhere you like.','WhatsApp, Instagram ya da istediğin yer.',0,()=>setTimeout(shareCard,300)));
   opts.push(O('Close','Kapat','Stay here.','Burada kal.',0,NOOP));
   return {id:'worlds',icon:'⭐',ok:()=>false,safe:0,title:['Your levels','Seviyelerin'],
-    text:[`Every level adds one new thing and starts from scratch, with its own rivals and advantage. To open the next one: play at least ${LAD_DAYS} days here and reach this level's goal. Stay where you enjoy it; only the level you are in runs.`,`Her seviye yeni bir şey ekler ve sıfırdan başlar; kendi rakipleri ve avantajı var. Sonrakini açmak için: burada en az ${LAD_DAYS} gün oyna ve bu seviyenin hedefine ulaş. Keyif aldığın yerde kal; sadece içinde olduğun seviye işler.`],opts:()=>opts};}
+    text:[`Every level adds one new thing and starts from scratch, with its own rivals and advantage. To open the next one: play at least ${ladDays()} days here and reach this level's goal. Stay where you enjoy it; only the level you are in runs.`,`Her seviye yeni bir şey ekler ve sıfırdan başlar; kendi rakipleri ve avantajı var. Sonrakini açmak için: burada en az ${ladDays()} gün oyna ve bu seviyenin hedefine ulaş. Keyif aldığın yerde kal; sadece içinde olduğun seviye işler.`],opts:()=>opts};}
 $('sWorlds').onclick=()=>{$('mSet').classList.remove('on');openCard(worldsCard());};
 /* v0.80: a review link, never a reward. Asked once, on the first visit to a second world; always in Settings. */
 const PLAY_URL='https://play.google.com/store/apps/details?id=games.baseload.megawattmogul';
@@ -10513,7 +10519,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.88.0';
+const GAME_VERSION='0.88.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
