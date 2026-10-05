@@ -469,7 +469,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.90.0</div>
+  <div class="t-ver" id="tVer">v0.90.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -714,7 +714,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.90.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.90.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5632,7 +5632,7 @@ function ladGoal(){const s=SEV[sev()];return s&&s.goal||null;}
 function ladTimeOk(){return gameNow()>=ladDays()*DAY_SEC;}
 function ladGoalOk(){const g=ladGoal();if(!g)return true;try{return g.v()>=g.n;}catch(e){return false;}}
 function ladProgTxt(){const g=ladGoal(),LAD_DAYS=ladDays(),d=Math.min(LAD_DAYS,gameNow()/DAY_SEC);
-  const gt=g?`${tt(g.t)} ${ladGoalOk()?'✅':`(${Math.min(g.n,Math.floor(g.v()))}/${g.n})`}`:'';
+  const gv=g?Math.floor(g.v()):0,gt=g?`${tt(g.t)} (${fmt(gv)}/${fmt(g.n)})${ladGoalOk()?' ✅':''}`:'';   // v0.90.1: the count stays visible after the goal is met
   return L(`Goal: ${gt} · time: ${ladTimeOk()?'✅':d.toFixed(1)+'/'+LAD_DAYS+' days'}`,`Hedef: ${gt} · süre: ${ladTimeOk()?'✅':d.toFixed(1)+'/'+LAD_DAYS+' gün'}`);}
 function has(k){
   if(k==='freebuild'&&(cozy()||inClassic()))k='regions';
@@ -9091,6 +9091,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.90.1',t:['Goal counts','Hedef sayaçları'],l:[['The level goal always shows your count, also after it is met: “Sell 30 cells (34/30) ✅”.','Seviye hedefi sayacı her zaman gösterir, tamamlandıktan sonra da: “30 hücre sat (34/30) ✅”.']]},
  {v:'0.90.0',t:['Your career','Kariyerin'],l:[
   ['💼 Holding points: they never reset and lift your income on every level. Earned at each day’s close, by opening a level, from goals, the daily market and badges.','💼 Holding puanı: hiç sıfırlanmaz, her seviyede gelirini artırır. Gün kapanışında, seviye açınca, hedeflerden, günün piyasasından ve başarımlardan kazanılır.'],
   ['🏆 Records: best day, best hour and best sale are celebrated. Every day closes with a 1–3 star report.','🏆 Rekorlar: en iyi gün, saat ve satış kutlanır. Her gün 1–3 yıldızlı bir karneyle kapanır.'],
@@ -10815,7 +10816,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.90.0';
+const GAME_VERSION='0.90.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
