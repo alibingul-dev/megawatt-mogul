@@ -456,7 +456,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.88.1</div>
+  <div class="t-ver" id="tVer">v0.89.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -691,7 +691,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.88.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.89.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5484,7 +5484,7 @@ const OPENTXT={
   freebuild:[['Building anywhere','Serbest inşa'],['Build a plant wherever it fits.','Santrali sığdığı her yere kur.']],
   shocks:[['Price shocks','Fiyat şokları'],['Spikes, crashes and dispatch orders.','Sıçramalar, çöküşler ve yük atma talimatları.']],
   brands:[['Turbine brands','Türbin markaları'],['Economy, standard or premium: price against reliability.','Ekonomi, standart ya da premium: fiyata karşı güvenilirlik.']],
-  svcplan:[['Maintenance plan','Bakım planı'],['Service each plant at cheap hours before it breaks.','Her santrale bozulmadan, ucuz saatlerde bakım yap.']],
+  svcplan:[['Maintenance policy','Bakım politikası'],['Auto service at cheap hours, or run to failure.','Ucuz saatlerde otomatik bakım ya da bozulana kadar çalıştır.']],
   river:[['Run-of-river','Akarsu'],['Plants in the river that work day and night.','Nehirde gece gündüz çalışan santraller.']],
   big:[['Big plants','Büyük santraller'],['Big turbines and solar farms.','Büyük türbinler ve güneş tarlaları.']],
   heavy:[['Storms','Fırtınalar'],['Heavy breakdowns and harder storms.','Ağır arızalar ve sert fırtınalar.']],
@@ -5564,7 +5564,7 @@ const SEV=[null,
  {n:['Regions','Bölgeler'],k:['markets','regions','ageing'],w:['➕ Far fields, town markets and depots. ➖ Plants age and lose output.','➕ Uzak sahalar, kasaba pazarları ve depolar. ➖ Santraller yaşlanır, verimi düşer.'],
   ela:[["The map opens up: far fields, towns that buy energy, depots. And your plants start to age.","Harita açılıyor: uzak sahalar, enerji alan kasabalar, depolar. Santrallerin de yaşlanmaya başlıyor."]],
   goal:G_(['Open a new region','Yeni bir bölge aç'],()=>['ridge','desert','coast'].filter(k=>S.regions[k]).length,1)},
- {n:['Maintenance plan','Bakım planı'],k:['svcplan'],w:['± Plan each plant\'s service: stop it at cheap hours or let it break at any hour.','± Her santralin bakımını planla: ucuz saatte durdur ya da herhangi bir saatte bozulsun.'],
+ {n:['Maintenance plan','Bakım planı'],k:['svcplan'],w:['± Pick a maintenance policy: automatic service at cheap hours (cost + downtime) or run to failure (risk).','± Bakım politikanı seç: ucuz saatlerde otomatik bakım (masraf + duruş) ya da bozulana kadar çalıştır (risk).'],
   ela:[["Plants that are never serviced break more. Now you plan the service yourself.","Bakım görmeyen santral daha çok bozulur. Artık bakımı sen planlıyorsun."]],
   goal:G_(['Finish 3 planned services','3 planlı bakım tamamla'],()=>S.stats.svcDone||0,3)},
  {n:['Big plants','Büyük santraller'],k:['big','imbalance'],w:['➕ Big turbines and solar farms. ➖ Imbalance: their forecast error is charged every hour.','➕ Büyük türbinler ve güneş tarlaları. ➖ Dengesizlik: tahmin hataları her saat faturalanır.'],
@@ -6678,6 +6678,8 @@ function onHour(h){
   try{bldHour(h);}catch(e){}
   try{(S.pxAcc=S.pxAcc||[]).push(basePrice(h,h+0.5));}catch(e){}
   if(inPack())return;   // v0.87.30: company orientation — no market news, peaks or offers
+  try{svcAutoHour();}catch(e){}
+  try{omHour();}catch(e){}
   try{imbalanceHour(h);}catch(e){}
   if(h===23&&S.imbDay){toast(L(`⚖️ Imbalance today: −$${fmt(S.imbDay)}. The battery covered ${S.imbCov||0} hours.`,`⚖️ Bugünkü dengesizlik bedeli: −$${fmt(S.imbDay)}. Batarya ${S.imbCov||0} saati karşıladı.`),'');S.imbDay=0;S.imbCov=0;}
   if(h===6&&droughtOn())toast(L('🏜️ A dry day: river and dam output is down to 40% today.','🏜️ Kurak gün: akarsu ve baraj üretimi bugün %40’a düştü.'),'');
@@ -8698,7 +8700,7 @@ const FEAT=[
  {k:'regions',l:[["The map grows: far fields behind gates. Each gate is a square you pay for.","Harita büyüyor: kapıların ardında uzak sahalar. Her kapı ödediğin bir kare."],["New areas bring town markets and depots closer to your plants.","Yeni bölgeler kasaba pazarlarını ve depoları santrallerine yaklaştırır."]]},
  {k:'gridline',hl:'#gridBtn',sh:()=>openGridPanel(),l:[["A grid line carries part of a plant's output by itself — no walking.","Şebeke hattı santralin üretiminin bir kısmını kendi taşır — yürümeden."],["The 🔌 button lists your lines. A worn line carries less; service it at the plant.","🔌 butonu hatlarını listeler. Yıpranan hat daha az taşır; santralde bakımını yap."]]},
  {k:'repair',hl:'#mntBtn',sh:()=>openMaint(),l:[["Plants can break now. A broken plant makes nothing until it is fixed.","Santraller artık bozulabilir. Bozuk santral tamir edilene kadar hiçbir şey üretmez."],["The 🧰 button lists every job with its price. Go walks you there.","🧰 butonu her işi fiyatıyla listeler. Git'e basınca seni oraya yürütür."]]},
- {k:'svcplan',hl:'#mntBtn',sh:()=>openMaint(),need:()=>has('svcplan'),l:[["Every plant now counts the days since its last service. After 3 days it breaks more often, after 6 much more.","Her santral artık son bakımdan beri geçen günü sayıyor. 3 günden sonra daha sık, 6 günden sonra çok daha sık bozulur."],["In 🧰, plan a 6-hour service at cheap hours. A breakdown never waits for a cheap hour.","🧰'da ucuz saatlere 6 saatlik bakım planla. Arıza ucuz saati beklemez."]]},
+ {k:'svcplan',hl:'#mntBtn',sh:()=>openMaint(),need:()=>has('svcplan'),l:[["Every plant now counts the days since its last service. After 3 days it breaks more often, after 6 much more.","Her santral artık son bakımdan beri geçen günü sayıyor. 3 günden sonra daha sık, 6 günden sonra çok daha sık bozulur."],["In 🧰 pick a policy. Auto books every plant into a 6-hour service at the cheapest hours. Run to failure saves the money, but a breakdown never waits for a cheap hour.","🧰'da politikanı seç. Otomatik, her santrali en ucuz saatlerde 6 saatlik bakıma yazar. Bozulana kadar çalıştır parayı korur ama arıza ucuz saati beklemez."]]},
  {k:'fire',hl:'#mntBtn',l:[["Lightning and wear can start a fire. A burning plant stops and gets damaged.","Yıldırım ve yıpranma yangın çıkarabilir. Yanan santral durur ve hasar alır."],["Stand next to it to put it out, or give a helper the Safety role.","Söndürmek için yanında dur ya da bir yardımcıya Afet rolü ver."]]},
  {k:'shifts',hl:'#crewBtn',sh2:()=>openCrew(),l:[["Your crew now works three shifts. At any hour only a third of them is on duty.","Ekibin artık üç vardiya çalışıyor. Her saatte sadece üçte biri görevde."],["Plan the evening peak: put your best people on the shift that covers it.","Akşam zirvesini planla: en iyi insanlarını onu kapsayan vardiyaya koy."]]},
  {k:'ageing',hl:'#mntBtn',sh2:()=>openMaint(),l:[["Plants get old. Output slowly drops as they age.","Santraller yaşlanır. Yaşlandıkça üretim yavaşça düşer."],["Repower in 🧰 to get it back. When even that is not enough, rebuild.","🧰'dan yenileyerek geri al. O da yetmezse söküp yeniden kur."]]},
@@ -8886,6 +8888,35 @@ function svcTick(p){
     return true;}
   return false;
 }
+/* v0.89: maintenance policy. 'auto' books each plant into the cheapest 6-hour window of the next day
+   once it nears 3 days, never stopping more than a quarter of the fleet at once. 'run' skips service:
+   no cost, no downtime, but breakdowns climb. The per-plant Plan button still overrides. */
+function svcPol(){return S.svcPol==='run'?'run':'auto';}
+function svcAutoHour(){
+  if(!has('svcplan')||svcPol()!=='auto')return;
+  const fleet=S.plants.filter(svcOn),cap=Math.max(1,Math.ceil(fleet.length/4));
+  const due=fleet.filter(p=>!p.broken&&!p.fire&&!p.plan&&!svcIn(p)&&svcDays(p)>=SVC_Y-1).sort((a,b)=>svcDays(b)-svcDays(a));
+  if(!due.length)return;
+  const sl=svcSlots(),busy=at=>fleet.filter(q=>(q.plan&&Math.abs(q.plan.at-at)<SVC_H*HOUR)||(q.mnt&&q.mnt>at)).length;
+  let n=0,spent=0;
+  for(const p of due.slice(0,cap)){const c=svcCost(p);if(S.cash<c)break;
+    const ok=sl.filter(x=>busy(x.at)<cap).sort((a,b)=>a.avg-b.avg)[0];if(!ok)break;
+    pay(c);spent+=c;p.plan={at:ok.at,auto:1};n++;S.stats.svcPlanned=(S.stats.svcPlanned||0)+1;}
+  if(n)toast(L(`🗓️ ${n} plant(s) booked for service at cheap hours · −$${fmt(spent)}.`,`🗓️ ${n} santral ucuz saatlerde bakıma yazıldı · −$${fmt(spent)}.`),'');
+}
+/* v0.89: service contract. A light breakdown nobody has touched for 4 hours is fixed by the outside
+   service firm at +50% (call-out fee). Standing there or a Fix-role helper is faster and cheaper.
+   Heavy damage and fires still need your own hands. */
+const OM_WAIT=4;
+function omHour(){
+  if(!has('repair'))return;const now=gameNow();
+  for(const p of S.plants){if(!p.broken||p.fire||heavy(p)||(p.fix||0)>0||!PLANT_TYPES[p.type])continue;
+    if(now-(p.brokenAt||now)<OM_WAIT*HOUR)continue;
+    const c=repairCost(p),fee=Math.round(c*0.5);if(S.cash<c+fee)continue;
+    doRepair(p,false);pay(fee);S.stats.fixSpend=(S.stats.fixSpend||0)+fee;S.stats.omN=(S.stats.omN||0)+1;
+    toast(L(`🚐 The service firm fixed ${codeOf(p.id)} · −$${fmt(c+fee)} (incl. +50% call-out).`,`🚐 Servis firması ${codeOf(p.id)}'i onardı · −$${fmt(c+fee)} (%50 çağrı ücreti dahil).`),'');
+    hint('om',L(`🚐 Light breakdowns left alone for ${OM_WAIT} hours are fixed by the service firm, at +50%. Fix them yourself to save the fee and the lost hours.`,`🚐 ${OM_WAIT} saat dokunulmayan hafif arızaları servis firması onarır, %50 fazlasına. Kendin onarırsan hem ücretten hem kayıp saatlerden kurtulursun.`),'');}
+}
 function svcSlots(){const cur=todayCurve();return [0,6,12,18].map(hs=>{let at=S.day*DAY_SEC+hs*HOUR;if(at<=gameNow())at+=DAY_SEC;
   let a=0;for(let i=0;i<SVC_H;i++)a+=cur[(hs+i)%24];return {hs,at,avg:a/SVC_H};});}
 function svcCard(p){
@@ -8903,8 +8934,11 @@ function svcCard(p){
 function svcHtml(){
   if(!has('svcplan'))return '';
   const ps=S.plants.filter(svcOn).map(p=>({p,d:svcDays(p)})).filter(o=>o.d>=SVC_Y||o.p.plan||svcIn(o.p)).sort((a,b)=>b.d-a.d).slice(0,8);
-  const head=`<div style="margin:14px 0 4px;font-family:var(--disp);font-size:16px">🗓️ ${L('Maintenance plan','Bakım planı')}</div>`
+  let head=`<div style="margin:14px 0 4px;font-family:var(--disp);font-size:16px">🗓️ ${L('Maintenance policy','Bakım politikası')}</div>`
     +`<div style="color:var(--soft);font-size:13px;margin-bottom:4px">${L(`Days since the last service. 🟡 ${SVC_Y}+ days: breakdowns and repairs ×1.5 · 🔴 ${SVC_R}+ days: ×2.5.`,`Son bakımdan beri geçen gün. 🟡 ${SVC_Y}+ gün: arıza ve tamir ×1,5 · 🔴 ${SVC_R}+ gün: ×2,5.`)}</div>`;
+  const pol=svcPol(),pb=(k,t)=>`<button data-pol="${k}" style="padding:6px 10px;min-height:0;font-size:.85em;flex:1;${pol===k?'background:#1E2433;color:#fff;font-weight:700':''}">${pol===k?'✓ ':''}${t}</button>`;
+  head+=`<div style="display:flex;gap:6px;margin:6px 0">${pb('auto',L('🤖 Auto · cheap hours','🤖 Otomatik · ucuz saat'))}${pb('run',L('🏃 Run to failure','🏃 Bozulana kadar çalıştır'))}</div>`
+    +`<div style="color:var(--soft);font-size:12px;margin-bottom:4px">${pol==='auto'?L('Each plant is booked for service at the cheapest hours. You pay for it; breakdowns stay low.','Her santral en ucuz saatlerde bakıma yazılır. Bedelini ödersin; arızalar düşük kalır.'):L('No service, no cost, no downtime — but breakdowns and repairs climb with the days.','Bakım yok, masraf yok, duruş yok — ama arıza ve tamir maliyeti günle artar.')}</div>`;
   if(!ps.length)return head+`<div style="padding:6px 0">${L('Every plant is freshly serviced.','Bütün santrallerin bakımı taze.')}</div>`;
   return head+ps.map(({p,d})=>{const st=svcIn(p)?L('in maintenance','bakımda'):p.plan?L('planned ','planlı ')+hh((p.plan.at%DAY_SEC)/HOUR):'';
     const dot=['🟢','🟡','🔴'][svcLvl(p)];
@@ -8922,6 +8956,7 @@ function renderMaint(){
     return `<div class="scale" style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span><b>${codeOf(x.p.id)}</b> · ${tt(nm[x.k])} · ${pct}${busy?' · '+L('in progress','yapılıyor'):''}</span><span style="white-space:nowrap;font-weight:700;display:flex;align-items:center;gap:8px">$${fmt(x.c)}<button class="pri" data-go="${x.p.id}|${x.k}" style="padding:4px 10px;min-height:0;font-size:.85em">${L('Go','Git')}</button></span></div>`;}).join('');
 }
 function openMaint(){renderMaint();try{$('mntBody').insertAdjacentHTML('beforeend',svcHtml());}catch(e){}$('mMaint').classList.add('on');trackOnce('maint-panel');}
+$('mntBody').addEventListener('click',e=>{const q=e.target.closest('button[data-pol]');if(q){S.svcPol=q.dataset.pol;sfx.pick();save();openMaint();try{trackOnce('svc-pol-'+q.dataset.pol);}catch(e){}return;}});
 $('mntBody').addEventListener('click',e=>{const b=e.target.closest('button[data-svc]');if(!b)return;const p=S.plants.find(q=>q.id===b.dataset.svc);if(!p)return;$('mMaint').classList.remove('on');openCard(svcCard(p));});
 $('mntBtn').onclick=openMaint;
 $('buildBtn').onclick=()=>{renderBuild();$('mBuild').classList.add('on');};
@@ -9029,6 +9064,9 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.89.0',t:['Less wrench, more decisions','Daha az anahtar, daha çok karar'],l:[
+  ['Level 10 maintenance is now a policy: Auto books every plant into the cheapest hours, staggered; Run to failure skips service.','Seviye 10 bakımı artık bir politika: Otomatik her santrali en ucuz saatlere, sırayla yazar; Bozulana kadar çalıştır bakımı atlar.'],
+  ['Service contract: a light breakdown untouched for 4 hours is fixed by the service firm at +50%. Heavy damage and fires stay yours.','Servis sözleşmesi: 4 saat dokunulmayan hafif arızayı servis firması %50 fazlasına onarır. Ağır hasar ve yangın sende kalır.']]},
  {v:'0.88.1',t:['Live in each level','Her seviyede yaşa'],l:[
   ['Minimum stay grows with the ladder: 2 days (levels 1–4), 3 (5–8), 4 (9–12), 5 (13–18).','Asgari kalma süresi merdivenle uzar: 2 gün (seviye 1–4), 3 (5–8), 4 (9–12), 5 (13–18).'],
   ['Level advantages no longer keep growing: at most ×1.5 from level 5 on.','Seviye avantajları artık büyümeye devam etmiyor: 5. seviyeden sonra en fazla ×1,5.'],
@@ -10519,7 +10557,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.88.1';
+const GAME_VERSION='0.89.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
