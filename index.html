@@ -469,7 +469,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.90.3</div>
+  <div class="t-ver" id="tVer">v0.90.4</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -714,7 +714,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.90.3 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.90.4 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9110,6 +9110,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.90.4',t:['Ela knows you','Ela seni tanıyor'],l:[['The how-to-play tour runs once per phone, not again on every level.','Nasıl oynanır turu telefon başına bir kez çalışır, her seviyede tekrar gelmez.']]},
  {v:'0.90.3',t:['Hidden areas','Gizli alanlar'],l:[['Areas behind a fence are not shown until you open them.','Çitin arkasındaki alanlar açılana kadar görünmez.']]},
  {v:'0.90.2',t:['Bigger goals','Daha büyük hedefler'],l:[['Small goals are four times bigger (combo goals twice).','Küçük hedefler dört kat büyüdü (kombo hedefleri iki kat).'],['The combo card no longer shows 0×, and it has a word or two for you.','Kombo kartı artık 0× göstermiyor, sana bir iki lafı da var.']]},
  {v:'0.90.1',t:['Goal counts','Hedef sayaçları'],l:[['The level goal always shows your count, also after it is met: “Sell 30 cells (34/30) ✅”.','Seviye hedefi sayacı her zaman gösterir, tamamlandıktan sonra da: “30 hücre sat (34/30) ✅”.']]},
@@ -10154,11 +10155,12 @@ const SAVE_SCHEMA=4;           // bump + add a step in migrate() whenever the sa
 const SAVE_PREV=SAVE_KEY+'_prev', SAVE_BACKUP=SAVE_KEY+'_backup';
 function validSave(o){return o&&typeof o==='object'&&Array.isArray(o.plants)&&isFinite(o.cash)&&o.built&&typeof o.built==='object';}
 let RELOADING=false;                       // set while the page is on its way to reload
+function tutSeenPhone(){try{return localStorage.getItem(SAVE_KEY+'_tutSeen')==='1'||worldMax()>=1;}catch(e){return false;}}
 function save(){
   try{
     if(RELOADING)return;
     if(!validSave(S))return;
-    try{profSave();}catch(e){}
+    try{profSave();if(S.tutDone)localStorage.setItem(SAVE_KEY+'_tutSeen','1');}catch(e){}
     if(S.notif)notifSnap(false);
     S.lastSave=Date.now();S.schema=SAVE_SCHEMA;
     const prev=localStorage.getItem(SAVE_KEY);
@@ -10491,7 +10493,7 @@ function worldsInit(){   // first run after the update: the newest world is wher
   try{if(localStorage.getItem((SAVE_KEY+'_worlds')))return;const P=S.prest||0;
     if(P>0&&!localStorage.getItem(wKey(P-1))){const b=readSave(SAVE_BACKUP);if(b&&(b.prest||0)===P-1)localStorage.setItem(wKey(P-1),JSON.stringify(b));}
     localStorage.setItem((SAVE_KEY+'_worlds'),JSON.stringify({max:P}));}catch(e){}}
-const WORLD_KEEP=['lang','muted','music','vSfx','vMus','zoom','speed','lowFlash','fxOff','notif','shadows','uiScale','look','nick'];   // v0.87.3: sound and zoom follow you everywhere
+const WORLD_KEEP=['tutDone','lang','muted','music','vSfx','vMus','zoom','speed','lowFlash','fxOff','notif','shadows','uiScale','look','nick'];   // v0.87.3: sound and zoom follow you everywhere
 function switchWorld(P){switchTo(wKey(P));}
 function worldsCard(){const cur=S.prest||0,mx=worldMax(),opts=[],meta=ladMeta();
   if(inClassic()){
@@ -10843,7 +10845,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.90.3';
+const GAME_VERSION='0.90.4';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10969,7 +10971,8 @@ function start(kit){
   const btn=$('playBtn');btn.disabled=false;
   btn.textContent=had?L('Continue','Devam et'):L('Play','Oyna');
   $('tStatus').innerHTML=had?`👛 $${fmt(S.cash)} · 🏛️ $${fmt(wealth())}<br>📅 ${dateLabel(S.day)}`:'';
-  const veteran=had&&(S.tutDone||S.day>=3||S.soldCells>=20);
+  const veteran=tutSeenPhone()||had&&(S.tutDone||S.day>=3||S.soldCells>=20);   // v0.90.4: the tutorial is a phone-level fact, not a per-level one
+  if(veteran)S.tutDone=true;
   $('tutChk').checked=!veteran;$('tutChk').closest('label').hidden=veteran;applyLang();try{syncProgBtn();}catch(e){}try{applyUiScale();}catch(e){}
   btn.onclick=startFlow;
   if(GO_IN&&!LAD_MOVING){try{sessionStorage.removeItem('mwm_go');}catch(e){}const G=GO_IN;GO_IN=null;lvlArrive(G);}   // arriving from a level card: its own card, one tap and you are in
