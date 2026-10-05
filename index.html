@@ -260,7 +260,7 @@ body.title #leftCol{visibility:hidden}
 .tut-btns .pri{background:#1D2433;color:#fff}
 .fnew{position:relative}
 .fnew::after{content:'';position:absolute;top:3px;left:3px;width:10px;height:10px;border-radius:50%;background:#23D18B;box-shadow:0 0 0 2px #fff}
-.modal.tutshow{z-index:24;align-items:flex-start}
+.modal.tutshow{z-index:24;align-items:flex-start;background:rgba(10,16,30,.3)}
 .mkteach{background:#fff;border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 0 0 3px #FFC83D}
 .mkt-h{font-weight:800;margin-bottom:4px}.mkt-cv{width:100%;display:block}
 .mkt-legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;margin-top:4px}
@@ -470,7 +470,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.90.6</div>
+  <div class="t-ver" id="tVer">v0.90.7</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -715,7 +715,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.90.6 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.90.7 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8445,7 +8445,7 @@ function startTutorial(full){
   trackOnce('tutorial-started');showTut();
 }
 let tutModal=null,tutShowFn=null;
-function tutHide(){if(tutModal){tutModal.classList.remove('on','tutshow');tutModal=null;}tutShowFn=null;}
+function tutHide(){$('tutDim').style.opacity=1;if(tutModal){tutModal.classList.remove('on','tutshow');tutModal=null;}tutShowFn=null;}
 function showTut(){
   const seq=tutSeq||TUT,st=seq[tutI];
   const keep=!!(st.show&&tutModal&&st.show===tutShowFn);   // v0.86.7: the same panel stays open across Ela's lines about it
@@ -8460,7 +8460,8 @@ function showTut(){
   $('tutNext').textContent=tutI===seq.length-1?(seq.okLbl?tt(seq.okLbl):L("Let's play!",'Hadi başlayalım!')):L('Next','İleri');
   if(st.hl){const e=document.querySelector(st.hl);if(e&&!e.hidden)e.classList.add('tut-hl');}
   if(st.show&&!keep){const before=new Set(document.querySelectorAll('.modal.on'));try{st.show();}catch(e){}
-    tutModal=[...document.querySelectorAll('.modal.on')].find(m=>!before.has(m))||null;if(tutModal){tutModal.classList.add('tutshow');tutShowFn=st.show;}}   // v0.86: Ela opens what she explains
+    tutModal=[...document.querySelectorAll('.modal.on')].find(m=>!before.has(m))||null;if(tutModal){tutModal.classList.add('tutshow');tutShowFn=st.show;}}
+    $('tutDim').style.opacity=tutModal?0:1;   // v0.90.7: one shade only — the panel Ela opens already sets the focus   // v0.86: Ela opens what she explains
 }
 /* v0.87.31: a line that asks you to build something keeps Next and Skip away until it stands */
 function tutGate(st){const g=st&&st.gate,ok=!g||!!g();$('tutNext').disabled=!ok;$('tutNext').style.visibility=ok?'':'hidden';$('tutSkip').style.visibility=ok?'':'hidden';}
@@ -9111,6 +9112,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.90.7',t:['Lighter tours','Daha aydınlık anlatım'],l:[['When Ela opens a panel to show it, the screen is shaded once, not twice.','Ela bir paneli açıp gösterirken ekran iki kat değil, bir kat kararır.']]},
  {v:'0.90.6',t:['Closed land','Kapalı arazi'],l:[['Areas you have not opened look like the land around the map, not empty sky.','Açmadığın alanlar boş gökyüzü değil, haritanın çevresindeki arazi gibi görünür.']]},
  {v:'0.90.5',t:['Code on the title screen','Giriş ekranında kod'],l:[['🔑 Enter a code right on the title screen: you go straight into the program, without the normal game or its tour.','🔑 Kodu doğrudan giriş ekranında gir: normal oyuna ve turuna uğramadan doğrudan programa geçersin.']]},
  {v:'0.90.4',t:['Ela knows you','Ela seni tanıyor'],l:[['The how-to-play tour runs once per phone, not again on every level.','Nasıl oynanır turu telefon başına bir kez çalışır, her seviyede tekrar gelmez.']]},
@@ -10848,7 +10850,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.90.6';
+const GAME_VERSION='0.90.7';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
