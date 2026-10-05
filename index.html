@@ -470,7 +470,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.90.5</div>
+  <div class="t-ver" id="tVer">v0.90.6</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -715,7 +715,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.90.5 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.90.6 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -7467,8 +7467,8 @@ function makeTown(T){
 TOWNS.forEach(makeTown);
 
 /* region fences & covers */
-const fenceObjs={},lockCovers=[],LOCK_Y=0.7;
-/* v0.90.3: a locked area is not shown at all — a flat cover in the sky's colour, and everything standing
+const fenceObjs={},lockCovers=[],LOCK_Y=0.7,lockMat=new THREE.MeshToonMaterial({color:0x4E8A4F,gradientMap:grad});groundMats.push([lockMat,new THREE.Color(0x4E8A4F)]);   // the same land as outside the map
+/* v0.90.3: a locked area is not shown at all — a flat cover of the same land as outside the map, and everything standing
    on it (trees, rocks, grass, animals, pads) is taken off the render layer until the area opens. */
 function lockedAt(X,Z){const x=X/U,y=Z/U;if(!S||!S.regions)return false;
   if(!S.regions.east&&x>EAST.x0+6&&x<=WORLD.w+40&&y>=-40&&y<=WORLD.h+40)return true;
@@ -7491,7 +7491,7 @@ for(const r of REGIONS){
   const NP=Math.ceil(WORLD.w*U/2)+1;const posts=new THREE.InstancedMesh(new THREE.BoxGeometry(0.25,1.2,0.25),M(0xA0683A),NP);const dm=new THREE.Object3D();
   for(let i=0;i<NP;i++){dm.position.set(i*2,0.6,z);dm.updateMatrix();posts.setMatrixAt(i,dm.matrix);}posts.castShadow=true;g.add(posts);
   g.add(mesh(new THREE.BoxGeometry(WORLD.w*U,0.14,0.1),M(0x8A5A2B),WORLD.w*U/2,0.9,z));g.add(mesh(new THREE.BoxGeometry(WORLD.w*U,0.14,0.1),M(0x8A5A2B),WORLD.w*U/2,0.5,z));
-  const d=(r.y1-r.y0)*U;const cover=mesh(new THREE.PlaneGeometry(WORLD.w*U,d),new THREE.MeshBasicMaterial({color:0xEEF1F6,fog:false}),WORLD.w*U/2,LOCK_Y,z+d/2,false);cover.rotation.x=-Math.PI/2;g.add(cover);lockCovers.push(cover);
+  const d=(r.y1-r.y0)*U;const cover=mesh(new THREE.PlaneGeometry(WORLD.w*U,d),lockMat,WORLD.w*U/2,LOCK_Y,z+d/2,false);cover.rotation.x=-Math.PI/2;g.add(cover);lockCovers.push(cover);
   scene.add(g);fenceObjs[r.id]=g;
 }
 { // the east bank: a fence running north-south just past the river, and the same dark wash while it is shut
@@ -7499,7 +7499,7 @@ for(const r of REGIONS){
   const posts=new THREE.InstancedMesh(new THREE.BoxGeometry(0.25,1.2,0.25),M(0xA0683A),n);const dm=new THREE.Object3D();
   for(let i=0;i<n;i++){dm.position.set(x,0.6,i*2);dm.updateMatrix();posts.setMatrixAt(i,dm.matrix);}posts.castShadow=true;g.add(posts);
   g.add(mesh(new THREE.BoxGeometry(0.1,0.14,len),M(0x8A5A2B),x,0.9,len/2));g.add(mesh(new THREE.BoxGeometry(0.1,0.14,len),M(0x8A5A2B),x,0.5,len/2));
-  const w=(WORLD.w-EAST.x0)*U;const cover=mesh(new THREE.PlaneGeometry(w,len),new THREE.MeshBasicMaterial({color:0xEEF1F6,fog:false}),x+w/2,LOCK_Y,len/2,false);cover.rotation.x=-Math.PI/2;g.add(cover);lockCovers.push(cover);
+  const w=(WORLD.w-EAST.x0)*U;const cover=mesh(new THREE.PlaneGeometry(w,len),lockMat,x+w/2,LOCK_Y,len/2,false);cover.rotation.x=-Math.PI/2;g.add(cover);lockCovers.push(cover);
   scene.add(g);fenceObjs.east=g;
 }
 
@@ -7820,7 +7820,7 @@ function render(dt,now){
   camera.position.copy(camPos);camera.lookAt(camPos.x,0,camPos.z-Math.cos(ang)*distc);camera.updateProjectionMatrix();
   // lights
   tutNightK+=((camAim&&camAim.night?1:0)-tutNightK)*Math.min(1,dt*2.5);   // v0.87.13: Ela's evening — the sky goes dark while she talks
-  const sky=skyCol(t).clone();if(tutNightK>0.01){const nc=skyCol(20.6).clone();sky.lerp(nc,tutNightK);}scene.background=sky;scene.fog.color.copy(sky);for(const c of lockCovers)c.material.color.copy(sky);
+  const sky=skyCol(t).clone();if(tutNightK>0.01){const nc=skyCol(20.6).clone();sky.lerp(nc,tutNightK);}scene.background=sky;scene.fog.color.copy(sky);
   const nk0=nk;nk=nk+(nightK(20.6)-nk)*tutNightK;
   scene.fog.near=distc*0.9;scene.fog.far=distc*2.4;
   const sa=Math.PI*(t-6)/12;
@@ -9111,6 +9111,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.90.6',t:['Closed land','Kapalı arazi'],l:[['Areas you have not opened look like the land around the map, not empty sky.','Açmadığın alanlar boş gökyüzü değil, haritanın çevresindeki arazi gibi görünür.']]},
  {v:'0.90.5',t:['Code on the title screen','Giriş ekranında kod'],l:[['🔑 Enter a code right on the title screen: you go straight into the program, without the normal game or its tour.','🔑 Kodu doğrudan giriş ekranında gir: normal oyuna ve turuna uğramadan doğrudan programa geçersin.']]},
  {v:'0.90.4',t:['Ela knows you','Ela seni tanıyor'],l:[['The how-to-play tour runs once per phone, not again on every level.','Nasıl oynanır turu telefon başına bir kez çalışır, her seviyede tekrar gelmez.']]},
  {v:'0.90.3',t:['Hidden areas','Gizli alanlar'],l:[['Areas behind a fence are not shown until you open them.','Çitin arkasındaki alanlar açılana kadar görünmez.']]},
@@ -10847,7 +10848,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.90.5';
+const GAME_VERSION='0.90.6';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
