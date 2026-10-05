@@ -469,7 +469,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.90.1</div>
+  <div class="t-ver" id="tVer">v0.90.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -714,7 +714,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.90.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.90.2 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9091,6 +9091,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.90.2',t:['Bigger goals','Daha büyük hedefler'],l:[['Small goals are four times bigger (combo goals twice).','Küçük hedefler dört kat büyüdü (kombo hedefleri iki kat).'],['The combo card no longer shows 0×, and it has a word or two for you.','Kombo kartı artık 0× göstermiyor, sana bir iki lafı da var.']]},
  {v:'0.90.1',t:['Goal counts','Hedef sayaçları'],l:[['The level goal always shows your count, also after it is met: “Sell 30 cells (34/30) ✅”.','Seviye hedefi sayacı her zaman gösterir, tamamlandıktan sonra da: “30 hücre sat (34/30) ✅”.']]},
  {v:'0.90.0',t:['Your career','Kariyerin'],l:[
   ['💼 Holding points: they never reset and lift your income on every level. Earned at each day’s close, by opening a level, from goals, the daily market and badges.','💼 Holding puanı: hiç sıfırlanmaz, her seviyede gelirini artırır. Gün kapanışında, seviye açınca, hedeflerden, günün piyasasından ve başarımlardan kazanılır.'],
@@ -10554,10 +10555,14 @@ function cmbStep(w,x,y){const now=Date.now(),c=S.cmb=S.cmb||{n:0,t:0,k:null,sum:
   if(c.n>=2){try{beep(520+Math.min(c.n,20)*35,0.05,'triangle',0.035);}catch(e){}if(c.n%3===0||m===w.cap&&c.n===Math.round((w.cap-1)*10)+1)floatTxt(x,y-14,`🔥 ${L('COMBO','KOMBO')} ×${m.toFixed(1)}`,'');}
   if(c.n===2)hint('combo',L('🔥 Combo! Keep selling within 25 seconds: each sale adds +10%. Up to ×1.3 at the evening peak, ×2 in a price spike.','🔥 Kombo! 25 saniye içinde satmaya devam et: her satış +%10 ekler. Akşam zirvesinde ×1,3’e, fiyat sıçramasında ×2’ye kadar.'),'big');
   return m;}
+function cmbJoke(b){return b<=1?L('🥱 The peak came and went. Where were you?','🥱 Zirve geldi geçti. Sen neredeydin?')
+  :b<=4?L('🐢 Call it a warm-up 😏','🐢 Isınma turu sayalım 😏'):b<=9?L('😎 Not bad, the city noticed you','😎 Fena değil, şehir seni fark etti')
+  :b<=14?L('🔥 Now we are talking!','🔥 İşte şimdi konuşuyoruz!'):L('😈 The market is getting scared of you','😈 Piyasa senden korkmaya başladı');}
 function cmbHour(){const c=S.cmb;if(!c||!c.sum||hotWin())return;
-  const sp=c.k==='spike';toast(sp?L(`⚡ Spike over · you sold $${fmt(c.sum)} · best combo ${c.best} (+$${fmt(c.extra)})`,`⚡ Sıçrama bitti · $${fmt(c.sum)} sattın · en uzun kombo ${c.best} (+$${fmt(c.extra)})`)
-    :L(`🌆 Peak over · $${fmt(c.sum)} sold · best combo ${c.best} (+$${fmt(c.extra)})`,`🌆 Zirve bitti · $${fmt(c.sum)} sattın · en uzun kombo ${c.best} (+$${fmt(c.extra)})`),'good');
-  if(c.best>=15)setTimeout(()=>celebrate(L('COMBO MASTER','KOMBO USTASI'),`${c.best}×`,'+$'+fmt(c.extra)),600);
+  const sp=c.k==='spike',best=c.best||0,sum=c.sum,extra=c.extra;
+  toast((sp?L(`⚡ Spike over · $${fmt(sum)} sold · best combo ${best}`,`⚡ Sıçrama bitti · $${fmt(sum)} sattın · en uzun kombo ${best}`)
+    :L(`🌆 Peak over · $${fmt(sum)} sold · best combo ${best}`,`🌆 Zirve bitti · $${fmt(sum)} sattın · en uzun kombo ${best}`))+(extra>=1?` (+$${fmt(extra)})`:'')+' · '+cmbJoke(best),best>=10?'good':'');
+  if(best>=15)setTimeout(()=>celebrate(L('COMBO MASTER','KOMBO USTASI'),`🔥 ${best}×`,cmbJoke(best)+(extra>=1?' · +$'+fmt(extra):'')),600);
   c.sum=0;c.extra=0;c.best=0;}
 /* the price every sale goes through: Holding, combo, welcome-back boost */
 function careerSale(p,byPlayer,x,y){
@@ -10578,16 +10583,18 @@ function countUp(el,to,pre){const t0=performance.now(),D=1200;const f=now=>{cons
   let n=0;const tk=setInterval(()=>{try{sfx.coin();}catch(e){}if(++n>8)clearInterval(tk);},120);}
 /* ---- 5. micro goals: always three small ones, each a few minutes, a chest each ---- */
 const MG_T=[
- {k:'sell',i:'⚡',ok:()=>true,need:()=>8+Math.min(40,3*sev()),t:n=>[`Sell ${n} cells yourself`,`Kendin ${n} hücre sat`]},
- {k:'peak',i:'🌆',ok:()=>true,need:()=>5+Math.min(20,2*sev()),t:n=>[`Sell ${n} cells at the evening peak (18–22)`,`Akşam zirvesinde (18–22) ${n} hücre sat`]},
- {k:'hi',i:'📈',ok:()=>has('price'),need:()=>6+Math.min(20,sev()),t:n=>[`Sell ${n} cells above today's average price`,`Günün ortalama fiyatının üstünde ${n} hücre sat`]},
- {k:'combo',i:'🔥',ok:()=>true,max:1,need:()=>4+Math.min(8,Math.floor(sev()/2)),t:n=>[`Make a ${n}-sale combo (evening or spike)`,`${n}'lik kombo yap (akşam ya da sıçrama)`]},
- {k:'store',i:'🔋',ok:()=>built('bat')||S.plants.some(p=>p.type==='battery'),need:()=>6+Math.min(20,sev()),t:n=>[`Store ${n} cells in the battery`,`Bataryaya ${n} hücre depola`]},
+ {k:'sell',i:'⚡',ok:()=>true,need:()=>4*(8+Math.min(40,3*sev())),t:n=>[`Sell ${n} cells yourself`,`Kendin ${n} hücre sat`]},
+ {k:'peak',i:'🌆',ok:()=>true,need:()=>4*(5+Math.min(20,2*sev())),t:n=>[`Sell ${n} cells at the evening peak (18–22)`,`Akşam zirvesinde (18–22) ${n} hücre sat`]},
+ {k:'hi',i:'📈',ok:()=>has('price'),need:()=>4*(6+Math.min(20,sev())),t:n=>[`Sell ${n} cells above today's average price`,`Günün ortalama fiyatının üstünde ${n} hücre sat`]},
+ {k:'combo',i:'🔥',ok:()=>true,max:1,need:()=>2*(4+Math.min(8,Math.floor(sev()/2))),t:n=>[`Make a ${n}-sale combo (evening or spike)`,`${n}'lik kombo yap (akşam ya da sıçrama)`]},
+ {k:'store',i:'🔋',ok:()=>built('bat')||S.plants.some(p=>p.type==='battery'),need:()=>4*(6+Math.min(20,sev())),t:n=>[`Store ${n} cells in the battery`,`Bataryaya ${n} hücre depola`]},
  {k:'fix',i:'🔧',ok:()=>has('repair')&&S.plants.some(p=>p.broken&&!p.fire),need:()=>1,t:()=>['Repair a broken plant yourself','Bozuk bir santrali onar']},
- {k:'earn',i:'💰',ok:()=>true,need:()=>Math.max(60,Math.round((S.lastDayEarned||200)*0.3)),t:n=>[`Earn $${fmt(n)} from sales`,`Satışlardan $${fmt(n)} kazan`]},
+ {k:'earn',i:'💰',ok:()=>true,need:()=>4*Math.max(60,Math.round((S.lastDayEarned||200)*0.3)),t:n=>[`Earn $${fmt(n)} from sales`,`Satışlardan $${fmt(n)} kazan`]},
  {k:'build',i:'🏗️',ok:()=>!cozy(),need:()=>1,t:()=>['Build a new plant','Yeni bir santral kur']}];
 function mgMake(skip){const pool=MG_T.filter(T=>T.ok()&&!skip.includes(T.k));const T=pool[Math.floor(Math.random()*pool.length)]||MG_T[0];return {k:T.k,need:T.need(),have:0};}
-function mgList(){if(!careerOn())return [];S.mg=Array.isArray(S.mg)?S.mg.filter(g=>MG_T.some(T=>T.k===g.k)):[];while(S.mg.length<3)S.mg.push(mgMake(S.mg.map(g=>g.k)));return S.mg;}
+function mgList(){if(!careerOn())return [];S.mg=Array.isArray(S.mg)?S.mg.filter(g=>MG_T.some(T=>T.k===g.k)):[];
+  if(!S.mgV2){S.mgV2=1;S.mg.forEach(g=>{const m={sell:4,peak:4,hi:4,store:4,earn:4,combo:2}[g.k];if(m)g.need*=m;});}   /* v0.90.2: goals four times bigger */
+  while(S.mg.length<3)S.mg.push(mgMake(S.mg.map(g=>g.k)));return S.mg;}
 function mgDef(g){return MG_T.find(T=>T.k===g.k);}
 function mgText(g){const T=mgDef(g);return T.i+' '+tt(T.t(g.need));}
 function mgChest(){return Math.max(25,Math.round((S.lastDayEarned||0)*0.06));}
@@ -10816,7 +10823,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.90.1';
+const GAME_VERSION='0.90.2';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
