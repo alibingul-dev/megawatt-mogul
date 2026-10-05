@@ -470,7 +470,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.90.10</div>
+  <div class="t-ver" id="tVer">v0.90.11</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -715,7 +715,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.90.10 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.90.11 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4886,6 +4886,8 @@ const AVG_D=DEMAND.reduce((a,b)=>a+b,0)/24;
 const PEAK_H=[18,19,20,21];
 const SAVE_KEY='mwmogul_3d_v3';
 const CITY={x:700,y:340,r:85};
+const CITY_B=[[540,120,70,110,6],[620,90,60,150,9],[690,70,50,170,12],[750,110,80,120,8],[840,140,60,90,5],[580,220,50,60,4],[790,220,60,60,4.5],[500,190,40,70,3.5],[900,190,40,60,3.2],[450,120,50,60,3],[960,110,50,70,4]];   // the skyline: x, y, width, depth, height
+function inSkyline(x,y,m){return CITY_B.some(([bx,by,w,d])=>x>bx-m&&x<bx+w+m&&y>by-m&&y<by+d+m);}   // v0.90.11: the city is wider than its selling ring
 /* towns you can build in the far regions: sell locally, no trip to the city */
 const TOWNS=[
   {id:'town1',x:170,y:1565,r:70,mult:0.92,sat:0.06},
@@ -5777,7 +5779,7 @@ function freeWhyNot(x,y,t,selfId){
   if(REGIONS.some(r=>Math.abs(y-r.y0)<50)||Math.abs(x-EAST.x0)<45)return L('That is a fence line between areas.','Burası bölgeler arasındaki çit hattı.');
   if(onRiver(x,y,70))return L('Too close to the river.','Nehre çok yakın.');
   if((Math.abs(x-700)<50&&y>320)||(Math.abs(y-700)<50&&x>250&&x<1140))return L('That is the road.','Burası yol.');
-  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+70||TOWNS.some(o=>Math.hypot(x-o.x,y-o.y)<120)||Math.hypot(x-HQ.x,y-HQ.y)<160||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<140)||Math.hypot(x-NUKE.x,y-NUKE.y)<190)
+  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+70||inSkyline(x,y,70)||TOWNS.some(o=>Math.hypot(x-o.x,y-o.y)<120)||Math.hypot(x-HQ.x,y-HQ.y)<160||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<140)||Math.hypot(x-NUKE.x,y-NUKE.y)<190)
     return L('Too close to a building.','Bir binaya çok yakın.');
   if(PADS.some(q=>q.id!==selfId&&!padDone(q)&&!(q.kind==='gate'&&S.regions[q.region])&&(()=>{const A=padAt(q);return Math.hypot(x-A.x,y-A.y)<90;})()))return L('A building square is here.','Burada bir inşaat karesi var.');
   if(S.plants.some(q=>q.id!==selfId&&Math.hypot(x-q.x,y-q.y)<90))return L('Too close to another plant.','Başka bir santrale çok yakın.');
@@ -5817,7 +5819,7 @@ function decoWhy(t,x,y){
   if(x<30||x>WORLD.w-30||y<70||y>LAND_H-30)return L('Too close to the edge of the map.','Haritanın kenarına çok yakın.');
   if(regionLocked(y)||(!S.regions.east&&x>EAST.x0-10))return L('This area is not open yet.','Bu bölge henüz açık değil.');
   if(onRiver(x,y,t==='road'?20:10))return L('That is the river.','Burası nehir.');
-  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+20||Math.hypot(x-HQ.x,y-HQ.y)<90||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<90)||TOWNS.some(o=>Math.hypot(x-o.x,y-o.y)<80)||Math.hypot(x-NUKE.x,y-NUKE.y)<150)return L('Too close to a building.','Bir binaya çok yakın.');
+  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+20||inSkyline(x,y,20)||Math.hypot(x-HQ.x,y-HQ.y)<90||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<90)||TOWNS.some(o=>Math.hypot(x-o.x,y-o.y)<80)||Math.hypot(x-NUKE.x,y-NUKE.y)<150)return L('Too close to a building.','Bir binaya çok yakın.');
   if(typeof bldNear==='function'&&bldNear(x,y,80))return L('Too close to a building.','Bir binaya çok yakın.');
   if(S.plants.some(q=>Math.hypot(x-q.x,y-q.y)<55))return L('A plant is here.','Burada bir santral var.');
   if(PADS.some(q=>!padDone(q)&&!(q.kind==='gate'&&S.regions[q.region])&&(()=>{const A=padAt(q);return Math.hypot(x-A.x,y-A.y)<60;})()))return L('A building square is here.','Burada bir inşaat karesi var.');
@@ -5876,7 +5878,7 @@ function bldWhy(t,x,y){
   if(REGIONS.some(r=>Math.abs(y-r.y0)<70)||Math.abs(x-EAST.x0)<70)return L('That is a fence line between areas.','Burası bölgeler arasındaki çit hattı.');
   if(onRiver(x,y,90))return L('Too close to the river.','Nehre çok yakın.');
   if((Math.abs(x-700)<70&&y>320)||(Math.abs(y-700)<70&&x>250&&x<1140))return L('That is the road.','Burası yol.');
-  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+110||TOWNS.some(o=>Math.hypot(x-o.x,y-o.y)<150)||Math.hypot(x-HQ.x,y-HQ.y)<180||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<160)||Math.hypot(x-NUKE.x,y-NUKE.y)<220||bldNear(x,y,110))
+  if(Math.hypot(x-CITY.x,y-CITY.y)<CITY.r+110||inSkyline(x,y,60)||TOWNS.some(o=>Math.hypot(x-o.x,y-o.y)<150)||Math.hypot(x-HQ.x,y-HQ.y)<180||DEPOTS.some(d=>Math.hypot(x-d.x,y-d.y)<160)||Math.hypot(x-NUKE.x,y-NUKE.y)<220||bldNear(x,y,110))
     return L('Too close to another building.','Başka bir binaya çok yakın.');
   if(S.plants.some(q=>Math.hypot(x-q.x,y-q.y)<120))return L('Too close to a plant.','Bir santrale çok yakın.');
   if(PADS.some(q=>!padDone(q)&&!(q.kind==='gate'&&S.regions[q.region])&&(()=>{const A=padAt(q);return Math.hypot(x-A.x,y-A.y)<120;})()))return L('A building square is here.','Burada bir inşaat karesi var.');
@@ -7392,7 +7394,7 @@ function animPerson(p,moving,t,bob){
 const cityGroup=new THREE.Group();scene.add(cityGroup);
 const winMats=[];
 {
-  const B=[[540,120,70,110,6],[620,90,60,150,9],[690,70,50,170,12],[750,110,80,120,8],[840,140,60,90,5],[580,220,50,60,4],[790,220,60,60,4.5],[500,190,40,70,3.5],[900,190,40,60,3.2],[450,120,50,60,3],[960,110,50,70,4]];
+  const B=CITY_B;
   const roofCols=[0x7FA7C9,0xE8A15A,0x98C07A,0xC78BD1,0x6FC2C0];
   B.forEach(([x,y,w,d,hgt],i)=>{
     const wm=new THREE.MeshToonMaterial({color:0xffffff,gradientMap:grad,map:winDay,emissiveMap:winNight,emissive:0xffffff,emissiveIntensity:0});
@@ -9112,6 +9114,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.90.11',t:['No plants in the city','Şehre santral yok'],l:[['Plants, buildings and decorations can no longer be placed among the city blocks.','Santral, bina ve süsler artık şehrin binaları arasına kurulamaz.']]},
  {v:'0.90.10',t:['Clearer daily market','Daha anlaşılır günün piyasası'],l:[['Three-step instructions, at least 4 charge and 4 sell hours before locking, a plain-words result and a reward-free practice round.','Üç adımlı anlatım, kilitlemeden önce en az 4 şarj ve 4 satış saati, sade sonuç ve ödülsüz alıştırma turu.']]},
  {v:'0.90.9',t:['Shorter career page','Daha kısa kariyer sayfası'],l:[['One explanation line less on the Career summary.','Kariyer özetinde bir açıklama satırı eksildi.']]},
  {v:'0.90.8',t:['No empty buttons','Boş buton yok'],l:[['🧰 Upkeep appears only when something needs fixing, until the maintenance level (10) where it stays.','🧰 Bakım butonu yalnızca onarılacak bir şey olduğunda çıkar; bakım seviyesinden (10) itibaren hep durur.']]},
@@ -10871,7 +10874,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.90.10';
+const GAME_VERSION='0.90.11';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
