@@ -430,6 +430,19 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .vol input[type=range]{width:100%;margin:4px 0 2px}
 @media (prefers-reduced-motion: reduce){.t-rot,.t-play{animation:none}}
 @media (prefers-reduced-motion: reduce){ .toast{animation:none} }
+#recFx{position:fixed;inset:0;pointer-events:none;z-index:45;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#recFx .rf-card{text-align:center;animation:rfPop 2.6s ease forwards;background:rgba(14,21,38,.72);border-radius:24px;padding:16px 26px}
+#recFx .rf-k{font:800 16px var(--disp);color:#FFD23F;letter-spacing:3px}
+#recFx .rf-t{font:800 46px var(--disp);color:#fff;line-height:1.1}
+#recFx .rf-s{font:700 14px var(--body);color:#C9D6EA;margin-top:4px}
+#recFx i{position:absolute;top:-30px;font-style:normal;font-size:24px;animation:rfFall 2s linear forwards}
+@keyframes rfPop{0%{transform:scale(.4);opacity:0}12%{transform:scale(1.12);opacity:1}20%{transform:scale(1)}82%{opacity:1}100%{opacity:0;transform:scale(.96)}}
+@keyframes rfFall{to{transform:translateY(110vh) rotate(540deg)}}
+#careerBtn.pop{animation:carPop .7s ease}
+@keyframes carPop{0%{transform:scale(1)}35%{transform:scale(1.25);box-shadow:0 0 0 6px rgba(229,168,0,.35)}100%{transform:scale(1)}}
+#careerBtn{margin-top:8px}
+.goal.mgl{font-size:12.5px;padding:4px 10px;margin-top:4px;background:rgba(255,255,255,.92)}
+.goal.mgl small{font-size:12px}
 </style>
 </head>
 <body class="title">
@@ -456,7 +469,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.89.0</div>
+  <div class="t-ver" id="tVer">v0.90.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -472,6 +485,8 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
       <div class="carry"><span data-i18n="carrying">Carrying</span> <b id="carry">0/8</b></div>
       <div class="lossc" id="lossC" hidden></div>
       <div class="dealc" id="dealC" hidden></div>
+      <div class="dealc" id="hotC" hidden></div>
+      <div class="dealc" id="boostC" hidden style="background:#23B26D"></div>
     </div>
     <div class="box market" id="mktBox" style="pointer-events:auto;cursor:pointer">
       <div><div class="pnow"><span id="pnow">0</span> <small>per cell</small></div><span class="lvl" id="lvl">Normal</span></div>
@@ -481,6 +496,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="rb" id="gear" aria-label="Settings">⚙️</button>
   </div>
   <div class="goal" id="goal" style="pointer-events:auto;cursor:pointer"></div>
+  <div class="goal mgl" id="mgLine" style="pointer-events:auto;cursor:pointer" hidden></div>
   <div class="banner" id="banner" hidden></div>
 </div>
 <div id="sideCol">
@@ -496,7 +512,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
   <button class="rb crewb" id="crewBtn" aria-label="Crew plan" hidden><span>👷</span><span class="cnum" id="crewN">1/45</span><span class="badge" id="crewAlert" hidden>!</span></button>
 </div>
 <canvas id="mini" width="90" height="128" aria-label="Mini map. Tap to enlarge."></canvas>
-<div id="leftCol"><button class="rb" id="worldBtn" aria-label="Levels" hidden><span>⭐</span><span class="cap" id="cap-world">Level 1</span></button><button class="rb" id="progExit" aria-label="Close the mode" hidden style="margin-top:8px"><span>🎓</span><span class="cap" id="cap-pexit">Close</span></button></div>
+<div id="leftCol"><button class="rb" id="worldBtn" aria-label="Levels" hidden><span>⭐</span><span class="cap" id="cap-world">Level 1</span></button><button class="rb" id="careerBtn" aria-label="Career" hidden><span>💼</span><span class="cap" id="cap-car">+0%</span><span class="badge" id="carDot" hidden>!</span></button><button class="rb" id="progExit" aria-label="Close the mode" hidden style="margin-top:8px"><span>🎓</span><span class="cap" id="cap-pexit">Close</span></button></div>
 <div class="modal" id="mMap"><canvas id="bigmap" aria-label="Map"></canvas></div>
 <div id="flashOv"></div>
 <canvas id="fxCanvas" hidden></canvas>
@@ -590,6 +606,13 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
   <p id="bldSub"></p>
   <div id="bldBody"></div>
   <div class="btns"><button class="pri" id="bldClose" data-i18n="close">Close</button></div>
+</div></div>
+<div class="modal" id="mCar"><div class="sheet tips">
+  <h2 id="carTitle">Career</h2>
+  <p id="carSub"></p>
+  <div class="seg" id="carTabs" style="grid-template-columns:repeat(4,1fr)"></div>
+  <div id="carBody"></div>
+  <div class="btns"><button class="pri" id="carClose" data-i18n="close">Close</button></div>
 </div></div>
 <div class="modal" id="mMaint"><div class="sheet tips">
   <h2 id="mntTitle">Upkeep</h2>
@@ -691,7 +714,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.89.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.90.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4904,7 +4927,7 @@ function gridDeliver(p){                               // one cell down the line
   p.gwear=Math.min(1,(p.gwear||0)+GRID_WEAR_PER_CELL);
   if(gridTo(p)==='bat'){
     const D=depotsOn().sort((a,b)=>dist(p,a)-dist(p,b))[0],each=batCapEach();
-    if(D&&batAt(D.id)<each){batSet(D.id,batAt(D.id)+1);S.stats.stored=(S.stats.stored||0)+1;return;}
+    if(D&&batAt(D.id)<each){batSet(D.id,batAt(D.id)+1);S.stats.stored=(S.stats.stored||0)+1;try{pst('store');mgHit('store',1);}catch(e){}return;}
   }
   sellCell(p.x,p.y,false,false,nearestMarket(p),false);
 }
@@ -5984,7 +6007,7 @@ function confirmPlace(){
     S.cash-=c;S.freeN=(S.freeN||0)+1;
     const np={id:'fb'+S.freeN,type:t,x:sp.x,y:sp.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1,free:true,cost:c,code:pg?pg.key:freeCode(t),q:st.q};
     if(pg){np.prog=pg.key;(S.progPlants=S.progPlants||{})[pg.pid+':'+pg.key]=np.id;setTimeout(()=>progAfter(pg,np),0);}
-    S.plants.push(np);pops[np.id]=1;clearFor(t,sp.x,sp.y);sfx.build();logLedger('build',-c,np.code);
+    S.plants.push(np);pops[np.id]=1;clearFor(t,sp.x,sp.y);sfx.build();logLedger('build',-c,np.code);if(!pg)try{pst('build');mgHit('build',1);}catch(e){}
     toast(L(`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} built for $${fmt(c)}.`,`🏗️ ${tt(PLANT_TYPES[t].name)} ${np.code} $${fmt(c)} karşılığında kuruldu.`),'good');
     if(PLANT_TYPES[t].kind==='wind'&&!pg)setTimeout(()=>askBrand(np),900);
     try{trackOnce('free-build-'+t);}catch(e){}}
@@ -6108,7 +6131,7 @@ function doRepair(p,whoPays){
   if(!poor)S.cash=Math.max(0,S.cash-c);
   const idle=gameNow()-(p.brokenAt||gameNow());
   if(p.ages)p.ages=p.ages.map(v=>v+idle);
-  p.broken=false;p.hv=false;p.fix=0;sfx.fix();S.stats.fixN=(S.stats.fixN||0)+1;
+  p.broken=false;p.hv=false;p.fix=0;sfx.fix();S.stats.fixN=(S.stats.fixN||0)+1;try{pst('fix');mgHit('fix',1);}catch(e){}
   floatTxt(p.x,p.y,poor?L('Patched','Geçici onarım'):`-$${fmt(c)}`,poor?'lost':'');
   S.stats.fixSpend=(S.stats.fixSpend||0)+(poor?0:c);
   return poor;
@@ -6372,7 +6395,7 @@ function beep(f,len=0.06,type='sine',vol=0.05,when=0){if(S.muted||!AC)return;vol
 let pitch=0;
 const sfx={pick:()=>{beep(440+pitch*18,0.05,'triangle',0.04);pitch=Math.min(30,pitch+1);},sell:()=>beep(880+Math.random()*60,0.05,'square',0.022),coin:()=>beep(1200,0.03,'square',0.02),
   build:()=>{[392,523,659,784].forEach((f,i)=>beep(f,0.14,'triangle',0.06,i*0.07));},warn:()=>{beep(180,0.25,'sawtooth',0.05);beep(180,0.25,'sawtooth',0.05,0.35);},
-  goal:()=>{beep(784,0.1,'sine',0.06);beep(1175,0.18,'sine',0.06,0.1);},fix:()=>beep(300,0.08,'square',0.04),
+  goal:()=>{beep(784,0.1,'sine',0.06);beep(1175,0.18,'sine',0.06,0.1);},fanfare:()=>{[523,659,784,1047,1319].forEach((f,i)=>beep(f,0.16,'triangle',0.06,i*0.09));},fix:()=>beep(300,0.08,'square',0.04),
   thunder:()=>{beep(70,0.9,'sawtooth',0.05,0.12);beep(48,1.2,'sine',0.06,0.15);beep(120,0.3,'sawtooth',0.03,0.1);}};
 
 /* ======================= INPUT ======================= */
@@ -6567,7 +6590,7 @@ function update(dt){
   batTick-=dt;
   if(built('bat')&&batTick<=0){
     for(const D of depotsOn()){
-      if(dist(P,D.store)<48&&S.carry>0&&batRoom(D)>0&&batUsable()){carryTake(S);batSet(D.id,batAt(D.id)+1);S.stats.stored++;batCharged(1);batTick=0.07;sfx.pick();flyers.push({x:S.px,y:S.py,h0:2.2,tx:()=>D.x,ty:()=>D.y,h1:1,life:0,kind:'cell'});break;}
+      if(dist(P,D.store)<48&&S.carry>0&&batRoom(D)>0&&batUsable()){carryTake(S);batSet(D.id,batAt(D.id)+1);S.stats.stored++;try{pst('store');mgHit('store',1);}catch(e){}batCharged(1);batTick=0.07;sfx.pick();flyers.push({x:S.px,y:S.py,h0:2.2,tx:()=>D.x,ty:()=>D.y,h1:1,life:0,kind:'cell'});break;}
       if(dist(P,D.take)<48&&batAt(D.id)>=1&&S.carry<carryCap()&&batUsable()){batSet(D.id,batAt(D.id)-1);carryAdd(S);S.carryStore=(S.carryStore||0)+1;batTick=0.07;sfx.pick();flyers.push({x:D.x,y:D.y,h0:1,tx:()=>S.px,ty:()=>S.py,h1:2.2+S.carry*0.3,life:0,kind:'cell'});break;}
     }
   }
@@ -6620,6 +6643,7 @@ function sellCell(x,y,byPlayer,crew,mk,fromStore){
   if(fromStore)p*=batBonus();                 // dispatchable energy pays a premium
   if(!used&&ct&&ct.delivered<ct.need&&gameNow()<ct.until){ct.delivered++;p=ct.price;if(ct.delivered===ct.need){toast(`Deal complete: ${ct.need} cells delivered.`,'good');trackOnce('deal-complete');S.contract=null;}}
   p*=modMult('income')*(byPlayer?modMult('playerPrice'):1)*perk('price')*mktFee();
+  try{p=careerSale(p,byPlayer,x,y);}catch(e){}
   if(S.debt>0){const r=Math.min(S.debt,p*0.25);S.debt-=r;p-=r;if(S.debt<=0.01){S.debt=0;toast(L('Loan fully repaid.','Kredi tamamen ödendi.'),'good');}}
   S.cash+=p;S.earned+=p;S.dayEarned=(S.dayEarned||0)+p;logEarn(p);S.soldCells++;
   if(byPlayer&&!S.hints['jit-sale'])firstSale(p);
@@ -6641,6 +6665,7 @@ function chargeWages(){
   return w;
 }
 function onNewDay(quiet){
+  try{careerDayEnd(S.dayEarned||0,quiet);}catch(e){}
   if(!quiet&&DAY.weather==='stormy'&&!S.tw&&has('repair')&&!cozy()&&Math.random()<0.25)setTimeout(()=>{try{if(!S.tw)spawnTornado(true);}catch(e){}},(4+Math.random()*10)*1000);
   S.lastDayEarned=S.dayEarned||S.lastDayEarned||0;if(!quiet){S.dayLog=(S.dayLog||[]).concat({day:S.day-1,earn:Math.round(S.dayEarned||0),icons:[WEATHER[makeDay(S.day-1).weather].icon]}).slice(-30);}S.dayEarned=0;
   {const paid=chargeWages();if(!quiet&&paid>0)toast(L(`Crew wages paid: $${fmt(paid)}`,`Ekip ücretleri ödendi: $${fmt(paid)}`),'');}
@@ -6673,6 +6698,7 @@ function onNewDay(quiet){
   }
 }
 function onHour(h){
+  try{careerHour(h);}catch(e){}
   try{ancPayHour();}catch(e){}
   try{nukeHour();}catch(e){}
   try{bldHour(h);}catch(e){}
@@ -6704,7 +6730,7 @@ function completePad(p){
   sfx.build();S.paid[p.id]=Math.max(0,(S.paid[p.id]||0)-_c);padLock=p.id;
   trackOnce('built-'+p.id+(p.kind==='upg'?'-lv'+(S.up[p.key]+1):''));
   if(p.kind==='build'){
-    S.built[p.id]=true;logLedger('build',-padCost(p),p.id);
+    S.built[p.id]=true;logLedger('build',-padCost(p),p.id);try{pst('build');mgHit('build',1);}catch(e){}
     if(p.type!=='battery'&&p.type!=='town')S.plants.push({id:p.id,type:p.type,x:p.x,y:p.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1});
     if(PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='wind'){const np=S.plants[S.plants.length-1];setTimeout(()=>askBrand(np),900);}
     pops[p.id]=1;toast(`${p.type==='battery'?L('Battery station','Batarya istasyonu'):p.type==='town'?L('Town market','Kasaba pazarı'):tt(PLANT_TYPES[p.type].name)} ${L('built','kuruldu')}`,'good');
@@ -7942,6 +7968,7 @@ function hud(dt){
   if(S.lang!==padLang){padLang=S.lang;try{relabelPads();}catch(e){}}
   if(S.up.helper>0)try{crewAll();}catch(e){}
   if(inProg()&&S.progStay){if(S.cash>S.progCap)S.cash=S.progCap;else S.progCap=S.cash;}
+  careerHud();
   {const pe=$('progExit');pe.hidden=!(inProg()&&S.progStay);if(!pe.hidden)$('cap-pexit').textContent=L('Close mode','Modu kapat');}
   $('gridBtn').hidden=!has('gridline');$('repBtn').hidden=!has('report');$('infoBtn').hidden=!has('tips');
   $('zIn').hidden=$('zOut').hidden=!has('build');
@@ -9064,6 +9091,13 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.90.0',t:['Your career','Kariyerin'],l:[
+  ['💼 Holding points: they never reset and lift your income on every level. Earned at each day’s close, by opening a level, from goals, the daily market and badges.','💼 Holding puanı: hiç sıfırlanmaz, her seviyede gelirini artırır. Gün kapanışında, seviye açınca, hedeflerden, günün piyasasından ve başarımlardan kazanılır.'],
+  ['🏆 Records: best day, best hour and best sale are celebrated. Every day closes with a 1–3 star report.','🏆 Rekorlar: en iyi gün, saat ve satış kutlanır. Her gün 1–3 yıldızlı bir karneyle kapanır.'],
+  ['🔥 Combo: keep selling at the evening peak (up to ×1.3) or in a price spike (up to ×2).','🔥 Kombo: akşam zirvesinde (×1,3’e kadar) ya da fiyat sıçramasında (×2’ye kadar) satmaya devam et.'],
+  ['🚀 Back after 30+ minutes: the earnings count up and income runs ×2 for 5 minutes.','🚀 30+ dakika sonra dönünce: kazanç sayarak gelir ve 5 dakika gelir ×2.'],
+  ['🎯 Three small goals, always on screen, each with a chest. 📈 Daily market: the same battery puzzle for everyone each day, with a shareable code.','🎯 Ekranda her zaman üç küçük hedef, her biri sandıklı. 📈 Günün piyasası: her gün herkese aynı batarya bulmacası, paylaşılabilir kodla.'],
+  ['🏅 14 badges in three tiers, titles from Intern to Megawatt Mogul, and six special hat colours.','🏅 Üç kademeli 14 başarım, Stajyer’den Megawatt Mogul’a unvanlar ve altı özel baret rengi.']]},
  {v:'0.89.0',t:['Less wrench, more decisions','Daha az anahtar, daha çok karar'],l:[
   ['Level 10 maintenance is now a policy: Auto books every plant into the cheapest hours, staggered; Run to failure skips service.','Seviye 10 bakımı artık bir politika: Otomatik her santrali en ucuz saatlere, sırayla yazar; Bozulana kadar çalıştır bakımı atlar.'],
   ['Service contract: a light breakdown untouched for 4 hours is fixed by the service firm at +50%. Heavy damage and fires stay yours.','Servis sözleşmesi: 4 saat dokunulmayan hafif arızayı servis firması %50 fazlasına onarır. Ağır hasar ve yangın sende kalır.']]},
@@ -10102,6 +10136,7 @@ function save(){
   try{
     if(RELOADING)return;
     if(!validSave(S))return;
+    try{profSave();}catch(e){}
     if(S.notif)notifSnap(false);
     S.lastSave=Date.now();S.schema=SAVE_SCHEMA;
     const prev=localStorage.getItem(SAVE_KEY);
@@ -10153,7 +10188,7 @@ function load(){
 /* ---- save code export / import ---- */
 function exportCode(){
   save();
-  const json=JSON.stringify(S);
+  S._prof=prof();const json=JSON.stringify(S);delete S._prof;
   return 'MWM1:'+btoa(unescape(encodeURIComponent(json)));
 }
 function importCode(code){
@@ -10161,6 +10196,7 @@ function importCode(code){
   if(!code.startsWith('MWM1:'))throw new Error('This is not a Megawatt Mogul save code.');
   const o=JSON.parse(decodeURIComponent(escape(atob(code.slice(5)))));
   if(!validSave(o))throw new Error('The save code looks damaged.');
+  if(o._prof){try{localStorage.setItem(PROF_KEY,JSON.stringify(o._prof));_prof=null;}catch(e){}delete o._prof;}
   const cur=localStorage.getItem(SAVE_KEY);
   if(cur)localStorage.setItem(SAVE_BACKUP,cur);
   localStorage.setItem(SAVE_KEY,JSON.stringify(o));
@@ -10231,17 +10267,18 @@ function offline(secs){
   for(const p of S.plants){const T=PLANT_TYPES[p.type];if(T){p.pile=p.broken?p.pile:Math.min(T.max,Math.floor(T.rate*0.35*DECAY_HOURS*HOUR));p.ages=Array(p.pile).fill(gameNow());}}
   S.dayLog=(S.dayLog||[]).concat(points.map(q=>({day:q.day,earn:Math.round(q.earn),icons:q.icons}))).slice(-30);
   if(earned<1&&!lines.length)return;
+  earned*=holdMult();const boostable=careerOn()&&secs>=1800;
   if(!lines.length)lines.push(L('✅ No trouble at all. Your plants ran smoothly.','✅ Hiç sorun yaşanmadı. Santrallerin sorunsuz çalıştı.'));
   $('offTitle').textContent=L('While you were away','Sen yokken');
   $('offTime').textContent=L(`You were gone ${dur(secs)}. The world moved ${points.length>1?points.length-1+' day(s)':'a few hours'} ahead.`,`${dur(secs)} yoktun. Oyunda ${points.length>1?(points.length-1)+' gün':'birkaç saat'} geçti.`);
-  $('offAmt').textContent='+$'+fmt(earned);
-  $('offNote').textContent=(secs>capS?L('Crew earnings stop after 8 hours. ','Ekip kazancı 8 saatten sonra durur. '):'')+L(`Your crew sold at $${realized.toFixed(1)} on average.`,`Ekibin ortalama $${realized.toFixed(1)}'den sattı.`);
+  $('offAmt').textContent='+$0';setTimeout(()=>countUp($('offAmt'),earned,'+$'),250);
+  $('offNote').textContent=(secs>capS?L('Crew earnings stop after 8 hours. ','Ekip kazancı 8 saatten sonra durur. '):'')+L(`Your crew sold at $${realized.toFixed(1)} on average.`,`Ekibin ortalama $${realized.toFixed(1)}'den sattı.`)+(boostable?L(' 🚀 Welcome back: income ×2 for the next 5 minutes.',' 🚀 Hoş geldin: önümüzdeki 5 dakika gelir ×2.'):'');
   $('offLog').innerHTML=lines.map(l=>`<li>${l}</li>`).join('');
   drawEarnChart($('offChart'),points);
   $('offChart').hidden=points.length<2;
   $('offOk').textContent=L('Collect','Topla');
   $('mOffline').classList.add('on');
-  const collect=m=>{S.cash+=earned*m;S.earned+=earned*m;$('mOffline').classList.remove('on');toast(`${L('Collected','Toplandı')} $${fmt(earned*m)}`,'good');save();};
+  const collect=m=>{if(boostable){S.boostUntil=Date.now()+300000;try{trackOnce('boost');}catch(e){}}try{hpAdd(Math.sqrt(earned)/10);}catch(e){}S.cash+=earned*m;S.earned+=earned*m;$('mOffline').classList.remove('on');toast(`${L('Collected','Toplandı')} $${fmt(earned*m)}`,'good');save();};
   $('offOk').onclick=()=>collect(1);
   trackOnce('seen-away-summary');
 }
@@ -10338,6 +10375,7 @@ function doPrestige(){
   try{localStorage.setItem(wKey(S.prest||0),JSON.stringify(S));}catch(e){toast(L('Not enough room on this phone to keep this level. Nothing changed.','Bu seviyeyi saklamaya telefonda yer yok. Hiçbir şey değişmedi.'),'');return;}
   try{localStorage.setItem(SAVE_BACKUP,JSON.stringify(S));}catch(e){}
   setWorldMax(P);
+  try{hpAdd(Math.sqrt(Math.max(0,wealth()))/4+10*P);pmax('lvl',P+1);profSave();}catch(e){}
   try{trackOnce('prestige-'+P);RELOADING=true;removeEventListener('pagehide',save);localStorage.setItem(SAVE_KEY,JSON.stringify(f));lvlGo(lvlLabel(f),true);}catch(e){RELOADING=false;}
 }
 $('sPrest').onclick=()=>{if(!prestOk())return;$('mSet').classList.remove('on');openCard(prestCard());};
@@ -10365,6 +10403,7 @@ function lvlArrive(G){
     if(s.w)rows.push('🆕 '+L('New here: ','Burada yeni: ')+tt(s.w));
     if(s.goal)rows.push('🎯 '+L('Goal: ','Hedef: ')+tt(s.goal.t)+L(` · at least ${ladDays(n)} days`,` · en az ${ladDays(n)} gün`));
     if(n>1)rows.push('⭐ '+L('Advantage of this level: ','Bu seviyenin avantajı: ')+worldPerkTxt(n-1));
+    try{if(prof().hp>0)rows.push('💼 '+L(`Holding ${fmt(prof().hp)} · income +${holdPct()}% here too`,`Holding ${fmt(prof().hp)} · burada da gelir +%${holdPct()}`));}catch(e){}
   }else rows.push(inClassic()?L('Your game from before the ladder, as you left it.','Merdivenden önceki oyunun, bıraktığın gibi.'):L('Your program, in its own space.','Programın, kendi alanında.'));
   v.innerHTML=`<div class="lv-card"><div class="lv-k">${G.fresh?L('NEW LEVEL','YENİ SEVİYE'):L('LEVEL','SEVİYE')}</div><div class="lv-t">${G.t}</div>`
     +rows.map(r=>`<div class="lv-r">${r}</div>`).join('')
@@ -10460,6 +10499,225 @@ function rateCard(){return {id:'rate',icon:'⭐',ok:()=>false,safe:1,title:['Wan
   opts:()=>[O('Yes, I would','Evet, isterim','Opens the game\'s Play page.','Oyunun Play sayfasını açar.',0,openPlayPage),O('Later','Daha sonra','You can always find it in Settings › Game.','Ayarlar › Oyun\'da her zaman bulabilirsin.',0,NOOP)]};}
 function askRateOnce(){try{if(localStorage.getItem(SAVE_KEY+'_rateAsked'))return;localStorage.setItem(SAVE_KEY+'_rateAsked','1');}catch(e){return;}
   const go=()=>{if(cardOpen||tutOpen||document.querySelector('.modal.on')){setTimeout(go,1500);return;}openCard(rateCard());};setTimeout(go,8000);}
+/* ===================== v0.90 CAREER LAYER =====================
+   One profile per phone, shared by every level (not by programs): Holding points that never reset
+   and lift income everywhere, records, day stars, the evening/spike combo, the welcome-back boost,
+   micro goals, the daily market puzzle, achievements, titles and extra hats. Nothing leaves the phone. */
+const PROF_KEY=SAVE_KEY+'_prof';
+let _prof=null,celebT=0;
+function prof(){if(_prof)return _prof;let o=null;try{o=JSON.parse(localStorage.getItem(PROF_KEY)||'null');}catch(e){}
+  _prof=Object.assign({hp:0,st:{},ach:{},hats:[],daily:{}},o||{});_prof.st=_prof.st||{};_prof.ach=_prof.ach||{};_prof.hats=_prof.hats||[];_prof.daily=_prof.daily||{};return _prof;}
+function profSave(){try{if(_prof)localStorage.setItem(PROF_KEY,JSON.stringify(_prof));}catch(e){}}
+function careerOn(){return typeof S!=='undefined'&&!!S&&!inProg();}
+function pst(k,n){if(!careerOn())return;const P=prof();P.st[k]=(P.st[k]||0)+(n==null?1:n);achCheck(k);}
+function pmax(k,v){if(!careerOn())return;const P=prof();if(v>(P.st[k]||0)){P.st[k]=v;achCheck(k);}}
+/* ---- 1. Holding: a number that only grows. Income ×(1 + 0.15·log10(1+HP/10)) on every level. ---- */
+function holdMult(){return careerOn()?1+0.15*Math.log10(1+prof().hp/10):1;}
+function holdPct(){return Math.round((holdMult()-1)*100);}
+function hpAdd(n){n=Math.round(n);if(n<=0||!careerOn())return 0;const P=prof();P.hp+=n;pmax('hp',P.hp);
+  try{const b=$('careerBtn');b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');}catch(e){}
+  hint('hold',L('💼 Holding points never reset. They lift your income on every level — and they keep growing.','💼 Holding puanı hiç sıfırlanmaz. Her seviyede gelirini artırır — ve büyümeye devam eder.'),'big');
+  return n;}
+const TITLES=[[0,'Intern','Stajyer'],[25,'Field engineer','Saha mühendisi'],[100,'Trader','Tüccar'],[300,'Senior trader','Kıdemli tüccar'],[1000,'Portfolio manager','Portföy yöneticisi'],[3000,'Director','Direktör'],[10000,'Energy baron','Enerji baronu'],[30000,'Megawatt Mogul','Megawatt Mogul']];
+function titleIdx(){const h=prof().hp;let i=0;TITLES.forEach((t,j)=>{if(h>=t[0])i=j;});return i;}
+function titleTxt(i){const t=TITLES[i==null?titleIdx():i];return L(t[1],t[2]);}
+/* ---- 2. records and the day report ---- */
+function recOf(){return S.rec=S.rec||{day:0,hour:0,sale:0};}
+function celebrate(k,t,sub){
+  if(!careerOn())return false;pst('rec');const now=Date.now();if(now-celebT<40000)return false;celebT=now;
+  let v=document.getElementById('recFx');if(v)v.remove();v=document.createElement('div');v.id='recFx';
+  let conf='';for(let i=0;i<24;i++)conf+=`<i style="left:${(Math.random()*100).toFixed(1)}%;animation-delay:${(Math.random()*0.5).toFixed(2)}s;animation-duration:${(1.6+Math.random()).toFixed(2)}s">${['⚡','💰','⭐','✨'][i%4]}</i>`;
+  v.innerHTML=`<div class="rf-card"><div class="rf-k">${k}</div><div class="rf-t">${t}</div>${sub?`<div class="rf-s">${sub}</div>`:''}</div>${conf}`;
+  document.body.appendChild(v);try{sfx.fanfare();}catch(e){}setTimeout(()=>{try{v.remove();}catch(e){}},2700);return true;}
+function dayStars(earn){const hist=(S.dayLog||[]).slice(-5).map(q=>q.earn||0).filter(x=>x>0);if(earn<=0)return 0;if(hist.length<2)return 1;
+  const avg=hist.reduce((a,b)=>a+b,0)/hist.length,r=earn/Math.max(1,avg);return r>=1.5?3:r>=1.15?2:r>=0.9?1:0;}
+function careerDayEnd(earn,quiet){
+  if(!careerOn()||earn<=0)return;
+  const st=dayStars(earn),g=hpAdd(Math.max(1,Math.sqrt(earn)/8)+st),R=recOf();pst('days');if(st===3)pst('star3');S.starSum=(S.starSum||0)+st;
+  const rec=S.day>=3&&R.day>0&&earn>R.day;R.day=Math.max(R.day,earn);
+  if(quiet)return;
+  const sstr='★'.repeat(st)+'☆'.repeat(3-st);
+  toast(L(`📋 Day report ${sstr} · $${fmt(earn)} · 💼 +${g} Holding`,`📋 Gün karnesi ${sstr} · $${fmt(earn)} · 💼 +${g} Holding`),st===3?'big':'good');
+  if(rec)setTimeout(()=>celebrate(L('DAY RECORD','GÜN REKORU'),'$'+fmt(earn),L('Your best day on this level','Bu seviyedeki en iyi günün')),900);
+}
+/* ---- 3. the combo: player sales in the evening peak (cap ×1.3) or a price spike (cap ×2) ---- */
+const CMB_GAP=25000;
+function hotWin(){if(!careerOn()||typeof DAY==='undefined'||!DAY)return null;const h=Math.floor(hourNow())%24,sh=DAY.shock;
+  if(sh&&sh.type==='spike'&&h>=sh.hour&&h<sh.hour+sh.len)return {k:'spike',cap:2,end:sh.hour+sh.len};
+  if(PEAK_H.includes(h))return {k:'peak',cap:1.3,end:PEAK_H[PEAK_H.length-1]+1};return null;}
+function cmbLive(){const c=S.cmb;return !!(c&&c.n>1&&Date.now()-c.t<CMB_GAP);}
+function cmbMult(){const c=S.cmb,w=hotWin();return c&&w&&cmbLive()?Math.min(w.cap,1+0.1*(c.n-1)):1;}
+function cmbStep(w,x,y){const now=Date.now(),c=S.cmb=S.cmb||{n:0,t:0,k:null,sum:0,best:0,extra:0};
+  if(c.k===w.k&&now-c.t<CMB_GAP)c.n++;else{c.n=1;c.k=w.k;}c.t=now;c.best=Math.max(c.best||0,c.n);
+  const m=Math.min(w.cap,1+0.1*(c.n-1));pmax('combo',c.n);mgHit('combo',c.n);
+  if(c.n>=2){try{beep(520+Math.min(c.n,20)*35,0.05,'triangle',0.035);}catch(e){}if(c.n%3===0||m===w.cap&&c.n===Math.round((w.cap-1)*10)+1)floatTxt(x,y-14,`🔥 ${L('COMBO','KOMBO')} ×${m.toFixed(1)}`,'');}
+  if(c.n===2)hint('combo',L('🔥 Combo! Keep selling within 25 seconds: each sale adds +10%. Up to ×1.3 at the evening peak, ×2 in a price spike.','🔥 Kombo! 25 saniye içinde satmaya devam et: her satış +%10 ekler. Akşam zirvesinde ×1,3’e, fiyat sıçramasında ×2’ye kadar.'),'big');
+  return m;}
+function cmbHour(){const c=S.cmb;if(!c||!c.sum||hotWin())return;
+  const sp=c.k==='spike';toast(sp?L(`⚡ Spike over · you sold $${fmt(c.sum)} · best combo ${c.best} (+$${fmt(c.extra)})`,`⚡ Sıçrama bitti · $${fmt(c.sum)} sattın · en uzun kombo ${c.best} (+$${fmt(c.extra)})`)
+    :L(`🌆 Peak over · $${fmt(c.sum)} sold · best combo ${c.best} (+$${fmt(c.extra)})`,`🌆 Zirve bitti · $${fmt(c.sum)} sattın · en uzun kombo ${c.best} (+$${fmt(c.extra)})`),'good');
+  if(c.best>=15)setTimeout(()=>celebrate(L('COMBO MASTER','KOMBO USTASI'),`${c.best}×`,'+$'+fmt(c.extra)),600);
+  c.sum=0;c.extra=0;c.best=0;}
+/* the price every sale goes through: Holding, combo, welcome-back boost */
+function careerSale(p,byPlayer,x,y){
+  if(!careerOn())return p;
+  p*=holdMult();if(S.boostUntil&&Date.now()<S.boostUntil)p*=2;
+  if(byPlayer){const w=hotWin();if(w){const m=cmbStep(w,x,y),c=S.cmb,np=p*m;c.sum+=np;c.extra+=np-p;p=np;if(w.k==='spike')pst('spike');}}
+  const R=recOf();if(R.sale>0&&p>R.sale*1.15&&S.soldCells>50)celebrate(L('SALE RECORD','SATIŞ REKORU'),'$'+fmt(p),L('One cell, your best price yet','Tek hücre, şimdiye kadarki en iyi fiyatın'));
+  R.sale=Math.max(R.sale,p);S.hrAcc=(S.hrAcc||0)+p;
+  pst('cells');pst('earn',p);mgHit('earn',p);
+  if(byPlayer){mgHit('sell',1);if(PEAK_H.includes(Math.floor(hourNow())%24))mgHit('peak',1);if(has('price')&&priceNow()>todayAvg())mgHit('hi',1);}
+  return p;}
+function careerHour(h){if(!careerOn())return;
+  const R=recOf(),v=S.hrAcc||0;if(v>0&&R.hour>0&&S.day>=1&&v>R.hour*1.05)celebrate(L('HOUR RECORD','SAAT REKORU'),'$'+fmt(v),L('Your best hour on this level','Bu seviyedeki en iyi saatin'));
+  R.hour=Math.max(R.hour,v);S.hrAcc=0;cmbHour();}
+/* ---- 4. welcome back: ×2 income for 5 minutes after 30+ minutes away ---- */
+function boostLeft(){return S.boostUntil?Math.max(0,S.boostUntil-Date.now()):0;}
+function countUp(el,to,pre){const t0=performance.now(),D=1200;const f=now=>{const k=Math.min(1,(now-t0)/D),e=1-Math.pow(1-k,3);el.textContent=pre+fmt(to*e);if(k<1)requestAnimationFrame(f);else{try{sfx.goal();}catch(e){}}};requestAnimationFrame(f);
+  let n=0;const tk=setInterval(()=>{try{sfx.coin();}catch(e){}if(++n>8)clearInterval(tk);},120);}
+/* ---- 5. micro goals: always three small ones, each a few minutes, a chest each ---- */
+const MG_T=[
+ {k:'sell',i:'⚡',ok:()=>true,need:()=>8+Math.min(40,3*sev()),t:n=>[`Sell ${n} cells yourself`,`Kendin ${n} hücre sat`]},
+ {k:'peak',i:'🌆',ok:()=>true,need:()=>5+Math.min(20,2*sev()),t:n=>[`Sell ${n} cells at the evening peak (18–22)`,`Akşam zirvesinde (18–22) ${n} hücre sat`]},
+ {k:'hi',i:'📈',ok:()=>has('price'),need:()=>6+Math.min(20,sev()),t:n=>[`Sell ${n} cells above today's average price`,`Günün ortalama fiyatının üstünde ${n} hücre sat`]},
+ {k:'combo',i:'🔥',ok:()=>true,max:1,need:()=>4+Math.min(8,Math.floor(sev()/2)),t:n=>[`Make a ${n}-sale combo (evening or spike)`,`${n}'lik kombo yap (akşam ya da sıçrama)`]},
+ {k:'store',i:'🔋',ok:()=>built('bat')||S.plants.some(p=>p.type==='battery'),need:()=>6+Math.min(20,sev()),t:n=>[`Store ${n} cells in the battery`,`Bataryaya ${n} hücre depola`]},
+ {k:'fix',i:'🔧',ok:()=>has('repair')&&S.plants.some(p=>p.broken&&!p.fire),need:()=>1,t:()=>['Repair a broken plant yourself','Bozuk bir santrali onar']},
+ {k:'earn',i:'💰',ok:()=>true,need:()=>Math.max(60,Math.round((S.lastDayEarned||200)*0.3)),t:n=>[`Earn $${fmt(n)} from sales`,`Satışlardan $${fmt(n)} kazan`]},
+ {k:'build',i:'🏗️',ok:()=>!cozy(),need:()=>1,t:()=>['Build a new plant','Yeni bir santral kur']}];
+function mgMake(skip){const pool=MG_T.filter(T=>T.ok()&&!skip.includes(T.k));const T=pool[Math.floor(Math.random()*pool.length)]||MG_T[0];return {k:T.k,need:T.need(),have:0};}
+function mgList(){if(!careerOn())return [];S.mg=Array.isArray(S.mg)?S.mg.filter(g=>MG_T.some(T=>T.k===g.k)):[];while(S.mg.length<3)S.mg.push(mgMake(S.mg.map(g=>g.k)));return S.mg;}
+function mgDef(g){return MG_T.find(T=>T.k===g.k);}
+function mgText(g){const T=mgDef(g);return T.i+' '+tt(T.t(g.need));}
+function mgChest(){return Math.max(25,Math.round((S.lastDayEarned||0)*0.06));}
+function mgHit(k,n){if(!careerOn()||!Array.isArray(S.mg))return;
+  S.mg.forEach((g,i)=>{if(g.k!==k)return;const T=mgDef(g);g.have=T.max?Math.max(g.have,n):g.have+n;
+    if(g.have>=g.need){const c=mgChest(),h=hpAdd(1+Math.floor((prof().st.mg||0)/10));S.cash+=c;S.earned+=c;
+      try{logLedger('goal',c,'mini');}catch(e){}try{sfx.goal();}catch(e){}floatTxt(S.px,S.py,'🎁 +$'+fmt(c),'');
+      toast(L(`🎁 Goal done: ${tt(T.t(g.need))} · +$${fmt(c)} · 💼 +${h}`,`🎁 Hedef tamam: ${tt(T.t(g.need))} · +$${fmt(c)} · 💼 +${h}`),'good');
+      pst('mg');S.mg[i]=mgMake(S.mg.map(q=>q.k));}});}
+function mgBest(){const m=mgList();if(!m.length)return null;return m.slice().sort((a,b)=>b.have/b.need-a.have/a.need)[0];}
+/* ---- 6. the daily market: same puzzle for everyone on the same date, worked out on the phone ---- */
+function dSeed(k){let h=2166136261;for(const c of 'mwm-daily-'+k){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+function dRng(s){return ()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+const DG=(h,c,w)=>Math.exp(-((h-c)*(h-c))/(2*w*w));
+function dMarket(k){const r=dRng(dSeed(k)),fc=[],ac=[];
+  const mh=7+r()*2.5,ma=0.3+r()*1.1,sd=r()*0.75,eh=17.5+r()*3,ea=1.2+r()*1.8,base=0.35+r()*0.25;   // morning peak, solar dip, evening peak: a new shape every day
+  for(let h=0;h<24;h++){const v=P0*(base+ma*DG(h,mh,1.4)+0.45*DG(h,13,4)-sd*DG(h,12.5,1.8)+ea*DG(h,eh,1.5))*(0.9+0.2*r());fc.push(Math.round(Math.max(0.5,v)*10)/10);}
+  for(let h=0;h<24;h++)ac.push(Math.round(fc[h]*(0.82+0.36*r())*10)/10);
+  const s=6+Math.floor(r()*16),up=r()<0.5;ac[s]=Math.round(ac[s]*(up?1.9:0.4)*10)/10;
+  return {fc,ac,surprise:{h:s,up}};}
+const D_CAP=4,D_N=8,D_EFF=0.9;   // the battery holds 4; up to 8 charge and 8 sell hours, so two cycles a day are possible
+function dSim(a,pick){let soc=0,c=0,d=0,v=0;for(let h=0;h<24;h++){const m=pick[h];
+  if(m===1&&soc<D_CAP&&c<D_N){soc++;c++;v-=a[h];}else if(m===2&&soc>0&&d<D_N){soc--;d++;v+=a[h]*D_EFF;}}return v;}
+function dBest(a){let st=new Map([['0,0',0]]);for(let h=0;h<24;h++){const nx=new Map();const put=(k,v)=>{if(!nx.has(k)||nx.get(k)<v)nx.set(k,v);};
+  for(const [k,v] of st){const [c,d]=k.split(',').map(Number);put(k,v);if(c<D_N&&c-d<D_CAP)put((c+1)+','+d,v-a[h]);if(d<c)put(c+','+(d+1),v+a[h]*D_EFF);}st=nx;}
+  return Math.max(...st.values());}
+function dStars(p){return p>=0.92?3:p>=0.78?2:p>=0.55?1:0;}
+function dCode(k,pct){const md=k.slice(5).replace('-','');return `MM-${md}-${pct}${(dSeed(k+':'+pct)%36).toString(36).toUpperCase()}`;}
+let dPick=null,dMode=1;
+function dailyDone(){return prof().daily[dayKey()];}
+function dailyHtml(){const k=dayKey(),M=dMarket(k),done=prof().daily[k],mx=Math.max(...M.ac,...M.fc);
+  if(!dPick||dPick.k!==k)dPick={k,p:Array(24).fill(0)};
+  const nC=dPick.p.filter(x=>x===1).length,nD=dPick.p.filter(x=>x===2).length;
+  const cell=(h)=>{const m=done?done.pick[h]:dPick.p[h],f=M.fc[h],a=M.ac[h];const bg=m===1?'#3E7BFA':m===2?'#FF8A3D':'#EEF1F6',fg=m?'#fff':'#1D2433';
+    const surp=done&&h===M.surprise.h?(M.surprise.up?' ⬆️':' ⬇️'):'';
+    return `<button data-dh="${h}" ${done?'disabled':''} style="background:${bg};color:${fg};border:0;border-radius:10px;padding:5px 0;font-size:11px;line-height:1.25;min-height:0;opacity:1">
+      <b>${String(h).padStart(2,'0')}</b><br>$${f.toFixed(1)}${done?`<br><span style="font-weight:800">$${a.toFixed(1)}${surp}</span>`:''}
+      <div style="height:4px;margin:3px 6px 0;border-radius:2px;background:rgba(0,0,0,.12)"><div style="height:4px;width:${Math.round(f/mx*100)}%;border-radius:2px;background:${m?'#fff':'#6A5CFF'}"></div></div></button>`;};
+  let h=`<div style="font-size:13px;color:var(--soft);margin:6px 0">${L(`Same market for everyone today. Your battery holds ${D_CAP} cells. Pick up to ${D_N} hours to 🔵 charge (you pay that hour's price) and up to ${D_N} to 🟠 sell (90% comes back) — two cycles if the day has two peaks. Charge before you sell. You see the forecast; the real prices show after you lock.`,`Bugün herkes için aynı piyasa. Bataryan ${D_CAP} hücre tutar. En fazla ${D_N} saat 🔵 şarj (o saatin fiyatını ödersin) ve ${D_N} saat 🟠 satış (%90’ı geri gelir) seç — günde iki zirve varsa iki tur. Önce şarj, sonra satış. Tahmini görüyorsun; gerçek fiyatlar kilitleyince çıkar.`)}</div>`;
+  if(!done)h+=`<div class="seg" style="grid-template-columns:1fr 1fr"><button data-dm="1" class="${dMode===1?'on':''}">🔵 ${L('Charge','Şarj')} ${nC}/${D_N}</button><button data-dm="2" class="${dMode===2?'on':''}">🟠 ${L('Sell','Satış')} ${nD}/${D_N}</button></div>`;
+  h+=`<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:8px 0">${[...Array(24).keys()].map(cell).join('')}</div>`;
+  if(done){const st='★'.repeat(done.s)+'☆'.repeat(3-done.s);
+    h+=`<div style="text-align:center;margin:8px 0"><div style="font:800 30px var(--disp);color:#E5A800">${st}</div><div style="font-weight:800">${L(`You made $${done.v.toFixed(1)} of a possible $${done.best.toFixed(1)} · ${done.pct}%`,`Olası $${done.best.toFixed(1)}’ın $${done.v.toFixed(1)}’ını yaptın · %${done.pct}`)}</div>
+      <div style="font-size:13px;color:var(--soft);margin-top:4px">${L(`Surprise: ${String(M.surprise.h).padStart(2,'0')}:00 ${M.surprise.up?'jumped':'collapsed'}. A new market tomorrow.`,`Sürpriz: ${String(M.surprise.h).padStart(2,'0')}:00 ${M.surprise.up?'fırladı':'çöktü'}. Yarın yeni piyasa.`)}</div>
+      <div style="font:800 18px monospace;margin:8px 0">${done.code}</div><button id="dShare" style="width:100%;margin-top:10px;background:#1E2433;color:#fff;border:0;border-radius:12px;padding:11px 14px;font-weight:800">📤 ${L('Share the result','Sonucu paylaş')}</button></div>`;}
+  else h+=`<button id="dLock" style="opacity:${nC&&nD?1:.4};width:100%;margin-top:10px;background:#1E2433;color:#fff;border:0;border-radius:12px;padding:11px 14px;font-weight:800" ${nC&&nD?'':'disabled'}>🔒 ${L('Lock and see the real prices','Kilitle ve gerçek fiyatları gör')}</button>`;
+  return h;}
+function dailyLock(){const k=dayKey();if(prof().daily[k]||!dPick)return;const M=dMarket(k),v=dSim(M.ac,dPick.p),best=dBest(M.ac);
+  const pct=Math.max(0,Math.min(100,Math.round(v/Math.max(0.01,best)*100))),s=v>0?dStars(pct/100):0;
+  const P=prof();P.daily[k]={pick:dPick.p.slice(),v,best,pct,s,code:dCode(k,pct)};
+  const ks=Object.keys(P.daily).sort();while(ks.length>40)delete P.daily[ks.shift()];
+  const h=hpAdd([2,5,12,25][s]);pst('dstar',s);
+  let cash=0;if(careerOn()&&s>0){cash=Math.round(Math.max(50,(S.lastDayEarned||0)/24)*[0,1,2,3][s]);S.cash+=cash;S.earned+=cash;try{logLedger('goal',cash,'daily');}catch(e){}}
+  profSave();save();try{trackOnce('daily-play');}catch(e){}
+  if(s===3)celebrate(L('PERFECT TRADE','KUSURSUZ İŞLEM'),'★★★',`%${pct}`);else try{sfx.goal();}catch(e){}
+  toast(L(`📈 Daily market ${'★'.repeat(s)}${'☆'.repeat(3-s)} · ${pct}% · 💼 +${h}${cash?' · +$'+fmt(cash):''}`,`📈 Günün piyasası ${'★'.repeat(s)}${'☆'.repeat(3-s)} · %${pct} · 💼 +${h}${cash?' · +$'+fmt(cash):''}`),'good');}
+async function dailyShare(){const k=dayKey(),d=prof().daily[k];if(!d)return;
+  const text=L(`⚡ Megawatt Mogul · Daily market ${k} · ${'★'.repeat(d.s)}${'☆'.repeat(3-d.s)} · ${d.pct}% · ${d.code} · Can you beat it?`,`⚡ Megawatt Mogul · Günün piyasası ${k} · ${'★'.repeat(d.s)}${'☆'.repeat(3-d.s)} · %${d.pct} · ${d.code} · Geçebilir misin?`)+' '+PLAY_URL;
+  try{if(navigator.share){await navigator.share({text});trackOnce('daily-share');return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  try{await navigator.clipboard.writeText(text);toast(L('Copied. Paste it anywhere.','Kopyalandı. İstediğin yere yapıştır.'),'good');}catch(e){prompt(L('Copy this','Bunu kopyala'),text);}}
+/* ---- 7. achievements: three tiers each, Holding points and hats as rewards ---- */
+const ACH=[
+ {id:'cells',k:'cells',n:['Seller','Satıcı'],u:['cells sold','hücre satıldı'],t:[100,1000,10000]},
+ {id:'earn',k:'earn',n:['Money maker','Para makinesi'],u:['$ earned','$ kazanıldı'],t:[1e4,1e6,1e8],hat:[2,'#D4AF37']},
+ {id:'build',k:'build',n:['Builder','İnşaatçı'],u:['plants built','santral kuruldu'],t:[5,25,100]},
+ {id:'fix',k:'fix',n:['Mechanic','Tamirci'],u:['repairs','onarım'],t:[5,50,250],hat:[2,'#1F2937']},
+ {id:'rec',k:'rec',n:['Record breaker','Rekortmen'],u:['records','rekor'],t:[3,15,50]},
+ {id:'combo',k:'combo',n:['Combo','Kombo'],u:['best combo','en uzun kombo'],t:[8,15,30],hat:[2,'#8B5CF6']},
+ {id:'spike',k:'spike',n:['Spike hunter','Sıçrama avcısı'],u:['cells in spikes','sıçramada hücre'],t:[10,100,500],hat:[2,'#00D1E8']},
+ {id:'days',k:'days',n:['Veteran','Kıdemli'],u:['days closed','gün kapandı'],t:[7,30,100]},
+ {id:'star3',k:'star3',n:['Star day','Yıldızlı gün'],u:['3-star days','3 yıldızlı gün'],t:[3,15,50],hat:[2,'#C0C7D1']},
+ {id:'dstar',k:'dstar',n:['Market reader','Piyasa okuyucu'],u:['daily market stars','günün piyasası yıldızı'],t:[3,15,60],hat:[2,'#FF4FD8']},
+ {id:'mg',k:'mg',n:['Goal getter','Hedef avcısı'],u:['goals done','hedef tamam'],t:[5,30,150]},
+ {id:'store',k:'store',n:['Storekeeper','Depocu'],u:['cells stored','hücre depolandı'],t:[20,200,2000]},
+ {id:'hp',k:'hp',n:['Holding','Holding'],u:['Holding points','Holding puanı'],t:[100,1000,10000],hat:[3,'#111111']},
+ {id:'lvl',k:'lvl',n:['Climber','Tırmanıcı'],u:['highest level','en yüksek seviye'],t:[3,9,18]}];
+const ACH_HP=[5,20,60],ROMAN=['','I','II','III'];
+function achCheck(k){const P=prof();for(const A of ACH){if(A.k!==k)continue;const v=P.st[k]||0;let t=P.ach[A.id]||0;
+  while(t<3&&v>=A.t[t]){t++;P.ach[A.id]=t;P.hp+=ACH_HP[t-1];
+    let hat='';if(A.hat&&A.hat[0]===t&&!P.hats.includes(A.hat[1])){P.hats.push(A.hat[1]);hat=L(' · 🎩 new hat colour',' · 🎩 yeni baret rengi');}
+    toast(L(`🏅 ${A.n[0]} ${ROMAN[t]} · 💼 +${ACH_HP[t-1]}${hat}`,`🏅 ${A.n[1]} ${ROMAN[t]} · 💼 +${ACH_HP[t-1]}${hat}`),'big');try{sfx.goal();}catch(e){}}}}
+const EXTRA_HATS=ACH.filter(A=>A.hat).map(A=>({c:A.hat[1],a:A}));
+/* ---- career panel ---- */
+let carTab='sum';
+function careerHtml(){const P=prof(),R=careerOn()?recOf():{day:0,hour:0,sale:0},ti=titleIdx(),nx=TITLES[ti+1];
+  if(carTab==='sum'){
+    return `<div style="text-align:center;margin:6px 0 10px"><div style="font-size:13px;color:var(--soft)">${L('Your title','Unvanın')}</div><div style="font:800 24px var(--disp)">${titleTxt(ti)}</div>
+      <div style="font:800 40px var(--disp);color:#E5A800;margin-top:4px">💼 ${fmt(P.hp)}</div><div style="font-weight:800">${L(`Holding points · income +${holdPct()}% on every level`,`Holding puanı · her seviyede gelir +%${holdPct()}`)}</div>
+      ${nx?`<div style="font-size:13px;color:var(--soft);margin-top:4px">${L(`Next title: ${nx[1]} at ${fmt(nx[0])}`,`Sonraki unvan: ${nx[2]} · ${fmt(nx[0])} puanda`)}</div><div style="height:8px;background:#EEF1F6;border-radius:4px;margin:6px 30px"><div style="height:8px;border-radius:4px;background:#E5A800;width:${Math.min(100,Math.round((P.hp-TITLES[ti][0])/(nx[0]-TITLES[ti][0])*100))}%"></div></div>`:''}</div>
+      <div style="font-size:13px;color:var(--soft)">${L('Holding points never reset. You earn them at every day’s close, by opening a new level, from goals, the daily market and achievements.','Holding puanı hiç sıfırlanmaz. Her gün kapanışında, yeni seviye açınca, hedeflerden, günün piyasasından ve başarımlardan kazanırsın.')}</div>
+      <div style="margin:12px 0 4px;font-family:var(--disp);font-size:16px">🏆 ${L('Records on this level','Bu seviyedeki rekorların')}</div>
+      <div class="scale" style="display:flex;justify-content:space-between;padding:4px 0"><span>${L('Best day','En iyi gün')}</span><b>$${fmt(R.day)}</b></div>
+      <div class="scale" style="display:flex;justify-content:space-between;padding:4px 0"><span>${L('Best hour','En iyi saat')}</span><b>$${fmt(R.hour)}</b></div>
+      <div class="scale" style="display:flex;justify-content:space-between;padding:4px 0"><span>${L('Best single sale','En iyi tek satış')}</span><b>$${fmt(R.sale)}</b></div>
+      <div class="scale" style="display:flex;justify-content:space-between;padding:4px 0"><span>${L('Longest combo','En uzun kombo')}</span><b>${P.st.combo||0}</b></div>
+      <button id="carLook" style="width:100%;margin-top:10px;background:#1E2433;color:#fff;border:0;border-radius:12px;padding:11px 14px;font-weight:800">🎩 ${L('Change your look','Görünümünü değiştir')} · ${P.hats.length}/${EXTRA_HATS.length} ${L('special hats','özel baret')}</button>`;}
+  if(carTab==='mg'){if(!careerOn())return `<p>${L('Goals run in your own game.','Hedefler kendi oyununda çalışır.')}</p>`;
+    return `<div style="font-size:13px;color:var(--soft);margin:6px 0">${L(`Three small goals, always. Each one pays a chest: about $${fmt(mgChest())} and Holding points.`,`Her zaman üç küçük hedef. Her biri bir sandık öder: yaklaşık $${fmt(mgChest())} ve Holding puanı.`)}</div>`
+      +mgList().map(g=>{const T=mgDef(g),f=Math.min(1,g.have/g.need);return `<div style="padding:8px 0;border-bottom:1px solid rgba(0,0,0,.08)"><div style="display:flex;justify-content:space-between;gap:8px"><span>${mgText(g)}</span><b>${T.k==='earn'?'$'+fmt(g.have)+'/$'+fmt(g.need):Math.floor(g.have)+'/'+g.need}</b></div><div style="height:6px;background:#EEF1F6;border-radius:3px;margin-top:5px"><div style="height:6px;border-radius:3px;background:#23B26D;width:${Math.round(f*100)}%"></div></div></div>`;}).join('')
+      +`<div style="font-size:12px;color:var(--soft);margin-top:8px">${L(`Goals done so far: ${P.st.mg||0}`,`Şimdiye kadar biten hedef: ${P.st.mg||0}`)}</div>`;}
+  if(carTab==='daily')return dailyHtml();
+  return ACH.map(A=>{const t=P.ach[A.id]||0,v=P.st[A.k]||0,nxt=A.t[Math.min(2,t)];
+    return `<div style="padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08)"><div style="display:flex;justify-content:space-between;gap:8px"><span><b>${tt(A.n)}</b> ${'🏅'.repeat(t)}<span style="color:#C5CCD8">${'○'.repeat(3-t)}</span>${A.hat?` <span title="hat" style="display:inline-block;width:12px;height:12px;border-radius:6px;background:${A.hat[1]};vertical-align:middle;${P.hats.includes(A.hat[1])?'':'opacity:.35'}"></span>`:''}</span><span style="font-size:12px;white-space:nowrap">${t>=3?L('complete','tamam'):fmt(Math.min(v,nxt))+' / '+fmt(nxt)}</span></div>
+      <div style="font-size:12px;color:var(--soft)">${tt(A.u)}</div></div>`;}).join('');}
+function openCareer(tab){if(tab)carTab=tab;const P=prof();
+  $('carTitle').textContent=L('💼 Career','💼 Kariyer');$('carSub').textContent=`${titleTxt()} · 💼 ${fmt(P.hp)} · +${holdPct()}%`;
+  const T=[['sum','💼',L('Summary','Özet')],['mg','🎯',L('Goals','Hedefler')],['daily','📈',L('Daily','Günlük')+(dailyDone()?'':' •')],['ach','🏅',L('Badges','Başarım')]];
+  $('carTabs').innerHTML=T.map(([k,i,n])=>`<button data-ct="${k}" class="${carTab===k?'on':''}">${i} ${n}</button>`).join('');
+  $('carBody').innerHTML=careerHtml();$('mCar').classList.add('on');}
+function careerHud(){try{
+  const b=$('careerBtn');b.hidden=document.body.classList.contains('title')||!careerOn();if(!b.hidden){$('cap-car').textContent='+'+holdPct()+'%';$('carDot').hidden=!!dailyDone();}
+  const w=hotWin(),e=$('hotC');e.hidden=!w;if(w){const left=Math.max(0,Math.ceil((w.end-hourNow()%24)*HOUR));const m=cmbMult();
+    e.textContent=`${w.k==='spike'?L('⚡ SPIKE','⚡ SIÇRAMA'):L('🌆 Peak','🌆 Zirve')} · ${left}${L('s','sn')}${m>1?` · ${L('combo','kombo')} ×${m.toFixed(1)}`:''}`;e.style.background=w.k==='spike'?'#E5A800':'#FF8A3D';}
+  const bl=boostLeft(),be=$('boostC');be.hidden=!bl||!careerOn();if(!be.hidden){const s=Math.ceil(bl/1000);be.textContent=`🚀 ×2 · ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+  const ml=$('mgLine'),g=careerOn()&&!tutOpen&&playing?mgBest():null;ml.hidden=!g;if(g){const T=mgDef(g);ml.innerHTML=`${mgText(g)} · <b>${T.k==='earn'?'$'+fmt(g.have)+'/$'+fmt(g.need):Math.floor(g.have)+'/'+g.need}</b> <small>🎁</small>`;}
+}catch(e){}}
+$('careerBtn').onclick=()=>{openCareer();try{trackOnce('career-open');}catch(e){}};
+$('mgLine').onclick=()=>openCareer('mg');
+$('carClose').onclick=()=>$('mCar').classList.remove('on');
+$('carTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-ct]');if(!b)return;carTab=b.dataset.ct;sfx.pick();openCareer();});
+$('carBody').addEventListener('click',e=>{
+  if(e.target.closest('#carLook')){$('mCar').classList.remove('on');openLook();return;}
+  if(e.target.closest('#dShare')){dailyShare();return;}
+  if(e.target.closest('#dLock')){dailyLock();openCareer();return;}
+  const m=e.target.closest('button[data-dm]');if(m){dMode=+m.dataset.dm;openCareer();return;}
+  const h=e.target.closest('button[data-dh]');if(h&&dPick&&!dailyDone()){const i=+h.dataset.dh,cur=dPick.p[i];
+    if(cur===dMode)dPick.p[i]=0;else if(dPick.p.filter(x=>x===dMode).length<D_N)dPick.p[i]=dMode;else{toast(L(`You already picked ${D_N} hours. Tap one to clear it.`,`Zaten ${D_N} saat seçtin. Birine dokunup kaldır.`),'');return;}
+    sfx.pick();openCareer();}});
+function careerBoot(){try{if(!careerOn())return;prof();mgList();if(!cozy()&&!inClassic())pmax('lvl',sev());
+  if(!dailyDone())setTimeout(()=>{if(playing&&careerOn()&&!dailyDone())toast(L('📈 Today’s daily market is ready — tap 💼.','📈 Günün piyasası hazır — 💼’a dokun.'),'');},9000);}catch(e){console.error('career',e);}}
+
 /* v0.81 shift streak: open the game on a new calendar day and a bonus waits. It grows for 7 days;
    a missed day steps it back by one, it never resets to zero. Kept per device, so switching worlds pays once. */
 const STREAK_MUL=[1,1.5,2,2.5,3,3.5,4];
@@ -10557,7 +10815,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.89.0';
+const GAME_VERSION='0.90.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10574,7 +10832,7 @@ function resize(){renderer.setSize(innerWidth,innerHeight,false);}
 addEventListener('resize',resize);resize();
 const had=load();let GO_IN=null;try{GO_IN=JSON.parse(sessionStorage.getItem('mwm_go')||'null');}catch(e){}if(GO_IN)lvlVeil(GO_IN.t);
 const LAD_MOVING=ladderInit(had);if(had&&!LAD_MOVING)worldsInit();if(!LAD_MOVING)ladRemap();if(!inProg()&&S.prog){S.prog=null;S.progs=[];}   // v0.86: programs live in their own worldif(had){if(!has('repair')){S.batFault=false;for(const p of S.plants){p.broken=false;p.hv=false;}}if(!has('fire')){S.batFire=0;for(const p of S.plants)p.fire=0;}}   // a level without that mechanic starts clean
-if(!inProg())try{streakCheck();}catch(e){}if(had&&!cozy()&&!inClassic()&&!inProg()&&SEV[sev()]&&!S.sevIntro){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,1200);return;}S.sevIntro=1;ladIntro(sev());};setTimeout(go,2000);}if(inProg()&&S.progPending){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,800);return;}const p=PROGRAMS.find(x=>x.id===S.progPending);S.progPending=null;if(p)startProgram(p);};setTimeout(go,1200);}if(had&&(S.prest||0)>=1&&!cozy()){const gr=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(gr,1500);return;}askRateOnce();};setTimeout(gr,4000);}const bootGap=had?(Date.now()-S.lastSave)/1000:0;DAY=makeDay(S.day);syncHelpers();
+if(!inProg())try{streakCheck();}catch(e){}try{careerBoot();}catch(e){}if(had&&!cozy()&&!inClassic()&&!inProg()&&SEV[sev()]&&!S.sevIntro){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,1200);return;}S.sevIntro=1;ladIntro(sev());};setTimeout(go,2000);}if(inProg()&&S.progPending){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,800);return;}const p=PROGRAMS.find(x=>x.id===S.progPending);S.progPending=null;if(p)startProgram(p);};setTimeout(go,1200);}if(had&&(S.prest||0)>=1&&!cozy()){const gr=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(gr,1500);return;}askRateOnce();};setTimeout(gr,4000);}const bootGap=had?(Date.now()-S.lastSave)/1000:0;DAY=makeDay(S.day);syncHelpers();
 let last=0;
 async function loadKit(){
   __diag('Loading models…');
@@ -10619,7 +10877,8 @@ function makeThumbs(){
 function openLook(){
   const LK=S.look||{char:CHAR_NAMES[0],hat:HAT_COLORS[0]};
   $('lkChars').innerHTML=CHAR_NAMES.filter(n=>KIT&&KIT.chars[n]).map((n,i)=>`<button data-c="${n}" class="${n===LK.char?'on':''}" aria-label="Engineer ${i+1}"><img src="${thumbs[n]||''}" alt=""></button>`).join('')||'<p>Looks need the 3D models, which did not load.</p>';
-  $('lkHats').innerHTML=HAT_COLORS.map(c=>`<button data-h="${c}" style="background:${c}" class="${c===LK.hat?'on':''}" aria-label="Hat color"></button>`).join('');
+  $('lkHats').innerHTML=HAT_COLORS.map(c=>`<button data-h="${c}" style="background:${c}" class="${c===LK.hat?'on':''}" aria-label="Hat color"></button>`).join('')
+    +EXTRA_HATS.map(x=>{const own=prof().hats.includes(x.c);return `<button data-h="${x.c}" ${own?'':'data-lock="1"'} style="background:${x.c};${own?'':'opacity:.35'}" class="${x.c===LK.hat?'on':''}" aria-label="Special hat">${own?'':'🔒'}</button>`;}).join('');
   $('mLook').classList.add('on');
 }
 function applyLook(){
@@ -10631,7 +10890,7 @@ function applyLook(){
   if(!playing){try{makeWaveFrames();startWave();}catch(e){}}
 }
 $('lkChars').addEventListener('click',e=>{const b=e.target.closest('button[data-c]');if(!b)return;S.look=Object.assign({hat:HAT_COLORS[0]},S.look||{},{char:b.dataset.c});applyLook();openLook();sfx.pick();});
-$('lkHats').addEventListener('click',e=>{const b=e.target.closest('button[data-h]');if(!b)return;S.look=Object.assign({char:CHAR_NAMES[0]},S.look||{},{hat:b.dataset.h});applyLook();openLook();sfx.pick();});
+$('lkHats').addEventListener('click',e=>{const b=e.target.closest('button[data-h]');if(!b)return;if(b.dataset.lock){const x=EXTRA_HATS.find(q=>q.c===b.dataset.h);if(x)toast(L(`🔒 Unlocks with the badge ${x.a.n[0]} ${ROMAN[x.a.hat[0]]} (💼 Career › Badges).`,`🔒 ${x.a.n[1]} ${ROMAN[x.a.hat[0]]} başarımıyla açılır (💼 Kariyer › Başarım).`),'');return;}S.look=Object.assign({char:CHAR_NAMES[0]},S.look||{},{hat:b.dataset.h});applyLook();openLook();sfx.pick();});
 $('lkDone').onclick=()=>$('mLook').classList.remove('on');
 $('sExport').onclick=()=>{
   $('mSet').classList.remove('on');trackOnce('save-exported');
