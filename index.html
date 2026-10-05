@@ -470,7 +470,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.90.9</div>
+  <div class="t-ver" id="tVer">v0.90.10</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -715,7 +715,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.90.9 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.90.10 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9112,6 +9112,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.90.10',t:['Clearer daily market','Daha anlaşılır günün piyasası'],l:[['Three-step instructions, at least 4 charge and 4 sell hours before locking, a plain-words result and a reward-free practice round.','Üç adımlı anlatım, kilitlemeden önce en az 4 şarj ve 4 satış saati, sade sonuç ve ödülsüz alıştırma turu.']]},
  {v:'0.90.9',t:['Shorter career page','Daha kısa kariyer sayfası'],l:[['One explanation line less on the Career summary.','Kariyer özetinde bir açıklama satırı eksildi.']]},
  {v:'0.90.8',t:['No empty buttons','Boş buton yok'],l:[['🧰 Upkeep appears only when something needs fixing, until the maintenance level (10) where it stays.','🧰 Bakım butonu yalnızca onarılacak bir şey olduğunda çıkar; bakım seviyesinden (10) itibaren hep durur.']]},
  {v:'0.90.7',t:['Lighter tours','Daha aydınlık anlatım'],l:[['When Ela opens a panel to show it, the screen is shaded once, not twice.','Ela bir paneli açıp gösterirken ekran iki kat değil, bir kat kararır.']]},
@@ -10652,26 +10653,44 @@ function dBest(a){let st=new Map([['0,0',0]]);for(let h=0;h<24;h++){const nx=new
   return Math.max(...st.values());}
 function dStars(p){return p>=0.92?3:p>=0.78?2:p>=0.55?1:0;}
 function dCode(k,pct){const md=k.slice(5).replace('-','');return `MM-${md}-${pct}${(dSeed(k+':'+pct)%36).toString(36).toUpperCase()}`;}
-let dPick=null,dMode=1;
+let dPick=null,dMode=1,dPrac=null;
+function dSimD(a,pick){let soc=0,c=0,d=0,v=0;const used=Array(24).fill(false);for(let h=0;h<24;h++){const m=pick[h];
+  if(m===1&&soc<D_CAP&&c<D_N){soc++;c++;v-=a[h];used[h]=true;}else if(m===2&&soc>0&&d<D_N){soc--;d++;v+=a[h]*D_EFF;used[h]=true;}}return {v,used};}
 function dailyDone(){return prof().daily[dayKey()];}
-function dailyHtml(){const k=dayKey(),M=dMarket(k),done=prof().daily[k],mx=Math.max(...M.ac,...M.fc);
-  if(!dPick||dPick.k!==k)dPick={k,p:Array(24).fill(0)};
-  const nC=dPick.p.filter(x=>x===1).length,nD=dPick.p.filter(x=>x===2).length;
-  const cell=(h)=>{const m=done?done.pick[h]:dPick.p[h],f=M.fc[h],a=M.ac[h];const bg=m===1?'#3E7BFA':m===2?'#FF8A3D':'#EEF1F6',fg=m?'#fff':'#1D2433';
-    const surp=done&&h===M.surprise.h?(M.surprise.up?' ⬆️':' ⬇️'):'';
-    return `<button data-dh="${h}" ${done?'disabled':''} style="background:${bg};color:${fg};border:0;border-radius:10px;padding:5px 0;font-size:11px;line-height:1.25;min-height:0;opacity:1">
-      <b>${String(h).padStart(2,'0')}</b><br>$${f.toFixed(1)}${done?`<br><span style="font-weight:800">$${a.toFixed(1)}${surp}</span>`:''}
-      <div style="height:4px;margin:3px 6px 0;border-radius:2px;background:rgba(0,0,0,.12)"><div style="height:4px;width:${Math.round(f/mx*100)}%;border-radius:2px;background:${m?'#fff':'#6A5CFF'}"></div></div></button>`;};
-  let h=`<div style="font-size:13px;color:var(--soft);margin:6px 0">${L(`Same market for everyone today. Your battery holds ${D_CAP} cells. Pick up to ${D_N} hours to 🔵 charge (you pay that hour's price) and up to ${D_N} to 🟠 sell (90% comes back) — two cycles if the day has two peaks. Charge before you sell. You see the forecast; the real prices show after you lock.`,`Bugün herkes için aynı piyasa. Bataryan ${D_CAP} hücre tutar. En fazla ${D_N} saat 🔵 şarj (o saatin fiyatını ödersin) ve ${D_N} saat 🟠 satış (%90’ı geri gelir) seç — günde iki zirve varsa iki tur. Önce şarj, sonra satış. Tahmini görüyorsun; gerçek fiyatlar kilitleyince çıkar.`)}</div>`;
-  if(!done)h+=`<div class="seg" style="grid-template-columns:1fr 1fr"><button data-dm="1" class="${dMode===1?'on':''}">🔵 ${L('Charge','Şarj')} ${nC}/${D_N}</button><button data-dm="2" class="${dMode===2?'on':''}">🟠 ${L('Sell','Satış')} ${nD}/${D_N}</button></div>`;
+/* v0.90.10: the daily market says what to do in three steps, needs a full battery cycle (4 + 4) before it locks,
+   explains the result in plain words, and offers a reward-free practice round after the real one. */
+function dailyHtml(){const k=dayKey(),M=dMarket(k),real=prof().daily[k],res=dPrac?dPrac.res:real,mx=Math.max(...M.fc);
+  const pick=dPrac?dPrac.p:(dPick&&dPick.k===k?dPick.p:(dPick={k,p:Array(24).fill(0)}).p);
+  const shown=res?res.pick:pick,used=res?dSimD(M.ac,res.pick).used:null;
+  const nC=pick.filter(x=>x===1).length,nD=pick.filter(x=>x===2).length,ready=nC>=D_CAP&&nD>=D_CAP;
+  const cell=h=>{const m=shown[h],off=res&&m&&!used[h];const bg=m===1?'#3E7BFA':m===2?'#FF8A3D':'#EEF1F6',fg=m?'#fff':'#1D2433';
+    const surp=res&&h===M.surprise.h?(M.surprise.up?' ⬆️':' ⬇️'):'';
+    return `<button data-dh="${h}" ${res?'disabled':''} style="background:${bg};color:${fg};border:0;border-radius:10px;padding:5px 0;font-size:11px;line-height:1.25;min-height:0;opacity:${off?0.4:1};${off?'text-decoration:line-through;':''}">
+      <b>${String(h).padStart(2,'0')}:00</b><br>${res?`<span style="opacity:.75">${L('fc','tah')} $${M.fc[h].toFixed(1)}</span><br><b>$${M.ac[h].toFixed(1)}${surp}</b>`:`$${M.fc[h].toFixed(1)}`}
+      ${res?'':`<div style="height:4px;margin:3px 6px 0;border-radius:2px;background:rgba(0,0,0,.12)"><div style="height:4px;width:${Math.round(M.fc[h]/mx*100)}%;border-radius:2px;background:${m?'#fff':'#6A5CFF'}"></div></div>`}</button>`;};
+  let h='';
+  if(!res){
+    h+=`<div style="font-size:13px;margin:6px 0;line-height:1.45">${L(`Same prices for everyone today. Buy cheap into your battery, sell it dear.<br>1️⃣ Tap <b>🔵 Charge</b>, then the cheap hours (at least ${D_CAP}).<br>2️⃣ Tap <b>🟠 Sell</b>, then dear hours <b>after</b> your charging (at least ${D_CAP}).<br>3️⃣ Lock: the real prices appear. The battery holds ${D_CAP}, so a day with two peaks can take two rounds (up to ${D_N} each).`,
+      `Bugün herkese aynı fiyatlar. Bataryana ucuzken al, pahalıyken sat.<br>1️⃣ <b>🔵 Şarj</b>'a dokun, sonra ucuz saatlere (en az ${D_CAP}).<br>2️⃣ <b>🟠 Satış</b>'a dokun, sonra şarjdan <b>sonraki</b> pahalı saatlere (en az ${D_CAP}).<br>3️⃣ Kilitle: gerçek fiyatlar açılır. Batarya ${D_CAP} hücre alır; iki zirveli günde iki tur yapabilirsin (her biri en fazla ${D_N}).`)}</div>`;
+    h+=`<div class="seg" style="grid-template-columns:1fr 1fr"><button data-dm="1" class="${dMode===1?'on':''}">🔵 ${L('Charge','Şarj')} ${nC}/${D_CAP}+</button><button data-dm="2" class="${dMode===2?'on':''}">🟠 ${L('Sell','Satış')} ${nD}/${D_CAP}+</button></div>`;
+  }
   h+=`<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:8px 0">${[...Array(24).keys()].map(cell).join('')}</div>`;
-  if(done){const st='★'.repeat(done.s)+'☆'.repeat(3-done.s);
-    h+=`<div style="text-align:center;margin:8px 0"><div style="font:800 30px var(--disp);color:#E5A800">${st}</div><div style="font-weight:800">${L(`You made $${done.v.toFixed(1)} of a possible $${done.best.toFixed(1)} · ${done.pct}%`,`Olası $${done.best.toFixed(1)}’ın $${done.v.toFixed(1)}’ını yaptın · %${done.pct}`)}</div>
-      <div style="font-size:13px;color:var(--soft);margin-top:4px">${L(`Surprise: ${String(M.surprise.h).padStart(2,'0')}:00 ${M.surprise.up?'jumped':'collapsed'}. A new market tomorrow.`,`Sürpriz: ${String(M.surprise.h).padStart(2,'0')}:00 ${M.surprise.up?'fırladı':'çöktü'}. Yarın yeni piyasa.`)}</div>
-      <div style="font:800 18px monospace;margin:8px 0">${done.code}</div><button id="dShare" style="width:100%;margin-top:10px;background:#1E2433;color:#fff;border:0;border-radius:12px;padding:11px 14px;font-weight:800">📤 ${L('Share the result','Sonucu paylaş')}</button></div>`;}
-  else h+=`<button id="dLock" style="opacity:${nC&&nD?1:.4};width:100%;margin-top:10px;background:#1E2433;color:#fff;border:0;border-radius:12px;padding:11px 14px;font-weight:800" ${nC&&nD?'':'disabled'}>🔒 ${L('Lock and see the real prices','Kilitle ve gerçek fiyatları gör')}</button>`;
+  const BS='width:100%;margin-top:8px;border:0;border-radius:12px;padding:11px 14px;font-weight:800;';
+  if(res){const st=res.s,off=used.filter((u,i)=>res.pick[i]&&!u).length,prac=!!(dPrac&&dPrac.res);
+    const why=res.v<=0?L('You lost money: you sold for less than you paid. Charge in the cheapest hours, sell in the dearest ones after them.','Zarar ettin: aldığından ucuza sattın. En ucuz saatlerde şarj et, sonrasındaki en pahalı saatlerde sat.')
+      :st===3?L('Near perfect. You read the day well.','Neredeyse kusursuz. Günü iyi okudun.')
+      :L('Profit made — but the best plan made more. Look at where the real prices differed from the forecast.','Kâr ettin — ama en iyi plan daha fazlasını yapıyordu. Gerçek fiyatın tahminden saptığı saatlere bak.');
+    h+=`<div style="text-align:center;margin:6px 0">${prac?`<div style="font-weight:800;color:var(--soft)">🔁 ${L('Practice round — no reward','Alıştırma turu — ödülsüz')}</div>`:''}
+      <div style="font:800 30px var(--disp);color:#E5A800">${'★'.repeat(st)}<span style="color:#C5CCD8">${'★'.repeat(3-st)}</span></div><div style="font-weight:800">${st} ${L('stars','yıldız')} · ${L('score','skor')} %${res.pct}</div>
+      <div style="display:flex;justify-content:space-around;margin:8px 0;font-size:13px"><div>${L('Your profit','Kârın')}<br><b style="font-size:17px;color:${res.v>0?'#23B26D':'#E8364F'}">${res.v<0?'−':''}$${Math.abs(res.v).toFixed(1)}</b></div><div>${L('Best possible','Mümkün en iyi')}<br><b style="font-size:17px">$${res.best.toFixed(1)}</b></div></div>
+      <div style="font-size:13px;color:var(--soft)">${why}${off?' '+L(`${off} pick(s) did not count (selling from an empty battery or charging a full one) — shown crossed out.`,`${off} seçimin sayılmadı (boş bataryadan satış ya da dolu bataryaya şarj) — üstü çizili.`):''} ${L(`Surprise: ${String(M.surprise.h).padStart(2,'0')}:00 ${M.surprise.up?'jumped':'collapsed'}.`,`Sürpriz: ${String(M.surprise.h).padStart(2,'0')}:00 ${M.surprise.up?'fırladı':'çöktü'}.`)}</div>
+      ${prac?'':`<div style="font:800 18px monospace;margin:8px 0">${res.code}</div><button id="dShare" style="${BS}background:#1E2433;color:#fff">📤 ${L('Share the result','Sonucu paylaş')}</button>`}
+      <button id="dPrac" style="${BS}background:#EEF1F6;color:#1D2433">🔁 ${L('Practice again (no reward) · new market tomorrow','Tekrar dene (ödülsüz) · yarın yeni piyasa')}</button></div>`;}
+  else h+=`<button id="dLock" style="${BS}background:#1E2433;color:#fff;opacity:${ready?1:.4}" ${ready?'':'disabled'}>🔒 ${ready?L('Lock and see the real prices','Kilitle ve gerçek fiyatları gör'):L(`Pick at least ${D_CAP} charge and ${D_CAP} sell hours`,`En az ${D_CAP} şarj ve ${D_CAP} satış saati seç`)}</button>`;
   return h;}
-function dailyLock(){const k=dayKey();if(prof().daily[k]||!dPick)return;const M=dMarket(k),v=dSim(M.ac,dPick.p),best=dBest(M.ac);
+function dailyLock(){const k=dayKey(),M=dMarket(k);
+  if(dPrac){const v=dSim(M.ac,dPrac.p),best=dBest(M.ac),pct=Math.max(0,Math.min(100,Math.round(v/Math.max(0.01,best)*100)));dPrac.res={pick:dPrac.p.slice(),v,best,pct,s:v>0?dStars(pct/100):0};try{sfx.goal();}catch(e){}return;}
+  if(prof().daily[k]||!dPick)return;const v=dSim(M.ac,dPick.p),best=dBest(M.ac);
   const pct=Math.max(0,Math.min(100,Math.round(v/Math.max(0.01,best)*100))),s=v>0?dStars(pct/100):0;
   const P=prof();P.daily[k]={pick:dPick.p.slice(),v,best,pct,s,code:dCode(k,pct)};
   const ks=Object.keys(P.daily).sort();while(ks.length>40)delete P.daily[ks.shift()];
@@ -10742,14 +10761,15 @@ function careerHud(){try{
 $('careerBtn').onclick=()=>{openCareer();try{trackOnce('career-open');}catch(e){}};
 $('mgLine').onclick=()=>openCareer('mg');
 $('carClose').onclick=()=>$('mCar').classList.remove('on');
-$('carTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-ct]');if(!b)return;carTab=b.dataset.ct;sfx.pick();openCareer();});
+$('carTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-ct]');if(!b)return;carTab=b.dataset.ct;if(dPrac&&dPrac.res)dPrac=null;sfx.pick();openCareer();});
 $('carBody').addEventListener('click',e=>{
   if(e.target.closest('#carLook')){$('mCar').classList.remove('on');openLook();return;}
   if(e.target.closest('#dShare')){dailyShare();return;}
   if(e.target.closest('#dLock')){dailyLock();openCareer();return;}
+  if(e.target.closest('#dPrac')){dPrac={p:Array(24).fill(0),res:null};dMode=1;openCareer();return;}
   const m=e.target.closest('button[data-dm]');if(m){dMode=+m.dataset.dm;openCareer();return;}
-  const h=e.target.closest('button[data-dh]');if(h&&dPick&&!dailyDone()){const i=+h.dataset.dh,cur=dPick.p[i];
-    if(cur===dMode)dPick.p[i]=0;else if(dPick.p.filter(x=>x===dMode).length<D_N)dPick.p[i]=dMode;else{toast(L(`You already picked ${D_N} hours. Tap one to clear it.`,`Zaten ${D_N} saat seçtin. Birine dokunup kaldır.`),'');return;}
+  const h=e.target.closest('button[data-dh]');const PP=dPrac&&!dPrac.res?dPrac.p:(!dailyDone()&&dPick?dPick.p:null);if(h&&PP){const i=+h.dataset.dh,cur=PP[i];
+    if(cur===dMode)PP[i]=0;else if(PP.filter(x=>x===dMode).length<D_N)PP[i]=dMode;else{toast(L(`You already picked ${D_N} hours. Tap one to clear it.`,`Zaten ${D_N} saat seçtin. Birine dokunup kaldır.`),'');return;}
     sfx.pick();openCareer();}});
 function careerBoot(){try{if(!careerOn())return;prof();mgList();if(!cozy()&&!inClassic())pmax('lvl',sev());
   if(!dailyDone())setTimeout(()=>{if(playing&&careerOn()&&!dailyDone())toast(L('📈 Today’s daily market is ready — tap 💼.','📈 Günün piyasası hazır — 💼’a dokun.'),'');},9000);}catch(e){console.error('career',e);}}
@@ -10851,7 +10871,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.90.9';
+const GAME_VERSION='0.90.10';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
