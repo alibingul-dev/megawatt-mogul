@@ -470,7 +470,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.91.0</div>
+  <div class="t-ver" id="tVer">v0.92.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -514,7 +514,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
 </div>
 <canvas id="mini" width="90" height="128" aria-label="Mini map. Tap to enlarge."></canvas>
 <div id="leftCol"><button class="rb" id="worldBtn" aria-label="Levels" hidden><span>⭐</span><span class="cap" id="cap-world">Level 1</span></button><button class="rb" id="careerBtn" aria-label="Career" hidden><span>💼</span><span class="cap" id="cap-car">+0%</span><span class="badge" id="carDot" hidden>!</span></button><button class="rb" id="progExit" aria-label="Close the mode" hidden style="margin-top:8px"><span>🎓</span><span class="cap" id="cap-pexit">Close</span></button></div>
-<div class="modal" id="mMap"><canvas id="bigmap" aria-label="Map"></canvas></div>
+<div class="modal" id="mMap"><div style="position:relative"><canvas id="bigmap" aria-label="Map"></canvas><button id="mapX" type="button" aria-label="Close" style="position:absolute;top:8px;right:8px;width:38px;height:38px;min-width:0;padding:0;border-radius:50%;background:#fff;border:0;color:#1D2433;font-size:18px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.25)">✕</button></div></div>
 <div id="flashOv"></div>
 <canvas id="fxCanvas" hidden></canvas>
 <div id="toasts" aria-live="polite"></div>
@@ -715,7 +715,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.91.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.92.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -4893,14 +4893,20 @@ const TOWNS=[
   {id:'town1',x:170,y:1565,r:70,mult:0.92,sat:0.06},
   {id:'town2',x:1040,y:1930,r:70,mult:0.88,sat:0.07},
   {id:'town3',x:480,y:2290,r:70,mult:0.9,sat:0.06},
+  {id:'village1',x:190,y:1040,r:60,mult:0.95,sat:0.08},   // v0.92: two villages in the home valley, from the crew level
+  {id:'village2',x:930,y:1140,r:60,mult:0.95,sat:0.08},
 ];
 const townsOn=()=>TOWNS.filter(t=>built(t.id));
 function markets(){return [{id:'city',x:CITY.x,y:CITY.y,r:CITY.r,mult:1,sat:0.035}].concat(townsOn(),(S&&S.blds||[]).map(b=>({id:b.id,x:b.x,y:b.y,r:BLD[b.k].r,mult:0.95,sat:0.05,bld:b})));}
 function marketSat(m){return m.id==='city'?S.sat:((S.satT&&S.satT[m.id])||0);}
+/* v0.92: trees, flowers and bushes planted around a market make it a nicer place to live — more people, more demand:
+   +1.5% on its price each, up to +15% */
+const LIFE_DECO=['tree','flowers','bush'];
+function lifeBonus(m){const r=(m.r||80)+220;let n=0;for(const d of (S.deco||[]))if(LIFE_DECO.includes(d.k)&&Math.hypot(d.x-m.x,d.y-m.y)<r)n++;return Math.min(0.15,n*0.015);}
 function priceAt(m){
-  if(m.id==='city')return priceNow();
+  if(m.id==='city')return priceNow()*(1+lifeBonus(m));
   const t=hourNow(),ev=eventNow();
-  return Math.max(1,basePrice(Math.floor(t)%24,t)*m.mult/(1+0.5*marketSat(m)*(ev&&ev.sat||1)));
+  return Math.max(1,basePrice(Math.floor(t)%24,t)*m.mult*(1+lifeBonus(m))/(1+0.5*marketSat(m)*(ev&&ev.sat||1)));
 }
 function nearestMarket(o){return markets().sort((a,b)=>dist(o,a)-dist(o,b))[0];}
 /* ---- per-plant grid connection: a share of this plant's output goes straight to the
@@ -5312,6 +5318,8 @@ const PADS=[
   {id:'ridge',kind:'gate',region:'ridge',label:['Open the windy ridge','Rüzgârlı sırtı aç'],icon:'🚧',x:700,y:1180,cost:1500,req:'bat'},
   {id:'batridge',kind:'build',type:'battery',x:950,y:1580,cost:3500,req:'ridge'},
   {id:'town1',kind:'build',type:'town',x:170,y:1565,cost:6000,req:'ridge'},
+  {id:'village1',kind:'build',type:'town',x:190,y:1040,cost:2500,req:null,vil:1},
+  {id:'village2',kind:'build',type:'town',x:930,y:1140,cost:7500,req:null,vil:1},
   {id:'w1',kind:'build',type:'bigwind',x:300,y:1340,cost:2500,req:'ridge'},
   {id:'w2',kind:'build',type:'bigwind',x:560,y:1400,cost:4500,req:'w1'},
   {id:'w3',kind:'build',type:'bigwind',x:840,y:1340,cost:8000,req:'w2'},
@@ -5681,7 +5689,9 @@ function makeStaff(){
   const used=(S.crew.staff||[]).map(x=>x&&x.name);
   let name=pool[Math.floor(Math.random()*pool.length)],guard=0;
   while(used.includes(name)&&guard++<40)name=pool[Math.floor(Math.random()*pool.length)];
-  return {name,f:rollSkill(),r:rollSkill(),s:rollSkill(),sh:0};
+  let r=rollSkill();   // v0.92: deeper in the ladder (lines everywhere) more people come with repair hands
+  try{const lv=sev();if(!inClassic()&&!cozy()&&lv>=9&&Math.random()<Math.min(0.6,(lv-8)*0.07))r=Math.min(5,Math.max(r,rollSkill())+1);}catch(e){}
+  return {name,f:rollSkill(),r,s:rollSkill(),sh:0};
 }
 function staffOf(i){
   S.crew.staff=S.crew.staff||[];
@@ -5747,19 +5757,27 @@ function fbCount(t){return S.plants.filter(p=>p.type===t&&!p.prog&&p.id!=='t1').
 function reqDone(id){if(built(id))return true;const q=pad(id);return !!(q&&q.kind==='build'&&FREE_BASE[q.type]&&fbLad()&&fbCount(q.type)>=fbPads(q.type).indexOf(q)+1);}
 /* v0.91: a level that brings a new plant starts with that plant. The goal line points at it, the first one
    is on the house, and the land it needs (regions) is already open. */
-const FOCUS={4:{ty:['battery'],pad:'bat',t:['🎯 Build the battery station — this one is on us','🎯 Batarya istasyonunu kur — bu bizden']},
-  7:{ty:['river'],t:['🎯 Build a run-of-river plant on the river bank (🏗️) — this one is on us','🎯 Nehir kıyısına akarsu santrali kur (🏗️) — bu bizden']},
-  11:{ty:['bigwind','solarfarm'],t:['🎯 Build a big turbine or a solar farm (🏗️) — the first is on us','🎯 Büyük türbin ya da güneş çiftliği kur (🏗️) — ilki bizden']},
-  15:{ty:['dam'],pad:'d1',reg:['ridge','desert'],t:['🎯 Build the dam in the solar desert — this one is on us','🎯 Güneş çölündeki barajı kur — bu bizden']},
-  17:{ty:['offshore'],reg:['ridge','desert','coast'],t:['🎯 Build a sea turbine off the coast (🏗️) — the first is on us','🎯 Kıyıya bir deniz türbini kur (🏗️) — ilki bizden']},
-  18:{ty:['nuclear'],pad:'n1',reg:['east'],t:['🎯 Build the nuclear plant on the east bank — this one is on us','🎯 Doğu kıyısındaki nükleer santrali kur — bu bizden']}};
+const FOCUS={4:{ty:['battery'],pad:'bat',t:['🎯 Build the battery station','🎯 Batarya istasyonunu kur']},
+  7:{ty:['river'],t:['🎯 Build a run-of-river plant on the river bank (🏗️)','🎯 Nehir kıyısına akarsu santrali kur (🏗️)']},
+  11:{ty:['bigwind','solarfarm'],t:['🎯 Build a big turbine or a solar farm (🏗️)','🎯 Büyük türbin ya da güneş çiftliği kur (🏗️)']},
+  15:{ty:['dam'],pad:'d1',reg:['ridge','desert'],t:['🎯 Build the dam in the solar desert','🎯 Güneş çölündeki barajı kur']},
+  17:{ty:['offshore'],reg:['ridge','desert','coast'],t:['🎯 Build a sea turbine off the coast (🏗️)','🎯 Kıyıya bir deniz türbini kur (🏗️)']},
+  18:{ty:['nuclear'],pad:'n1',reg:['east'],t:['🎯 Build the nuclear plant on the east bank','🎯 Doğu kıyısındaki nükleer santrali kur']}};
 function focusLv(){try{if(typeof S==='undefined'||!S||!S.lad||inClassic()||inProg()||cozy())return null;return FOCUS[sev()]||null;}catch(e){return null;}}
 function focusHave(F){return (F.pad&&built(F.pad))||S.plants.some(p=>F.ty.includes(p.type));}
 function focusFree(t){const F=focusLv();return !!F&&F.ty.includes(t)&&!focusHave(F);}
-function focusGoal(){const F=focusLv();if(!F||focusHave(F))return null;return {t:F.t,at:()=>F.pad?pad(F.pad):null,r:0};}
+/* v0.92: the focus plant is not a gift. It waits as a square on the map; stand on it and save up for it. */
+function focusPad(){const F=focusLv();if(!F||focusHave(F))return null;if(F.pad)return pad(F.pad);
+  const id='fx_'+F.ty[0];let p=PADS.find(q=>q.id===id);if(p)return p;
+  let sp=S.fxPad&&S.fxPad.type===F.ty[0]?S.fxPad:null;
+  if(!sp){let pk=[];try{pk=suggestSpots(F.ty[0]);}catch(e){}if(!pk.length)return null;sp=S.fxPad={type:F.ty[0],x:pk[0].x,y:pk[0].y,cost:freeCost(F.ty[0])};}
+  p={id,kind:'build',type:sp.type,x:sp.x,y:sp.y,cost:sp.cost,req:null,fx:1};PADS.push(p);return p;}
+function focusGoal(){const F=focusLv();if(!F||focusHave(F))return null;const P=focusPad();if(!P)return null;const left=Math.max(0,padCost(P)-(S.paid[P.id]||0));
+  return {t:[`🎯 ${tt(PLANT_TYPES[P.type]?PLANT_TYPES[P.type].name:['Battery station','Batarya istasyonu'])}: stand on its square on the map and save up · $${fmt(left)} to go`,
+             `🎯 ${tt(PLANT_TYPES[P.type]?PLANT_TYPES[P.type].name:['Battery station','Batarya istasyonu'])}: haritadaki karesine git, parayı biriktir · $${fmt(left)} kaldı`],at:()=>P,r:0};}
 function prodAdd(p){if(inPack())return;const st=S.stats.prod=S.stats.prod||{};st[p.type]=(st[p.type]||0)+1;}
 function prodOf(...ty){const st=S.stats.prod||{};return ty.reduce((a,t)=>a+(st[t]||0),0);}
-function freeCost(t){if(focusFree(t))return 0;if(fbLad()&&fbPads(t).length){const c=fbPads(t).map(x=>x.cost),n=fbCount(t);
+function freeCost(t){if(fbLad()&&fbPads(t).length){const c=fbPads(t).map(x=>x.cost),n=fbCount(t);
     return Math.max(1,Math.round((n<c.length?c[n]:c[c.length-1]*Math.pow(1.25,n-c.length+1))*perk('build')));}
   return freeCostOld(t);}
 function freeCostOld(t){const n=S.plants.filter(p=>p.free&&!p.prog&&p.type===t).length;return Math.round(FREE_BASE[t]*Math.pow(1.25,n)*perk('build'));}
@@ -6003,8 +6021,15 @@ function placeTick(){
   if(placing.t==='road'){const n=computeRoadRun().length;b.disabled=!n||S.cash<DECO.road.c;$('pbText').textContent=n?L(`🛣️ ${n} pieces fit this way. Draw them first.`,`🛣️ Bu yöne ${n} parça sığıyor. Önce çiz.`):'⛔ '+L('No room for a road this way.','Bu yönde yola yer yok.');}
   if(placing.t==='axe'&&!st.why)$('pbText').textContent=L(`🪓 ${treesNear(sp.x,sp.y,AXE_R).length} trees in the ring.`,`🪓 Halkada ${treesNear(sp.x,sp.y,AXE_R).length} ağaç var.`)+(poor?' · '+L('not enough money','para yetmiyor'):'');
 }
+/* v0.92: a suggested spot is not built from afar — the character walks there first, then it goes up */
+let walkBuild=null;
 function confirmPlace(){
-  if(!placing)return;if(placing.t==='road'){roadGo();return;}const t=placing.t,sp=freeSpot(t),mv=placing.mode==='move'||!!placing.moveId,mid=placing.moveId||placing.id;
+  if(!placing)return;if(placing.t==='road'){roadGo();return;}
+  if(placing.mode==='sugg'&&!placing.walked){const sp0=placing.list[placing.i],t0=placing.t,mv0=!!placing.moveId;
+    const c0=mv0?moveCost(S.plants.find(q=>q.id===placing.moveId)||{}):(isBld(t0)?Math.round(BLD[t0].c*perk('build')):freeCost(t0));
+    if(S.cash<c0){toast(L(`Not enough cash: $${fmt(c0)} needed.`,`Para yetmiyor: $${fmt(c0)} gerekli.`),'');return;}
+    walkBuild={t:t0,sp:sp0,moveId:placing.moveId||null,t0:performance.now(),best:1e9,stuck:0};stopPlacing();
+    toast(L('🚶 Walking to the spot. It goes up when you arrive — touch the joystick to cancel.','🚶 Yerine yürüyorsun. Varınca kurulur — iptal için joystick’e dokun.'),'');return;}const t=placing.t,sp=freeSpot(t),mv=placing.mode==='move'||!!placing.moveId,mid=placing.moveId||placing.id;
   const st=spotState(t,sp.x,sp.y,mv?mid:null);if(st.why)return;
   if(isBld(t)){const c=Math.round(BLD[t].c*perk('build'));if(S.cash<c)return;S.cash-=c;S.bldN=(S.bldN||0)+1;
     const same=(S.blds||[]).filter(b=>b.k===t).length;const b={id:'bd'+S.bldN,k:t,x:sp.x,y:sp.y,code:BLD[t].pre+(same+1),del:0,con:null,next:S.day+7,cost:c};
@@ -6014,6 +6039,7 @@ function confirmPlace(){
   if(t==='axe'){const n=treesNear(sp.x,sp.y,AXE_R).length,c=DECO.axe.c*n;if(!n||S.cash<c)return;S.cash-=c;cutTreesAt(sp.x,sp.y,AXE_R);sfx.build();logLedger('build',-c,'axe');
     toast(L(`🪓 ${n} trees cut for $${fmt(c)}.`,`🪓 ${n} ağaç $${fmt(c)} karşılığında kesildi.`),'good');try{trackOnce('axe');}catch(e){}save();return;}   // stay in placing mode
   if(isDeco(t)){const c=DECO[t].c;if(S.cash<c)return;S.cash-=c;const d={k:t,x:sp.x,y:sp.y,r:sp.r||0};(S.deco=S.deco||[]).push(d);addDecoObj(d);sfx.build();
+    if(LIFE_DECO.includes(t)){const m=markets().find(q=>!q.bld&&Math.hypot(q.x-d.x,q.y-d.y)<(q.r||80)+220);if(m)toast(L(`🌳 ${m.id==='city'?'City':'Town'} demand +${Math.round(lifeBonus(m)*100)}% (max 15%)`,`🌳 ${m.id==='city'?'Şehir':'Kasaba'} talebi +%${Math.round(lifeBonus(m)*100)} (en fazla %15)`),'good');else hint('lifedeco',L('🌳 Plant trees, flowers and bushes near the city or a town: each adds 1.5% to its demand (up to 15%).','🌳 Ağaç, çiçek ve çalıyı şehrin ya da bir kasabanın yakınına dik: her biri talebine %1,5 ekler (en fazla %15).'),'');}
     try{trackOnce('deco-'+t);}catch(e){}save();return;}      // stay in placing mode: lay the next one
   if(mv){const p=S.plants.find(q=>q.id===mid);if(!p)return stopPlacing();const c=moveCost(p);if(S.cash<c)return;
     S.cash-=c;p.x=sp.x;p.y=sp.y;p.q=st.q;clearFor(p.type,sp.x,sp.y);
@@ -6083,9 +6109,52 @@ function renderBuild(){
     return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BUILD_ICON[t]||''} <b>${tt(PLANT_TYPES[t].name)}</b></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">$${fmt(c)}<button data-tip="${t}" style="padding:4px 8px;min-height:0">📍</button><button class="pri" data-fb="${t}" ${no?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')
     +(nm?`<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>↔️ ${L('Nearby','Yakındaki')}: <b>${codeOf(nm.p.id)}</b></span><span style="display:flex;gap:6px">${suggestSpots(nm.p.type,nm.p.id).length?`<button data-mvtip="${nm.p.id}" style="padding:4px 8px;min-height:0">📍</button>`:""}<button class="pri" data-mv="${nm.p.id}" style="padding:4px 12px;min-height:0">${L('Move','Taşı')} $${fmt(moveCost(nm.p))}</button></span></div>`
         :`<p style="font-size:12.5px;margin-top:10px">↔️ ${L('To move a plant, stand next to it and open this again.','Bir santrali taşımak için yanında dur ve burayı tekrar aç.')}</p>`)
-    +`<h3 style="margin:12px 0 4px">${L('Roads & decoration','Yol ve süs')}</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">`+Object.keys(DECO).map(k=>`<button data-fb="${k}" ${S.cash<DECO[k].c?'disabled':''} style="padding:6px 4px;min-height:0;font-size:12.5px">${DECO[k].i} ${tt(DECO[k].n)}<br><small>$${DECO[k].c}</small></button>`).join('')+`</div><h3 style="margin:12px 0 4px">${L('Buildings & contracts','Binalar ve sözleşmeler')}</h3>`+Object.keys(BLD).map(k=>{const c=Math.round(BLD[k].c*perk('build'));return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BLD[k].i} <b>${tt(BLD[k].n)}</b><br><small>${L(`buys ~${fmt(BLD[k].need)}/day`,`günde ~${fmt(BLD[k].need)} alır`)}</small></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">$${fmt(c)}<button class="pri" data-fb="${k}" ${S.cash<c?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')+`<p style="font-size:12px;margin-top:6px">${L('Roads make you 30% faster. Sheep next to solar panels add 5%. Decorations stay placeable one after another — tap ✕ when done.','Yollar seni %30 hızlandırır. Güneş panellerinin yanındaki koyunlar %5 katar. Süsler art arda yerleştirilir — bitince ✕.')}</p>`;
+    +`<h3 style="margin:12px 0 4px">${L('Roads & decoration','Yol ve süs')}</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">`+Object.keys(DECO).map(k=>`<button data-fb="${k}" ${S.cash<DECO[k].c?'disabled':''} style="padding:6px 4px;min-height:0;font-size:12.5px">${DECO[k].i} ${tt(DECO[k].n)}<br><small>$${DECO[k].c}</small></button>`).join('')+`</div><h3 style="margin:12px 0 4px">${L('Buildings & contracts','Binalar ve sözleşmeler')}</h3>`+Object.keys(BLD).map(k=>{const c=Math.round(BLD[k].c*perk('build'));return `<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${BLD[k].i} <b>${tt(BLD[k].n)}</b><br><small>${L(`buys ~${fmt(BLD[k].need)}/day`,`günde ~${fmt(BLD[k].need)} alır`)}</small></span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">$${fmt(c)}<button class="pri" data-fb="${k}" ${S.cash<c?'disabled':''} style="padding:4px 10px;min-height:0">${L('Place','Yerleştir')}</button></span></div>`;}).join('')+`<p style="font-size:12px;margin-top:6px">${L('Roads make you 30% faster. Sheep next to solar panels add 5%. Trees, flowers and bushes near the city or a town add 1.5% demand each (up to 15%). Decorations stay placeable one after another — tap ✕ when done.','Yollar seni %30 hızlandırır. Güneş panellerinin yanındaki koyunlar %5 katar. Şehir ya da kasaba yakınındaki ağaç, çiçek ve çalı talebe %1,5 ekler (en fazla %15). Süsler art arda yerleştirilir — bitince ✕.')}</p>`;
+  try{$('bldBody').insertAdjacentHTML('afterbegin',bldExtraHtml());}catch(e){console.error(e);}
 }
 const upCost=p=>Math.round(p.base*Math.pow(p.growth,S.up[p.key]));
+/* v0.92: the battery's upgrades live here instead of as squares on the map; the battery can be moved;
+   a small turbine can be upgraded to a big one where it stands */
+const BAT_UPG=['batcap','bateff','grid'];
+function upgOk(p){return p.key==='grid'?has('grid')&&built('bat')&&S.up.batcap>0:has('battery')&&built('bat');}
+function buyUpg(id){const p=PADS.find(q=>q.id===id);if(!p||padDone(p))return;const c=padCost(p);
+  if(S.cash<c){toast(L(`Not enough cash: $${fmt(c)} needed.`,`Para yetmiyor: $${fmt(c)} gerekli.`),'');return;}
+  S.cash-=c;S.paid[p.id]=(S.paid[p.id]||0)+c;completePad(p);}
+function depotShift(D,x,y){const dx=x-D.x,dy=y-D.y;D.x=x;D.y=y;D.store.x+=dx;D.store.y+=dy;D.take.x+=dx;D.take.y+=dy;if(D.id==='bat'){BAT.x=x;BAT.y=y;}
+  const o=depotObjs[D.id];if(o){const[X,Z]=W3(x,y);o.g.position.set(X,0,Z);o.sp.position.set(D.store.x*U,0.05,D.store.y*U);o.tp.position.set(D.take.x*U,0.05,D.take.y*U);}}
+function batPosApply(){for(const id in (S.batPos||{})){const D=DEPOTS.find(d=>d.id===id),q=S.batPos[id];if(D&&q)depotShift(D,q.x,q.y);}}
+function batMoveCost(D){const pd=pad(D.id);return Math.max(50,Math.round(((pd&&pd.cost)||250)*0.2*perk('build')));}
+function batMoveWhy(D,x,y){
+  if(x<80||x>WORLD.w-80||y<120||y>LAND_H-120)return L('Too close to the edge of the map.','Haritanın kenarına çok yakın.');
+  if(regionLocked(y)||(!S.regions.east&&x>EAST.x0-90))return L('This area is not open yet.','Bu bölge henüz açık değil.');
+  for(const q of [{x,y},{x:x-70,y:y+135},{x:x+70,y:y+135}]){if(onRiver(q.x,q.y,60))return L('Too close to the river.','Nehre çok yakın.');
+    if(Math.hypot(q.x-CITY.x,q.y-CITY.y)<CITY.r+80||inSkyline(q.x,q.y,60)||Math.hypot(q.x-HQ.x,q.y-HQ.y)<150)return L('Too close to a building.','Bir binaya çok yakın.');
+    if((Math.abs(q.x-700)<45&&q.y>320)||(Math.abs(q.y-700)<45&&q.x>250&&q.x<1140))return L('That is the road.','Burası yol.');}
+  if(S.plants.some(p=>Math.hypot(p.x-x,p.y-y)<130))return L('Too close to a plant.','Bir santrale çok yakın.');
+  if(DEPOTS.some(d=>d!==D&&built(d.id)&&Math.hypot(d.x-x,d.y-y)<220))return L('Too close to another battery.','Başka bir bataryaya çok yakın.');
+  return null;}
+function moveBattery(id){const D=DEPOTS.find(d=>d.id===id);if(!D||!built(id))return;const f=S.face||0,x=Math.round(S.px+Math.sin(f)*150),y=Math.round(S.py+Math.cos(f)*150-60);
+  const why=batMoveWhy(D,x,y);if(why){toast('🔋 '+why+' '+L('Walk somewhere open and try again.','Açık bir yere yürü, tekrar dene.'),'');return;}
+  const c=batMoveCost(D);if(S.cash<c){toast(L(`Not enough cash: $${fmt(c)} needed.`,`Para yetmiyor: $${fmt(c)} gerekli.`),'');return;}
+  S.cash-=c;depotShift(D,x,y);(S.batPos=S.batPos||{})[id]={x,y};pops[id]=1;sfx.build();logLedger('move',-c,codeOf(id));
+  toast(L(`🔋 Battery moved for $${fmt(c)}.`,`🔋 Batarya $${fmt(c)} karşılığında taşındı.`),'good');try{trackOnce('bat-move');}catch(e){}save();$('mBuild').classList.remove('on');}
+function upBigCost(){return Math.round(freeCostOld('bigwind')*0.75);}
+function upBigWhy(p){if(!typeOk('bigwind'))return L('Big turbines open at a later level.','Büyük türbinler sonraki bir seviyede açılır.');return freeWhyNot(p.x,p.y,'bigwind',p.id);}
+function upgradeTurbine(id){const p=S.plants.find(q=>q.id===id);if(!p||p.type!=='turbine')return;const why=upBigWhy(p);if(why){toast(why,'');return;}
+  const c=upBigCost();if(S.cash<c){toast(L(`Not enough cash: $${fmt(c)} needed.`,`Para yetmiyor: $${fmt(c)} gerekli.`),'');return;}
+  S.cash-=c;const old=codeOf(p.id);p.type='bigwind';p.free=true;p.code=freeCode('bigwind');p.gen=1;p.born=gameNow();p.pile=0;p.ages=[];
+  if(plantObjs[p.id]){plantObjs[p.id].parent&&scene.remove(plantObjs[p.id]);delete plantObjs[p.id];}pops[p.id]=1;sfx.build();logLedger('build',-c,p.code);
+  try{pst('build');mgHit('build',1);}catch(e){}
+  toast(L(`⬆️ ${old} is now big turbine ${p.code} · $${fmt(c)}.`,`⬆️ ${old} artık büyük türbin ${p.code} · $${fmt(c)}.`),'good');save();$('mBuild').classList.remove('on');}
+function bldExtraHtml(){let h='';const row=(l,r)=>`<div class="scale" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08)"><span>${l}</span><span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:700">${r}</span></div>`;
+  const nm=nearMovable();
+  if(nm&&nm.p.type==='turbine'&&typeOk('bigwind')){const c=upBigCost(),why=upBigWhy(nm.p);
+    h+=row(`⬆️ <b>${codeOf(nm.p.id)}</b> → ${L('big turbine','büyük türbin')}${why?`<br><small style="color:var(--soft)">${why}</small>`:''}`,`$${fmt(c)}<button class="pri" data-upbig="${nm.p.id}" ${why||S.cash<c?'disabled':''} style="padding:4px 10px;min-height:0">${L('Upgrade','Yükselt')}</button>`);}
+  if(!cozy()&&has('battery')&&depotsOn().length){h+=`<h3 style="margin:10px 0 4px">🔋 ${L('Battery','Batarya')}</h3>`;
+    for(const id of BAT_UPG){const p=PADS.find(q=>q.id===id);if(!p||!upgOk(p))continue;const done=padDone(p),c=padCost(p);
+      h+=row(`${p.icon} <b>${tt(p.label)}</b> · ${L('lv','sv')} ${S.up[p.key]||0}/${p.max}`,done?L('max','tam'):`$${fmt(c)}<button class="pri" data-upg="${id}" ${S.cash<c?'disabled':''} style="padding:4px 10px;min-height:0">${L('Buy','Al')}</button>`);}
+    for(const D of depotsOn()){const c=batMoveCost(D);h+=row(`↔️ <b>${codeOf(D.id)}</b> ${D.id==='bat'?L('battery station','batarya istasyonu'):L('field depot','saha deposu')}<br><small style="color:var(--soft)">${L('Moves to just in front of you.','Tam önüne taşınır.')}</small>`,`$${fmt(c)}<button class="pri" data-batmv="${D.id}" ${S.cash<c?'disabled':''} style="padding:4px 10px;min-height:0">${L('Move here','Buraya taşı')}</button>`);}}
+  return h;}
 const carryCap=()=>8+4*S.up.bag+perk('carry');
 const speed=()=>230*(1+0.12*S.up.boots)*modMult('playerSpeed')*perk('speed')*(S.deco&&S.deco.length&&onRoad(S.px,S.py)?1.3:1);
 const batWear=()=>0.0002*(1-0.15*(S.up.bateff||0));
@@ -6377,20 +6446,26 @@ function padHelp(p){
    Goals done out of order are remembered in S.goalOut and skipped when the line reaches them. */
 function goalLocked(G){if(!G||cozy()||G.ok())return false;if(!inClassic()&&!inProg()&&/^Grow your wealth/.test(G.t[0]))return true;   // v0.88: no wealth goals on the ladder
   if(G.need&&!(typeof G.need==='function'?G.need():has(G.need)))return true;const p=G.at&&G.at();return !!(p&&p.kind&&!padVisible(p));}
-function curGoal(){const out=S.goalOut||[];for(let i=S.goal;i<GOALS.length;i++){if(out.includes(i))continue;if(goalLocked(GOALS[i]))continue;return i;}return inClassic()||cozy()?S.goal:-1;}   // v0.86: nothing doable → the level goal shows
+/* v0.92: from level 2 on, the basics line comes in a different order in every world (the first two steps stay) */
+let _gOrd=null,_gSeed=null;
+function goalOrd(){const seed=(S.seed||1)+'|'+(S.gShuf&&S.lad&&!inClassic()&&!cozy()&&sev()>1?1:0);if(_gSeed===seed&&_gOrd)return _gOrd;_gSeed=seed;
+  const o=GOALS.map((_,i)=>i);if(seed.endsWith('|1')){const r=dRng((S.seed||1)>>>0),rest=o.slice(2);for(let i=rest.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[rest[i],rest[j]]=[rest[j],rest[i]];}_gOrd=o.slice(0,2).concat(rest);}else _gOrd=o;return _gOrd;}
+function goalAt(i){return i==null||i<0?undefined:GOALS[goalOrd()[i]];}
+function curGoal(){const out=S.goalOut||[];for(let i=S.goal;i<GOALS.length;i++){if(out.includes(i))continue;if(goalLocked(goalAt(i)))continue;return i;}return inClassic()||cozy()?S.goal:-1;}   // v0.86: nothing doable → the level goal shows
 function padNeedLv(p){const k=p.kind==='upg'?({bag:'upgrades',boots:'upgrades',helper:'crew',batcap:'battery',bateff:'battery',grid:'grid'})[p.key]:
   p.kind==='gate'?(p.region==='east'?'nuclear':'regions'):({battery:'battery',town:'regions',nuclear:'nuclear'})[p.type];return k&&!has(k)?UNLOCK[k]:0;}
 function padVisible(p){
   if(p.pg)return pgPadVis(p);
   if(inPack()&&p.id!==tutPadId)return false;                  // v0.87.21: no stray squares in a company pack                                  // v0.87.16: a Part 2 plant square
-  if(p.kind==='build'&&!typeOk(p.type))return false;          // v0.86: this plant type opens at a later level
-  if(p.kind==='build'&&FREE_BASE[p.type]&&fbLad())return false;   // v0.87.9: build anywhere = no plant squares
+  if(p.kind==='build'&&!typeOk(p.type)&&!(p.vil&&has('crew')))return false;          // v0.86: this plant type opens at a later level
+  if(p.kind==='build'&&FREE_BASE[p.type]&&fbLad()&&!p.fx)return false;   // v0.87.9: build anywhere = no plant squares (the level's focus square stays)
   if(p.kind==='upg'&&(p.key==='bag'||p.key==='boots')&&!has('upgrades'))return false;
   if(p.kind==='upg'&&p.key==='helper'&&!has('crew'))return false;
   if(p.kind==='upg'&&(p.key==='batcap'||p.key==='bateff')&&!has('battery'))return false;
+  if(p.kind==='upg'&&(p.key==='batcap'||p.key==='bateff'||p.key==='grid')&&!cozy())return false;   // v0.92: bought from 🏗️, not squares
   if(p.kind==='upg'&&p.key==='grid'&&!has('grid'))return false;
   if(p.kind==='build'&&p.type==='battery'&&!has('battery'))return false;
-  if(p.kind==='build'&&p.type==='town'&&!has('regions'))return false;
+  if(p.kind==='build'&&p.type==='town'&&!has('regions')&&!(p.vil&&has('crew')))return false;
   if(p.kind==='build'&&p.type==='nuclear'&&!has('nuclear'))return false;
   if(p.kind==='gate'&&!has('regions'))return false;
   if(p.kind==='gate'&&p.region==='east'&&!has('nuclear'))return false;
@@ -6400,7 +6475,7 @@ function padVisible(p){
   if(regionLocked(p.y)&&p.kind!=='gate')return false;
   return true;
 }
-const padCost=p=>(p.kind==='build'&&focusFree(p.type))?0:Math.max(1,Math.round((p.kind==='upg'?upCost(p):p.cost)*perk('build')));
+const padCost=p=>Math.max(1,Math.round((p.kind==='upg'?upCost(p):p.cost)*perk('build')));
 const padDone=p=>p.kind==='upg'&&S.up[p.key]>=p.max;
 
 /* ======================= AUDIO ======================= */
@@ -6514,7 +6589,11 @@ function update(dt){
   if(S.satT)for(const k in S.satT)S.satT[k]=Math.max(0,S.satT[k]-Math.max(0.16,S.satT[k]*0.4)*dt);
   // player
   let[vx,vy,m]=inputVec();
-  if(m>0.05)autoGo=null;                                           // the joystick always wins
+  if(m>0.05){autoGo=null;if(walkBuild){walkBuild=null;toast(L('Build cancelled.','Kurulum iptal.'),'');}}   // the joystick always wins
+  else if(walkBuild){const w=walkBuild,dx=w.sp.x-S.px,dy=Math.min(w.sp.y+45,LAND_H-10)-S.py,l=Math.hypot(dx,dy);
+    if(l<w.best-2){w.best=l;w.stuck=0;}else w.stuck+=dt;
+    if(l<48||w.stuck>4){walkBuild=null;placing={mode:'sugg',t:w.t,list:[w.sp],i:0,moveId:w.moveId,walked:true};$('placeBar').hidden=false;confirmPlace();if(placing)stopPlacing();}
+    else{vx=dx/l;vy=dy/l;m=1;}}
   else if(autoGo){const tp=jobOpen(autoGo);
     if(!tp)autoGo=null;                                            // done by a helper, or gone
     else{const dx=tp.x-S.px,dy=Math.min(tp.y+30,LAND_H-10)-S.py,l=Math.hypot(dx,dy);
@@ -6637,7 +6716,7 @@ function update(dt){
   for(const f of floats){f.life-=dt*0.9;f.rise+=dt*1.6;}
   for(let i=floats.length-1;i>=0;i--)if(floats[i].life<=0)floats.splice(i,1);
   for(const k in pops){pops[k]-=dt*1.8;if(pops[k]<=0)delete pops[k];}
-  const gi=curGoal(),G=inProg()?null:GOALS[gi];   // v0.87.29: game goals do not run inside a program
+  const gi=curGoal(),G=inProg()?null:goalAt(gi);   // v0.87.29: game goals do not run inside a program
   if(G&&G.ok()){if(G.r)S.cash+=G.r;trackOnce('goal-'+String(gi+1).padStart(2,'0'));
     if(gi===S.goal){S.goal++;S.goalOut=(S.goalOut||[]).filter(i=>i>=S.goal);while((S.goalOut||[]).includes(S.goal)){S.goal++;}}else (S.goalOut=S.goalOut||[]).push(gi);sfx.goal();toast(G.r?`${L('Goal done','Hedef tamam')}: +$${fmt(G.r)}`:L('Goal done','Hedef tamam'),'good');}
   S.saveT=(S.saveT||0)+dt;if(S.saveT>30){S.saveT=0;save();}
@@ -6749,6 +6828,7 @@ function completePad(p){
   if(p.kind==='build'){
     S.built[p.id]=true;logLedger('build',-padCost(p),p.id);try{pst('build');mgHit('build',1);}catch(e){}
     if(p.type!=='battery'&&p.type!=='town')S.plants.push({id:p.id,type:p.type,x:p.x,y:p.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1});
+    if(p.fx){const np=S.plants[S.plants.length-1];np.free=true;np.cost=padCost(p);np.code=freeCode(p.type);S.fxPad=null;}
     if(PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='wind'){const np=S.plants[S.plants.length-1];setTimeout(()=>askBrand(np),900);}
     pops[p.id]=1;toast(`${p.type==='battery'?L('Battery station','Batarya istasyonu'):p.type==='town'?L('Town market','Kasaba pazarı'):tt(PLANT_TYPES[p.type].name)} ${L('built','kuruldu')}`,'good');
     if(p.type==='town')toast(L('Town market open. Sell right here instead of walking to the city.','Kasaba pazarı açıldı. Şehre yürümek yerine burada sat.'),'big');
@@ -7962,7 +8042,7 @@ function render(dt,now){
   // floats
   floats.forEach(f=>{place('fl'+f.id,'fl'+(f.cls?' '+f.cls:''),f.x,f.y,3+f.rise,f.txt);LB['fl'+f.id].el.style.opacity=Math.max(0,f.life);});
   // guide
-  const G=progGoalObj()||GOALS[curGoal()],tg=G?G.at():null;
+  const G=progGoalObj()||goalAt(curGoal()),tg=G?G.at():null;
   if(tg){
     const d=Math.hypot(tg.x-S.px,tg.y-S.py),a=Math.atan2(tg.x-S.px,tg.y-S.py);
     arrow.visible=d>110;arrow.position.set(PX+Math.sin(a)*1.9,0.35,PZ+Math.cos(a)*1.9);arrow.rotation.set(Math.PI/2,a,0);
@@ -7994,7 +8074,7 @@ function hud(dt){
   $('cash').textContent=fmt(S.cash);$('wealth').textContent=fmt(wealth());{const c=S.contract,d=$('dealC');d.hidden=!c;if(c){const hl=Math.max(0,Math.ceil((c.until-gameNow())/HOUR));d.textContent=`🤝 ${c.delivered}/${c.need} · ${hl}h`;}}{const L=lossLastHour(),e=$('lossC');e.hidden=L<1;if(L>=1)e.textContent=`−${L} ⚡ · ${Math.round(efficiency()*100)}%`;e.title=L>=1?(S.lang==='tr'?'Son bir saatte kaybolan enerji · verimlilik':'Energy lost in the last hour · efficiency'):'';}$('carry').textContent=`${S.carry}/${carryCap()}`;
   $('pnow').textContent='$'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
-  const G=progGoalObj()||focusGoal()||GOALS[curGoal()];const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');$('goal').style.display=G&&G.hide?'none':'';
+  const G=progGoalObj()||focusGoal()||goalAt(curGoal());const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');$('goal').style.display=G&&G.hide?'none':'';
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:inProg()?`<b class="lvlchip">🎓</b> · `:inClassic()?`<b class="lvlchip">🏛️ ${L('Classic','Klasik')}</b> · `:`<b class="lvlchip">${L('Level','Seviye')} ${sev()}</b> · `;
   const gp=G&&G.at();const gl=gp&&gp.kind&&!cozy()?padNeedLv(gp):0;
   if(!up&&!cozy()&&prestOk()){$('goal').innerHTML=chip+L(`⭐ Level ${sev()+1} · ${sevName(sev()+1)} can be opened — tap here`,`⭐ Seviye ${sev()+1} · ${sevName(sev()+1)} açılabilir — dokun`);}else
@@ -8095,7 +8175,8 @@ function renderCrew(){
     html+=`<div class="rule">
       <button class="boxhead" data-btog="${b.id}"><span>${boxShut[b.id]?'▸':'▾'} <b>${boxCode(b)}</b> ${tt(ROLES[b.role].name)} · ${SHIFTS[b.sh].icon} ${h2(SHIFTS[b.sh].from)}–${h2(SHIFTS[b.sh].to)} · ${mem.length} ${L('person','kişi')}</span><span class="bw">$${fmt(boxWage(b))}/${L('day','gün')}</span></button>
       ${boxShut[b.id]?'':`
-      <div class="seg" style="grid-template-columns:repeat(${ROLEKEYS.length},1fr)">${ROLEKEYS.map(k=>`<button data-brole="${b.id}" data-r="${k}" class="${b.role===k?'on':''}" ${(!hasBat&&k!=='sell')?'disabled':''}>${tt(ROLES[k].name)}</button>`).join('')}</div>
+      ${boxRoleOpen[b.id]?`<div class="seg" style="grid-template-columns:repeat(${ROLEKEYS.length},1fr)">${ROLEKEYS.map(k=>`<button data-brole="${b.id}" data-r="${k}" class="${b.role===k?'on':''}" ${(!hasBat&&(k==='store'||k==='peak'))?'disabled':''}>${roleIcon(k)} ${tt(ROLES[k].name)}</button>`).join('')}</div>`
+        :`<div class="assign" style="grid-template-columns:1fr auto"><button disabled style="opacity:1"><small>${L('Job','Görev')}</small><b>${roleIcon(b.role)} ${tt(ROLES[b.role].name)}</b></button><button data-brchg="${b.id}" style="padding:7px 12px;font-weight:800">🔁 ${L('Change','Değiştir')}${ROLEKEYS.length>1?` (${ROLEKEYS.length})`:''}</button></div>`}
       <div class="role-desc">${tt(ROLES[b.role].desc)}</div>
       <div class="assign">
         <button data-bset="site" data-b="${b.id}"><small>${L('Field','Saha')}</small><b>${siteLabelId(b.site)}</b></button>
@@ -8176,8 +8257,9 @@ $('crewList').addEventListener('click',e=>{
   if(e.target.closest('#boxAdd')){const nb=newBox();const t=S.crew.tab||'all';if(t!=='all')nb.role=t;boxes().push(nb);trackOnce('crew-box-new');touch();return;}
   const bd=e.target.closest('button[data-bdel]');
   if(bd){S.crew.boxes=boxes().filter(b=>b.id!==bd.dataset.bdel);if(pickFor===bd.dataset.bdel)pickFor=null;touch();return;}
+  const bc=e.target.closest('button[data-brchg]');if(bc){boxRoleOpen[bc.dataset.brchg]=1;sfx.pick();renderCrew();return;}
   const br=e.target.closest('button[data-brole]');
-  if(br&&!br.disabled){const b=findBox(br.dataset.brole);if(b)b.role=br.dataset.r;touch();return;}
+  if(br&&!br.disabled){const b=findBox(br.dataset.brole);if(b)b.role=br.dataset.r;delete boxRoleOpen[br.dataset.brole];touch();return;}
   const bs=e.target.closest('button[data-bset]');
   if(bs){const b=findBox(bs.dataset.b);if(b){
       if(bs.dataset.bset==='shift')b.sh=((b.sh||0)+1)%3;
@@ -9025,7 +9107,10 @@ $('mntBody').addEventListener('click',e=>{const b=e.target.closest('button[data-
 $('mntBtn').onclick=openMaint;
 $('buildBtn').onclick=()=>{renderBuild();$('mBuild').classList.add('on');};
 $('bldClose').onclick=()=>$('mBuild').classList.remove('on');
-$('bldBody').addEventListener('click',e=>{const b=e.target.closest('button[data-fb]');if(b&&!b.disabled){startPlacing('new',b.dataset.fb);return;}
+$('bldBody').addEventListener('click',e=>{
+  {const u=e.target.closest('button[data-upg]');if(u&&!u.disabled){buyUpg(u.dataset.upg);renderBuild();return;}
+   const mvb=e.target.closest('button[data-batmv]');if(mvb&&!mvb.disabled){moveBattery(mvb.dataset.batmv);return;}
+   const ub=e.target.closest('button[data-upbig]');if(ub&&!ub.disabled){upgradeTurbine(ub.dataset.upbig);return;}}const b=e.target.closest('button[data-fb]');if(b&&!b.disabled){startPlacing('new',b.dataset.fb);return;}
   const tp=e.target.closest('button[data-tip]');if(tp){showSuggest(tp.dataset.tip);return;}
   const mt=e.target.closest('button[data-mvtip]');if(mt){const p=S.plants.find(q=>q.id===mt.dataset.mvtip);if(p)showSuggest(p.type,p.id);return;}
   const mv=e.target.closest('button[data-mv]');if(mv){const p=S.plants.find(q=>q.id===mv.dataset.mv);if(p)startPlacing('move',p.type,p.id);}});
@@ -9034,6 +9119,7 @@ $('rankBtn').onclick=()=>{openReport(repMax());trackOnce('ladder-btn');};
 /* Go: the character walks to the job by itself. The joystick always wins (touch it and the
    walk is cancelled), and if a helper finishes the job first the walk stops. */
 let autoGo=null;
+const boxRoleOpen={};   // v0.92: a task box shows its job; 🔁 Change opens every job this level allows
 function jobOpen(j){const p=S.plants.find(q=>q.id===j.id);if(!p)return null;
   const ok=j.k==='fix'?p.broken:j.k==='line'?gridNeedsService(p):needsWork(p)&&!p.broken;return ok?p:null;}
 $('mntBody').addEventListener('click',e=>{const b=e.target.closest('button[data-go]');if(!b)return;
@@ -9128,6 +9214,13 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.92.0',t:['Walk, save, upgrade','Yürü, biriktir, yükselt'],l:[
+  ['📍 Building on a suggested spot: you walk there first, then it goes up.','📍 Önerilen yere kurarken önce oraya yürürsün, sonra kurulur.'],
+  ['A level\'s new plant is not free any more: it waits as a square on the map — stand on it and save up.','Seviyenin yeni santrali artık bedava değil: haritada kare olarak bekler — üstünde dur, parayı biriktir.'],
+  ['Battery capacity, upgrade and grid link are bought in 🏗️ Build; the battery can be moved; a small turbine can be upgraded to a big one.','Batarya kapasitesi, geliştirme ve şebeke bağlantısı 🏗️ İnşa’dan alınır; batarya taşınabilir; küçük türbin büyüğe yükseltilebilir.'],
+  ['Task boxes show their job with a 🔁 Change button for every job your level allows.','Görev kutuları işini gösterir; 🔁 Değiştir seviyenin izin verdiği tüm işleri açar.'],
+  ['Basics goals come in a different order in every new level. Two villages to sell in from the crew level; trees, flowers and bushes near a market raise its demand.','Temel hedefler her yeni seviyede farklı sırayla gelir. Ekip seviyesinden itibaren satış yapılacak iki köy; pazar yakınındaki ağaç, çiçek ve çalı talebi artırır.'],
+  ['More helpers with repair skill deeper in the ladder. The big map has a ✕.','İleri seviyelerde tamire yatkın aday artar. Büyük haritada ✕ var.']]},
  {v:'0.91.0',t:['The new plant comes first','Önce yeni santral'],l:[
   ['A level that brings a new plant (battery, river, big plants, dam, sea wind, nuclear) starts with it: the goal line points at it, the first one is free and the land it needs is open.','Yeni santral getiren seviye (batarya, akarsu, büyük santraller, baraj, deniz rüzgârı, nükleer) onunla başlar: hedef satırı onu gösterir, ilki bedava, gereken arazi açıktır.'],
   ['Those levels now ask you to use the plant, not just build it: e.g. run-of-river plants make 600 cells.','Bu seviyeler artık santrali kurmayı değil kullanmayı ister: ör. akarsu santralleri 600 hücre üretsin.']]},
@@ -9886,7 +9979,7 @@ function drawMap(cv,big){
     g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=1;
     g.strokeRect((S.px-vw/2)*k,(S.py-vh/2)*k,vw*k,vh*k);}
   // goal marker
-  const G=progGoalObj()||GOALS[curGoal()],tg=G?G.at():null;
+  const G=progGoalObj()||goalAt(curGoal()),tg=G?G.at():null;
   if(tg){const pulse=(performance.now()%1000)/1000;
     g.strokeStyle='rgba(255,210,63,'+(1-pulse).toFixed(2)+')';g.lineWidth=big?3:2;
     g.beginPath();g.arc(tg.x*k,tg.y*k,(big?8:5)+pulse*(big?10:6),0,7);g.stroke();
@@ -10421,7 +10514,7 @@ function doPrestige(){
   const P=(S.prest||0)+1,f=fresh();
   const KEEP=LAD_KEEP;
   for(const k of KEEP)if(S[k]!==undefined)f[k]=S[k];
-  f.prest=P;f.lvl=1;f.cash=0;f.lad=1;
+  f.prest=P;f.lvl=1;f.cash=0;f.lad=1;f.gShuf=1;
   {const F=FOCUS[P+1];if(F&&F.reg){f.regions=f.regions||{};for(const r of F.reg)f.regions[r]=true;}}f.prestAt=(S.prestAt||[]).concat({p:P,day:S.day,w:Math.round(wealth())});
   f.crew.boxes=[];   // v0.79.1: a new world starts with no task boxes
   S.lastSave=Date.now();
@@ -10892,7 +10985,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.91.0';
+const GAME_VERSION='0.92.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -10909,7 +11002,7 @@ function resize(){renderer.setSize(innerWidth,innerHeight,false);}
 addEventListener('resize',resize);resize();
 const had=load();let GO_IN=null;try{GO_IN=JSON.parse(sessionStorage.getItem('mwm_go')||'null');}catch(e){}if(GO_IN)lvlVeil(GO_IN.t);
 const LAD_MOVING=ladderInit(had);if(had&&!LAD_MOVING)worldsInit();if(!LAD_MOVING)ladRemap();if(!inProg()&&S.prog){S.prog=null;S.progs=[];}   // v0.86: programs live in their own worldif(had){if(!has('repair')){S.batFault=false;for(const p of S.plants){p.broken=false;p.hv=false;}}if(!has('fire')){S.batFire=0;for(const p of S.plants)p.fire=0;}}   // a level without that mechanic starts clean
-if(!inProg())try{streakCheck();}catch(e){}try{careerBoot();}catch(e){}if(had&&!cozy()&&!inClassic()&&!inProg()&&SEV[sev()]&&!S.sevIntro){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,1200);return;}S.sevIntro=1;ladIntro(sev());};setTimeout(go,2000);}if(inProg()&&S.progPending){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,800);return;}const p=PROGRAMS.find(x=>x.id===S.progPending);S.progPending=null;if(p)startProgram(p);};setTimeout(go,1200);}if(had&&(S.prest||0)>=1&&!cozy()){const gr=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(gr,1500);return;}askRateOnce();};setTimeout(gr,4000);}const bootGap=had?(Date.now()-S.lastSave)/1000:0;DAY=makeDay(S.day);syncHelpers();
+try{batPosApply();}catch(e){}if(!inProg())try{streakCheck();}catch(e){}try{careerBoot();}catch(e){}if(had&&!cozy()&&!inClassic()&&!inProg()&&SEV[sev()]&&!S.sevIntro){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,1200);return;}S.sevIntro=1;ladIntro(sev());};setTimeout(go,2000);}if(inProg()&&S.progPending){const go=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(go,800);return;}const p=PROGRAMS.find(x=>x.id===S.progPending);S.progPending=null;if(p)startProgram(p);};setTimeout(go,1200);}if(had&&(S.prest||0)>=1&&!cozy()){const gr=()=>{if(!playing||tutOpen||cardOpen||document.querySelector('.modal.on')){setTimeout(gr,1500);return;}askRateOnce();};setTimeout(gr,4000);}const bootGap=had?(Date.now()-S.lastSave)/1000:0;DAY=makeDay(S.day);syncHelpers();
 let last=0;
 async function loadKit(){
   __diag('Loading models…');
