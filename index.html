@@ -470,7 +470,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.92.0</div>
+  <div class="t-ver" id="tVer">v0.92.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -488,6 +488,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
       <div class="dealc" id="dealC" hidden></div>
       <div class="dealc" id="hotC" hidden></div>
       <div class="dealc" id="boostC" hidden style="background:#23B26D"></div>
+      <div class="dealc" id="sfkC" hidden style="background:#0E7C86"></div>
     </div>
     <div class="box market" id="mktBox" style="pointer-events:auto;cursor:pointer">
       <div><div class="pnow"><span id="pnow">0</span> <small>per cell</small></div><span class="lvl" id="lvl">Normal</span></div>
@@ -715,7 +716,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.92.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.92.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9214,6 +9215,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.92.1',t:['Clearer return, reserve on screen','Daha net dönüş, ekranda SFK'],l:[['Without a crew the away card says plainly that nobody sold, and why.','Ekip yokken dönüş kartı kimsenin satmadığını ve nedenini açıkça söyler.'],['While a reserve band is held, the top-left box shows what it pays per hour (⚖️ SFK).','Rezerv bandı tutulurken sol üst kutu saatlik kazancını gösterir (⚖️ SFK).']]},
  {v:'0.92.0',t:['Walk, save, upgrade','Yürü, biriktir, yükselt'],l:[
   ['📍 Building on a suggested spot: you walk there first, then it goes up.','📍 Önerilen yere kurarken önce oraya yürürsün, sonra kurulur.'],
   ['A level\'s new plant is not free any more: it waits as a square on the map — stand on it and save up.','Seviyenin yeni santrali artık bedava değil: haritada kare olarak bekler — üstünde dur, parayı biriktir.'],
@@ -10414,13 +10416,15 @@ function offline(secs){
   if(earned<1&&!lines.length)return;
   earned*=holdMult();const boostable=careerOn()&&secs>=1800;
   if(!lines.length)lines.push(L('✅ No trouble at all. Your plants ran smoothly.','✅ Hiç sorun yaşanmadı. Santrallerin sorunsuz çalıştı.'));
+  const noCrew=(S.up.helper||0)<=0&&earned<1;   // v0.92.1: nobody sold while you were away — say so, and say why
+  if(noCrew)lines.unshift(L('👷 Nobody sold while you were away: you have no crew yet. Your plants are full — collect and sell. Helpers sell for you even when the game is closed.','👷 Sen yokken kimse satmadı: henüz ekibin yok. Santrallerin dolu — topla ve sat. Yardımcılar oyun kapalıyken bile senin yerine satar.'));
   $('offTitle').textContent=L('While you were away','Sen yokken');
   $('offTime').textContent=L(`You were gone ${dur(secs)}. The world moved ${points.length>1?points.length-1+' day(s)':'a few hours'} ahead.`,`${dur(secs)} yoktun. Oyunda ${points.length>1?(points.length-1)+' gün':'birkaç saat'} geçti.`);
-  $('offAmt').textContent='+$0';setTimeout(()=>countUp($('offAmt'),earned,'+$'),250);
-  $('offNote').textContent=(secs>capS?L('Crew earnings stop after 8 hours. ','Ekip kazancı 8 saatten sonra durur. '):'')+L(`Your crew sold at $${realized.toFixed(1)} on average.`,`Ekibin ortalama $${realized.toFixed(1)}'den sattı.`)+(boostable?L(' 🚀 Welcome back: income ×2 for the next 5 minutes.',' 🚀 Hoş geldin: önümüzdeki 5 dakika gelir ×2.'):'');
+  $('offAmt').textContent='+$0';if(!noCrew)setTimeout(()=>countUp($('offAmt'),earned,'+$'),250);else $('offAmt').textContent=L('Plants full ⚡','Santraller dolu ⚡');
+  $('offNote').textContent=noCrew?(boostable?L('🚀 Welcome back: income ×2 for the next 5 minutes.','🚀 Hoş geldin: önümüzdeki 5 dakika gelir ×2.'):''):(secs>capS?L('Crew earnings stop after 8 hours. ','Ekip kazancı 8 saatten sonra durur. '):'')+L(`Your crew sold at $${realized.toFixed(1)} on average.`,`Ekibin ortalama $${realized.toFixed(1)}'den sattı.`)+(boostable?L(' 🚀 Welcome back: income ×2 for the next 5 minutes.',' 🚀 Hoş geldin: önümüzdeki 5 dakika gelir ×2.'):'');
   $('offLog').innerHTML=lines.map(l=>`<li>${l}</li>`).join('');
   drawEarnChart($('offChart'),points);
-  $('offChart').hidden=points.length<2;
+  $('offChart').hidden=points.length<2||noCrew;
   $('offOk').textContent=L('Collect','Topla');
   $('mOffline').classList.add('on');
   const collect=m=>{if(boostable){S.boostUntil=Date.now()+300000;try{trackOnce('boost');}catch(e){}}try{hpAdd(Math.sqrt(earned)/10);}catch(e){}S.cash+=earned*m;S.earned+=earned*m;$('mOffline').classList.remove('on');toast(`${L('Collected','Toplandı')} $${fmt(earned*m)}`,'good');save();};
@@ -10869,6 +10873,7 @@ function careerHud(){try{
   const b=$('careerBtn');b.hidden=document.body.classList.contains('title')||!careerOn();if(!b.hidden){$('cap-car').textContent='+'+holdPct()+'%';$('carDot').hidden=!!dailyDone();}
   const w=hotWin(),e=$('hotC');e.hidden=!w;if(w){const left=Math.max(0,Math.ceil((w.end-hourNow()%24)*HOUR));const m=cmbMult();
     e.textContent=`${w.k==='spike'?L('⚡ SPIKE','⚡ SIÇRAMA'):L('🌆 Peak','🌆 Zirve')} · ${left}${L('s','sn')}${m>1?` · ${L('combo','kombo')} ×${m.toFixed(1)}`:''}`;e.style.background=w.k==='spike'?'#E5A800':'#FF8A3D';}
+  {const e2=$('sfkC');let on=false;try{on=ancOn()&&ancUnits()>0&&!inPack();}catch(e){}e2.hidden=!on;if(on)e2.textContent=`⚖️ ${L('Reserve','SFK')} +$${fmt(ancHourly())}/${L('h','sa')}`;}
   const bl=boostLeft(),be=$('boostC');be.hidden=!bl||!careerOn();if(!be.hidden){const s=Math.ceil(bl/1000);be.textContent=`🚀 ×2 · ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
   const ml=$('mgLine'),g=careerOn()&&!tutOpen&&playing?mgBest():null;ml.hidden=!g;if(g){const T=mgDef(g);ml.innerHTML=`${mgText(g)} · <b>${T.k==='earn'?'$'+fmt(g.have)+'/$'+fmt(g.need):Math.floor(g.have)+'/'+g.need}</b> <small>🎁</small>`;}
 }catch(e){}}
@@ -10985,7 +10990,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.92.0';
+const GAME_VERSION='0.92.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
