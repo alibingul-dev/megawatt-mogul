@@ -400,7 +400,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 #diag{font-family:monospace;font-size:12px;max-width:88vw;text-align:left;white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.45);color:#fff;padding:8px 10px;border-radius:10px}
 @media (max-height:700px){#tChar{width:104px;height:104px}.t-char{bottom:4%;left:5%;right:auto}.t-bubble{bottom:34px;font-size:12.5px;max-width:min(200px,50vw)}.t-turb{width:78px;right:5%;left:auto}}
 #tGear{position:absolute;z-index:5;pointer-events:auto;top:calc(env(safe-area-inset-top) + 12px);right:12px;width:46px;height:46px;min-width:0;padding:0;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:22px;line-height:46px;box-shadow:0 3px 0 rgba(0,0,0,.12)}
-#tMenu{position:absolute;z-index:5;pointer-events:auto;top:calc(env(safe-area-inset-top) + 64px);right:12px}#tMenu .t-prog{margin-top:0}
+#tMenu{display:flex;flex-direction:column;align-items:flex-end;gap:8px;position:absolute;z-index:5;pointer-events:auto;top:calc(env(safe-area-inset-top) + 64px);right:12px}#tMenu .t-prog{margin-top:0}#tMenu[hidden]{display:none}#tMenu .t-lang{margin:0}
 .t-ver{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 30px);color:rgba(255,255,255,.85);font-family:var(--disp);font-size:14px;letter-spacing:.5px;font-weight:400}
 .t-credit{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 14px);color:rgba(255,255,255,.85);font-size:11px;font-weight:700}
 .t-prog{pointer-events:auto;margin-top:12px;padding:10px 20px;border-radius:14px;background:rgba(255,255,255,.92)!important;color:#1D2433!important;font-family:var(--disp);font-size:17px;font-weight:400;box-shadow:0 3px 0 rgba(0,0,0,.12)}
@@ -471,7 +471,7 @@ body.radDead #sideCol .rb:not(.zb):not(#repBtn):not(#infoBtn),body.radDead #devi
 v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…</div></div>';v0.querySelector('.lv-t').textContent=g0.t||'';document.body.appendChild(v0);}}catch(e){}</script>
 <div id="loading">
   <button id="tGear" type="button" aria-label="Settings">⚙️</button>
-  <div id="tMenu" hidden><button id="codeBtnT" class="t-prog" disabled>🔑 Enter a code</button></div>
+  <div id="tMenu" hidden><div class="t-lang"><button data-lang="en">ENG</button><button data-lang="tr">TR</button></div><button id="codeBtnT" class="t-prog" disabled>🔑 Enter a code</button></div>
   <div class="t-sky"><div class="t-sun"></div></div>
   <svg class="t-turb" viewBox="0 0 120 200" aria-hidden="true">
     <path d="M56 70 L52 196 L68 196 L64 70 Z" fill="#fff"/>
@@ -487,12 +487,11 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button id="playBtn" class="t-play" disabled>Building the grid…</button>
     <label class="t-tut"><input type="checkbox" id="tutChk" checked> <span data-i18n="showHow">Show me how to play</span></label>
     <button id="progBtn" class="t-prog" hidden>Programs</button>
-    <div class="t-lang"><button data-lang="en">ENG</button><button data-lang="tr">TR</button></div>
     <div class="t-status" id="tStatus"></div>
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.94.3</div>
+  <div class="t-ver" id="tVer">v0.95.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -727,6 +726,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
   <div class="btns setsec" id="setDisp" hidden>
     <button id="sFx">Event scenes: on</button>
     <button id="sNotif">Daily report: off</button>
+    <button id="sQuip">Crew comments: on</button>
     <button id="sShadow">Shadows: on</button>
     <button id="sFlash">Flashes: on</button>
     <button id="sUI">Panel size: 100%</button>
@@ -740,7 +740,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.94.3 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.95.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6632,6 +6632,7 @@ function update(dt){
   if(!S.regions.east&&nx>EAST.x0-16)nx=Math.min(nx,EAST.x0-16);
   S.moving=m>0.05;if(S.moving)S.face=Math.atan2(vx,vy);
   S.px=nx;S.py=ny;const P={x:S.px,y:S.py};
+  if(S.radBoom){S.cash=S.radCash;S.earned=S.radEarned;try{radUI();}catch(e){}return;}   /* v0.95: a dead level is for looking only */
   cellTick-=dt;
   if(cellTick<=0){for(const p of S.plants){if(dist(P,p)<75&&p.pile>=1&&!p.fire&&S.carry<carryCap()){pileTake(p);carryAdd(S);cellTick=0.07;flyers.push({x:p.x,y:p.y,h0:0.5,tx:()=>S.px,ty:()=>S.py,h1:2.2+S.carry*0.3,life:0,kind:'cell'});sfx.pick();break;}}}
   if(!S.moving&&S.carry===0)pitch=0;
@@ -6832,6 +6833,7 @@ function onHour(h){
   try{omHour();}catch(e){}
   try{imbalanceHour(h);}catch(e){}
   if(h===23&&S.imbDay){toast(L(`⚖️ Imbalance today: −$${fmt(S.imbDay)}. The battery covered ${S.imbCov||0} hours.`,`⚖️ Bugünkü dengesizlik bedeli: −$${fmt(S.imbDay)}. Batarya ${S.imbCov||0} saati karşıladı.`),'');S.imbDay=0;S.imbCov=0;}
+  if(h===0&&S.nm&&S.nmSince!=null&&S.day-1>=S.nmSince){try{pst('nmDays');}catch(e){}toast(L('👹 A full day in nightmare. Still standing.','👹 Kâbusta tam bir gün. Hâlâ ayaktasın.'),'good');}
   if(h===6&&droughtOn())toast(L('🏜️ A dry day: river and dam output is down to 40% today.','🏜️ Kurak gün: akarsu ve baraj üretimi bugün %40’a düştü.'),'');
   {const dw=dumpWin();if(dw&&h===dw[0]-1){sfx.warn();toast(L(`📉 Rivals are dumping energy ${dw[0]}:00–${dw[1]}:00. Prices −45%. Store, don't sell.`,`📉 Rakipler ${dw[0]}:00–${dw[1]}:00 arası enerji boşaltıyor. Fiyatlar −%45. Satma, depola.`),'big');}}
   try{if(bilDue()&&h>=10&&h<=20&&!cardOpen&&!tutOpen){bilMakeOffer();
@@ -9248,6 +9250,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.95.0',t:['Safer reactor, louder crew','Daha güvenli reaktör, daha konuşkan ekip'],l:[['A siren sounds while the reactor is at risk, and you get a warning when a fire is heading for it.','Reaktör risk altındayken siren çalar; bir yangın reaktöre yaklaşırken uyarı gelir.'],['A blown level is for looking only: no repairs, sales or pickups.','Patlamış seviyede sadece bakılır: onarım, satış ya da toplama yok.'],['Nightmare pays Holding ×1.5, with two new badges.','Kâbus Holding ×1,5 öder; iki yeni rozet var.'],['Helpers talk about the day, records and having nothing to do, and never repeat themselves. Settings can turn them off.','Yardımcılar gün sonu, rekorlar ve işsiz kalmak hakkında konuşur, aynı cümleyi tekrarlamaz. Ayarlardan kapatılabilir.'],['Goal chests are four times bigger.','Hedef sandıkları dört kat büyük.'],['Language moved into the ⚙️ on the start screen.','Dil seçimi giriş ekranındaki ⚙️ içine taşındı.']]},
  {v:'0.94.3',t:['After the blast','Patlamadan sonra'],l:[['Close the blast card to look around the ruined map; no money comes in or goes out there.','Patlama kartını kapatıp harap haritaya bakabilirsin; orada para girmez, çıkmaz.'],['Green radioactive jelly covers the ground.','Yerleri yeşil radyoaktif jöle kaplar.'],['If chaos caused it, you can go back to the moment before chaos.','Kaos yüzünden olduysa kaos öncesine dönebilirsin.']]},
  {v:'0.94.2',t:['Chaos follows the level','Kaos seviyeye uyuyor'],l:[['😈 lists only what this level can do to you, and hides on levels with no trouble yet.','😈 sadece bu seviyede olabilecekleri listeler; henüz sorun olmayan seviyelerde görünmez.']]},
  {v:'0.94.1',t:['Shorter nightmare text','Daha kısa kâbus metni'],l:[['The nightmare row says only what it does.','Kâbus satırı sadece ne yaptığını söylüyor.']]},
@@ -10490,6 +10493,7 @@ function drawEarnChart(cv,pts){
 
 /* ======================= SETTINGS ======================= */
 function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
+  $('sQuip').textContent=L('Crew comments: ','Ekip yorumları: ')+(S.quipOff?L('off','kapalı'):L('on','açık'));
   $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');$('sWipe').textContent=L('Reset the whole game','Bütün oyunu sıfırla');$('sLearn').textContent='📚 '+L('What you have learned','Öğrendiklerin');$('sOnb').textContent='🎓 '+(S.prog?tt((PROGRAMS.find(x=>x.id===S.prog)||{name:['Program','Program']}).name):L('Orientation · Part 1','Oryantasyon · Bölüm 1'));try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
   snd:['setSnd',['🔊','Sound','Ses'],['Effects and music, with sliders','Efektler ve müzik, kaydırıcılı']],
@@ -10706,7 +10710,8 @@ function pmax(k,v){if(!careerOn())return;const P=prof();if(v>(P.st[k]||0)){P.st[
 /* ---- 1. Holding: a number that only grows. Income ×(1 + 0.15·log10(1+HP/10)) on every level. ---- */
 function holdMult(){return careerOn()?1+0.15*Math.log10(1+prof().hp/10):1;}
 function holdPct(){return Math.round((holdMult()-1)*100);}
-function hpAdd(n){n=Math.round(n);if(n<=0||!careerOn())return 0;const P=prof();P.hp+=n;pmax('hp',P.hp);
+function hpAdd(n){if(S&&S.nm)n*=1.5;   /* v0.95: nightmare pays ×1.5 Holding */
+  n=Math.round(n);if(n<=0||!careerOn())return 0;const P=prof();P.hp+=n;pmax('hp',P.hp);
   try{const b=$('careerBtn');b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');}catch(e){}
   hint('hold',L('💼 Holding points never reset. They lift your income on every level — and they keep growing.','💼 Holding puanı hiç sıfırlanmaz. Her seviyede gelirini artırır — ve büyümeye devam eder.'),'big');
   return n;}
@@ -10720,7 +10725,7 @@ function celebrate(k,t,sub){
   let v=document.getElementById('recFx');if(v)v.remove();v=document.createElement('div');v.id='recFx';
   let conf='';for(let i=0;i<24;i++)conf+=`<i style="left:${(Math.random()*100).toFixed(1)}%;animation-delay:${(Math.random()*0.5).toFixed(2)}s;animation-duration:${(1.6+Math.random()).toFixed(2)}s">${['⚡','💰','⭐','✨'][i%4]}</i>`;
   v.innerHTML=`<div class="rf-card"><div class="rf-k">${k}</div><div class="rf-t">${t}</div>${sub?`<div class="rf-s">${sub}</div>`:''}</div>${conf}`;
-  document.body.appendChild(v);try{sfx.fanfare();}catch(e){}setTimeout(()=>{try{v.remove();}catch(e){}},2700);return true;}
+  document.body.appendChild(v);try{sfx.fanfare();}catch(e){}setTimeout(()=>{try{v.remove();}catch(e){}},2700);setTimeout(()=>{try{crewSay('rec');}catch(e){}},2900);return true;}
 function dayStars(earn){const hist=(S.dayLog||[]).slice(-5).map(q=>q.earn||0).filter(x=>x>0);if(earn<=0)return 0;if(hist.length<2)return 1;
   const avg=hist.reduce((a,b)=>a+b,0)/hist.length,r=earn/Math.max(1,avg);return r>=1.5?3:r>=1.15?2:r>=0.9?1:0;}
 function careerDayEnd(earn,quiet){
@@ -10730,6 +10735,7 @@ function careerDayEnd(earn,quiet){
   if(quiet)return;
   const sstr='★'.repeat(st)+'☆'.repeat(3-st);
   toast(L(`📋 Day report ${sstr} · $${fmt(earn)} · 💼 +${g} Holding`,`📋 Gün karnesi ${sstr} · $${fmt(earn)} · 💼 +${g} Holding`),st===3?'big':'good');
+  setTimeout(()=>{try{crewSay(st>=2?'dayGood':'dayBad');}catch(e){}},1600);
   if(rec)setTimeout(()=>celebrate(L('DAY RECORD','GÜN REKORU'),'$'+fmt(earn),L('Your best day on this level','Bu seviyedeki en iyi günün')),900);
 }
 /* ---- 3. the combo: player sales in the evening peak (cap ×1.3) or a price spike (cap ×2) ---- */
@@ -10787,7 +10793,7 @@ function mgList(){if(!careerOn())return [];S.mg=Array.isArray(S.mg)?S.mg.filter(
   while(S.mg.length<3)S.mg.push(mgMake(S.mg.map(g=>g.k)));return S.mg;}
 function mgDef(g){return MG_T.find(T=>T.k===g.k);}
 function mgText(g){const T=mgDef(g);return T.i+' '+tt(T.t(g.need));}
-function mgChest(){return Math.max(25,Math.round((S.lastDayEarned||0)*0.06));}
+function mgChest(){return 4*Math.max(25,Math.round((S.lastDayEarned||0)*0.06));}   /* v0.95: goals are ×4, so is the chest */
 function mgHit(k,n){if(!careerOn()||!Array.isArray(S.mg))return;
   S.mg.forEach((g,i)=>{if(g.k!==k)return;const T=mgDef(g);g.have=T.max?Math.max(g.have,n):g.have+n;
     if(g.have>=g.need){const c=mgChest(),h=hpAdd(1+Math.floor((prof().st.mg||0)/10));S.cash+=c;S.earned+=c;
@@ -10878,7 +10884,9 @@ const ACH=[
  {id:'mg',k:'mg',n:['Goal getter','Hedef avcısı'],u:['goals done','hedef tamam'],t:[5,30,150]},
  {id:'store',k:'store',n:['Storekeeper','Depocu'],u:['cells stored','hücre depolandı'],t:[20,200,2000]},
  {id:'hp',k:'hp',n:['Holding','Holding'],u:['Holding points','Holding puanı'],t:[100,1000,10000],hat:[3,'#111111']},
- {id:'lvl',k:'lvl',n:['Climber','Tırmanıcı'],u:['highest level','en yüksek seviye'],t:[3,9,18]}];
+ {id:'lvl',k:'lvl',n:['Climber','Tırmanıcı'],u:['highest level','en yüksek seviye'],t:[3,9,18]},
+ {id:'nm',k:'nmDays',n:['Nightmare survivor','Kâbustan sağ çıkan'],u:['full days in nightmare','kâbusta tam gün'],t:[1,5,20],hat:[2,'#5B2A86']},
+ {id:'rad',k:'radSave',n:['Reactor saviour','Reaktör kurtarıcısı'],u:['reactors cooled','soğutulan reaktör'],t:[1,5,15],hat:[2,'#FFD400']}];
 const ACH_HP=[5,20,60],ROMAN=['','I','II','III'];
 function achCheck(k){const P=prof();for(const A of ACH){if(A.k!==k)continue;const v=P.st[k]||0;let t=P.ach[A.id]||0;
   while(t<3&&v>=A.t[t]){t++;P.ach[A.id]=t;P.hp+=ACH_HP[t-1];
@@ -10952,7 +10960,7 @@ const DEV_H=[
 ];
 function devHtml(){
   const on=DEV_H.filter(h=>h.ok());
-  let x=`<div class="dvRow nmr"><span class="dvI">👹</span><div><b>${L('Nightmare mode','Kâbus modu')}</b><small>${S.nm?L('On. Top speed, problems back to back, cards come faster.','Açık. En yüksek hız, sorunlar ard arda, kartlar daha sık.'):L('Top speed, problems back to back, cards come faster.','En yüksek hız, sorunlar ard arda, kartlar daha sık.')}</small></div><button data-nm="1" class="${S.nm?'':'pri'}">${S.nm?L('Turn off','Kapat'):L('Turn on','Aç')}</button></div>`;
+  let x=`<div class="dvRow nmr"><span class="dvI">👹</span><div><b>${L('Nightmare mode','Kâbus modu')}</b><small>${S.nm?L('On. Top speed, problems back to back, cards come faster. Holding ×1.5.','Açık. En yüksek hız, sorunlar ard arda, kartlar daha sık. Holding ×1,5.'):L('Top speed, problems back to back, cards come faster. Holding ×1.5.','En yüksek hız, sorunlar ard arda, kartlar daha sık. Holding ×1,5.')}</small></div><button data-nm="1" class="${S.nm?'':'pri'}">${S.nm?L('Turn off','Kapat'):L('Turn on','Aç')}</button></div>`;
   x+=on.map(h=>`<div class="dvRow"><span class="dvI">${h.i}</span><div><b>${tt(h.n)}</b><small>${tt(h.d)}</small></div><button data-dv="${h.k}">${L('Call','Çağır')}</button></div>`).join('');   /* v0.94.2: only what this level can throw at you */
   return {x,n:on.length};
 }
@@ -10972,8 +10980,8 @@ $('devBody').onclick=e=>{
 };
 let nmT=0,nmCardT=0,nmNext=8,nmCardNext=30;
 function nmSet(on){
-  if(on){chaosSnapTake();S.nmSpeed=S.speed||1;S.nm=true;S.speed=12;nmT=0;nmCardT=0;nmNext=6;nmCardNext=25;sfx.warn();
-    toast(L('👹 Nightmare mode on. Top speed. Good luck.','👹 Kâbus modu açık. En yüksek hız. Kolay gelsin.'),'big');try{trackOnce('nightmare-on');}catch(e){}}
+  if(on){chaosSnapTake();S.nmSpeed=S.speed||1;S.nm=true;S.nmSince=S.day;S.speed=12;nmT=0;nmCardT=0;nmNext=6;nmCardNext=25;sfx.warn();
+    toast(L('👹 Nightmare mode on. Top speed, Holding ×1.5. Good luck.','👹 Kâbus modu açık. En yüksek hız, Holding ×1,5. Kolay gelsin.'),'big');try{trackOnce('nightmare-on');}catch(e){}}
   else{S.nm=false;S.speed=S.nmSpeed||1;toast(L('😮‍💨 Nightmare over. Back to normal.','😮‍💨 Kâbus bitti. Normale dönüldü.'),'good');}
   try{syncSet();}catch(e){}careerHud();save();
 }
@@ -11004,13 +11012,24 @@ function nukeRisk(why,chaos){const p=nukeP();if(!p||p.rad||p.boom||S.radBoom)ret
            :L(`☢️ ${codeOf(p.id)} is in danger! Get there and cool the reactor.`,`☢️ ${codeOf(p.id)} tehlikede! Hemen git, reaktörü soğut.`),'big');
   try{camAim={x:p.x,y:p.y};setTimeout(()=>{camAim=null;},2500);}catch(e){}
   try{trackOnce('nuke-risk');}catch(e){}radUI();save();return true;}
+let sirenT=0,sirenN=0;
+function radWarn(p){   /* a fire whose next jump would be the reactor gets one warning */
+  if(!p||p.rad||p.boom||S.radBoom)return;
+  for(const q of S.plants){if(!(q.fire>0)||q.nkW||q.spread)continue;
+    const cand=S.plants.filter(r=>r!==q&&PLANT_TYPES[r.type]&&!r.fire&&!r.broken&&dist(r,q)<FIRE_RANGE).sort((a,b)=>dist(a,q)-dist(b,q));
+    if(cand[0]&&isNuke(cand[0])){q.nkW=1;sfx.warn();toast(L(`☢️ The fire at ${codeOf(q.id)} is heading for the reactor. Put it out now.`,`☢️ ${codeOf(q.id)} yangını reaktöre yaklaşıyor. Hemen söndür.`),'big');
+      try{camAim={x:q.x,y:q.y};setTimeout(()=>{camAim=null;},2200);}catch(e){}}}}
 function radTick(dt,paused){
   const p=nukeP();
+  if(!paused&&p&&!S.radBoom){try{radWarn(p);}catch(e){}}
   if(!S.radBoom&&p&&p.rad&&!paused){
+    sirenT-=dt;if(sirenT<=0){sirenT=1.1;sirenN++;
+      try{if(radCool>0)beep(1050,0.12,'sine',0.03);else{beep(620,0.4,'sawtooth',0.032);beep(880,0.4,'sawtooth',0.032,0.45);}}catch(e){}
+      try{if(radCool<=0&&sirenN%2===0&&navigator.vibrate)navigator.vibrate(140);}catch(e){}}
     if(dist({x:S.px,y:S.py},p)<110){radCool+=dt;
       if(radCool>=RAD_COOL){p.rad=null;radCool=0;p.scramUntil=gameNow()+NUKE_SCRAM_H*HOUR;sfx.fix();
         toast(L(`✅ Reactor cooled. ${codeOf(p.id)} is safe and back in ${NUKE_SCRAM_H} hours.`,`✅ Reaktör soğutuldu. ${codeOf(p.id)} güvende, ${NUKE_SCRAM_H} saat sonra devrede.`),'good');
-        S.stats.radSaved=(S.stats.radSaved||0)+1;try{trackOnce('nuke-saved');}catch(e){}save();}}
+        S.stats.radSaved=(S.stats.radSaved||0)+1;try{pst('radSave');}catch(e){}try{trackOnce('nuke-saved');}catch(e){}save();}}
     else radCool=Math.max(0,radCool-dt*0.5);
     if(p.rad){p.rad.left-=dt;if(p.rad.left<=0)nukeBoom(p);}
   }
@@ -11050,7 +11069,8 @@ $('radChip').onclick=e=>{e.stopPropagation();radShut=false;radUI();};
 /* chaos snapshot: taken when you turn nightmare on or call a hazard from 😈 (not again while nightmare
    runs). If the reactor blows because of chaos, you may go back to exactly that moment. */
 const CHAOS_KEY=SAVE_KEY+'_chaosSnap';
-function chaosSnapTake(){if(S.nm||S.radBoom)return;try{localStorage.setItem(CHAOS_KEY,JSON.stringify({slot:curSlot(),t:Date.now(),s:S}));}catch(e){}}
+function chaosSnapTake(){if(S.nm||S.radBoom)return;try{localStorage.removeItem(CHAOS_KEY);localStorage.setItem(CHAOS_KEY,JSON.stringify({slot:curSlot(),t:Date.now(),s:S}));}
+  catch(e){toast(L('⚠️ No room on this phone for a before-chaos copy. There will be no way back.','⚠️ Telefonda kaos öncesi kopyası için yer yok. Geri dönüş olmayacak.'),'big');}}
 function chaosSnap(){if(!S.radChaos)return null;try{const o=JSON.parse(localStorage.getItem(CHAOS_KEY)||'null');return o&&o.slot===curSlot()&&o.s?o:null;}catch(e){return null;}}
 $('radBack').onclick=()=>{const o=chaosSnap();if(!o)return;try{trackOnce('nuke-rollback');}catch(e){}
   const f=o.s;f.nm=false;f.lastSave=Date.now();for(const k of LAD_KEEP)if(S[k]!==undefined&&k!=='speed')f[k]=S[k];
@@ -11070,20 +11090,26 @@ function radDraw(now){
     if(p.rad)smokeAt(X,Z,3.2,now,1.7);
     if(p.boom){smokeAt(X,Z,2.2,now,0.9);smokeAt(X+1.2,Z-0.8,2.6,now,2.3);const o=plantObjs[p.id];if(o&&o.userData.model)o.userData.model.visible=false;}}
   if(!S.radBoom){if(radFx){radFx.g.visible=false;}return;}
-  if(!radFx){const g=new THREE.Group(),geo=new THREE.SphereGeometry(0.5,14,10),pg=new THREE.CircleGeometry(1,18);
-    const mats=[0x7CFF3A,0xA8FF4D,0x52E62B].map(c=>new THREE.MeshPhongMaterial({color:c,emissive:0x1E7A00,emissiveIntensity:0.55,shininess:90,specular:0xE8FFD0,transparent:true,opacity:0.82}));
+  if(!radFx){const NB=300,geo=new THREE.SphereGeometry(0.5,14,10),pg=new THREE.CircleGeometry(1,18);
+    const mat=new THREE.MeshPhongMaterial({color:0xffffff,emissive:0x1E7A00,emissiveIntensity:0.55,shininess:90,specular:0xE8FFD0,transparent:true,opacity:0.82});
     const pm=new THREE.MeshBasicMaterial({color:0x6CE62E,transparent:true,opacity:0.42,depthWrite:false});
-    const N=[],src=p?W3(p.x,p.y):W3(NUKE.x,NUKE.y),fr=S.radAt&&Date.now()-S.radAt<4000;
-    for(let i=0;i<300;i++){const m=new THREE.Mesh(geo,mats[i%3]);const tx=Math.random()*WORLD.w*U,tz=Math.random()*WORLD.h*U,sz=0.6+Math.random()*1.1;
-      m.userData={sx:src[0],sz:src[1],tx,tz,ph:Math.random()*6.3,d:0.6+Math.random()*1.8,s:sz};m.position.set(fr?src[0]:tx,0.3,fr?src[1]:tz);g.add(m);N.push(m);
-      if(i%2===0){const q=new THREE.Mesh(pg,pm);q.rotation.x=-Math.PI/2;q.scale.setScalar(sz*(1.1+Math.random()*0.9));q.position.set(tx,0.06,tz);q.userData.puddle=1;q.visible=!fr;g.add(q);m.userData.pd=q;}}
-    scene.add(g);radFx={g,N,t0:fr?now:now-99999};}
+    const blobs=new THREE.InstancedMesh(geo,mat,NB),pud=new THREE.InstancedMesh(pg,pm,NB/2);
+    const cols=[0x7CFF3A,0xA8FF4D,0x52E62B].map(c=>new THREE.Color(c));
+    const g=new THREE.Group();g.add(pud);g.add(blobs);
+    const D=[],src=p?W3(p.x,p.y):W3(NUKE.x,NUKE.y),fr=S.radAt&&Date.now()-S.radAt<4000,o=new THREE.Object3D();
+    for(let i=0;i<NB;i++){const tx=Math.random()*WORLD.w*U,tz=Math.random()*WORLD.h*U,sz=0.6+Math.random()*1.1;
+      D.push({tx,tz,ph:Math.random()*6.3,d:0.6+Math.random()*1.8,s:sz});try{blobs.setColorAt(i,cols[i%3]);}catch(e){}
+      if(i%2===0){o.position.set(tx,0.06,tz);o.rotation.set(-Math.PI/2,0,0);o.scale.setScalar(sz*(1.1+Math.random()*0.9));o.updateMatrix();pud.setMatrixAt(i/2,o.matrix);}}
+    o.rotation.set(0,0,0);pud.visible=!fr;
+    scene.add(g);radFx={g,blobs,pud,D,o,sx:src[0],sz:src[1],t0:fr?now:now-99999};}
   radFx.g.visible=true;
-  const k=Math.min(1,(now-radFx.t0)/2600);
-  for(const m of radFx.N){const u=m.userData,e=Math.min(1,k*u.d*0.9+k*0.4);
-    const x=u.sx+(u.tx-u.sx)*e,z=u.sz+(u.tz-u.sz)*e,w=Math.sin(now/220+u.ph);
-    if(e<1){m.position.set(x,0.3+Math.sin(Math.PI*e)*14,z);m.scale.setScalar(u.s*0.7);}
-    else{m.position.set(x,u.s*0.26,z);m.scale.set(u.s*(1+0.13*w),u.s*0.55*(1-0.18*w),u.s*(1+0.13*w));if(u.pd)u.pd.visible=true;}}
+  const F=radFx,k=Math.min(1,(now-F.t0)/2600),o=F.o;let landed=true;
+  for(let i=0;i<F.D.length;i++){const u=F.D[i],e=Math.min(1,k*u.d*0.9+k*0.4),w=Math.sin(now/220+u.ph);
+    const x=F.sx+(u.tx-F.sx)*e,z=F.sz+(u.tz-F.sz)*e;
+    if(e<1){landed=false;o.position.set(x,0.3+Math.sin(Math.PI*e)*14,z);o.scale.setScalar(u.s*0.7);}
+    else{o.position.set(x,u.s*0.26,z);o.scale.set(u.s*(1+0.13*w),u.s*0.55*(1-0.18*w),u.s*(1+0.13*w));}
+    o.updateMatrix();F.blobs.setMatrixAt(i,o.matrix);}
+  F.blobs.instanceMatrix.needsUpdate=true;if(landed)F.pud.visible=true;
 }
 /* crew quips: a short line over a helper's head after something happens, then it fades */
 const QUIPS={
@@ -11094,9 +11120,13 @@ const QUIPS={
  bat:{neg:[['The battery is sulking again.','Batarya yine küsmüş.'],['Buy low, fix high.','Ucuza al, pahalıya tamir et.'],['No storage, no evening money.','Depo yoksa akşam parası da yok.']]},
  dump:{neg:[['Rivals are dumping. Do not sell into that.','Rakipler boşaltıyor. Bunun içine satma.'],['Cheap hours: fill the battery.','Ucuz saat: bataryayı doldur.']]},
  spike:{pos:[['Spike! Everybody to the city!','Sıçrama! Herkes şehre!'],['This is the hour we live for.','Yaşadığımız saat bu.'],['Hold nothing back now.','Şimdi bir şey saklama.']]},
+ dayGood:{pos:[['Good day. Drinks are on the boss.','İyi gündü. İçecekler patrondan.'],['The city will remember today.','Şehir bugünü hatırlayacak.'],['Same again tomorrow?','Yarın da aynısı?']]},
+ dayBad:{neg:[['Tomorrow can only be better.','Yarın ancak daha iyi olabilir.'],['We sold at the wrong hours, boss.','Yanlış saatlerde sattık patron.'],['I have seen better days. Yesterday, for one.','Daha iyi günler gördüm. Mesela dün.']]},
+ rec:{pos:[['A record! Frame that one.','Rekor! Bunu çerçeveletelim.'],['Did you see that? A record!','Gördün mü? Rekor!'],['Write it down, nobody will believe us.','Not alın, kimse inanmayacak.']]},
+ idle:{neg:[['Boss, I am out of work here.','Patron, burada işsiz kaldım.'],['Give me a task or a chair.','Ya iş verin ya sandalye.'],['Counting sheep. Literally.','Koyun sayıyorum. Gerçekten.']]},
  good:{pos:[['Clean work, boss.','Temiz iş, patron.'],['See? Teamwork.','Gördün mü? Takım işi.'],['I would have been faster. Still, nice.','Ben daha hızlı yapardım. Yine de güzel.'],['That one goes on my CV.','Bunu CV\'me yazıyorum.'],['Not bad for a Monday.','Pazartesi için fena değil.']]}
 };
-const quips={};let quipCd=0;
+const quips={},quipLast={},idleT={};let quipCd=0;
 function quipCat(m,c){
   if(/☢️/.test(m))return 'rad';if(/🔥/.test(m))return 'fire';if(/🌪️|⚡ (Lightning|Yıldırım)/.test(m))return 'storm';if(/🔋|🧯/.test(m)&&c==='big')return 'bat';
   if(/📉/.test(m))return 'dump';if(/(spike|sıçrama)/i.test(m)&&c!=='good')return 'spike';
@@ -11104,15 +11134,23 @@ function quipCat(m,c){
   if(c==='good')return 'good';return null;
 }
 function crewQuip(m,c){
-  if(!playing||!helpers.length||tutOpen||Date.now()<quipCd)return;
+  if(!playing||!helpers.length||tutOpen||Date.now()<quipCd||S.quipOff)return;
   const k=quipCat(String(m),c);if(!k)return;
   if(Math.random()>(k==='good'?0.35:0.6))return;
-  const idx=helpers.map((h,i)=>i).filter(i=>!helpers[i].inside);if(!idx.length)return;
-  const i=idx[Math.floor(Math.random()*idx.length)],Q=QUIPS[k],sign=Q.pos?'pos':'neg',pool=Q.pos||Q.neg,line=pool[Math.floor(Math.random()*pool.length)];
+  crewSay(k);
+}
+function crewSay(k,only){
+  if(!playing||!helpers.length||tutOpen||S.quipOff||(only==null&&Date.now()<quipCd))return;
+  const idx=only!=null?[only]:helpers.map((h,i)=>i).filter(i=>!helpers[i].inside);if(!idx.length||helpers[idx[0]].inside)return;
+  const i=idx[Math.floor(Math.random()*idx.length)],Q=QUIPS[k];if(!Q)return;const sign=Q.pos?'pos':'neg',all=Q.pos||Q.neg;
+  const pool=all.filter(l=>l!==quipLast[i]);const line=(pool.length?pool:all)[Math.floor(Math.random()*(pool.length||all.length))];quipLast[i]=line;
   let nm='';try{nm=(S.crew.staff&&S.crew.staff[i]&&S.crew.staff[i].name)||'';}catch(e){}
   const esc=t=>String(t).replace(/[<>&]/g,'');
   quips[i]={h:(nm?`<i>${esc(nm)}</i>`:'')+esc(tt(line)),c:sign,t0:Date.now()};quipCd=Date.now()+9000;
 }
+setInterval(()=>{try{if(!playing||S.quipOff||cardOpen||tutOpen)return;
+  helpers.forEach((h,i)=>{if(h.inside||!/^(Looking for work|No job)$/.test(h.status||'')){idleT[i]=0;return;}
+    idleT[i]=(idleT[i]||0)+1;if(idleT[i]>=45&&Date.now()>=quipCd){idleT[i]=-60;crewSay('idle',i);quipCd=Date.now()+9000;}});}catch(e){}},1000);
 function quipAt(i){const q=quips[i];if(!q)return null;const a=(Date.now()-q.t0)/1000;if(a>3.6){delete quips[i];return null;}return {h:q.h,c:q.c,o:a>3.0?Math.max(0,(3.6-a)/0.6):1};}
 $('careerBtn').onclick=()=>{openCareer();try{trackOnce('career-open');}catch(e){}};
 $('mgLine').onclick=()=>openCareer('mg');
@@ -11206,6 +11244,7 @@ function notifSnap(force){
   caches.open('mwm-snap').then(c=>c.put('./__snap',new Response(JSON.stringify({t:Date.now(),on:!!S.notif,title:'Megawatt Mogul',body}),{headers:{'Content-Type':'application/json'}}))).catch(()=>{});
 }
 addEventListener('visibilitychange',()=>{if(document.hidden&&S&&S.notif)notifSnap(true);});
+$('sQuip').onclick=()=>{S.quipOff=!S.quipOff;syncSet();save();};
 $('sNotif').onclick=()=>{if(S.notif)notifOffNow();else notifOn();};
 const UISCALES=[0.85,1,1.15,1.3,1.5];
 function uiScale(){const v=+S.uiScale;return UISCALES.indexOf(v)>=0?v:1;}
@@ -11227,7 +11266,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.94.3';
+const GAME_VERSION='0.95.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
