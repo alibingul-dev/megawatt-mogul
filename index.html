@@ -488,7 +488,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.94.1</div>
+  <div class="t-ver" id="tVer">v0.94.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -736,7 +736,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.94.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.94.2 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9243,6 +9243,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.94.2',t:['Chaos follows the level','Kaos seviyeye uyuyor'],l:[['😈 lists only what this level can do to you, and hides on levels with no trouble yet.','😈 sadece bu seviyede olabilecekleri listeler; henüz sorun olmayan seviyelerde görünmez.']]},
  {v:'0.94.1',t:['Shorter nightmare text','Daha kısa kâbus metni'],l:[['The nightmare row says only what it does.','Kâbus satırı sadece ne yaptığını söylüyor.']]},
  {v:'0.94.0',t:['Nuclear accident','Nükleer kaza'],l:[['If fire, lightning or a funnel reaches the reactor, a radiation alarm covers the screen. Stand at the plant to cool it in time.','Yangın, yıldırım ya da hortum reaktöre ulaşırsa ekranı radyasyon alarmı kaplar. Zamanında santralin yanında durup soğut.'],['Too late and it blows: fallout everywhere, and the level has to be restarted.','Geç kalırsan patlar: her yere radyoaktif madde saçılır, seviye baştan başlatılmalıdır.']]},
  {v:'0.93.1',t:['Cleaner fires','Daha temiz yangın'],l:[['The 🔥 badge over burning sites is gone; the flames are enough. The 🧯 progress still shows while you put it out.','Yanan sahaların üstündeki 🔥 rozeti kalktı; alevler yeterli. Söndürürken 🧯 ilerlemesi görünmeye devam ediyor.']]},
@@ -10909,7 +10910,7 @@ function careerHud(){try{
   const w=hotWin(),e=$('hotC');e.hidden=!w;if(w){const left=Math.max(0,Math.ceil((w.end-hourNow()%24)*HOUR));const m=cmbMult();
     e.textContent=`${w.k==='spike'?L('⚡ SPIKE','⚡ SIÇRAMA'):L('🌆 Peak','🌆 Zirve')} · ${left}${L('s','sn')}${m>1?` · ${L('combo','kombo')} ×${m.toFixed(1)}`:''}`;e.style.background=w.k==='spike'?'#E5A800':'#FF8A3D';}
   {const e2=$('sfkC');let on=false;try{on=ancOn()&&ancUnits()>0&&!inPack();}catch(e){}e2.hidden=!on;if(on)e2.textContent=`⚖️ ${L('Reserve','SFK')} +$${fmt(ancHourly())}/${L('h','sa')}`;}
-  {const d=$('devilBtn');d.hidden=document.body.classList.contains('title')||!playing||inPack();if(!d.hidden){d.classList.toggle('nm',!!S.nm);$('cap-dev').textContent=S.nm?L('Nightmare','Kâbus'):L('Chaos','Kaos');}}
+  {const d=$('devilBtn');d.hidden=document.body.classList.contains('title')||!playing||inPack()||!DEV_H.some(h=>h.k!=='card'&&h.ok());if(!d.hidden){d.classList.toggle('nm',!!S.nm);$('cap-dev').textContent=S.nm?L('Nightmare','Kâbus'):L('Chaos','Kaos');}}
   const bl=boostLeft(),be=$('boostC');be.hidden=!bl||!careerOn();if(!be.hidden){const s=Math.ceil(bl/1000);be.textContent=`🚀 ×2 · ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
   const ml=$('mgLine'),g=careerOn()&&!tutOpen&&playing?mgBest():null;ml.hidden=!g;if(g){const T=mgDef(g);ml.innerHTML=`${mgText(g)} · <b>${T.k==='earn'?'$'+fmt(g.have)+'/$'+fmt(g.need):Math.floor(g.have)+'/'+g.need}</b> <small>🎁</small>`;}
 }catch(e){}}
@@ -10946,12 +10947,12 @@ const DEV_H=[
 function devHtml(){
   const on=DEV_H.filter(h=>h.ok());
   let x=`<div class="dvRow nmr"><span class="dvI">👹</span><div><b>${L('Nightmare mode','Kâbus modu')}</b><small>${S.nm?L('On. Top speed, problems back to back, cards come faster.','Açık. En yüksek hız, sorunlar ard arda, kartlar daha sık.'):L('Top speed, problems back to back, cards come faster.','En yüksek hız, sorunlar ard arda, kartlar daha sık.')}</small></div><button data-nm="1" class="${S.nm?'':'pri'}">${S.nm?L('Turn off','Kapat'):L('Turn on','Aç')}</button></div>`;
-  x+=DEV_H.map(h=>{const ok=h.ok();return `<div class="dvRow${ok?'':' off'}"><span class="dvI">${h.i}</span><div><b>${tt(h.n)}</b><small>${ok?tt(h.d):L('Not in this level yet.','Bu seviyede henüz yok.')}</small></div><button data-dv="${h.k}" ${ok?'':'disabled'}>${L('Call','Çağır')}</button></div>`;}).join('');
+  x+=on.map(h=>`<div class="dvRow"><span class="dvI">${h.i}</span><div><b>${tt(h.n)}</b><small>${tt(h.d)}</small></div><button data-dv="${h.k}">${L('Call','Çağır')}</button></div>`).join('');   /* v0.94.2: only what this level can throw at you */
   return {x,n:on.length};
 }
 function openDevil(){const d=devHtml();
   $('devTitle').textContent=L('😈 Chaos','😈 Kaos');
-  $('devSub').textContent=L(`Everything that can hurt your company. ${d.n} of ${DEV_H.length} can happen in this level. Call one on purpose to practise.`,`Şirketine zarar verebilecek her şey. Bu seviyede ${DEV_H.length} taneden ${d.n} tanesi olabilir. Pratik için istediğini kendin çağır.`);
+  $('devSub').textContent=L('What can hurt your company in this level. Call one on purpose to practise.','Bu seviyede şirketine zarar verebilecek şeyler. Pratik için istediğini kendin çağır.');
   $('devBody').innerHTML=d.x;$('mDev').classList.add('on');try{trackOnce('devil-open');}catch(e){}}
 $('devClose').onclick=()=>$('mDev').classList.remove('on');
 $('devilBtn').onclick=openDevil;
@@ -11198,7 +11199,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.94.1';
+const GAME_VERSION='0.94.2';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
