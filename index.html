@@ -444,7 +444,11 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 @keyframes carPop{0%{transform:scale(1)}35%{transform:scale(1.25);box-shadow:0 0 0 6px rgba(229,168,0,.35)}100%{transform:scale(1)}}
 #careerBtn{margin-top:8px}
 #radOv{position:fixed;inset:0;z-index:26;pointer-events:none;display:flex;align-items:center;justify-content:center}#radOv[hidden]{display:none}
-#radOv.risk{background:rgba(255,212,0,.10)}#radOv.boom{background:rgba(30,70,15,.62)}
+#radOv.risk{background:rgba(255,212,0,.10)}#radOv.boom{background:rgba(30,70,15,.62)}#radOv.boom.shut{background:rgba(60,160,20,.14)}#radOv.boom.shut .rad-sym{display:none}
+#radOv .rad-end .rad-x{position:absolute;width:36px!important;margin:0!important;top:10px;right:10px;width:36px;height:36px;min-width:0!important;padding:0!important;border-radius:50%;background:#EEF1F6;border:0;color:#1D2433;font-size:17px;font-weight:800}
+#radOv .rad-chip{position:absolute;top:calc(env(safe-area-inset-top) + 160px);left:50%;transform:translateX(-50%);pointer-events:auto;background:#2E5E12;color:#fff;border:0;border-radius:14px;padding:10px 16px;font-family:var(--body);font-weight:800;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.35);width:max-content;max-width:90vw}
+#radOv .rad-end button.sec{margin-top:8px;background:#EEF1F6;color:#1D2433}
+body.radDead #sideCol .rb:not(.zb):not(#repBtn):not(#infoBtn),body.radDead #devilBtn{display:none!important}
 #radOv .rad-sym{width:80vmin;height:80vmin;animation:radBlink .8s ease-in-out infinite alternate}#radOv.boom .rad-sym{animation-duration:1.6s;position:absolute;opacity:.25}
 #radOv .rad-sym svg{width:100%;height:100%}
 @keyframes radBlink{from{opacity:.08}to{opacity:.6}}
@@ -488,7 +492,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.94.2</div>
+  <div class="t-ver" id="tVer">v0.94.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -535,7 +539,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
 <div id="leftCol"><button class="rb" id="worldBtn" aria-label="Levels" hidden><span>⭐</span><span class="cap" id="cap-world">Level 1</span></button><button class="rb" id="devilBtn" aria-label="Chaos" hidden><span>😈</span><span class="cap" id="cap-dev">Chaos</span></button><button class="rb" id="careerBtn" aria-label="Career" hidden><span>💼</span><span class="cap" id="cap-car">+0%</span><span class="badge" id="carDot" hidden>!</span></button><button class="rb" id="progExit" aria-label="Close the mode" hidden style="margin-top:8px"><span>🎓</span><span class="cap" id="cap-pexit">Close</span></button></div>
 <div class="modal" id="mMap"><div style="position:relative"><canvas id="bigmap" aria-label="Map"></canvas><button id="mapX" type="button" aria-label="Close" style="position:absolute;top:8px;right:8px;width:38px;height:38px;min-width:0;padding:0;border-radius:50%;background:#fff;border:0;color:#1D2433;font-size:18px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.25)">✕</button></div></div>
 <div id="flashOv"></div>
-<div id="radOv" hidden><div class="rad-sym"><svg viewBox="-100 -100 200 200"><circle r="98" fill="#FFD400" stroke="#1D2433" stroke-width="6"/><g fill="#1D2433"><circle r="15"/><path d="M0 -24 L0 -84 A84 84 0 0 1 72.7 -42 L20.8 -12 A24 24 0 0 0 0 -24Z" transform="rotate(-30)"/><path d="M0 -24 L0 -84 A84 84 0 0 1 72.7 -42 L20.8 -12 A24 24 0 0 0 0 -24Z" transform="rotate(90)"/><path d="M0 -24 L0 -84 A84 84 0 0 1 72.7 -42 L20.8 -12 A24 24 0 0 0 0 -24Z" transform="rotate(210)"/></g></svg></div><div class="rad-bar" id="radBar" hidden></div><div class="rad-end" id="radEnd" hidden><div style="font-size:44px">☢️</div><h2 id="radEndT"></h2><p id="radEndP"></p><button class="pri" id="radReset"></button></div></div>
+<div id="radOv" hidden><div class="rad-sym"><svg viewBox="-100 -100 200 200"><circle r="98" fill="#FFD400" stroke="#1D2433" stroke-width="6"/><g fill="#1D2433"><circle r="15"/><path d="M0 -24 L0 -84 A84 84 0 0 1 72.7 -42 L20.8 -12 A24 24 0 0 0 0 -24Z" transform="rotate(-30)"/><path d="M0 -24 L0 -84 A84 84 0 0 1 72.7 -42 L20.8 -12 A24 24 0 0 0 0 -24Z" transform="rotate(90)"/><path d="M0 -24 L0 -84 A84 84 0 0 1 72.7 -42 L20.8 -12 A24 24 0 0 0 0 -24Z" transform="rotate(210)"/></g></svg></div><div class="rad-bar" id="radBar" hidden></div><div class="rad-end" id="radEnd" hidden><div style="font-size:44px">☢️</div><h2 id="radEndT"></h2><p id="radEndP"></p><button class="pri" id="radReset"></button><button class="sec" id="radBack" hidden></button><button class="rad-x" id="radX" type="button" aria-label="Close">✕</button></div><button class="rad-chip" id="radChip" type="button" hidden></button></div>
 <canvas id="fxCanvas" hidden></canvas>
 <div id="toasts" aria-live="polite"></div>
 <div class="help" id="help" data-i18n="dragWalk">Drag anywhere to walk</div>
@@ -736,7 +740,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.94.2 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.94.3 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6547,6 +6551,7 @@ function syncHelpers(){
 }
 let clearT=0,repT=0,gridT=0,gsvT=0,gridLock=null,batFixT=0,refurbT=0,padLock=null,standPad=null,standT=0,fixT=0,cellTick=0,sellTick=0,batTick=0,gridTick=0;
 function update(dt){
+  if(S.radBoom&&S.radCash!=null){S.cash=S.radCash;S.earned=S.radEarned;}   /* v0.94.3: a dead level neither earns nor spends */
   const tscale=(tutOpen||cardOpen||S.radBoom)?0:S.speed;
   const t0=hourNow();S.t+=dt*tscale;
   if(S.t>=DAY_SEC){S.t-=DAY_SEC;try{const r=bilDayEnd();if(r){toast(r.line,r.v>=0?'good':'');if(r.end)setTimeout(()=>toast(r.end,'big'),2500);}}catch(e){}try{bldDayEnd(false).forEach((l,i)=>setTimeout(()=>toast(l,''),3000+i*1500));}catch(e){}S.day++;DAY=makeDay(S.day);try{ancApplyDay();}catch(e){}try{nukeDay();}catch(e){}onNewDay();save();}
@@ -6722,7 +6727,7 @@ function update(dt){
     if(on.pg){if(standT>0.5){padLock=on.id;if(pgLocked(on))toast(pgLockTxt(on),'');else pgBuild(on);}}else{
     let _g=0;while(!padDone(on)&&(S.paid[on.id]||0)>=padCost(on)-0.001&&_g++<30)completePad(on);
     const cost=padCost(on),paid=S.paid[on.id]||0,need=cost-paid;
-    if(standT>0.3&&S.cash>0.0001&&need>0){
+    if(standT>0.3&&S.cash>0.0001&&need>0&&!S.radBoom){
       const pay=Math.min(S.cash,need,Math.max(cost/1.1,15)*dt);S.cash-=pay;S.paid[on.id]=paid+pay;
       if(Math.random()<0.45){flyers.push({x:S.px,y:S.py,h0:2,tx:()=>on.x,ty:()=>on.y,h1:0.2,life:0,kind:'coin'});sfx.coin();}
       if(S.paid[on.id]>=cost-0.001)completePad(on);
@@ -9243,6 +9248,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.94.3',t:['After the blast','Patlamadan sonra'],l:[['Close the blast card to look around the ruined map; no money comes in or goes out there.','Patlama kartını kapatıp harap haritaya bakabilirsin; orada para girmez, çıkmaz.'],['Green radioactive jelly covers the ground.','Yerleri yeşil radyoaktif jöle kaplar.'],['If chaos caused it, you can go back to the moment before chaos.','Kaos yüzünden olduysa kaos öncesine dönebilirsin.']]},
  {v:'0.94.2',t:['Chaos follows the level','Kaos seviyeye uyuyor'],l:[['😈 lists only what this level can do to you, and hides on levels with no trouble yet.','😈 sadece bu seviyede olabilecekleri listeler; henüz sorun olmayan seviyelerde görünmez.']]},
  {v:'0.94.1',t:['Shorter nightmare text','Daha kısa kâbus metni'],l:[['The nightmare row says only what it does.','Kâbus satırı sadece ne yaptığını söylüyor.']]},
  {v:'0.94.0',t:['Nuclear accident','Nükleer kaza'],l:[['If fire, lightning or a funnel reaches the reactor, a radiation alarm covers the screen. Stand at the plant to cool it in time.','Yangın, yıldırım ya da hortum reaktöre ulaşırsa ekranı radyasyon alarmı kaplar. Zamanında santralin yanında durup soğut.'],['Too late and it blows: fallout everywhere, and the level has to be restarted.','Geç kalırsan patlar: her yere radyoaktif madde saçılır, seviye baştan başlatılmalıdır.']]},
@@ -10940,7 +10946,7 @@ const DEV_H=[
  {k:'snow',i:'❄️',n:['Snow on panels','Panellerde kar'],d:['Solar output drops until you clear the panels.','Panelleri temizleyene kadar güneş üretimi düşer.'],ok:()=>S.plants.some(q=>PLANT_TYPES[q.type]&&PLANT_TYPES[q.type].kind==='solar'),
   go:()=>{const ps=S.plants.filter(q=>PLANT_TYPES[q.type]&&PLANT_TYPES[q.type].kind==='solar');if(!ps.length)return 0;ps.forEach(q=>q.snow=1);sfx.warn();toast(L('❄️ Snow covered the panels. Stand next to them to clear.','❄️ Paneller karla kaplandı. Temizlemek için yanlarında dur.'),'big');return 1;}},
  {k:'nuke',i:'☢️',n:['Nuclear accident','Nükleer kaza'],d:['Radiation risk: cool the reactor in time or it blows and the level is lost.','Radyasyon riski: reaktörü zamanında soğutmazsan patlar, seviye kaybedilir.'],ok:()=>!!nukeP()&&!S.radBoom,
-  go:()=>nukeRisk(L('Chaos','Kaos'))?1:0},
+  go:()=>nukeRisk(L('Chaos','Kaos'),true)?1:0},
  {k:'card',i:'🃏',n:['Decision card','Karar kartı'],d:['Market news with a trade-off.','Bedeli olan bir piyasa haberi.'],ok:()=>has('cards'),
   go:()=>{if(cardOpen)return 0;const c=pickCard();if(!c)return 0;openCard(c);return 1;}}
 ];
@@ -10961,11 +10967,12 @@ $('devBody').onclick=e=>{
   if(n){nmSet(!S.nm);openDevil();return;}
   const b=e.target.closest('button[data-dv]');if(!b||b.disabled)return;
   const h=DEV_H.find(x=>x.k===b.dataset.dv);$('mDev').classList.remove('on');
+  chaosSnapTake();
   setTimeout(()=>{let r=0;try{r=h.go();}catch(err){}if(!r)toast(L('Nothing to hit right now.','Şu an vurulacak hedef yok.'),'');else try{trackOnce('devil-'+h.k);}catch(err){}save();},300);
 };
 let nmT=0,nmCardT=0,nmNext=8,nmCardNext=30;
 function nmSet(on){
-  if(on){S.nmSpeed=S.speed||1;S.nm=true;S.speed=12;nmT=0;nmCardT=0;nmNext=6;nmCardNext=25;sfx.warn();
+  if(on){chaosSnapTake();S.nmSpeed=S.speed||1;S.nm=true;S.speed=12;nmT=0;nmCardT=0;nmNext=6;nmCardNext=25;sfx.warn();
     toast(L('👹 Nightmare mode on. Top speed. Good luck.','👹 Kâbus modu açık. En yüksek hız. Kolay gelsin.'),'big');try{trackOnce('nightmare-on');}catch(e){}}
   else{S.nm=false;S.speed=S.nmSpeed||1;toast(L('😮‍💨 Nightmare over. Back to normal.','😮‍💨 Kâbus bitti. Normale dönüldü.'),'good');}
   try{syncSet();}catch(e){}careerHud();save();
@@ -10991,8 +10998,8 @@ setInterval(()=>{try{nmTick();}catch(e){}},1000);
    The countdown only runs while you are actually playing (never while away or reading a card). */
 const RAD_T=60,RAD_COOL=3.5;let radCool=0;
 function nukeP(){return S.plants.find(isNuke)||null;}
-function nukeRisk(why){const p=nukeP();if(!p||p.rad||p.boom||S.radBoom)return false;
-  p.rad={left:RAD_T};radCool=0;sfx.warn();
+function nukeRisk(why,chaos){const p=nukeP();if(!p||p.rad||p.boom||S.radBoom)return false;
+  p.rad={left:RAD_T,ch:!!(chaos||S.nm)};radCool=0;sfx.warn();
   toast(why?L(`☢️ ${why} reached ${codeOf(p.id)}! Radiation risk. Get there and cool the reactor.`,`☢️ ${why} ${codeOf(p.id)} santraline ulaştı! Radyasyon riski. Hemen git, reaktörü soğut.`)
            :L(`☢️ ${codeOf(p.id)} is in danger! Get there and cool the reactor.`,`☢️ ${codeOf(p.id)} tehlikede! Hemen git, reaktörü soğut.`),'big');
   try{camAim={x:p.x,y:p.y};setTimeout(()=>{camAim=null;},2500);}catch(e){}
@@ -11010,7 +11017,8 @@ function radTick(dt,paused){
   radUI();
 }
 function nukeBoom(p){
-  p.rad=null;p.boom=true;S.radBoom=true;S.radAt=Date.now();radCool=0;
+  S.radChaos=!!((p.rad&&p.rad.ch)||S.nm);
+  p.rad=null;p.boom=true;S.radBoom=true;S.radAt=Date.now();radCool=0;S.radCash=S.cash;S.radEarned=S.earned;if(S.nm){S.nm=false;S.speed=S.nmSpeed||1;}
   try{const f=$('flashOv');f.style.background='#FFFBE0';f.style.opacity=1;setTimeout(()=>{f.style.opacity=0;f.style.background='';},700);}catch(e){}
   try{sfx.thunder&&sfx.thunder();sfx.warn();}catch(e){}
   try{if(navigator.vibrate)navigator.vibrate([300,100,500]);}catch(e){}
@@ -11021,16 +11029,32 @@ function radUI(){
   const o=$('radOv');if(!o)return;const p=nukeP();
   let st=S.radBoom?'boom':(p&&p.rad?'risk':'');
   if(document.body.classList.contains('title'))st='';
-  o.hidden=!st;o.className=st;if(!st){radLast='';return;}
+  document.body.classList.toggle('radDead',!!S.radBoom);
+  if(S.radBoom&&S.radCash==null){S.radCash=S.cash;S.radEarned=S.earned;}
+  o.hidden=!st;o.className=st+(st==='boom'&&radShut?' shut':'');if(!st){radLast='';return;}
   if(st==='risk'){$('radEnd').hidden=true;const b=$('radBar');b.hidden=false;
     const near=radCool>0,txt=near?L(`☢️ Cooling the reactor… ${Math.min(100,Math.round(radCool/RAD_COOL*100))}%`,`☢️ Reaktör soğutuluyor… %${Math.min(100,Math.round(radCool/RAD_COOL*100))}`)
       :L(`☢️ RADIATION RISK · ${codeOf(p.id)} · ${Math.ceil(p.rad.left)} s<br><small>Stand at the plant to cool it</small>`,`☢️ RADYASYON RİSKİ · ${codeOf(p.id)} · ${Math.ceil(p.rad.left)} sn<br><small>Soğutmak için santralin yanında dur</small>`);
     if(txt!==radLast){b.innerHTML=txt;radLast=txt;}}
-  else if(radLast!=='boom'){radLast='boom';$('radBar').hidden=true;$('radEnd').hidden=false;
+  else if(radLast!=='boom'+radShut){radLast='boom'+radShut;$('radBar').hidden=true;$('radEnd').hidden=radShut;
+    $('radChip').hidden=!radShut;$('radChip').textContent=L('☢️ Level lost · options','☢️ Seviye kaybedildi · seçenekler');
+    const sn=chaosSnap();$('radBack').hidden=!sn;if(sn)$('radBack').textContent=L('⏪ Back to before chaos','⏪ Kaos öncesine dön');
     $('radEndT').textContent=L('The reactor blew','Reaktör patladı');
     $('radEndP').textContent=L('Radioactive material is everywhere. Nothing here can run or sell any more. Restart this level from the beginning; your other levels and your career are untouched.','Her yere radyoaktif madde saçıldı. Burada artık hiçbir şey çalışmaz, satılamaz. Bu seviyeyi baştan başlat; diğer seviyelerin ve kariyerin olduğu gibi kalır.');
     $('radReset').textContent=L('🔄 Restart this level','🔄 Seviyeyi sıfırla');}
 }
+let radShut=false;
+$('radX').onclick=e=>{e.stopPropagation();radShut=true;radUI();};
+$('radChip').onclick=e=>{e.stopPropagation();radShut=false;radUI();};
+['pointerdown','touchstart','mousedown'].forEach(ev=>$('radOv').addEventListener(ev,e=>{if(e.target.closest('.rad-end,.rad-chip'))e.stopPropagation();}));
+/* chaos snapshot: taken when you turn nightmare on or call a hazard from 😈 (not again while nightmare
+   runs). If the reactor blows because of chaos, you may go back to exactly that moment. */
+const CHAOS_KEY=SAVE_KEY+'_chaosSnap';
+function chaosSnapTake(){if(S.nm||S.radBoom)return;try{localStorage.setItem(CHAOS_KEY,JSON.stringify({slot:curSlot(),t:Date.now(),s:S}));}catch(e){}}
+function chaosSnap(){if(!S.radChaos)return null;try{const o=JSON.parse(localStorage.getItem(CHAOS_KEY)||'null');return o&&o.slot===curSlot()&&o.s?o:null;}catch(e){return null;}}
+$('radBack').onclick=()=>{const o=chaosSnap();if(!o)return;try{trackOnce('nuke-rollback');}catch(e){}
+  const f=o.s;f.nm=false;f.lastSave=Date.now();for(const k of LAD_KEEP)if(S[k]!==undefined&&k!=='speed')f[k]=S[k];
+  try{localStorage.removeItem(CHAOS_KEY);RELOADING=true;removeEventListener('pagehide',save);localStorage.setItem(SAVE_KEY,JSON.stringify(f));lvlGo(lvlLabel(f),false);}catch(e){RELOADING=false;}};
 $('radReset').onclick=()=>{try{trackOnce('nuke-reset');}catch(e){}
   const f=fresh();for(const k of LAD_KEEP)if(S[k]!==undefined)f[k]=S[k];
   for(const k of ['prest','classic','progWorld','prog','prestAt','lad'])if(S[k]!==undefined)f[k]=S[k];
@@ -11046,16 +11070,20 @@ function radDraw(now){
     if(p.rad)smokeAt(X,Z,3.2,now,1.7);
     if(p.boom){smokeAt(X,Z,2.2,now,0.9);smokeAt(X+1.2,Z-0.8,2.6,now,2.3);const o=plantObjs[p.id];if(o&&o.userData.model)o.userData.model.visible=false;}}
   if(!S.radBoom){if(radFx){radFx.g.visible=false;}return;}
-  if(!radFx){const g=new THREE.Group(),geo=new THREE.IcosahedronGeometry(0.32,0),mats=[0x8CFF3A,0xC6FF4D,0x5BEA2B].map(c=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.9}));
-    const N=[],src=p?W3(p.x,p.y):W3(NUKE.x,NUKE.y),fresh=S.radAt&&Date.now()-S.radAt<4000;
-    for(let i=0;i<260;i++){const m=new THREE.Mesh(geo,mats[i%3]);const tx=Math.random()*WORLD.w*U,tz=Math.random()*WORLD.h*U;
-      m.userData={sx:src[0],sz:src[1],tx,tz,ph:Math.random()*6.3,d:0.6+Math.random()*1.8};m.position.set(fresh?src[0]:tx,0.35,fresh?src[1]:tz);g.add(m);N.push(m);}
-    scene.add(g);radFx={g,N,t0:fresh?now:now-99999};}
+  if(!radFx){const g=new THREE.Group(),geo=new THREE.SphereGeometry(0.5,14,10),pg=new THREE.CircleGeometry(1,18);
+    const mats=[0x7CFF3A,0xA8FF4D,0x52E62B].map(c=>new THREE.MeshPhongMaterial({color:c,emissive:0x1E7A00,emissiveIntensity:0.55,shininess:90,specular:0xE8FFD0,transparent:true,opacity:0.82}));
+    const pm=new THREE.MeshBasicMaterial({color:0x6CE62E,transparent:true,opacity:0.42,depthWrite:false});
+    const N=[],src=p?W3(p.x,p.y):W3(NUKE.x,NUKE.y),fr=S.radAt&&Date.now()-S.radAt<4000;
+    for(let i=0;i<300;i++){const m=new THREE.Mesh(geo,mats[i%3]);const tx=Math.random()*WORLD.w*U,tz=Math.random()*WORLD.h*U,sz=0.6+Math.random()*1.1;
+      m.userData={sx:src[0],sz:src[1],tx,tz,ph:Math.random()*6.3,d:0.6+Math.random()*1.8,s:sz};m.position.set(fr?src[0]:tx,0.3,fr?src[1]:tz);g.add(m);N.push(m);
+      if(i%2===0){const q=new THREE.Mesh(pg,pm);q.rotation.x=-Math.PI/2;q.scale.setScalar(sz*(1.1+Math.random()*0.9));q.position.set(tx,0.06,tz);q.userData.puddle=1;q.visible=!fr;g.add(q);m.userData.pd=q;}}
+    scene.add(g);radFx={g,N,t0:fr?now:now-99999};}
   radFx.g.visible=true;
   const k=Math.min(1,(now-radFx.t0)/2600);
   for(const m of radFx.N){const u=m.userData,e=Math.min(1,k*u.d*0.9+k*0.4);
-    const x=u.sx+(u.tx-u.sx)*e,z=u.sz+(u.tz-u.sz)*e,y=e<1?0.35+Math.sin(Math.PI*e)*14:0.35+Math.abs(Math.sin(now/500+u.ph))*0.35;
-    m.position.set(x,y,z);m.scale.setScalar(0.8+0.35*Math.sin(now/300+u.ph));}
+    const x=u.sx+(u.tx-u.sx)*e,z=u.sz+(u.tz-u.sz)*e,w=Math.sin(now/220+u.ph);
+    if(e<1){m.position.set(x,0.3+Math.sin(Math.PI*e)*14,z);m.scale.setScalar(u.s*0.7);}
+    else{m.position.set(x,u.s*0.26,z);m.scale.set(u.s*(1+0.13*w),u.s*0.55*(1-0.18*w),u.s*(1+0.13*w));if(u.pd)u.pd.visible=true;}}
 }
 /* crew quips: a short line over a helper's head after something happens, then it fades */
 const QUIPS={
@@ -11199,7 +11227,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.94.2';
+const GAME_VERSION='0.94.3';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
