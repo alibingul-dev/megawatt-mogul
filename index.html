@@ -443,6 +443,13 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 #careerBtn.pop{animation:carPop .7s ease}
 @keyframes carPop{0%{transform:scale(1)}35%{transform:scale(1.25);box-shadow:0 0 0 6px rgba(229,168,0,.35)}100%{transform:scale(1)}}
 #careerBtn{margin-top:8px}
+#devilBtn{margin-top:8px}#devilBtn.nm{background:#5B2A86!important;color:#fff}#devilBtn.nm .cap{color:#fff}
+.dvRow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#F4F1FA;margin:6px 0;text-align:left}
+.dvRow .dvI{font-size:24px;width:30px;text-align:center}.dvRow b{display:block;font-size:15px}.dvRow small{display:block;color:#5B6475;font-size:12.5px;line-height:1.3}
+.dvRow button{margin-left:auto;min-width:84px;padding:8px 10px;font-size:14px;flex:none}.dvRow.off{opacity:.5}
+.dvRow.nmr{background:#3B1E5C;color:#fff}.dvRow.nmr small{color:#D9C8F0}
+.lb.qp{background:#fff;color:#1D2433;font-family:var(--body);font-weight:700;font-size:11.5px;line-height:1.25;padding:5px 9px;border-radius:12px;max-width:150px;white-space:normal;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:opacity .4s}
+.lb.qp.neg{background:#FFF1F1}.lb.qp.pos{background:#F0FBF4}.lb.qp i{font-style:normal;display:block;font-size:10px;color:#7A8296;font-weight:800}
 .goal.mgl{font-size:12.5px;padding:4px 10px;margin-top:4px;background:rgba(255,255,255,.92)}
 .goal.mgl small{font-size:12px}
 </style>
@@ -473,7 +480,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.92.3</div>
+  <div class="t-ver" id="tVer">v0.93.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -517,7 +524,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
   <button class="rb crewb" id="crewBtn" aria-label="Crew plan" hidden><span>👷</span><span class="cnum" id="crewN">1/45</span><span class="badge" id="crewAlert" hidden>!</span></button>
 </div>
 <canvas id="mini" width="90" height="128" aria-label="Mini map. Tap to enlarge."></canvas>
-<div id="leftCol"><button class="rb" id="worldBtn" aria-label="Levels" hidden><span>⭐</span><span class="cap" id="cap-world">Level 1</span></button><button class="rb" id="careerBtn" aria-label="Career" hidden><span>💼</span><span class="cap" id="cap-car">+0%</span><span class="badge" id="carDot" hidden>!</span></button><button class="rb" id="progExit" aria-label="Close the mode" hidden style="margin-top:8px"><span>🎓</span><span class="cap" id="cap-pexit">Close</span></button></div>
+<div id="leftCol"><button class="rb" id="worldBtn" aria-label="Levels" hidden><span>⭐</span><span class="cap" id="cap-world">Level 1</span></button><button class="rb" id="devilBtn" aria-label="Chaos" hidden><span>😈</span><span class="cap" id="cap-dev">Chaos</span></button><button class="rb" id="careerBtn" aria-label="Career" hidden><span>💼</span><span class="cap" id="cap-car">+0%</span><span class="badge" id="carDot" hidden>!</span></button><button class="rb" id="progExit" aria-label="Close the mode" hidden style="margin-top:8px"><span>🎓</span><span class="cap" id="cap-pexit">Close</span></button></div>
 <div class="modal" id="mMap"><div style="position:relative"><canvas id="bigmap" aria-label="Map"></canvas><button id="mapX" type="button" aria-label="Close" style="position:absolute;top:8px;right:8px;width:38px;height:38px;min-width:0;padding:0;border-radius:50%;background:#fff;border:0;color:#1D2433;font-size:18px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.25)">✕</button></div></div>
 <div id="flashOv"></div>
 <canvas id="fxCanvas" hidden></canvas>
@@ -612,6 +619,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
   <div id="bldBody"></div>
   <div class="btns"><button class="pri" id="bldClose" data-i18n="close">Close</button></div>
 </div></div>
+<div class="modal" id="mDev"><div class="sheet tips"><h2 id="devTitle">😈 Chaos</h2><p id="devSub"></p><div id="devBody"></div><div class="btns"><button class="pri" id="devClose">Close</button></div></div></div>
 <div class="modal" id="mCar"><div class="sheet tips">
   <h2 id="carTitle">Career</h2>
   <p id="carSub"></p>
@@ -719,7 +727,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.92.3 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.93.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6416,7 +6424,7 @@ const $=id=>document.getElementById(id);
 const SUF=['','K','M','B','T','Qa'];
 function fmt(n){if(n<0)return '-'+fmt(-n);if(n<1000)return n<10&&n%1?n.toFixed(1):Math.floor(n).toString();let i=0;while(n>=1000&&i<SUF.length-1){n/=1000;i++;}return(n<10?n.toFixed(2):n<100?n.toFixed(1):Math.floor(n))+SUF[i];}
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-function toast(m,c=''){const e=document.createElement('div');e.className='toast '+c;e.textContent=m;$('toasts').appendChild(e);setTimeout(()=>e.remove(),c==='big'?4000:2800);while($('toasts').children.length>3)$('toasts').firstChild.remove();}
+function toast(m,c=''){try{crewQuip(m,c);}catch(_){}const e=document.createElement('div');e.className='toast '+c;e.textContent=m;$('toasts').appendChild(e);setTimeout(()=>e.remove(),c==='big'?4000:2800);while($('toasts').children.length>3)$('toasts').firstChild.remove();}
 function hint(k,m,c){if(S.hints[k])return;S.hints[k]=1;toast(m,c);}
 function hh(t){const h=Math.floor(t)%24,m=Math.floor((t%1)*6)*10;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');}
 function dur(s){s=Math.floor(s);if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h '+Math.floor(s%3600/60)+'m';}
@@ -8033,7 +8041,8 @@ function render(dt,now){
     o.rotation.y+=((hp.face-o.rotation.y+Math.PI*3)%(Math.PI*2)-Math.PI)*Math.min(1,dt*10);
     animPerson(o,hp.moving,hp.walk);setStack(o,hp.carry,hp.carryAges);
     if(hp.status==='Repairing')place('hs'+i,'nm',hp.x,hp.y,2.4,'🔧 '+Math.round(Math.min(1,(hp.fixT||0)/2)*100)+'%');
-    else if(hp.status&&hp.status.startsWith('Waiting'))place('hs'+i,'nm',hp.x,hp.y,2.4,'⏳ '+stTr(hp.status));});
+    else if(hp.status&&hp.status.startsWith('Waiting'))place('hs'+i,'nm',hp.x,hp.y,2.4,'⏳ '+stTr(hp.status));
+    {const q=quipAt(i);if(q){place('qp'+i,'qp '+q.c,hp.x,hp.y,3.6,q.h,-14);LB['qp'+i].el.style.opacity=q.o;}}});
   // flyers
   for(const f of flyers){
     let tx,ty;
@@ -9220,6 +9229,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.93.0',t:['Chaos, nightmare, crew talk','Kaos, kâbus, ekip yorumları'],l:[['😈 lists everything that can hurt your company; call any of them on purpose.','😈 şirketine zarar verebilecek her şeyi listeler; istediğini kendin çağırabilirsin.'],['Nightmare mode: top speed, problems back to back, faster cards, capped so it stays playable.','Kâbus modu: en yüksek hız, ard arda sorunlar, daha sık kart; oynanabilir kalacak şekilde sınırlı.'],['Helpers comment briefly on what just happened, then the bubble fades.','Yardımcılar olanlara kısa bir yorum yapar, balon kendiliğinden kaybolur.']]},
  {v:'0.92.3',t:['Code entry moved','Kod girişi taşındı'],l:[['On the start screen, Enter a code now sits under the ⚙️ button in the top-right corner.','Giriş ekranında Kod gir artık sağ üst köşedeki ⚙️ butonunun içinde.']]},
  {v:'0.92.2',t:['Close the level cards','Seviye kartlarını kapat'],l:[['The levels card and the level arrival card have a ✕ in the corner.','Seviyeler kartında ve seviye giriş kartında köşede ✕ var.']]},
  {v:'0.92.1',t:['Clearer return, reserve on screen','Daha net dönüş, ekranda SFK'],l:[['Without a crew the away card says plainly that nobody sold, and why.','Ekip yokken dönüş kartı kimsenin satmadığını ve nedenini açıkça söyler.'],['While a reserve band is held, the top-left box shows what it pays per hour (⚖️ SFK).','Rezerv bandı tutulurken sol üst kutu saatlik kazancını gösterir (⚖️ SFK).']]},
@@ -10033,7 +10043,7 @@ $('mini').addEventListener('pointerdown',e=>{e.stopPropagation();
   b.style.width=b.width+'px';b.style.height=b.height+'px';drawMap(b,true);$('mMap').classList.add('on');trackOnce('minimap-opened');});
 $('mMap').addEventListener('pointerdown',()=>$('mMap').classList.remove('on'));
 /* v0.77: every window you can leave gets an ✕ top right; it presses that window's own close button, so nothing else changes */
-const MODAL_X={mCrew:'crewClose',mLook:'lkDone',mProgram:'pgClose',mMkt:'mktClose',mLvl:'lvlSkip',mGrid:'gridClose',mBuild:'bldClose',mMaint:'mntClose',mRep:'repClose',mNews:'newsClose',mTips:'tipsClose',mCode:'codeClose',mOffline:'offOk',mSet:'sClose'};
+const MODAL_X={mDev:'devClose',mCrew:'crewClose',mLook:'lkDone',mProgram:'pgClose',mMkt:'mktClose',mLvl:'lvlSkip',mGrid:'gridClose',mBuild:'bldClose',mMaint:'mntClose',mRep:'repClose',mNews:'newsClose',mTips:'tipsClose',mCode:'codeClose',mOffline:'offOk',mSet:'sClose'};
 for(const [m,b] of Object.entries(MODAL_X)){const sh=document.querySelector('#'+m+' .sheet'),t=$(b);if(!sh||!t)continue;
   const x=document.createElement('button');x.className='xbtn';x.type='button';x.textContent='✕';x.setAttribute('aria-label','Close');
   x.addEventListener('click',e=>{e.stopPropagation();t.click();});sh.insertBefore(x,sh.firstChild);}
@@ -10882,9 +10892,106 @@ function careerHud(){try{
   const w=hotWin(),e=$('hotC');e.hidden=!w;if(w){const left=Math.max(0,Math.ceil((w.end-hourNow()%24)*HOUR));const m=cmbMult();
     e.textContent=`${w.k==='spike'?L('⚡ SPIKE','⚡ SIÇRAMA'):L('🌆 Peak','🌆 Zirve')} · ${left}${L('s','sn')}${m>1?` · ${L('combo','kombo')} ×${m.toFixed(1)}`:''}`;e.style.background=w.k==='spike'?'#E5A800':'#FF8A3D';}
   {const e2=$('sfkC');let on=false;try{on=ancOn()&&ancUnits()>0&&!inPack();}catch(e){}e2.hidden=!on;if(on)e2.textContent=`⚖️ ${L('Reserve','SFK')} +$${fmt(ancHourly())}/${L('h','sa')}`;}
+  {const d=$('devilBtn');d.hidden=document.body.classList.contains('title')||!playing||inPack();if(!d.hidden){d.classList.toggle('nm',!!S.nm);$('cap-dev').textContent=S.nm?L('Nightmare','Kâbus'):L('Chaos','Kaos');}}
   const bl=boostLeft(),be=$('boostC');be.hidden=!bl||!careerOn();if(!be.hidden){const s=Math.ceil(bl/1000);be.textContent=`🚀 ×2 · ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
   const ml=$('mgLine'),g=careerOn()&&!tutOpen&&playing?mgBest():null;ml.hidden=!g;if(g){const T=mgDef(g);ml.innerHTML=`${mgText(g)} · <b>${T.k==='earn'?'$'+fmt(g.have)+'/$'+fmt(g.need):Math.floor(g.have)+'/'+g.need}</b> <small>🎁</small>`;}
 }catch(e){}}
+/* ===================== v0.93 CHAOS BUTTON, NIGHTMARE, CREW QUIPS =====================
+   😈 lists every way the game can hurt you; each one can be called on purpose. Nightmare runs
+   at top speed with problems and cards back to back, but with caps so the field never all burns:
+   at most a third of the fleet down, one fire, one funnel, a breather after every card. */
+function devPick(f){const c=S.plants.filter(q=>PLANT_TYPES[q.type]&&!isNuke(q)&&!q.broken&&!q.fire&&!svcIn(q)&&(!f||f(q)));return c.length?c[Math.floor(Math.random()*c.length)]:null;}
+const isWindQ=q=>PLANT_TYPES[q.type].kind==='wind';
+const DEV_H=[
+ {k:'break',i:'🔧',n:['Breakdown','Arıza'],d:['A plant stops until someone repairs it.','Bir santral durur, biri onarana kadar üretmez.'],ok:()=>has('repair'),
+  go:()=>{const p=devPick();if(!p||!damagePlant(p,0))return 0;sfx.warn();toast(L(`🔧 ${codeOf(p.id)} broke down. It needs a repair.`,`🔧 ${codeOf(p.id)} arızalandı. Onarım gerekiyor.`),'big');return 1;}},
+ {k:'heavy',i:'💥',n:['Heavy damage','Ağır hasar'],d:['A wreck: the repair takes longer and costs more.','Hurda: onarım daha uzun sürer, daha pahalıdır.'],ok:()=>has('heavy'),
+  go:()=>{const p=devPick();if(!p||!damagePlant(p,1))return 0;sfx.warn();toast(L(`💥 ${codeOf(p.id)} is wrecked.`,`💥 ${codeOf(p.id)} hurdaya döndü.`),'big');return 1;}},
+ {k:'bolt',i:'⚡',n:['Lightning','Yıldırım'],d:['Hits a turbine: damage, sometimes a fire.','Bir türbine düşer: hasar, bazen yangın.'],ok:()=>has('repair')&&S.plants.some(q=>PLANT_TYPES[q.type]&&isWindQ(q)&&q.type!=='offshore'),
+  go:()=>{const p=devPick(q=>isWindQ(q)&&q.type!=='offshore');if(!p)return 0;sfx.thunder&&sfx.thunder();
+    try{const[HX,HZ]=W3(p.x,p.y);showBolt(HX,HZ,PLANT_TYPES[p.type].scale>1?6.4:4.2);}catch(e){}
+    if(has('fire')&&Math.random()<0.45)startFire(p,L('lightning','yıldırım'));else{damagePlant(p,0.5);sfx.warn();toast(L(`⚡ Lightning hit ${codeOf(p.id)}. It needs a repair.`,`⚡ Yıldırım ${codeOf(p.id)} türbinine düştü. Onarım gerekiyor.`),'big');}return 1;}},
+ {k:'fire',i:'🔥',n:['Fire','Yangın'],d:['Spreads to the next site if nobody puts it out.','Söndürülmezse yandaki sahaya sıçrar.'],ok:()=>has('fire'),
+  go:()=>{const p=devPick(q=>q.type!=='offshore');if(!p)return 0;startFire(p,L('chaos','kaos'));return 1;}},
+ {k:'tw',i:'🌪️',n:['Funnel','Hortum'],d:['Crosses the wind field and damages what it touches.','Rüzgâr sahasını geçer, değdiğine zarar verir.'],ok:()=>has('repair')&&S.plants.some(q=>PLANT_TYPES[q.type]&&isWindQ(q)),
+  go:()=>{if(S.tw)return 0;spawnTornado(true);return S.tw?1:0;}},
+ {k:'batf',i:'🔋',n:['Battery fault','Batarya arızası'],d:['Storage stops until you stand at a station.','Bir istasyonda durana kadar depolama çalışmaz.'],ok:()=>built('bat'),
+  go:()=>{if(S.batFault)return 0;S.batFault=true;sfx.warn();toast(L('🔋 The battery system tripped. Stand at a station to fix it.','🔋 Batarya sistemi arızalandı. Onarmak için istasyonda dur.'),'big');return 1;}},
+ {k:'batfire',i:'🧯',n:['Battery fire','Batarya yangını'],d:['Storage is offline until the fire is out.','Yangın sönene kadar depolama kapalı.'],ok:()=>built('bat')&&has('fire'),
+  go:()=>{if(S.batFire)return 0;startBatFire(L('chaos','kaos'));return 1;}},
+ {k:'snow',i:'❄️',n:['Snow on panels','Panellerde kar'],d:['Solar output drops until you clear the panels.','Panelleri temizleyene kadar güneş üretimi düşer.'],ok:()=>S.plants.some(q=>PLANT_TYPES[q.type]&&PLANT_TYPES[q.type].kind==='solar'),
+  go:()=>{const ps=S.plants.filter(q=>PLANT_TYPES[q.type]&&PLANT_TYPES[q.type].kind==='solar');if(!ps.length)return 0;ps.forEach(q=>q.snow=1);sfx.warn();toast(L('❄️ Snow covered the panels. Stand next to them to clear.','❄️ Paneller karla kaplandı. Temizlemek için yanlarında dur.'),'big');return 1;}},
+ {k:'card',i:'🃏',n:['Decision card','Karar kartı'],d:['Market news with a trade-off.','Bedeli olan bir piyasa haberi.'],ok:()=>has('cards'),
+  go:()=>{if(cardOpen)return 0;const c=pickCard();if(!c)return 0;openCard(c);return 1;}}
+];
+function devHtml(){
+  const on=DEV_H.filter(h=>h.ok());
+  let x=`<div class="dvRow nmr"><span class="dvI">👹</span><div><b>${L('Nightmare mode','Kâbus modu')}</b><small>${S.nm?L('On. Top speed, problems back to back, cards come faster. Fires, wrecks and funnels are capped so the game stays playable.','Açık. En yüksek hız, sorunlar ard arda, kartlar daha sık. Yangın, hurda ve hortum sınırlı; oyun oynanabilir kalır.'):L('Top speed, problems back to back, cards come faster. Capped so it never becomes unplayable.','En yüksek hız, sorunlar ard arda, kartlar daha sık. Sınırlı; oyun asla oynanamaz hale gelmez.')}</small></div><button data-nm="1" class="${S.nm?'':'pri'}">${S.nm?L('Turn off','Kapat'):L('Turn on','Aç')}</button></div>`;
+  x+=DEV_H.map(h=>{const ok=h.ok();return `<div class="dvRow${ok?'':' off'}"><span class="dvI">${h.i}</span><div><b>${tt(h.n)}</b><small>${ok?tt(h.d):L('Not in this level yet.','Bu seviyede henüz yok.')}</small></div><button data-dv="${h.k}" ${ok?'':'disabled'}>${L('Call','Çağır')}</button></div>`;}).join('');
+  return {x,n:on.length};
+}
+function openDevil(){const d=devHtml();
+  $('devTitle').textContent=L('😈 Chaos','😈 Kaos');
+  $('devSub').textContent=L(`Everything that can hurt your company. ${d.n} of ${DEV_H.length} can happen in this level. Call one on purpose to practise.`,`Şirketine zarar verebilecek her şey. Bu seviyede ${DEV_H.length} taneden ${d.n} tanesi olabilir. Pratik için istediğini kendin çağır.`);
+  $('devBody').innerHTML=d.x;$('mDev').classList.add('on');try{trackOnce('devil-open');}catch(e){}}
+$('devClose').onclick=()=>$('mDev').classList.remove('on');
+$('devilBtn').onclick=openDevil;
+$('devBody').onclick=e=>{
+  const n=e.target.closest('button[data-nm]');
+  if(n){nmSet(!S.nm);openDevil();return;}
+  const b=e.target.closest('button[data-dv]');if(!b||b.disabled)return;
+  const h=DEV_H.find(x=>x.k===b.dataset.dv);$('mDev').classList.remove('on');
+  setTimeout(()=>{let r=0;try{r=h.go();}catch(err){}if(!r)toast(L('Nothing to hit right now.','Şu an vurulacak hedef yok.'),'');else try{trackOnce('devil-'+h.k);}catch(err){}save();},300);
+};
+let nmT=0,nmCardT=0,nmNext=8,nmCardNext=30;
+function nmSet(on){
+  if(on){S.nmSpeed=S.speed||1;S.nm=true;S.speed=12;nmT=0;nmCardT=0;nmNext=6;nmCardNext=25;sfx.warn();
+    toast(L('👹 Nightmare mode on. Top speed. Good luck.','👹 Kâbus modu açık. En yüksek hız. Kolay gelsin.'),'big');try{trackOnce('nightmare-on');}catch(e){}}
+  else{S.nm=false;S.speed=S.nmSpeed||1;toast(L('😮‍💨 Nightmare over. Back to normal.','😮‍💨 Kâbus bitti. Normale dönüldü.'),'good');}
+  try{syncSet();}catch(e){}careerHud();save();
+}
+/* the director: runs on real seconds, sleeps whenever the player is reading or away */
+function nmTick(){
+  if(!S.nm||!playing||cardOpen||tutOpen||document.querySelector('.modal.on')||inPack()||!isActive())return;
+  if(S.speed!==12)S.speed=12;
+  nmT++;nmCardT++;
+  if(nmT>=nmNext){
+    const fleet=S.plants.filter(q=>PLANT_TYPES[q.type]&&!isNuke(q)).length,down=S.plants.filter(q=>q.broken).length;
+    const busy=down>=Math.max(1,Math.ceil(fleet/3))||burning().length>=1||(S.batFire||0)>0||!!S.tw;
+    if(!busy){const pool=DEV_H.filter(h=>h.k!=='card'&&h.ok()&&!(h.k==='heavy'&&Math.random()<0.6)&&!(h.k==='tw'&&Math.random()<0.6)&&!(h.k==='batfire'&&Math.random()<0.7));
+      for(let g=0;g<4&&pool.length;g++){const h=pool.splice(Math.floor(Math.random()*pool.length),1)[0];let r=0;try{r=h.go();}catch(e){}if(r)break;}}
+    nmT=0;nmNext=busy?4:9+Math.floor(Math.random()*7);}
+  if(nmCardT>=nmCardNext&&has('cards')){const c=pickCard();if(c)openCard(c);nmCardT=0;nmCardNext=28+Math.floor(Math.random()*15);}
+}
+setInterval(()=>{try{nmTick();}catch(e){}},1000);
+/* crew quips: a short line over a helper's head after something happens, then it fades */
+const QUIPS={
+ fire:{neg:[['Who left the extinguisher in the truck?','Yangın tüpünü kamyonda kim unuttu?'],['Smells like overtime.','Mesai kokusu geliyor.'],['Boss, that one is not supposed to glow.','Patron, onun parlaması normal değil.'],['Run first, paperwork later!','Önce koş, evrak sonra!']]},
+ storm:{neg:[['Told you the sky looked angry.','Gökyüzü sinirli demiştim.'],['My hard hat is not rated for this.','Baretim buna göre değil.'],['Nature 1, us 0.','Doğa 1, biz 0.'],['Should have stopped the turbines…','Türbinleri durdursaydık keşke…']]},
+ broke:{neg:[['Skipping maintenance has a price.','Bakımı ertelemenin bedeli bu.'],['That noise was not normal.','O ses normal değildi.'],['I will need a bigger wrench.','Daha büyük bir anahtar lazım.'],['Again? We just fixed that one.','Yine mi? Daha yeni tamir ettik.']]},
+ bat:{neg:[['The battery is sulking again.','Batarya yine küsmüş.'],['Buy low, fix high.','Ucuza al, pahalıya tamir et.'],['No storage, no evening money.','Depo yoksa akşam parası da yok.']]},
+ dump:{neg:[['Rivals are dumping. Do not sell into that.','Rakipler boşaltıyor. Bunun içine satma.'],['Cheap hours: fill the battery.','Ucuz saat: bataryayı doldur.']]},
+ spike:{pos:[['Spike! Everybody to the city!','Sıçrama! Herkes şehre!'],['This is the hour we live for.','Yaşadığımız saat bu.'],['Hold nothing back now.','Şimdi bir şey saklama.']]},
+ good:{pos:[['Clean work, boss.','Temiz iş, patron.'],['See? Teamwork.','Gördün mü? Takım işi.'],['I would have been faster. Still, nice.','Ben daha hızlı yapardım. Yine de güzel.'],['That one goes on my CV.','Bunu CV\'me yazıyorum.'],['Not bad for a Monday.','Pazartesi için fena değil.']]}
+};
+const quips={};let quipCd=0;
+function quipCat(m,c){
+  if(/🔥/.test(m))return 'fire';if(/🌪️|⚡ (Lightning|Yıldırım)/.test(m))return 'storm';if(/🔋|🧯/.test(m)&&c==='big')return 'bat';
+  if(/📉/.test(m))return 'dump';if(/(spike|sıçrama)/i.test(m)&&c!=='good')return 'spike';
+  if(c==='big'&&/(🔧|💥|❄️|broke|wreck|damag|arıza|hurda|zarar)/i.test(m))return 'broke';
+  if(c==='good')return 'good';return null;
+}
+function crewQuip(m,c){
+  if(!playing||!helpers.length||tutOpen||Date.now()<quipCd)return;
+  const k=quipCat(String(m),c);if(!k)return;
+  if(Math.random()>(k==='good'?0.35:0.6))return;
+  const idx=helpers.map((h,i)=>i).filter(i=>!helpers[i].inside);if(!idx.length)return;
+  const i=idx[Math.floor(Math.random()*idx.length)],Q=QUIPS[k],sign=Q.pos?'pos':'neg',pool=Q.pos||Q.neg,line=pool[Math.floor(Math.random()*pool.length)];
+  let nm='';try{nm=(S.crew.staff&&S.crew.staff[i]&&S.crew.staff[i].name)||'';}catch(e){}
+  const esc=t=>String(t).replace(/[<>&]/g,'');
+  quips[i]={h:(nm?`<i>${esc(nm)}</i>`:'')+esc(tt(line)),c:sign,t0:Date.now()};quipCd=Date.now()+9000;
+}
+function quipAt(i){const q=quips[i];if(!q)return null;const a=(Date.now()-q.t0)/1000;if(a>3.6){delete quips[i];return null;}return {h:q.h,c:q.c,o:a>3.0?Math.max(0,(3.6-a)/0.6):1};}
 $('careerBtn').onclick=()=>{openCareer();try{trackOnce('career-open');}catch(e){}};
 $('mgLine').onclick=()=>openCareer('mg');
 $('carClose').onclick=()=>$('mCar').classList.remove('on');
@@ -10998,7 +11105,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.92.3';
+const GAME_VERSION='0.93.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
