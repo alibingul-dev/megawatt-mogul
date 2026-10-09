@@ -488,7 +488,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.94.0</div>
+  <div class="t-ver" id="tVer">v0.94.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -736,7 +736,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.94.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.94.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9243,6 +9243,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.94.1',t:['Shorter nightmare text','Daha kısa kâbus metni'],l:[['The nightmare row says only what it does.','Kâbus satırı sadece ne yaptığını söylüyor.']]},
  {v:'0.94.0',t:['Nuclear accident','Nükleer kaza'],l:[['If fire, lightning or a funnel reaches the reactor, a radiation alarm covers the screen. Stand at the plant to cool it in time.','Yangın, yıldırım ya da hortum reaktöre ulaşırsa ekranı radyasyon alarmı kaplar. Zamanında santralin yanında durup soğut.'],['Too late and it blows: fallout everywhere, and the level has to be restarted.','Geç kalırsan patlar: her yere radyoaktif madde saçılır, seviye baştan başlatılmalıdır.']]},
  {v:'0.93.1',t:['Cleaner fires','Daha temiz yangın'],l:[['The 🔥 badge over burning sites is gone; the flames are enough. The 🧯 progress still shows while you put it out.','Yanan sahaların üstündeki 🔥 rozeti kalktı; alevler yeterli. Söndürürken 🧯 ilerlemesi görünmeye devam ediyor.']]},
  {v:'0.93.0',t:['Chaos, nightmare, crew talk','Kaos, kâbus, ekip yorumları'],l:[['😈 lists everything that can hurt your company; call any of them on purpose.','😈 şirketine zarar verebilecek her şeyi listeler; istediğini kendin çağırabilirsin.'],['Nightmare mode: top speed, problems back to back, faster cards, capped so it stays playable.','Kâbus modu: en yüksek hız, ard arda sorunlar, daha sık kart; oynanabilir kalacak şekilde sınırlı.'],['Helpers comment briefly on what just happened, then the bubble fades.','Yardımcılar olanlara kısa bir yorum yapar, balon kendiliğinden kaybolur.']]},
@@ -10944,7 +10945,7 @@ const DEV_H=[
 ];
 function devHtml(){
   const on=DEV_H.filter(h=>h.ok());
-  let x=`<div class="dvRow nmr"><span class="dvI">👹</span><div><b>${L('Nightmare mode','Kâbus modu')}</b><small>${S.nm?L('On. Top speed, problems back to back, cards come faster. Fires, wrecks and funnels are capped so the game stays playable.','Açık. En yüksek hız, sorunlar ard arda, kartlar daha sık. Yangın, hurda ve hortum sınırlı; oyun oynanabilir kalır.'):L('Top speed, problems back to back, cards come faster. Capped so it never becomes unplayable.','En yüksek hız, sorunlar ard arda, kartlar daha sık. Sınırlı; oyun asla oynanamaz hale gelmez.')}</small></div><button data-nm="1" class="${S.nm?'':'pri'}">${S.nm?L('Turn off','Kapat'):L('Turn on','Aç')}</button></div>`;
+  let x=`<div class="dvRow nmr"><span class="dvI">👹</span><div><b>${L('Nightmare mode','Kâbus modu')}</b><small>${S.nm?L('On. Top speed, problems back to back, cards come faster.','Açık. En yüksek hız, sorunlar ard arda, kartlar daha sık.'):L('Top speed, problems back to back, cards come faster.','En yüksek hız, sorunlar ard arda, kartlar daha sık.')}</small></div><button data-nm="1" class="${S.nm?'':'pri'}">${S.nm?L('Turn off','Kapat'):L('Turn on','Aç')}</button></div>`;
   x+=DEV_H.map(h=>{const ok=h.ok();return `<div class="dvRow${ok?'':' off'}"><span class="dvI">${h.i}</span><div><b>${tt(h.n)}</b><small>${ok?tt(h.d):L('Not in this level yet.','Bu seviyede henüz yok.')}</small></div><button data-dv="${h.k}" ${ok?'':'disabled'}>${L('Call','Çağır')}</button></div>`;}).join('');
   return {x,n:on.length};
 }
@@ -11197,7 +11198,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.94.0';
+const GAME_VERSION='0.94.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
