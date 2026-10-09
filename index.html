@@ -480,7 +480,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.93.0</div>
+  <div class="t-ver" id="tVer">v0.93.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -727,7 +727,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.93.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.93.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -7980,7 +7980,7 @@ function render(dt,now){
     if(p.fire>0){const fl=1;
       {const[FX,FZ]=W3(p.x,p.y);const big=p.type==='solarfarm'?3.2:p.type==='solar'?1.6:T.kind==='wind'?0.9*T.scale:2.2;const kf=Math.min(1,p.fire/FIRE_SPREAD);flameAt(FX,FZ,big,now,p.x*0.013,kf);
        const top=T.kind==='wind'?4.75*T.scale:T.kind==='dam'?3:T.kind==='hydro'?1.8:1.1;flameAt(FX,FZ,T.kind==='wind'?0.3*T.scale:big*0.5,now,p.x*0.017+1,kf,top,true);}   // v0.79.2: and on top of it
-      const prog=Math.max(p.fireT||0,p.fireC||0);place('fr'+p.id,'wrench fire',p.x,p.y+34,1.2*fl,prog>0?`🧯 ${Math.round(prog*100)}%`:'🔥');}
+      const prog=Math.max(p.fireT||0,p.fireC||0);if(prog>0)place('fr'+p.id,'wrench fire',p.x,p.y+34,1.2*fl,`🧯 ${Math.round(prog*100)}%`);}   /* v0.93.1: the flames show it; no 🔥 badge on top */
     if(snowPanel(p)>0.05)place('sn'+p.id,'wrench',p.x,p.y+6,1.6,p.clr>0?`🧹 ${Math.round(p.clr*100)}%`:`🌨️ ${Math.round(snowPanel(p)*100)}%`);
     if(gridNeedsService(p)&&!p.fire&&p.gsv>0)place('gw'+p.id,'wrench',p.x+(T.kind==='wind'?0:14),p.y+14,T.kind==='wind'?4.4*T.scale:1.2,`🔌 ${Math.round(p.gsv*100)}%`);   // costs live in 🧰 Upkeep
     if(!p.broken&&needsWork(p)&&p.rep>0)place('rp'+p.id,'wrench',p.x,p.y-10,T.kind==='wind'?5.6*T.scale:2.0,`${canRebuild(p)?'🏗️':'♻️'} ${Math.round(p.rep*100)}%`);   // costs live in 🧰 Upkeep
@@ -8008,7 +8008,7 @@ function render(dt,now){
      const f=each?batAt(D.id)/each:0;o.g.userData.bar.scale.x=Math.max(0.001,f);o.g.userData.bar.position.x=-2.6*(1-f);
      const bp=pops[D.id]||0;o.g.scale.setScalar(1+Math.sin(bp*Math.PI)*0.25);
      if(S.batFire>0){const[FX,FZ]=W3(D.x,D.y);flameAt(FX,FZ,2.4,now,0.4,Math.min(1,S.batFire/FIRE_SPREAD));}
-     if(S.batFire>0)place('bf'+D.id,'wrench fire',D.x,D.y+40,1.2,Math.max(S.batFireT||0,S.batFireC||0)>0?`🧯 ${Math.round(Math.max(S.batFireT||0,S.batFireC||0)*100)}%`:'🔥');
+     if(S.batFire>0&&Math.max(S.batFireT||0,S.batFireC||0)>0)place('bf'+D.id,'wrench fire',D.x,D.y+40,1.2,`🧯 ${Math.round(Math.max(S.batFireT||0,S.batFireC||0)*100)}%`);
      place('dep'+D.id,'tag'+(S.batFault?' bad':' ok'),D.x,D.y,3.2,S.batFault?(batFixT>0?`🔧 ${Math.round(batFixT/1.5*100)}%`:L('🔋 Fault · stand here','🔋 Arıza · burada dur')):`🔋 ${batAt(D.id)} / ${each}`);
      place('bc'+D.id,'code'+(batHealth()<0.9?' worn':''),D.x-42,D.y+26,0.9,`${codeOf(D.id)} ${Math.round(batHealth()*100)}%`);
      if(!S.batFault&&batHealth()<0.995&&D.id==='bat')place('rf'+D.id,'wrench',D.x,D.y-20,4.4,refurbT>0?`♻️ ${Math.round(refurbT/2.5*100)}%`:`♻️ $${fmt(refurbCost())}`);}}
@@ -9229,6 +9229,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.93.1',t:['Cleaner fires','Daha temiz yangın'],l:[['The 🔥 badge over burning sites is gone; the flames are enough. The 🧯 progress still shows while you put it out.','Yanan sahaların üstündeki 🔥 rozeti kalktı; alevler yeterli. Söndürürken 🧯 ilerlemesi görünmeye devam ediyor.']]},
  {v:'0.93.0',t:['Chaos, nightmare, crew talk','Kaos, kâbus, ekip yorumları'],l:[['😈 lists everything that can hurt your company; call any of them on purpose.','😈 şirketine zarar verebilecek her şeyi listeler; istediğini kendin çağırabilirsin.'],['Nightmare mode: top speed, problems back to back, faster cards, capped so it stays playable.','Kâbus modu: en yüksek hız, ard arda sorunlar, daha sık kart; oynanabilir kalacak şekilde sınırlı.'],['Helpers comment briefly on what just happened, then the bubble fades.','Yardımcılar olanlara kısa bir yorum yapar, balon kendiliğinden kaybolur.']]},
  {v:'0.92.3',t:['Code entry moved','Kod girişi taşındı'],l:[['On the start screen, Enter a code now sits under the ⚙️ button in the top-right corner.','Giriş ekranında Kod gir artık sağ üst köşedeki ⚙️ butonunun içinde.']]},
  {v:'0.92.2',t:['Close the level cards','Seviye kartlarını kapat'],l:[['The levels card and the level arrival card have a ✕ in the corner.','Seviyeler kartında ve seviye giriş kartında köşede ✕ var.']]},
@@ -11105,7 +11106,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.93.0';
+const GAME_VERSION='0.93.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
