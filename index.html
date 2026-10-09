@@ -399,6 +399,8 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .t-status{color:#fff;font-weight:700;font-size:13px;min-height:18px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
 #diag{font-family:monospace;font-size:12px;max-width:88vw;text-align:left;white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.45);color:#fff;padding:8px 10px;border-radius:10px}
 @media (max-height:700px){#tChar{width:104px;height:104px}.t-char{bottom:4%;left:5%;right:auto}.t-bubble{bottom:34px;font-size:12.5px;max-width:min(200px,50vw)}.t-turb{width:78px;right:5%;left:auto}}
+#tGear{position:absolute;z-index:5;pointer-events:auto;top:calc(env(safe-area-inset-top) + 12px);right:12px;width:46px;height:46px;min-width:0;padding:0;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:22px;line-height:46px;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+#tMenu{position:absolute;z-index:5;pointer-events:auto;top:calc(env(safe-area-inset-top) + 64px);right:12px}#tMenu .t-prog{margin-top:0}
 .t-ver{position:absolute;right:12px;bottom:calc(env(safe-area-inset-bottom) + 30px);color:rgba(255,255,255,.85);font-family:var(--disp);font-size:14px;letter-spacing:.5px;font-weight:400}
 .t-credit{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 14px);color:rgba(255,255,255,.85);font-size:11px;font-weight:700}
 .t-prog{pointer-events:auto;margin-top:12px;padding:10px 20px;border-radius:14px;background:rgba(255,255,255,.92)!important;color:#1D2433!important;font-family:var(--disp);font-size:17px;font-weight:400;box-shadow:0 3px 0 rgba(0,0,0,.12)}
@@ -449,6 +451,8 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 <script>try{var g0=JSON.parse(sessionStorage.getItem('mwm_go')||'null');if(g0){var v0=document.createElement('div');v0.id='lvlVeil';v0.className='on';
 v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…</div></div>';v0.querySelector('.lv-t').textContent=g0.t||'';document.body.appendChild(v0);}}catch(e){}</script>
 <div id="loading">
+  <button id="tGear" type="button" aria-label="Settings">⚙️</button>
+  <div id="tMenu" hidden><button id="codeBtnT" class="t-prog" disabled>🔑 Enter a code</button></div>
   <div class="t-sky"><div class="t-sun"></div></div>
   <svg class="t-turb" viewBox="0 0 120 200" aria-hidden="true">
     <path d="M56 70 L52 196 L68 196 L64 70 Z" fill="#fff"/>
@@ -464,13 +468,12 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button id="playBtn" class="t-play" disabled>Building the grid…</button>
     <label class="t-tut"><input type="checkbox" id="tutChk" checked> <span data-i18n="showHow">Show me how to play</span></label>
     <button id="progBtn" class="t-prog" hidden>Programs</button>
-    <button id="codeBtnT" class="t-prog" disabled>🔑 Enter a code</button>
     <div class="t-lang"><button data-lang="en">ENG</button><button data-lang="tr">TR</button></div>
     <div class="t-status" id="tStatus"></div>
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.92.2</div>
+  <div class="t-ver" id="tVer">v0.92.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -716,7 +719,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.92.2 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.92.3 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9217,6 +9220,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.92.3',t:['Code entry moved','Kod girişi taşındı'],l:[['On the start screen, Enter a code now sits under the ⚙️ button in the top-right corner.','Giriş ekranında Kod gir artık sağ üst köşedeki ⚙️ butonunun içinde.']]},
  {v:'0.92.2',t:['Close the level cards','Seviye kartlarını kapat'],l:[['The levels card and the level arrival card have a ✕ in the corner.','Seviyeler kartında ve seviye giriş kartında köşede ✕ var.']]},
  {v:'0.92.1',t:['Clearer return, reserve on screen','Daha net dönüş, ekranda SFK'],l:[['Without a crew the away card says plainly that nobody sold, and why.','Ekip yokken dönüş kartı kimsenin satmadığını ve nedenini açıkça söyler.'],['While a reserve band is held, the top-left box shows what it pays per hour (⚖️ SFK).','Rezerv bandı tutulurken sol üst kutu saatlik kazancını gösterir (⚖️ SFK).']]},
  {v:'0.92.0',t:['Walk, save, upgrade','Yürü, biriktir, yükselt'],l:[
@@ -10994,7 +10998,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.92.2';
+const GAME_VERSION='0.92.3';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -11488,7 +11492,9 @@ async function codeEnter(){
   startProgram(p);   // from the title screen this goes straight to the program's own space: no normal game, no how-to-play tour
 }
 $('sCode').onclick=codeEnter;
-$('codeBtnT').onclick=()=>{try{trackOnce('code-title');}catch(e){}codeEnter();};
+$('tGear').onclick=e=>{e.stopPropagation();$('tMenu').hidden=!$('tMenu').hidden;};
+document.addEventListener('click',e=>{const m=$('tMenu');if(m&&!m.hidden&&!e.target.closest('#tMenu,#tGear'))m.hidden=true;});
+$('codeBtnT').onclick=()=>{$('tMenu').hidden=true;try{trackOnce('code-title');}catch(e){}codeEnter();};
 $('progBtn').onclick=()=>{                 // on the title screen this is a way IN, not a panel
   if(!S.prog)return;
   if(playing){openProgram();return;}
