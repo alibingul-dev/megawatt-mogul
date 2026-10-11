@@ -43,7 +43,7 @@ jobs:
           sed -i "s/if('serviceWorker' in navigator){/if(false\&\&'serviceWorker' in navigator){/" "$W/index.html"
           test "$before" = "1"
           grep -q "if(false&&'serviceWorker' in navigator){" "$W/index.html"
-          echo "VERSION_NAME=$(grep -o "mwmogul-v[0-9.]*" sw.js | head -1 | sed 's/mwmogul-v//')" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$(grep -o "mwmogul-v[0-9.]*" sw.js | head -1 | sed 's/mwmogul-v//').${{ github.run_number }}0" >> "$GITHUB_ENV"
 
       - name: Signing key
         env:
