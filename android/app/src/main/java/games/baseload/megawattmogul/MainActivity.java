@@ -26,7 +26,7 @@ import androidx.webkit.WebViewAssetLoader;
 public class MainActivity extends Activity {
 
     private static final String HOST = "appassets.androidplatform.net";
-    private static final String START = "https://" + HOST + "/www/index.html";
+    private static final String START = "https://" + HOST + "/assets/www/index.html";
 
     private WebView web;
 
@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
 
         final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
                 .setDomain(HOST)
-                .addPathHandler("/www/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
         web = new WebView(this);
