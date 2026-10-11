@@ -491,7 +491,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.95.0</div>
+  <div class="t-ver" id="tVer">v0.95.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -740,7 +740,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.95.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.95.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5910,6 +5910,7 @@ function clearFor(t,x,y){const r=isBld(t)?85:t==='road'?24:isDeco(t)?0:(CLEAR_R[
 function applyCuts(){if(!TREE_REF.length||typeof S==='undefined'||!S)return;
   for(const [x,y] of (S.cut||[]))for(const t of TREE_REF)if(!t.cut&&Math.abs(t.x-x)<3&&Math.abs(t.y-y)<3)hideTree(t);
   for(const b of (S.blds||[]))cutTreesAt(b.x,b.y,85);                 // anything already built under a tree gets its ground back
+  for(const q of (S.plants||[]))try{clearFor(q.type,q.x,q.y);}catch(e){}
   for(const q of S.plants)if(q.free)clearFor(q.type,q.x,q.y);}
 function spawnDecoAnimal(d){try{const o=d.k==='sheep'?makeSheep():makeCow();const P={x:d.x,y:d.y,r:70,kind:d.k};
   const an={o,P,x:d.x,y:d.y,tx:d.x,ty:d.y,wait:1,face:0,phase:Math.random()*6,kind:d.k};o.scale.setScalar(d.k==='cow'?1.1:0.95);scene.add(o);animals.push(an);}catch(e){}}
@@ -6856,7 +6857,7 @@ function completePad(p){
   sfx.build();S.paid[p.id]=Math.max(0,(S.paid[p.id]||0)-_c);padLock=p.id;
   trackOnce('built-'+p.id+(p.kind==='upg'?'-lv'+(S.up[p.key]+1):''));
   if(p.kind==='build'){
-    S.built[p.id]=true;logLedger('build',-padCost(p),p.id);try{pst('build');mgHit('build',1);}catch(e){}
+    S.built[p.id]=true;logLedger('build',-padCost(p),p.id);try{clearFor(p.type,p.x,p.y);}catch(e){}   /* v0.95.1: trees on the site come down */try{pst('build');mgHit('build',1);}catch(e){}
     if(p.type!=='battery'&&p.type!=='town')S.plants.push({id:p.id,type:p.type,x:p.x,y:p.y,pile:0,acc:0,broken:false,born:gameNow(),gen:1});
     if(p.fx){const np=S.plants[S.plants.length-1];np.free=true;np.cost=padCost(p);np.code=freeCode(p.type);S.fxPad=null;}
     if(PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='wind'){const np=S.plants[S.plants.length-1];setTimeout(()=>askBrand(np),900);}
@@ -7335,7 +7336,9 @@ function buildNature(kit){
   for(let i=0;i<400&&rocks.length<70;i++){const x=30+tr()*1340,y=1250+tr()*730;if(blocked(x,y,20))continue;if([300,560,840,1100].some(px=>Math.abs(px-x)<90)&&y<1620)continue;if([350,700,1050].some(px=>Math.abs(px-x)<150)&&y>1620)continue;rocks.push([x,y]);}
   for(let i=0;i<300&&bare.length<16;i++){const x=30+tr()*1340,y=1660+tr()*320;if(blocked(x,y,20))continue;if([350,700,1050].some(px=>Math.abs(px-x)<150))continue;bare.push([x,y]);}
   const B=['Bush_1_A','Bush_2_A'];
-  B.forEach((ty,k)=>instanced(kit.geo[ty],kit.mat,bush.filter((_,i)=>i%2===k),(d,[x,y])=>{const[X,Z]=W3(x,y);d.position.set(X,0,Z);d.scale.setScalar(2.2+tr()*1.4);d.rotation.set(0,tr()*6.28,0);}));
+  B.forEach((ty,k)=>{const list=bush.filter((_,i)=>i%2===k);const m=instanced(kit.geo[ty],kit.mat,list,(d,[x,y])=>{const[X,Z]=W3(x,y);d.position.set(X,0,Z);d.scale.setScalar(2.2+tr()*1.4);d.rotation.set(0,tr()*6.28,0);});
+    if(m)list.forEach((b,j)=>TREE_REF.push({x:b[0],y:b[1],refs:[[m,j]],bush:1}));});   /* v0.95.1: big bushes can be cleared like trees */
+  try{applyCuts();}catch(e){}
   const G=['Grass_1_A','Grass_2_A'];
   G.forEach((ty,k)=>{const m=instanced(kit.geo[ty],kit.mat,grass.filter((_,i)=>i%2===k),(d,[x,y])=>{const[X,Z]=W3(x,y);d.position.set(X,0,Z);d.scale.setScalar(1.3+tr()*0.9);d.rotation.set(0,tr()*6.28,0);});if(m)m.castShadow=false;});
   const R=['Rock_1_A','Rock_2_A','Rock_3_A'];
@@ -9250,6 +9253,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.95.1',t:['Clear ground','Temiz zemin'],l:[['Building on a square cuts down the trees and big bushes standing on it, for free. Plants already under trees get their ground back.','Bir karede kurulum, üstündeki ağaçları ve büyük çalıları bedavaya keser. Ağaç altında kalmış santraller de yerini geri alır.']]},
  {v:'0.95.0',t:['Safer reactor, louder crew','Daha güvenli reaktör, daha konuşkan ekip'],l:[['A siren sounds while the reactor is at risk, and you get a warning when a fire is heading for it.','Reaktör risk altındayken siren çalar; bir yangın reaktöre yaklaşırken uyarı gelir.'],['A blown level is for looking only: no repairs, sales or pickups.','Patlamış seviyede sadece bakılır: onarım, satış ya da toplama yok.'],['Nightmare pays Holding ×1.5, with two new badges.','Kâbus Holding ×1,5 öder; iki yeni rozet var.'],['Helpers talk about the day, records and having nothing to do, and never repeat themselves. Settings can turn them off.','Yardımcılar gün sonu, rekorlar ve işsiz kalmak hakkında konuşur, aynı cümleyi tekrarlamaz. Ayarlardan kapatılabilir.'],['Goal chests are four times bigger.','Hedef sandıkları dört kat büyük.'],['Language moved into the ⚙️ on the start screen.','Dil seçimi giriş ekranındaki ⚙️ içine taşındı.']]},
  {v:'0.94.3',t:['After the blast','Patlamadan sonra'],l:[['Close the blast card to look around the ruined map; no money comes in or goes out there.','Patlama kartını kapatıp harap haritaya bakabilirsin; orada para girmez, çıkmaz.'],['Green radioactive jelly covers the ground.','Yerleri yeşil radyoaktif jöle kaplar.'],['If chaos caused it, you can go back to the moment before chaos.','Kaos yüzünden olduysa kaos öncesine dönebilirsin.']]},
  {v:'0.94.2',t:['Chaos follows the level','Kaos seviyeye uyuyor'],l:[['😈 lists only what this level can do to you, and hides on levels with no trouble yet.','😈 sadece bu seviyede olabilecekleri listeler; henüz sorun olmayan seviyelerde görünmez.']]},
@@ -11266,7 +11270,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.95.0';
+const GAME_VERSION='0.95.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
