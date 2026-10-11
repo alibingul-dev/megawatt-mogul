@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'games.baseload.megawattmogul'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'games.baseload.megawattmogul'
+        minSdk 24
+        targetSdk 36
+        // CI passes a number that only ever grows; 10 is the floor above the old TWA builds
+        versionCode((System.getenv('VERSION_CODE') ?: '10') as int)
+        versionName(System.getenv('VERSION_NAME') ?: '0.95.0')
+    }
+
+    signingConfigs {
+        release {
+            storeFile file(System.getenv('KEYSTORE_PATH') ?: 'missing.keystore')
+            storePassword System.getenv('KEYSTORE_PASSWORD')
+            keyAlias System.getenv('KEY_ALIAS')
+            keyPassword System.getenv('KEY_PASSWORD')
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // the game file and the music are already compressed or tiny; keep them stored
+    androidResources {
+        noCompress += ['mp3']
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+}

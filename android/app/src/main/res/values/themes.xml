@@ -1,0 +1,8 @@
+<resources>
+    <style name="GameTheme" parent="android:Theme.Material.Light.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/sky</item>
+        <item name="android:statusBarColor">@color/sky</item>
+        <item name="android:navigationBarColor">@color/sky</item>
+    </style>
+    <color name="sky">#8CCDF6</color>
+</resources>
