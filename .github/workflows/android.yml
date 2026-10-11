@@ -13,6 +13,9 @@ on:
 
 run-name: AAB ${{ github.run_number }} ${{ inputs.notes }}
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -69,3 +72,12 @@ jobs:
           name: MegawattMogul-aab-${{ github.run_number }}
           path: out/*.aab
           retention-days: 30
+
+      # a release keeps the signed file reachable without the Actions UI
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "aab-${{ github.run_number }}0" out/*.aab \
+            --title "AAB vc${{ github.run_number }}0 (v${VERSION_NAME})" \
+            --notes "${{ inputs.notes }}" --target "${{ github.sha }}"
