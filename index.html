@@ -491,7 +491,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.95.1</div>
+  <div class="t-ver" id="tVer">v0.95.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -740,7 +740,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.95.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.95.2 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5796,10 +5796,12 @@ function focusPad(){const F=focusLv();if(!F||focusHave(F))return null;if(F.pad)r
   const id='fx_'+F.ty[0];let p=PADS.find(q=>q.id===id);if(p)return p;
   let sp=S.fxPad&&S.fxPad.type===F.ty[0]?S.fxPad:null;
   if(!sp){let pk=[];try{pk=suggestSpots(F.ty[0]);}catch(e){}if(!pk.length)return null;sp=S.fxPad={type:F.ty[0],x:pk[0].x,y:pk[0].y,cost:freeCost(F.ty[0])};}
-  p={id,kind:'build',type:sp.type,x:sp.x,y:sp.y,cost:sp.cost,req:null,fx:1};PADS.push(p);return p;}
+  p={id,kind:'build',type:sp.type,x:sp.x,y:sp.y,cost:sp.cost,req:null,fx:1};
+  if(p.type==='river'||p.type==='dam'){try{snapToRiver(p);const yy=p.type==='dam'?p.y+62:p.y,r=riverAt(yy);p.sx=Math.round(r.x-r.w/2-50);p.sy=yy;}catch(e){}}   /* v0.95.2: pay from the bank, like every river square */
+  PADS.push(p);return p;}
 function focusGoal(){const F=focusLv();if(!F||focusHave(F))return null;const P=focusPad();if(!P)return null;const left=Math.max(0,padCost(P)-(S.paid[P.id]||0));
   return {t:[`🎯 ${tt(PLANT_TYPES[P.type]?PLANT_TYPES[P.type].name:['Battery station','Batarya istasyonu'])}: stand on its square on the map and save up · $${fmt(left)} to go`,
-             `🎯 ${tt(PLANT_TYPES[P.type]?PLANT_TYPES[P.type].name:['Battery station','Batarya istasyonu'])}: haritadaki karesine git, parayı biriktir · $${fmt(left)} kaldı`],at:()=>P,r:0};}
+             `🎯 ${tt(PLANT_TYPES[P.type]?PLANT_TYPES[P.type].name:['Battery station','Batarya istasyonu'])}: haritadaki karesine git, parayı biriktir · $${fmt(left)} kaldı`],at:()=>padAt(P),r:0};}
 function prodAdd(p){if(inPack())return;const st=S.stats.prod=S.stats.prod||{};st[p.type]=(st[p.type]||0)+1;}
 function prodOf(...ty){const st=S.stats.prod||{};return ty.reduce((a,t)=>a+(st[t]||0),0);}
 function freeCost(t){if(fbLad()&&fbPads(t).length){const c=fbPads(t).map(x=>x.cost),n=fbCount(t);
@@ -9253,6 +9255,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.95.2',t:['River square on the bank','Akarsu karesi kıyıda'],l:[['The run-of-river square of the river level now sits on the bank where you can see it and stand on it.','Akarsu seviyesinin akarsu karesi artık görünür ve üstünde durulabilir şekilde kıyıda.']]},
  {v:'0.95.1',t:['Clear ground','Temiz zemin'],l:[['Building on a square cuts down the trees and big bushes standing on it, for free. Plants already under trees get their ground back.','Bir karede kurulum, üstündeki ağaçları ve büyük çalıları bedavaya keser. Ağaç altında kalmış santraller de yerini geri alır.']]},
  {v:'0.95.0',t:['Safer reactor, louder crew','Daha güvenli reaktör, daha konuşkan ekip'],l:[['A siren sounds while the reactor is at risk, and you get a warning when a fire is heading for it.','Reaktör risk altındayken siren çalar; bir yangın reaktöre yaklaşırken uyarı gelir.'],['A blown level is for looking only: no repairs, sales or pickups.','Patlamış seviyede sadece bakılır: onarım, satış ya da toplama yok.'],['Nightmare pays Holding ×1.5, with two new badges.','Kâbus Holding ×1,5 öder; iki yeni rozet var.'],['Helpers talk about the day, records and having nothing to do, and never repeat themselves. Settings can turn them off.','Yardımcılar gün sonu, rekorlar ve işsiz kalmak hakkında konuşur, aynı cümleyi tekrarlamaz. Ayarlardan kapatılabilir.'],['Goal chests are four times bigger.','Hedef sandıkları dört kat büyük.'],['Language moved into the ⚙️ on the start screen.','Dil seçimi giriş ekranındaki ⚙️ içine taşındı.']]},
  {v:'0.94.3',t:['After the blast','Patlamadan sonra'],l:[['Close the blast card to look around the ruined map; no money comes in or goes out there.','Patlama kartını kapatıp harap haritaya bakabilirsin; orada para girmez, çıkmaz.'],['Green radioactive jelly covers the ground.','Yerleri yeşil radyoaktif jöle kaplar.'],['If chaos caused it, you can go back to the moment before chaos.','Kaos yüzünden olduysa kaos öncesine dönebilirsin.']]},
@@ -11270,7 +11273,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.95.1';
+const GAME_VERSION='0.95.2';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
