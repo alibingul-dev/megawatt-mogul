@@ -4,6 +4,9 @@ name: Android AAB
 # Run it from the Actions tab (Run workflow). The signed .aab is attached to the
 # run as an artifact; upload that file to Play Console.
 on:
+  push:
+    branches: [main]
+    paths: ['sw.js', '.github/workflows/android.yml']   # every version bump builds a fresh signed AAB
   workflow_dispatch:
     inputs:
       notes:
@@ -11,7 +14,7 @@ on:
         required: false
         default: ''
 
-run-name: AAB ${{ github.run_number }} ${{ inputs.notes }}
+run-name: AAB ${{ github.run_number }} ${{ inputs.notes || github.event.head_commit.message }}
 
 permissions:
   contents: write
@@ -77,7 +80,8 @@ jobs:
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
+          NOTES: ${{ inputs.notes || github.event.head_commit.message }}
         run: |
           gh release create "aab-${{ github.run_number }}0" out/*.aab \
             --title "AAB vc${{ github.run_number }}0 (v${VERSION_NAME})" \
-            --notes "${{ inputs.notes }}" --target "${{ github.sha }}"
+            --notes "$NOTES" --target "${{ github.sha }}"
