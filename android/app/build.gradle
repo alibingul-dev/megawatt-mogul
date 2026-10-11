@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId 'games.baseload.megawattmogul'
-        minSdk 23
+        minSdk 24
         targetSdk 36
         // CI passes a number that only ever grows; 10 is the floor above the old TWA builds
         versionCode((System.getenv('VERSION_CODE') ?: '10') as int)
