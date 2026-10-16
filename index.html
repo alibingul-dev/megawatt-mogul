@@ -491,7 +491,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.95.2</div>
+  <div class="t-ver" id="tVer">v0.96.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -740,7 +740,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.95.2 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.96.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5247,6 +5247,11 @@ function ribbonGeo(i0,i1,oA,yA,oB,yB){
     pos.push((q.x+nx*wb)*U,yB(q,i),(q.y+nz*wb)*U);
   }
   for(let i=0;i<i1-i0;i++){const k=i*2;idx.push(k,k+1,k+3,k,k+3,k+2);}
+  /* v0.96: on a tight bend the inner edge folds back and a few triangles turn over. With a two-sided
+     material those come out dark: the thin dark lines on the water. Turn them back to face like the rest. */
+  {const ny=t=>{const a=idx[t]*3,b=idx[t+1]*3,c=idx[t+2]*3;return (pos[b+2]-pos[a+2])*(pos[c]-pos[a])-(pos[b]-pos[a])*(pos[c+2]-pos[a+2]);};
+   let sum=0;for(let t=0;t<idx.length;t+=3)sum+=Math.sign(ny(t));
+   if(sum!==0)for(let t=0;t<idx.length;t+=3){const v=ny(t);if(Math.abs(v)>1e-9&&Math.sign(v)!==Math.sign(sum)){const k=idx[t+1];idx[t+1]=idx[t+2];idx[t+2]=k;}}}
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
   g.setIndex(idx);g.computeVertexNormals();return g;
@@ -6541,6 +6546,11 @@ function inputVec(){
 
 /* ======================= SIM ======================= */
 const helpers=[], flyers=[], floats=[], pops={};
+/* v0.96: a cell in flight can never hang in the air. It lands on game time, and is dropped after 1.5 s of
+   real time whatever happens (a paused loop, a stopped clock), so nothing is left frozen on screen. */
+function flyTick(dt){const t=performance.now();
+  for(const f of flyers){if(!f.t0)f.t0=t;f.life+=dt*3;if(t-f.t0>1500)f.life=1;}
+  for(let i=flyers.length-1;i>=0;i--)if(flyers[i].life>=1||!isFinite(flyers[i].life))flyers.splice(i,1);}
 function syncHelpers(){
   while(helpers.length<S.up.helper){helpers.push({x:HQ.x+40,y:HQ.y+90,carry:0,state:'idle',target:null,tick:0,walk:Math.random()*6,face:0,moving:false});}
   while(helpers.length>S.up.helper){const h=helpers.pop();const o=helperObjs.pop();if(o)scene.remove(o);}
@@ -6635,7 +6645,7 @@ function update(dt){
   if(!S.regions.east&&nx>EAST.x0-16)nx=Math.min(nx,EAST.x0-16);
   S.moving=m>0.05;if(S.moving)S.face=Math.atan2(vx,vy);
   S.px=nx;S.py=ny;const P={x:S.px,y:S.py};
-  if(S.radBoom){S.cash=S.radCash;S.earned=S.radEarned;try{radUI();}catch(e){}return;}   /* v0.95: a dead level is for looking only */
+  if(S.radBoom){S.cash=S.radCash;S.earned=S.radEarned;try{radUI();}catch(e){}flyTick(dt);return;}   /* v0.96: cells in flight still land */   /* v0.95: a dead level is for looking only */
   cellTick-=dt;
   if(cellTick<=0){for(const p of S.plants){if(dist(P,p)<75&&p.pile>=1&&!p.fire&&S.carry<carryCap()){pileTake(p);carryAdd(S);cellTick=0.07;flyers.push({x:p.x,y:p.y,h0:0.5,tx:()=>S.px,ty:()=>S.py,h1:2.2+S.carry*0.3,life:0,kind:'cell'});sfx.pick();break;}}}
   if(!S.moving&&S.carry===0)pitch=0;
@@ -6743,8 +6753,7 @@ function update(dt){
   try{radTick(dt,tscale===0||!!document.querySelector('.modal.on')||!isActive());}catch(e){}
   try{musicTick(dt);}catch(e){}
   try{fxTick(dt);}catch(e){}
-  for(const f of flyers)f.life+=dt*3;
-  for(let i=flyers.length-1;i>=0;i--)if(flyers[i].life>=1)flyers.splice(i,1);
+  flyTick(dt);
   for(const f of floats){f.life-=dt*0.9;f.rise+=dt*1.6;}
   for(let i=floats.length-1;i>=0;i--)if(floats[i].life<=0)floats.splice(i,1);
   for(const k in pops){pops[k]-=dt*1.8;if(pops[k]<=0)delete pops[k];}
@@ -8070,6 +8079,7 @@ function render(dt,now){
     {const q=quipAt(i);if(q){place('qp'+i,'qp '+q.c,hp.x,hp.y,3.6,q.h,-14);LB['qp'+i].el.style.opacity=q.o;}}});
   // flyers
   for(const f of flyers){
+    if(!f.t0)f.t0=performance.now();else if(performance.now()-f.t0>1500){f.life=1;continue;}   /* v0.96: never draw a stuck cell */
     let tx,ty;
     try{tx=f.tx();ty=f.ty();}catch(_){f.life=1;continue;}
     if(!isFinite(tx)||!isFinite(ty)){f.life=1;continue;}
@@ -8350,7 +8360,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)trackSessio
 
 
 /* ======================= DECISION CARDS ======================= */
-let cardOpen=false,lastInput=Date.now();
+let cardOpen=false,lastInput=Date.now(),curCardId=null;
 ['pointerdown','keydown','wheel'].forEach(ev=>addEventListener(ev,()=>{lastInput=Date.now();},{passive:true}));
 function isActive(){return playing&&!document.hidden&&Date.now()-lastInput<30000;}
 const windPlants=()=>S.plants.filter(p=>PLANT_TYPES[p.type]&&PLANT_TYPES[p.type].kind==='wind');
@@ -8530,7 +8540,7 @@ function autoCard(c0){
 }
 function openCard(c0){
   const c=(c0&&c0.opts)?c0:pickCard();if(!c)return;
-  cardOpen=true;sfx.warn();
+  cardOpen=true;curCardId=c.id;sfx.warn();
   $('cardIcon').textContent=c.icon;$('cardTitle').textContent=tt(c.title);$('cardText').textContent=tt(c.text);
   const opts=c.opts();
   /* v0.87.4: a card never locks you in. A free option is always free (even in the red), and if every
@@ -8539,9 +8549,9 @@ function openCard(c0){
   /* v0.92.2: the levels card can be closed from its corner */
   {const cx=$('cardX');if(cx){cx.hidden=c.id!=='worlds';cx.onclick=e=>{e.stopPropagation();$('mCard').classList.remove('on');cardOpen=false;last=0;};}}
   $('cardOpts').innerHTML=opts.map((o,i)=>{const no=o.cost>0&&o.cost>S.cash;return `<button data-o="${i}" ${no?'disabled':''}><b>${tt(o.t)}</b><small>${tt(o.d)}</small>${no?`<span class="nomoney">${L('Not enough money','Yeterli para yok')} · 👛 $${fmt(S.cash)}</span>`:''}</button>`;}).join('');
-  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','prestige','rate','quiz','svc','progexit','streak'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
+  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','prestige','rate','quiz','svc','progexit','streak','exit'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
     S.cardPrefs=S.cardPrefs||{};S.cardPrefs[c.id]=k;logLedger('card',-(o.cost||0),c.id+':'+k);track('card-'+c.id+'-'+k);
-    $('mCard').classList.remove('on');cardOpen=false;last=0;sfx.goal();toast(`${c.icon} ${tt(o.t)}`,'good');save();};
+    $('mCard').classList.remove('on');cardOpen=false;curCardId=null;last=0;if(c.id!=='exit'){sfx.goal();toast(`${c.icon} ${tt(o.t)}`,'good');}save();};
   $('mCard').classList.add('on');
 }
 
@@ -9255,6 +9265,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.96.0',t:['Back button, sharing, smoother water','Geri tuşu, paylaşım, düzgün su'],l:[['On Android the back button closes the open window first, and asks before leaving the game.','Android\'de geri tuşu önce açık pencereyi kapatır, oyundan çıkmadan önce sorar.'],['Sharing your score card and the daily market result now opens the phone\'s share menu in the app.','Skor kartı ve günün piyasası sonucu paylaşımı uygulamada telefonun paylaş menüsünü açar.'],['After your first three-star day the game asks once whether you want to leave a review.','İlk üç yıldızlı gününden sonra oyun bir kez yorum yazmak isteyip istemediğini sorar.'],['Thin dark lines on river bends and the reservoir are gone.','Nehir dönemeçlerindeki ve barajdaki ince koyu çizgiler kalktı.'],['A cell can no longer stay frozen in the air.','Bir hücre artık havada asılı kalamaz.'],['The daily report setting is hidden in the app, where the phone cannot deliver it.','Günlük rapor ayarı, telefonun bildirimi iletemediği uygulamada gizlendi.']]},
  {v:'0.95.2',t:['River square on the bank','Akarsu karesi kıyıda'],l:[['The run-of-river square of the river level now sits on the bank where you can see it and stand on it.','Akarsu seviyesinin akarsu karesi artık görünür ve üstünde durulabilir şekilde kıyıda.']]},
  {v:'0.95.1',t:['Clear ground','Temiz zemin'],l:[['Building on a square cuts down the trees and big bushes standing on it, for free. Plants already under trees get their ground back.','Bir karede kurulum, üstündeki ağaçları ve büyük çalıları bedavaya keser. Ağaç altında kalmış santraller de yerini geri alır.']]},
  {v:'0.95.0',t:['Safer reactor, louder crew','Daha güvenli reaktör, daha konuşkan ekip'],l:[['A siren sounds while the reactor is at risk, and you get a warning when a fire is heading for it.','Reaktör risk altındayken siren çalar; bir yangın reaktöre yaklaşırken uyarı gelir.'],['A blown level is for looking only: no repairs, sales or pickups.','Patlamış seviyede sadece bakılır: onarım, satış ya da toplama yok.'],['Nightmare pays Holding ×1.5, with two new badges.','Kâbus Holding ×1,5 öder; iki yeni rozet var.'],['Helpers talk about the day, records and having nothing to do, and never repeat themselves. Settings can turn them off.','Yardımcılar gün sonu, rekorlar ve işsiz kalmak hakkında konuşur, aynı cümleyi tekrarlamaz. Ayarlardan kapatılabilir.'],['Goal chests are four times bigger.','Hedef sandıkları dört kat büyük.'],['Language moved into the ⚙️ on the start screen.','Dil seçimi giriş ekranındaki ⚙️ içine taşındı.']]},
@@ -10737,7 +10748,8 @@ function dayStars(earn){const hist=(S.dayLog||[]).slice(-5).map(q=>q.earn||0).fi
   const avg=hist.reduce((a,b)=>a+b,0)/hist.length,r=earn/Math.max(1,avg);return r>=1.5?3:r>=1.15?2:r>=0.9?1:0;}
 function careerDayEnd(earn,quiet){
   if(!careerOn()||earn<=0)return;
-  const st=dayStars(earn),g=hpAdd(Math.max(1,Math.sqrt(earn)/8)+st),R=recOf();pst('days');if(st===3)pst('star3');S.starSum=(S.starSum||0)+st;
+  const st=dayStars(earn),g=hpAdd(Math.max(1,Math.sqrt(earn)/8)+st),R=recOf();pst('days');if(st===3)pst('star3');
+  if(st===3&&!quiet&&!cozy()&&S.day>=2)setTimeout(()=>{try{askRateOnce();}catch(e){}},3000);   /* v0.96: ask after a good day, once per phone */S.starSum=(S.starSum||0)+st;
   const rec=S.day>=3&&R.day>0&&earn>R.day;R.day=Math.max(R.day,earn);
   if(quiet)return;
   const sstr='★'.repeat(st)+'☆'.repeat(3-st);
@@ -10874,6 +10886,7 @@ function dailyLock(){const k=dayKey(),M=dMarket(k);
   toast(L(`📈 Daily market ${'★'.repeat(s)}${'☆'.repeat(3-s)} · ${pct}% · 💼 +${h}${cash?' · +$'+fmt(cash):''}`,`📈 Günün piyasası ${'★'.repeat(s)}${'☆'.repeat(3-s)} · %${pct} · 💼 +${h}${cash?' · +$'+fmt(cash):''}`),'good');}
 async function dailyShare(){const k=dayKey(),d=prof().daily[k];if(!d)return;
   const text=L(`⚡ Megawatt Mogul · Daily market ${k} · ${'★'.repeat(d.s)}${'☆'.repeat(3-d.s)} · ${d.pct}% · ${d.code} · Can you beat it?`,`⚡ Megawatt Mogul · Günün piyasası ${k} · ${'★'.repeat(d.s)}${'☆'.repeat(3-d.s)} · %${d.pct} · ${d.code} · Geçebilir misin?`)+' '+PLAY_URL;
+  if(window.MMAndroid){try{MMAndroid.share(text);trackOnce('daily-share');return;}catch(e){}}   /* v0.96: the app has no navigator.share */
   try{if(navigator.share){await navigator.share({text});trackOnce('daily-share');return;}}catch(e){if(e&&e.name==='AbortError')return;}
   try{await navigator.clipboard.writeText(text);toast(L('Copied. Paste it anywhere.','Kopyalandı. İstediğin yere yapıştır.'),'good');}catch(e){prompt(L('Copy this','Bunu kopyala'),text);}}
 /* ---- 7. achievements: three tiers each, Holding points and hats as rewards ---- */
@@ -11195,7 +11208,10 @@ function streakCheck(){const today=dayKey();let st=streakRead();
   const n=gap===1?Math.min(7,(st.n||1)+1):Math.max(1,(st.n||1)-1);
   streakWrite({last:today,n});const pay=streakPay(n);
   const go=()=>{if(cardOpen||tutOpen||document.querySelector('.modal.on')){setTimeout(go,1500);return;}openCard(streakCard(n,pay));try{trackOnce('streak-'+n);}catch(e){}};setTimeout(go,2500);}
-function shareCard(){try{
+function shareCard(){
+  /* v0.96: the app's WebView has no file sharing; hand the text and Play link to the phone's share menu */
+  if(window.MMAndroid){try{MMAndroid.share(L(`Level ${sev()} · $${fmt(wealth())} in Megawatt Mogul. Can you beat it?`,`Megawatt Mogul'da Seviye ${sev()} · $${fmt(wealth())}. Geçebilir misin?`)+' '+PLAY_URL);trackOnce('share-card');return;}catch(e){}}
+  try{
   const c=document.createElement('canvas');c.width=1080;c.height=1350;const g=c.getContext('2d');
   const gr=g.createLinearGradient(0,0,0,1350);gr.addColorStop(0,'#1B2A4A');gr.addColorStop(1,'#0E1526');g.fillStyle=gr;g.fillRect(0,0,1080,1350);
   g.fillStyle='rgba(255,210,63,.12)';for(let i=0;i<14;i++){g.beginPath();g.arc(80+i*75,1180+Math.sin(i)*40,26+(i%3)*10,0,7);g.fill();}
@@ -11214,6 +11230,22 @@ function shareCard(){try{
     const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='megawatt-mogul.png';document.body.appendChild(a);a.click();a.remove();},'image/png');
 }catch(e){toast(L('Could not make the card on this phone.','Bu telefonda kart oluşturulamadı.'),'');}}
 $('sShare').onclick=()=>{$('mSet').classList.remove('on');shareCard();};
+/* v0.96: Android back. The app calls mmBack(); true = handled here. Order: guide stays, an open window closes,
+   a decision card stays (a choice is required), otherwise ask before leaving. */
+function exitCard(){return {id:'exit',icon:'🚪',ok:()=>false,safe:1,title:['Leave the game?','Oyundan çıkılsın mı?'],
+  text:['Your progress is saved on this phone.','İlerlemen bu telefonda kayıtlı.'],
+  opts:()=>[O('Stay','Kal','Back to the game.','Oyuna dön.',0,NOOP),O('Leave','Çık','Saves and closes the game.','Kaydeder ve oyunu kapatır.',0,()=>{try{save();}catch(e){}try{MMAndroid.exit();}catch(e){}})]};}
+function mmBack(){
+  if(typeof tutOpen!=='undefined'&&tutOpen)return true;
+  const mc=$('mCard');
+  if(mc&&mc.classList.contains('on')){
+    if(curCardId==='exit'){mc.classList.remove('on');cardOpen=false;curCardId=null;return true;}
+    const cx=$('cardX');if(cx&&!cx.hidden)cx.click();return true;}
+  for(const [m,b] of Object.entries(MODAL_X)){const el=$(m);if(el&&el.classList.contains('on')){const t=$(b);if(t)t.click();else el.classList.remove('on');return true;}}
+  const other=document.querySelector('.modal.on');if(other){other.classList.remove('on');return true;}
+  openCard(exitCard());return true;}
+/* the daily report needs browser notifications, which the app's WebView does not have */
+if(window.MMAndroid){try{$('sNotif').hidden=true;}catch(e){}}
 $('sRate').onclick=()=>{$('mSet').classList.remove('on');openPlayPage();};
 $('worldBtn').onclick=()=>{trackOnce('world-btn');openCard(worldMax()>=1?worldsCard():prestCard());};
 /* ---- daily report notification: nothing leaves the phone. The game leaves a one-line
@@ -11273,7 +11305,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.95.2';
+const GAME_VERSION='0.96.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */

@@ -8,8 +8,10 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.window.OnBackInvokedDispatcher;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -72,8 +74,54 @@ public class MainActivity extends Activity {
             }
         });
 
+        // the page asks for these: share sheet (WebView has no navigator.share) and leaving after the exit card
+        web.addJavascriptInterface(new Bridge(), "MMAndroid");
+
+        // Back goes to the page first: it closes an open window or asks before leaving.
+        // From Android 16 (target 36) onBackPressed is no longer called, so register the callback too.
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::askPageBack);
+        }
+
         hideBars();
         web.loadUrl(START);
+    }
+
+    private void askPageBack() {
+        if (web == null) { finish(); return; }
+        // the page answers "1" when it handled back itself; anything else (page not ready) leaves
+        web.evaluateJavascript("(function(){try{return mmBack()?'1':'0'}catch(e){return '0'}})()", r -> {
+            if (!"\"1\"".equals(r)) finish();
+        });
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onBackPressed() {
+        askPageBack();
+    }
+
+    public class Bridge {
+        @JavascriptInterface
+        public void share(String text) {
+            runOnUiThread(() -> {
+                try {
+                    Intent i = new Intent(Intent.ACTION_SEND);
+                    i.setType("text/plain");
+                    i.putExtra(Intent.EXTRA_TEXT, text == null ? "" : text);
+                    startActivity(Intent.createChooser(i, null));
+                } catch (Exception ignored) { }
+            });
+        }
+
+        @JavascriptInterface
+        public void exit() {
+            runOnUiThread(() -> {
+                if (web != null) web.evaluateJavascript("try{save()}catch(e){}", v -> finish());
+                else finish();
+            });
+        }
     }
 
     private void openOutside(Uri u) {
