@@ -21,6 +21,10 @@ import android.webkit.WebViewClient;
 
 import androidx.webkit.WebViewAssetLoader;
 
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
+
 /* The whole game ships inside the app (assets/www). It is served from
    https://appassets.androidplatform.net so it runs as a normal secure web page
    with its own localStorage, entirely on the phone. Nothing is fetched from the
@@ -112,6 +116,27 @@ public class MainActivity extends Activity {
                     i.putExtra(Intent.EXTRA_TEXT, text == null ? "" : text);
                     startActivity(Intent.createChooser(i, null));
                 } catch (Exception ignored) { }
+            });
+        }
+
+        /* Play's own rating sheet. Play decides whether to show it (quota); if the request fails,
+           open the store page instead so the button never does nothing. */
+        @JavascriptInterface
+        public void review() {
+            runOnUiThread(() -> {
+                try {
+                    final ReviewManager m = ReviewManagerFactory.create(MainActivity.this);
+                    m.requestReviewFlow().addOnCompleteListener(t -> {
+                        if (t.isSuccessful()) {
+                            ReviewInfo info = t.getResult();
+                            m.launchReviewFlow(MainActivity.this, info);
+                        } else {
+                            openOutside(Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName()));
+                        }
+                    });
+                } catch (Exception e) {
+                    openOutside(Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName()));
+                }
             });
         }
 

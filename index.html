@@ -491,7 +491,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.96.0</div>
+  <div class="t-ver" id="tVer">v0.96.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -711,6 +711,8 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button id="sWorlds" hidden>⭐ Levels</button>
     <button id="sRate">⭐ Write a review on Play</button>
     <button id="sShare">📤 Share my score card</button>
+    <button id="sShareApp">📲 Share the game</button>
+    <button id="sTg">💬 Telegram community</button>
     <button id="sSpeed">Time speed: normal</button>
     <button class="pri setback">‹ Back</button>
   </div>
@@ -727,6 +729,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button id="sFx">Event scenes: on</button>
     <button id="sNotif">Daily report: off</button>
     <button id="sQuip">Crew comments: on</button>
+    <button id="sExit" hidden>Ask before leaving: on</button>
     <button id="sShadow">Shadows: on</button>
     <button id="sFlash">Flashes: on</button>
     <button id="sUI">Panel size: 100%</button>
@@ -740,7 +743,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.96.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.96.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9265,6 +9268,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.96.1',t:['Share the game, join the community','Oyunu paylaş, topluluğa katıl'],l:[['Settings › Game: 📲 Share the game sends a link to a friend; 💬 opens the Telegram channel.','Ayarlar › Oyun: 📲 Oyunu paylaş arkadaşına link gönderir; 💬 Telegram kanalını açar.'],['In the app, the review card opens Google Play\'s own rating window.','Uygulamada yorum kartı Google Play\'in kendi puanlama penceresini açar.'],['Settings › Display: turn off the question before leaving.','Ayarlar › Görüntü: çıkmadan önceki soruyu kapatabilirsin.']]},
  {v:'0.96.0',t:['Back button, sharing, smoother water','Geri tuşu, paylaşım, düzgün su'],l:[['On Android the back button closes the open window first, and asks before leaving the game.','Android\'de geri tuşu önce açık pencereyi kapatır, oyundan çıkmadan önce sorar.'],['Sharing your score card and the daily market result now opens the phone\'s share menu in the app.','Skor kartı ve günün piyasası sonucu paylaşımı uygulamada telefonun paylaş menüsünü açar.'],['After your first three-star day the game asks once whether you want to leave a review.','İlk üç yıldızlı gününden sonra oyun bir kez yorum yazmak isteyip istemediğini sorar.'],['Thin dark lines on river bends and the reservoir are gone.','Nehir dönemeçlerindeki ve barajdaki ince koyu çizgiler kalktı.'],['A cell can no longer stay frozen in the air.','Bir hücre artık havada asılı kalamaz.'],['The daily report setting is hidden in the app, where the phone cannot deliver it.','Günlük rapor ayarı, telefonun bildirimi iletemediği uygulamada gizlendi.']]},
  {v:'0.95.2',t:['River square on the bank','Akarsu karesi kıyıda'],l:[['The run-of-river square of the river level now sits on the bank where you can see it and stand on it.','Akarsu seviyesinin akarsu karesi artık görünür ve üstünde durulabilir şekilde kıyıda.']]},
  {v:'0.95.1',t:['Clear ground','Temiz zemin'],l:[['Building on a square cuts down the trees and big bushes standing on it, for free. Plants already under trees get their ground back.','Bir karede kurulum, üstündeki ağaçları ve büyük çalıları bedavaya keser. Ağaç altında kalmış santraller de yerini geri alır.']]},
@@ -10510,7 +10514,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
+function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');$('sShareApp').textContent=L('📲 Share the game','📲 Oyunu paylaş');$('sTg').textContent=L('💬 Telegram community','💬 Telegram topluluğu');$('sExit').textContent=L('Ask before leaving: ','Çıkmadan önce sor: ')+((typeof exitAskOff==='function'&&exitAskOff())?L('off','kapalı'):L('on','açık'));{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
   $('sQuip').textContent=L('Crew comments: ','Ekip yorumları: ')+(S.quipOff?L('off','kapalı'):L('on','açık'));
   $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');$('sWipe').textContent=L('Reset the whole game','Bütün oyunu sıfırla');$('sLearn').textContent='📚 '+L('What you have learned','Öğrendiklerin');$('sOnb').textContent='🎓 '+(S.prog?tt((PROGRAMS.find(x=>x.id===S.prog)||{name:['Program','Program']}).name):L('Orientation · Part 1','Oryantasyon · Bölüm 1'));try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
@@ -10710,7 +10714,7 @@ const PLAY_URL='https://play.google.com/store/apps/details?id=games.baseload.meg
 function openPlayPage(){try{trackOnce('rate-open');}catch(e){}try{window.open(PLAY_URL,'_blank');}catch(e){location.href=PLAY_URL;}}
 function rateCard(){return {id:'rate',icon:'⭐',ok:()=>false,safe:1,title:['Want to leave a review?','Yorum yazmak ister misin?'],
   text:['If you would like to tell us what you think, the Play page is one tap away. Every comment helps us make the game better.','Ne düşündüğünü yazmak istersen Play sayfamız bir dokunuş uzağında. Her yorum oyunu geliştirmemize yardım ediyor.'],
-  opts:()=>[O('Yes, I would','Evet, isterim','Opens the game\'s Play page.','Oyunun Play sayfasını açar.',0,openPlayPage),O('Later','Daha sonra','You can always find it in Settings › Game.','Ayarlar › Oyun\'da her zaman bulabilirsin.',0,NOOP)]};}
+  opts:()=>[O('Yes, I would','Evet, isterim','Rate it right here on Google Play.','Google Play\'de hemen puan ver.',0,()=>askReview()),O('Later','Daha sonra','You can always find it in Settings › Game.','Ayarlar › Oyun\'da her zaman bulabilirsin.',0,NOOP)]};}
 function askRateOnce(){try{if(localStorage.getItem(SAVE_KEY+'_rateAsked'))return;localStorage.setItem(SAVE_KEY+'_rateAsked','1');}catch(e){return;}
   const go=()=>{if(cardOpen||tutOpen||document.querySelector('.modal.on')){setTimeout(go,1500);return;}openCard(rateCard());};setTimeout(go,8000);}
 /* ===================== v0.90 CAREER LAYER =====================
@@ -11237,15 +11241,31 @@ function exitCard(){return {id:'exit',icon:'🚪',ok:()=>false,safe:1,title:['Le
   opts:()=>[O('Stay','Kal','Back to the game.','Oyuna dön.',0,NOOP),O('Leave','Çık','Saves and closes the game.','Kaydeder ve oyunu kapatır.',0,()=>{try{save();}catch(e){}try{MMAndroid.exit();}catch(e){}})]};}
 function mmBack(){
   if(typeof tutOpen!=='undefined'&&tutOpen)return true;
+  const noAsk=exitAskOff();
   const mc=$('mCard');
   if(mc&&mc.classList.contains('on')){
     if(curCardId==='exit'){mc.classList.remove('on');cardOpen=false;curCardId=null;return true;}
     const cx=$('cardX');if(cx&&!cx.hidden)cx.click();return true;}
   for(const [m,b] of Object.entries(MODAL_X)){const el=$(m);if(el&&el.classList.contains('on')){const t=$(b);if(t)t.click();else el.classList.remove('on');return true;}}
   const other=document.querySelector('.modal.on');if(other){other.classList.remove('on');return true;}
+  if(noAsk){try{save();}catch(e){}return false;}   /* v0.96.1: asked not to be asked */
   openCard(exitCard());return true;}
 /* the daily report needs browser notifications, which the app's WebView does not have */
-if(window.MMAndroid){try{$('sNotif').hidden=true;}catch(e){}}
+if(window.MMAndroid){try{$('sNotif').hidden=true;$('sExit').hidden=false;}catch(e){}}
+/* v0.96.1: the exit question can be turned off (per phone) */
+function exitAskOff(){try{return localStorage.getItem(SAVE_KEY+'_exitOff')==='1';}catch(e){return false;}}
+$('sExit').onclick=()=>{try{if(exitAskOff())localStorage.removeItem(SAVE_KEY+'_exitOff');else localStorage.setItem(SAVE_KEY+'_exitOff','1');}catch(e){}syncSet();};
+/* v0.96.1: share the game itself, not a score */
+async function shareApp(){
+  const text=L('Megawatt Mogul: an energy tycoon game made by a real electricity trader. Build wind and solar, sell power at the evening peak.','Megawatt Mogul: gerçek bir elektrik tüccarının yaptığı enerji patronu oyunu. Rüzgâr ve güneş kur, elektriği akşam zirvesinde sat.')+' '+PLAY_URL;
+  if(window.MMAndroid){try{MMAndroid.share(text);trackOnce('share-app');return;}catch(e){}}
+  try{if(navigator.share){await navigator.share({text});trackOnce('share-app');return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  try{await navigator.clipboard.writeText(text);toast(L('Copied. Paste it anywhere.','Kopyalandı. İstediğin yere yapıştır.'),'good');}catch(e){prompt(L('Copy this','Bunu kopyala'),text);}}
+$('sShareApp').onclick=()=>{$('mSet').classList.remove('on');shareApp();};
+const TG_URL='https://t.me/megawattmogul';
+$('sTg').onclick=()=>{$('mSet').classList.remove('on');try{window.open(TG_URL,'_blank');}catch(e){location.href=TG_URL;}};
+/* v0.96.1: in the app, the review card uses Play's own in-app review sheet (falls back to the Play page) */
+function askReview(){if(window.MMAndroid&&MMAndroid.review){try{MMAndroid.review();return;}catch(e){}}openPlayPage();}
 $('sRate').onclick=()=>{$('mSet').classList.remove('on');openPlayPage();};
 $('worldBtn').onclick=()=>{trackOnce('world-btn');openCard(worldMax()>=1?worldsCard():prestCard());};
 /* ---- daily report notification: nothing leaves the phone. The game leaves a one-line
@@ -11305,7 +11325,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.96.0';
+const GAME_VERSION='0.96.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
