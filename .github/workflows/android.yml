@@ -62,7 +62,15 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle --no-daemon bundleRelease
+        run: |
+          # on failure, surface Gradle's own error as annotations (the run's log is not always reachable)
+          if ! gradle --no-daemon bundleRelease > "$RUNNER_TEMP/gradle.log" 2>&1; then
+            grep -A25 "What went wrong" "$RUNNER_TEMP/gradle.log" | head -40 | while IFS= read -r l; do echo "::error::$l"; done
+            grep -E "^e: |error:|Duplicate class" "$RUNNER_TEMP/gradle.log" | head -15 | while IFS= read -r l; do echo "::error::$l"; done
+            tail -30 "$RUNNER_TEMP/gradle.log"
+            exit 1
+          fi
+          tail -5 "$RUNNER_TEMP/gradle.log"
 
       - name: Name the file
         run: |
