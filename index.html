@@ -491,7 +491,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.96.1</div>
+  <div class="t-ver" id="tVer">v0.96.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -743,7 +743,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.96.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.96.2 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9268,6 +9268,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.96.2',t:['Android libraries updated','Android kütüphaneleri güncellendi'],l:[['The Android app uses current versions of its system libraries. Nothing changes in the game.','Android uygulaması sistem kütüphanelerinin güncel sürümlerini kullanıyor. Oyunda bir şey değişmedi.']]},
  {v:'0.96.1',t:['Share the game, join the community','Oyunu paylaş, topluluğa katıl'],l:[['Settings › Game: 📲 Share the game sends a link to a friend; 💬 opens the Telegram channel.','Ayarlar › Oyun: 📲 Oyunu paylaş arkadaşına link gönderir; 💬 Telegram kanalını açar.'],['In the app, the review card opens Google Play\'s own rating window.','Uygulamada yorum kartı Google Play\'in kendi puanlama penceresini açar.'],['Settings › Display: turn off the question before leaving.','Ayarlar › Görüntü: çıkmadan önceki soruyu kapatabilirsin.']]},
  {v:'0.96.0',t:['Back button, sharing, smoother water','Geri tuşu, paylaşım, düzgün su'],l:[['On Android the back button closes the open window first, and asks before leaving the game.','Android\'de geri tuşu önce açık pencereyi kapatır, oyundan çıkmadan önce sorar.'],['Sharing your score card and the daily market result now opens the phone\'s share menu in the app.','Skor kartı ve günün piyasası sonucu paylaşımı uygulamada telefonun paylaş menüsünü açar.'],['After your first three-star day the game asks once whether you want to leave a review.','İlk üç yıldızlı gününden sonra oyun bir kez yorum yazmak isteyip istemediğini sorar.'],['Thin dark lines on river bends and the reservoir are gone.','Nehir dönemeçlerindeki ve barajdaki ince koyu çizgiler kalktı.'],['A cell can no longer stay frozen in the air.','Bir hücre artık havada asılı kalamaz.'],['The daily report setting is hidden in the app, where the phone cannot deliver it.','Günlük rapor ayarı, telefonun bildirimi iletemediği uygulamada gizlendi.']]},
  {v:'0.95.2',t:['River square on the bank','Akarsu karesi kıyıda'],l:[['The run-of-river square of the river level now sits on the bank where you can see it and stand on it.','Akarsu seviyesinin akarsu karesi artık görünür ve üstünde durulabilir şekilde kıyıda.']]},
@@ -11325,7 +11326,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.96.1';
+const GAME_VERSION='0.96.2';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
