@@ -50,6 +50,11 @@ dependencies {
     implementation 'androidx.activity:activity:1.9.3'
     implementation 'androidx.fragment:fragment:1.8.5'
     implementation 'androidx.core:core:1.13.1'
-    // the newer AndroidX brings kotlin-stdlib 1.8, review still brings stdlib-jdk7/jdk8 1.6 -> duplicate classes; align them
-    implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
+}
+
+// The newer AndroidX brings kotlin-stdlib 1.8, which already contains the old stdlib-jdk7/jdk8 classes;
+// review still drags in stdlib-jdk7/jdk8 1.6 -> duplicate classes. Leave the old split jars out.
+configurations.configureEach {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
 }
