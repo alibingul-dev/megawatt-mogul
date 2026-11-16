@@ -491,7 +491,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.97.3</div>
+  <div class="t-ver" id="tVer">v0.98.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -744,7 +744,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.97.3 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.98.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -5526,6 +5526,8 @@ const GOALS=[
 /* ---- levels: opt-in. Wealth unlocks the offer, the player decides when to take it.
        Every level opens one system (often harder) and grants one permanent perk. ---- */
 const OPENTXT={
+  gop:[['Day-ahead market','Gün öncesi piyasası'],['A promise at 17:00 for tomorrow: +20% on delivered cells, half a price for each missing one.','17:00’de yarın için söz: teslim edilen hücreye +%20, eksik her hücreye yarım fiyat ceza.']],
+  kgup:[['Forecast notice','KGÜP bildirimi'],['Each morning: careful, average or bold notice for big plants.','Her sabah: büyük santraller için temkinli, ortalama ya da iddialı bildirim.']],
   drought:[['Dry days','Kurak günler'],['On a dry day river and dam output drops to 40%.','Kurak günde akarsu ve baraj üretimi %40’a düşer.']],
   imbalance:[['Imbalance','Dengesizlik'],['Big plants pay for every hour their output misses the forecast.','Büyük santraller üretim tahmini ıskaladıkça her saat bedel öder.']],
   rivaldump:[['Rival dumping','Rakip fiyat kırma'],['Some days rivals crash the price for a few hours.','Bazı günler rakipler fiyatı birkaç saat kırar.']],
@@ -5657,7 +5659,13 @@ const SEV=[null,
   ela:[["Off the coast the wind is steadier. But salt eats steel: sea turbines age faster.","Kıyıdan açıkta rüzgâr daha istikrarlı. Ama tuz çeliği yer: deniz türbinleri daha hızlı yaşlanır."]],
   goal:G_(['Sea turbines make 4,000 cells','Deniz türbinleri 4.000 hücre üretsin'],()=>prodOf('offshore'),4000)},
 {n:['Nuclear','Nükleer'],k:['nuclear'],w:['± A plant that never sleeps — until a SCRAM stops it.','± Hiç uyumayan bir santral — ta ki bir SCRAM onu durdurana kadar.'],
-  ela:[["The last rung for now: nuclear, across the river. It never sleeps — until a SCRAM stops it.","Şimdilik son basamak: nehrin karşısında nükleer. Hiç uyumaz — ta ki bir SCRAM onu durdurana kadar."]]},
+  ela:[["Nuclear, across the river. It never sleeps — until a SCRAM stops it.","Nehrin karşısında nükleer. Hiç uyumaz — ta ki bir SCRAM onu durdurana kadar."]]},
+ {n:['Day-ahead market','Gün öncesi piyasası'],k:['gop'],w:['➕ Sell tomorrow’s energy today at a better price. ➖ Every cell you promise and do not deliver is charged.','➕ Yarının enerjisini bugünden daha iyi fiyata sat. ➖ Söz verip teslim etmediğin her hücre faturalanır.'],
+  ela:[["Real traders sell tomorrow's energy a day before: the day-ahead market. Every evening at 17:00 you promise how much you will sell tomorrow.","Gerçek tüccarlar yarının enerjisini bir gün önceden satar: gün öncesi piyasası. Her akşam 17:00'de yarın ne kadar satacağına söz verirsin."],["Cells you deliver against the promise earn 20% more. Cells you promised but did not deliver cost you half a price each. Promise what you can really sell.","Sözüne karşılık teslim ettiğin her hücre %20 fazla kazandırır. Söz verip teslim etmediğin her hücre yarım fiyat ceza yazar. Gerçekten satabileceğin kadar söz ver."]],
+  goal:G_(['Deliver 3 full day-ahead promises','3 GÖP sözünü tam teslim et'],()=>S.stats.gopFull||0,3)},
+ {n:['Forecast notice','KGÜP bildirimi'],k:['kgup'],w:['± You choose how big plants are declared each morning; the system short or long decides which mistake is expensive.','± Büyük santrallerin bildirimini her sabah sen seçersin; sistemin açık ya da fazla olması hangi hatanın pahalı olduğunu belirler.'],
+  ela:[["Every morning big plants tell the grid how much they will make: the forecast notice. Now you choose it: careful, average or bold.","Büyük santraller her sabah şebekeye ne kadar üreteceklerini bildirir: KGÜP. Artık sen seçiyorsun: temkinli, ortalama ya da iddialı."],["If the system is short, making less than you declared is expensive — declare careful. If the system is long, making more is expensive — declare bold. On a calm day, average is best.","Sistem açıksa bildirdiğinden az üretmek pahalıdır — temkinli bildir. Sistem fazlaysa bildirdiğinden çok üretmek pahalıdır — iddialı bildir. Sakin günde ortalama en iyisidir."]],
+  goal:G_(['Pick the cheapest notice on 5 days','5 gün en ucuz bildirimi seç'],()=>S.stats.kgupBest||0,5)},
 ];
 const SEV_MAX=SEV.length-1, LAD_DAYS=2;
 function ladDays(n){n=n||sev();return n<=4?2:n<=8?3:n<=12?4:5;}   // v0.88.1: the higher the level, the longer you live in it
@@ -5665,7 +5673,7 @@ const FSEV={};SEV.forEach((s,i)=>{if(s)for(const k of s.k)FSEV[k]=i;});
 const TYPE_SEV={turbine:1,solar:1,battery:4,river:7,town:9,bigwind:11,solarfarm:11,dam:15,offshore:17,nuclear:18};
 /* the four levels of v0.82–0.85, kept for Classic worlds */
 const HARD_SEV={repair:2,fire:2,shifts:3,skills:3,ageing:4},CLASSIC_SEV=[null,['Basics','Temel'],['Maintenance','Bakım'],['Shifts & people','Vardiya ve İK'],['Investment','Yatırım']];
-const PROG_OFF={drought:1,imbalance:1,rivaldump:1,pricecap:1,mktfee:1,saltwear:1,shocks:1,repair:1,fire:1,heavy:1,cards:1,shifts:1,skills:1,ageing:1,svcplan:1,nuclear:1,regions:1,gridline:1,grid:1,report:1,report2:1,report3:1,roles:1,coast:1,dam:1,river:1,big:1};
+const PROG_OFF={gop:1,kgup:1,drought:1,imbalance:1,rivaldump:1,pricecap:1,mktfee:1,saltwear:1,shocks:1,repair:1,fire:1,heavy:1,cards:1,shifts:1,skills:1,ageing:1,svcplan:1,nuclear:1,regions:1,gridline:1,grid:1,report:1,report2:1,report3:1,roles:1,coast:1,dam:1,river:1,big:1};
 function sev(){return (typeof S!=='undefined'&&S&&S.prest||0)+1;}
 function sevName(n){if(typeof S!=='undefined'&&S&&S.classic!=null)return CLASSIC_SEV[n]?tt(CLASSIC_SEV[n]):L('Classic','Klasik');return SEV[n]?tt(SEV[n].n):'?';}
 function inClassic(){return typeof S!=='undefined'&&!!S&&S.classic!=null;}
@@ -6422,10 +6430,58 @@ function droughtMult(){return droughtOn()?0.4:1;}
 function dumpWin(){if(!has('rivaldump')||inProg())return null;const r=dayRng(257);if(r()>=0.35)return null;const a=10+Math.floor(r()*9);return [a,a+2+Math.floor(r()*2)];}   // L14
 function priceCap(){return has('pricecap')&&!inProg()?P0*AVG_D*1.9:Infinity;}           // L15
 function mktFee(){return has('mktfee')&&!inProg()?0.95:1;}                               // L16
+
+/* v0.98: two ladder levels from the real Turkish market. Both are local, both are decisions, not
+   chores: one card a day each, and nothing is charged while you are away. */
+function ladOnly(){return !cozy()&&!inClassic()&&!inProg()&&!(typeof inPack==='function'&&inPack());}
+function gopOn(){return ladOnly()&&has('gop');}
+function kgupOn(){return ladOnly()&&has('kgup');}
+/* L19 GÖP: at 17:00 promise tomorrow's cells; settled at midnight against what was really sold */
+function gopBase(){return Math.max(10,Math.round(S.gopLast||0));}
+function gopCard(){const b=gopBase(),av=Math.round(todayAvg()*100)/100,
+    o=(f,en,tr)=>{const q=Math.round(b*f);return O(`${en} · ${q} cells`,`${tr} · ${q} hücre`,
+      q?`Delivered: +$${fmt(q*av*0.2)} at most · missed: −$${fmt(av*0.5)} per cell.`:'No promise, no bonus, no risk.',
+      q?`Teslim: en fazla +$${fmt(q*av*0.2)} · eksik: hücre başı −$${fmt(av*0.5)}.`:'Söz yok, prim yok, risk yok.',0,()=>{S.gopNext={q,day:S.day+1};});};
+  return {id:'gop',icon:'📅',ok:()=>false,safe:0,title:['Day-ahead market · tomorrow','Gün öncesi piyasası · yarın'],
+    text:[`Today you sold ${fmt(S.gopLast||0)} cells. How many do you promise for tomorrow?`,`Bugün ${fmt(S.gopLast||0)} hücre sattın. Yarın için kaç hücre söz veriyorsun?`],
+    opts:()=>[o(0.5,'Careful','Temkinli'),o(0.8,'Steady','Dengeli'),o(1.1,'Bold','İddialı'),o(0,'No promise','Söz verme')]};}
+function gopHour(h){
+  if(!gopOn())return;
+  if(h===0){const sold=(S.soldCells||0)-(S.gopSold0==null?(S.soldCells||0):S.gopSold0);S.gopLast=sold;S.gopSold0=S.soldCells||0;
+    const g=S.gop;S.gop=null;
+    if(g&&g.day===S.day-1&&g.q>0){const d=Math.min(sold,g.q),miss=g.q-d,bon=Math.round(d*g.av*0.2),pen=Math.round(miss*g.av*0.5),net=bon-pen;
+      S.cash=Math.max(0,S.cash+net);try{logLedger('gop',net,'gop');}catch(e){}if(!miss){S.stats.gopFull=(S.stats.gopFull||0)+1;}
+      toast(miss?L(`📅 Day-ahead: ${d}/${g.q} delivered · +$${fmt(bon)} −$${fmt(pen)}`,`📅 GÖP: ${d}/${g.q} teslim · +$${fmt(bon)} −$${fmt(pen)}`)
+                :L(`📅 Day-ahead promise kept: ${g.q} cells · +$${fmt(bon)}`,`📅 GÖP sözü tutuldu: ${g.q} hücre · +$${fmt(bon)}`),miss?'':'good');}
+    const n=S.gopNext;S.gopNext=null;if(n&&n.day===S.day&&n.q>0)S.gop={q:n.q,day:S.day,av:todayAvg()};}
+  if(h>=17&&h<=20&&!S.gopNext&&S.gopAsk!==S.day&&!cardOpen&&!tutOpen){S.gopAsk=S.day;S.gopLast=(S.soldCells||0)-(S.gopSold0==null?0:S.gopSold0);openCard(gopCard());}}
+/* L20 KGÜP: the day's system direction sets which mistake is expensive (critical fractile, in three choices) */
+function sysDir(){const r=dayRng(373),x=r();const d=x<0.35?'short':x<0.7?'long':'calm';const y=r();
+  const hint=y<0.75?d:(d==='short'?'long':d==='long'?'calm':'short');return {d,hint};}
+function kgupPen(){const d=sysDir().d,b={careful:-0.5,avg:0,bold:0.5}[S.kgupPick||'avg'];
+  const sp=d==='short'?1.6:d==='long'?0.4:1,lp=d==='short'?0.4:d==='long'?1.6:1;return {b,sp,lp};}
+function kgupExp(k){return k.sp*Math.pow(k.b+1,2)/4+k.lp*Math.pow(1-k.b,2)/4;}   // expected cost, uniform error in [-1,1]
+function kgupCost(k){const e=Math.random()*2-1,dv=k.b-e;return 0.4*(dv>0?dv*k.sp:-dv*k.lp);}
+function kgupCard(){const h=sysDir().hint,ht={short:L('probably SHORT (deficit)','büyük ihtimalle AÇIK'),long:L('probably LONG (surplus)','büyük ihtimalle FAZLA'),calm:L('probably CALM','büyük ihtimalle DENGEDE')}[h];
+  const pick=k=>()=>{S.kgupPick=k;S.kgupDay=S.day;};
+  return {id:'kgup',icon:'📡',ok:()=>false,safe:0,title:['Forecast notice · today','KGÜP bildirimi · bugün'],
+    text:[`System operator's outlook: ${ht}. The outlook is right about three days in four.`,`Sistem operatörünün öngörüsü: ${ht}. Öngörü yaklaşık dört günün üçünde doğru çıkar.`],
+    opts:()=>[O('Careful (declare low)','Temkinli (düşük bildir)','Best when the system is short.','Sistem açıksa en iyisi.',0,pick('careful')),
+              O('Average','Ortalama','Best on a calm day.','Sakin günde en iyisi.',0,pick('avg')),
+              O('Bold (declare high)','İddialı (yüksek bildir)','Best when the system is long.','Sistem fazlaysa en iyisi.',0,pick('bold'))]};}
+function kgupHour(h){
+  if(!kgupOn())return;
+  if(h===0&&S.kgupDay!==S.day)S.kgupPick='avg';
+  if(h===23&&S.kgupDay===S.day){const d=sysDir().d,best=d==='short'?'careful':d==='long'?'bold':'avg',ok=S.kgupPick===best;
+    if(ok)S.stats.kgupBest=(S.stats.kgupBest||0)+1;
+    const nm={short:L('short','açık'),long:L('long','fazla'),calm:L('calm','dengede')}[d];
+    toast(ok?L(`📡 The system was ${nm} — your notice was the cheapest.`,`📡 Sistem ${nm} çıktı — bildirimin en ucuzuydu.`):L(`📡 The system was ${nm}. Cheapest notice would have been: ${best==='careful'?'careful':best==='bold'?'bold':'average'}.`,`📡 Sistem ${nm} çıktı. En ucuz bildirim: ${best==='careful'?'temkinli':best==='bold'?'iddialı':'ortalama'}.`),ok?'good':'');}
+  if(h>=6&&h<=10&&S.kgupDay!==S.day&&S.kgupAsk!==S.day&&!cardOpen&&!tutOpen&&S.plants.some(p=>p.type==='bigwind'||p.type==='solarfarm')){S.kgupAsk=S.day;S.kgupPick='avg';openCard(kgupCard());}}
 function imbalanceHour(h){                                                               // L11
   if(!has('imbalance')||inProg())return;
   const big=S.plants.filter(p=>(p.type==='bigwind'||p.type==='solarfarm')&&!p.broken&&!p.fire);if(!big.length)return;
-  let c=0,cov=0;for(const p of big){let x=(0.1+Math.random()*0.2)*basePrice(h,h+0.5)*(p.type==='bigwind'?1.2:0.9);
+  const kg=kgupOn()?kgupPen():null;
+  let c=0,cov=0;for(const p of big){let x=kg?kgupCost(kg)*basePrice(h,h+0.5)*(p.type==='bigwind'?1.2:0.9):(0.1+Math.random()*0.2)*basePrice(h,h+0.5)*(p.type==='bigwind'?1.2:0.9);
     if(batAt('bat')>=1){batSet('bat',batAt('bat')-1);x*=0.4;cov++;}c+=x;}
   c=Math.round(c);if(c<=0)return;S.cash=Math.max(0,S.cash-c);S.imbDay=(S.imbDay||0)+c;S.imbCov=(S.imbCov||0)+cov;try{logLedger('imbalance',-c,'imb');}catch(e){}}
 function basePrice(h,t){
@@ -6847,7 +6903,9 @@ function onHour(h){
   if(inPack())return;   // v0.87.30: company orientation — no market news, peaks or offers
   try{svcAutoHour();}catch(e){}
   try{omHour();}catch(e){}
+  try{kgupHour(h);}catch(e){}
   try{imbalanceHour(h);}catch(e){}
+  try{gopHour(h);}catch(e){}
   if(h===23&&S.imbDay){toast(L(`⚖️ Imbalance today: −$${fmt(S.imbDay)}. The battery covered ${S.imbCov||0} hours.`,`⚖️ Bugünkü dengesizlik bedeli: −$${fmt(S.imbDay)}. Batarya ${S.imbCov||0} saati karşıladı.`),'');S.imbDay=0;S.imbCov=0;}
   if(h===0&&S.nm&&S.nmSince!=null&&S.day-1>=S.nmSince){try{pst('nmDays');}catch(e){}toast(L('👹 A full day in nightmare. Still standing.','👹 Kâbusta tam bir gün. Hâlâ ayaktasın.'),'good');}
   if(h===6&&droughtOn())toast(L('🏜️ A dry day: river and dam output is down to 40% today.','🏜️ Kurak gün: akarsu ve baraj üretimi bugün %40’a düştü.'),'');
@@ -8555,7 +8613,7 @@ function openCard(c0){
   /* v0.92.2: the levels card can be closed from its corner */
   {const cx=$('cardX');if(cx){cx.hidden=c.id!=='worlds'&&c.id!=='adm';cx.onclick=e=>{e.stopPropagation();$('mCard').classList.remove('on');cardOpen=false;last=0;};}}
   $('cardOpts').innerHTML=opts.map((o,i)=>{const no=o.cost>0&&o.cost>S.cash;return `<button data-o="${i}" ${no?'disabled':''}><b>${tt(o.t)}</b><small>${tt(o.d)}</small>${no?`<span class="nomoney">${L('Not enough money','Yeterli para yok')} · 👛 $${fmt(S.cash)}</span>`:''}</button>`;}).join('');
-  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','adm','prestige','rate','quiz','svc','progexit','streak','exit'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
+  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','adm','gop','kgup','prestige','rate','quiz','svc','progexit','streak','exit'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
     S.cardPrefs=S.cardPrefs||{};S.cardPrefs[c.id]=k;logLedger('card',-(o.cost||0),c.id+':'+k);track('card-'+c.id+'-'+k);
     $('mCard').classList.remove('on');cardOpen=false;curCardId=null;last=0;if(c.id!=='exit'){sfx.goal();toast(`${c.icon} ${tt(o.t)}`,'good');}save();};
   $('mCard').classList.add('on');
@@ -9271,6 +9329,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.98.0',t:['Two new levels: day-ahead market and forecast notice','İki yeni seviye: gün öncesi piyasası ve KGÜP'],l:[['Level 19: promise tomorrow\'s cells at 17:00 — +20% on what you deliver, a fine for what you miss.','Seviye 19: yarının hücrelerine 17:00’de söz ver — teslim ettiğine +%20, eksik kalana ceza.'],['Level 20: each morning choose how big plants are declared; the system short or long decides which mistake is expensive.','Seviye 20: her sabah büyük santrallerin bildirimini seç; sistemin açık ya da fazla olması hangi hatanın pahalı olduğunu belirler.']]},
  {v:'0.97.3',t:['Daily report in the app','Uygulamada günlük rapor'],l:[['Settings › 🔔: one note a day after 8 hours away, never at night. Made on the phone; nothing is sent anywhere.','Ayarlar › 🔔: 8 saat uzak kalırsan günde bir not, gece asla. Telefonda hazırlanır, hiçbir yere gönderilmez.']]},
  {v:'0.97.2',t:['Admin test levels','Admin test seviyeleri'],l:[['A hidden code opens every level for testing, kept apart from your real game.','Gizli bir kod test için tüm seviyeleri açar; gerçek oyunundan ayrı tutulur.']]},
  {v:'0.97.1',t:['Your programme code stays on screen','Program kodun ekranda kalıyor'],l:[['When a code-based programme is finished, your result code stays at the top with a copy button and a way out.','Kodla açılan bir program bitince sonuç kodun üstte kalıyor; yanında kopyalama ve çıkış butonu var.']]},
@@ -11367,7 +11426,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.97.3';
+const GAME_VERSION='0.98.0';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
