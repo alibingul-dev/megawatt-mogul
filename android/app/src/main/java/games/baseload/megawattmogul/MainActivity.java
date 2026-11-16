@@ -1,9 +1,11 @@
 package games.baseload.megawattmogul;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -140,6 +142,23 @@ public class MainActivity extends Activity {
             });
         }
 
+        /* daily report switch from Settings; asks for the notification permission on Android 13+ */
+        @JavascriptInterface
+        public void notifSet(boolean on) {
+            Reminder.prefs(MainActivity.this).edit().putBoolean("on", on).apply();
+            if (!on) { Reminder.cancel(MainActivity.this); return; }
+            if (Build.VERSION.SDK_INT >= 33
+                    && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                runOnUiThread(() -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 7));
+            }
+        }
+
+        /* the one line the report will say; the page sends it when the player leaves */
+        @JavascriptInterface
+        public void notifText(String text) {
+            Reminder.prefs(MainActivity.this).edit().putString("text", text == null ? "" : text).apply();
+        }
+
         @JavascriptInterface
         public void exit() {
             runOnUiThread(() -> {
@@ -192,9 +211,10 @@ public class MainActivity extends Activity {
     protected void onPause() {
         // the page saves on pagehide, which a backgrounded app may never get; save now
         if (web != null) {
-            web.evaluateJavascript("try{save()}catch(e){}", null);
+            web.evaluateJavascript("try{save()}catch(e){}try{notifSnap(true)}catch(e){}", null);
             web.onPause();
         }
+        Reminder.schedule(this);
         super.onPause();
     }
 
@@ -202,6 +222,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (web != null) web.onResume();
+        Reminder.cancel(this);
         hideBars();
     }
 

@@ -491,7 +491,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.97.2</div>
+  <div class="t-ver" id="tVer">v0.97.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -744,7 +744,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.97.2 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.97.3 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9271,6 +9271,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.97.3',t:['Daily report in the app','Uygulamada günlük rapor'],l:[['Settings › 🔔: one note a day after 8 hours away, never at night. Made on the phone; nothing is sent anywhere.','Ayarlar › 🔔: 8 saat uzak kalırsan günde bir not, gece asla. Telefonda hazırlanır, hiçbir yere gönderilmez.']]},
  {v:'0.97.2',t:['Admin test levels','Admin test seviyeleri'],l:[['A hidden code opens every level for testing, kept apart from your real game.','Gizli bir kod test için tüm seviyeleri açar; gerçek oyunundan ayrı tutulur.']]},
  {v:'0.97.1',t:['Your programme code stays on screen','Program kodun ekranda kalıyor'],l:[['When a code-based programme is finished, your result code stays at the top with a copy button and a way out.','Kodla açılan bir program bitince sonuç kodun üstte kalıyor; yanında kopyalama ve çıkış butonu var.']]},
  {v:'0.97.0',t:['Orientation programmes: guided all the way','Oryantasyon programları: baştan sona rehberli'],l:[['In a code-based programme Ela now walks you to every next square on the map, like in Part 1. No Steps tab needed.','Kodla açılan programlarda Ela artık seni haritadaki her sonraki kutucuğa götürüyor, Bölüm 1’deki gibi. Adımlar sekmesine gerek yok.'],['Programmes can grow a plant with a capacity increase square: the turbine gets bigger.','Programlar bir santrali kapasite artışı kutucuğuyla büyütebiliyor: türbin büyüyor.'],['Ela’s Part 1 lines were rewritten to read more naturally.','Ela’nın Bölüm 1 cümleleri daha doğal okunacak şekilde yeniden yazıldı.']]},
@@ -11288,7 +11289,7 @@ function mmBack(){
   if(noAsk){try{save();}catch(e){}return false;}   /* v0.96.1: asked not to be asked */
   openCard(exitCard());return true;}
 /* the daily report needs browser notifications, which the app's WebView does not have */
-if(window.MMAndroid){try{$('sNotif').hidden=true;$('sExit').hidden=false;}catch(e){}}
+if(window.MMAndroid){try{$('sNotif').hidden=!MMAndroid.notifSet;$('sExit').hidden=false;}catch(e){}}
 /* v0.96.1: the exit question can be turned off (per phone) */
 function exitAskOff(){try{return localStorage.getItem(SAVE_KEY+'_exitOff')==='1';}catch(e){return false;}}
 $('sExit').onclick=()=>{try{if(exitAskOff())localStorage.removeItem(SAVE_KEY+'_exitOff');else localStorage.setItem(SAVE_KEY+'_exitOff','1');}catch(e){}syncSet();};
@@ -11310,6 +11311,9 @@ $('worldBtn').onclick=()=>{trackOnce('world-btn');openCard(worldMax()>=1?worldsC
        day, only if you have not played for 8 hours. Needs Android Chrome's periodic
        background sync, which the phone schedules on its own terms. ---- */
 async function notifOn(){
+  if(window.MMAndroid&&MMAndroid.notifSet){   /* v0.97.3: the app schedules it itself, on the phone */
+    try{MMAndroid.notifSet(true);S.notif=true;notifSnap(true);toast(L('🔔 Daily report on. At most one a day, only after 8 hours away, never at night.','🔔 Günlük rapor açık. Günde en fazla bir kez, 8 saat uzak kalırsan, gece asla.'),'good');}catch(e){S.notif=false;}
+    syncSet();save();return;}
   try{
     if(!('Notification' in window)||!('serviceWorker' in navigator))throw 0;
     const perm=await Notification.requestPermission();if(perm!=='granted')throw 1;
@@ -11322,7 +11326,7 @@ async function notifOn(){
                :L('This device cannot schedule a daily report for the game.','Bu cihaz oyun için günlük rapor planlayamıyor.'),'');}
   syncSet();save();
 }
-async function notifOffNow(){S.notif=false;try{const reg=await navigator.serviceWorker.ready;if(reg.periodicSync)await reg.periodicSync.unregister('mwm-daily');}catch(e){}notifSnap(true);syncSet();save();}
+async function notifOffNow(){S.notif=false;try{if(window.MMAndroid&&MMAndroid.notifSet)MMAndroid.notifSet(false);}catch(e){}try{const reg=await navigator.serviceWorker.ready;if(reg.periodicSync)await reg.periodicSync.unregister('mwm-daily');}catch(e){}notifSnap(true);syncSet();save();}
 function notifLine(){
   const n=S.plants.filter(p=>PLANT_TYPES[p.type]&&(p.broken||p.fire>0)).length;
   if(n>=5)return L(`🔧 ${n} of your plants are down! The crew cannot keep up — come sort it out.`,`🔧 ${n} santralin durdu! Ekip yetişemiyor, gel toparla.`);
@@ -11334,9 +11338,10 @@ function notifLine(){
 }
 let notifT=0;
 function notifSnap(force){
-  if(!('caches' in window))return;
   if(!force&&Date.now()-notifT<60000)return;notifT=Date.now();
   let body='';try{body=S.notif?notifLine():'';}catch(e){}
+  if(window.MMAndroid&&MMAndroid.notifText){try{MMAndroid.notifText(body);}catch(e){}return;}
+  if(!('caches' in window))return;
   caches.open('mwm-snap').then(c=>c.put('./__snap',new Response(JSON.stringify({t:Date.now(),on:!!S.notif,title:'Megawatt Mogul',body}),{headers:{'Content-Type':'application/json'}}))).catch(()=>{});
 }
 addEventListener('visibilitychange',()=>{if(document.hidden&&S&&S.notif)notifSnap(true);});
@@ -11362,7 +11367,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.97.2';
+const GAME_VERSION='0.97.3';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
