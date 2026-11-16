@@ -491,7 +491,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.97.1</div>
+  <div class="t-ver" id="tVer">v0.97.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -709,6 +709,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button id="sCode">🔑 Enter a code</button>
     <button id="sPrest" hidden>⭐ Rebuild</button>
     <button id="sWorlds" hidden>⭐ Levels</button>
+    <button id="sAdm" hidden>🛠️ Admin</button>
     <button id="sRate">⭐ Write a review on Play</button>
     <button id="sShare">📤 Share my score card</button>
     <button id="sShareApp">📲 Share the game</button>
@@ -743,7 +744,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.97.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.97.2 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8552,9 +8553,9 @@ function openCard(c0){
      choice costs more than you have, the worst one — do nothing and take the hit — is added. */
   if(!opts.some(o=>!(o.cost>0&&o.cost>S.cash)))opts.push(O('Do nothing (worst case)','Hiçbir şey yapma (en kötüsü)','No money for the rest. Word gets around: prices −10% for 2 days.','Diğerlerine para yok. Laf yayılır: fiyatlar 2 gün −%10.',0,()=>addMod('price',0.9,48)));
   /* v0.92.2: the levels card can be closed from its corner */
-  {const cx=$('cardX');if(cx){cx.hidden=c.id!=='worlds';cx.onclick=e=>{e.stopPropagation();$('mCard').classList.remove('on');cardOpen=false;last=0;};}}
+  {const cx=$('cardX');if(cx){cx.hidden=c.id!=='worlds'&&c.id!=='adm';cx.onclick=e=>{e.stopPropagation();$('mCard').classList.remove('on');cardOpen=false;last=0;};}}
   $('cardOpts').innerHTML=opts.map((o,i)=>{const no=o.cost>0&&o.cost>S.cash;return `<button data-o="${i}" ${no?'disabled':''}><b>${tt(o.t)}</b><small>${tt(o.d)}</small>${no?`<span class="nomoney">${L('Not enough money','Yeterli para yok')} · 👛 $${fmt(S.cash)}</span>`:''}</button>`;}).join('');
-  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','prestige','rate','quiz','svc','progexit','streak','exit'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
+  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','adm','prestige','rate','quiz','svc','progexit','streak','exit'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
     S.cardPrefs=S.cardPrefs||{};S.cardPrefs[c.id]=k;logLedger('card',-(o.cost||0),c.id+':'+k);track('card-'+c.id+'-'+k);
     $('mCard').classList.remove('on');cardOpen=false;curCardId=null;last=0;if(c.id!=='exit'){sfx.goal();toast(`${c.icon} ${tt(o.t)}`,'good');}save();};
   $('mCard').classList.add('on');
@@ -9270,6 +9271,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.97.2',t:['Admin test levels','Admin test seviyeleri'],l:[['A hidden code opens every level for testing, kept apart from your real game.','Gizli bir kod test için tüm seviyeleri açar; gerçek oyunundan ayrı tutulur.']]},
  {v:'0.97.1',t:['Your programme code stays on screen','Program kodun ekranda kalıyor'],l:[['When a code-based programme is finished, your result code stays at the top with a copy button and a way out.','Kodla açılan bir program bitince sonuç kodun üstte kalıyor; yanında kopyalama ve çıkış butonu var.']]},
  {v:'0.97.0',t:['Orientation programmes: guided all the way','Oryantasyon programları: baştan sona rehberli'],l:[['In a code-based programme Ela now walks you to every next square on the map, like in Part 1. No Steps tab needed.','Kodla açılan programlarda Ela artık seni haritadaki her sonraki kutucuğa götürüyor, Bölüm 1’deki gibi. Adımlar sekmesine gerek yok.'],['Programmes can grow a plant with a capacity increase square: the turbine gets bigger.','Programlar bir santrali kapasite artışı kutucuğuyla büyütebiliyor: türbin büyüyor.'],['Ela’s Part 1 lines were rewritten to read more naturally.','Ela’nın Bölüm 1 cümleleri daha doğal okunacak şekilde yeniden yazıldı.']]},
  {v:'0.96.2',t:['Android libraries updated','Android kütüphaneleri güncellendi'],l:[['The Android app uses current versions of its system libraries. Nothing changes in the game.','Android uygulaması sistem kütüphanelerinin güncel sürümlerini kullanıyor. Oyunda bir şey değişmedi.']]},
@@ -10519,7 +10521,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');$('sShareApp').textContent=L('📲 Share the game','📲 Oyunu paylaş');$('sTg').textContent=L('💬 Telegram community','💬 Telegram topluluğu');$('sExit').textContent=L('Ask before leaving: ','Çıkmadan önce sor: ')+((typeof exitAskOff==='function'&&exitAskOff())?L('off','kapalı'):L('on','açık'));{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
+function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');$('sShareApp').textContent=L('📲 Share the game','📲 Oyunu paylaş');$('sTg').textContent=L('💬 Telegram community','💬 Telegram topluluğu');$('sExit').textContent=L('Ask before leaving: ','Çıkmadan önce sor: ')+((typeof exitAskOff==='function'&&exitAskOff())?L('off','kapalı'):L('on','açık'));{const a=$('sAdm');if(a){a.hidden=!isAdm();a.textContent='🛠️ Admin'+(S.adm?' · '+L('test level','test seviyesi'):'');}}{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
   $('sQuip').textContent=L('Crew comments: ','Ekip yorumları: ')+(S.quipOff?L('off','kapalı'):L('on','açık'));
   $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');$('sWipe').textContent=L('Reset the whole game','Bütün oyunu sıfırla');$('sLearn').textContent='📚 '+L('What you have learned','Öğrendiklerin');$('sOnb').textContent='🎓 '+(S.prog?tt((PROGRAMS.find(x=>x.id===S.prog)||{name:['Program','Program']}).name):L('Orientation · Part 1','Oryantasyon · Bölüm 1'));try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
@@ -10575,7 +10577,7 @@ $('sFx').onclick=()=>{S.fxOff=!S.fxOff;if(S.fxOff)fxEnd();syncSet();save();};
        task-box layout (empty) and a level floor, so each run starts further along. The ladder
        comes back too, 50% richer per prestige. The old save goes to the backup slot first. ---- */
 const PFLOOR=[1,6,9,12,14,16];
-function prestOk(){return !cozy()&&!inClassic()&&!inProg()&&(S.prest||0)>=worldMax()&&sev()<SEV_MAX&&ladTimeOk()&&ladGoalOk();}   // only the newest world can open the next one
+function prestOk(){return !S.adm&&!cozy()&&!inClassic()&&!inProg()&&(S.prest||0)>=worldMax()&&sev()<SEV_MAX&&ladTimeOk()&&ladGoalOk();}   // only the newest world can open the next one
 function prestFloor(P){return PFLOOR[Math.min(P,PFLOOR.length-1)];}
 function prestCash(P){return Math.round(LEVELS[prestFloor(P)].need*0.5*(1+P));}
 function prestCard(){const P=(S.prest||0)+1,fl=prestFloor(P);
@@ -10608,7 +10610,7 @@ $('sPrest').onclick=()=>{if(!prestOk())return;$('mSet').classList.remove('on');o
    walks straight back in on the other side. */
 function lvlLabel(o){if(!o)return '';if(o.progWorld)return '🎓 '+L('Program','Program');
   if(o.classic!=null)return '🏛️ '+L('Classic','Klasik')+' '+(o.classic+1);
-  const n=(o.prest||0)+1;return `⭐ ${L('Level','Seviye')} ${n} · ${SEV[n]?tt(SEV[n].n):''}`;}
+  const n=(o.prest||0)+1;return `${o.adm?'🛠️ ':''}⭐ ${L('Level','Seviye')} ${n} · ${SEV[n]?tt(SEV[n].n):''}`;}
 function lvlVeil(label,sub){let v=document.getElementById('lvlVeil');
   if(!v){v=document.createElement('div');v.id='lvlVeil';document.body.appendChild(v);}
   v.innerHTML=`<div class="lv-card"><div class="lv-t">${label}</div><div class="lv-s">${sub||L('Getting the site ready…','Saha hazırlanıyor…')}</div></div>`;v.className='on';}
@@ -10652,7 +10654,7 @@ const PROG_KEY=SAVE_KEY+'_prog',LAD_KEY=SAVE_KEY+'_lad';
 const LAD_KEEP=['music','lang','muted','vSfx','vMus','lowFlash','fxOff','notif','shadows','speed','hints','tutDone','tipsSeen','seenVer','nick','mode','uiScale','zoom','look','cardPrefs','feat'];
 function ladMeta(){try{return JSON.parse(localStorage.getItem(LAD_KEY)||'null')||{classic:[],cur:0};}catch(e){return {classic:[],cur:0};}}
 function setLadMeta(m){try{localStorage.setItem(LAD_KEY,JSON.stringify(m));}catch(e){}}
-function curSlot(){return inProg()?PROG_KEY:inClassic()?cKey(S.classic):wKey(S.prest||0);}
+function curSlot(){return (typeof S!=='undefined'&&S&&S.adm)?wKey(S.prest||0)+'_a':inProg()?PROG_KEY:inClassic()?cKey(S.classic):wKey(S.prest||0);}
 /* v0.86 first run: every world made before the ladder becomes a Classic world, kept exactly as it
    was, and the ladder starts at level 1. Cozy saves have no ladder and are left alone. */
 function ladderInit(had){
@@ -10681,12 +10683,12 @@ function switchTo(key,after){
   const o=readSave(key);if(!o){toast(L('That level was not kept on this phone.','O seviye bu telefonda saklanmamış.'),'');return;}
   save();S.lastSave=Date.now();
   try{localStorage.setItem(curSlot(),JSON.stringify(S));}catch(e){toast(L('Not enough room on this phone to keep this level. Nothing changed.','Bu seviyeyi saklamaya telefonda yer yok. Hiçbir şey değişmedi.'),'');return;}
-  if(!inClassic()&&!inProg()){const m=ladMeta();m.cur=S.prest||0;setLadMeta(m);}
+  if(!inClassic()&&!inProg()&&!S.adm){const m=ladMeta();m.cur=S.prest||0;setLadMeta(m);}
   for(const k of WORLD_KEEP)if(S[k]!==undefined)o[k]=S[k];
   o.lastSave=Date.now();   // a world you were away from stood still
   if(after)after(o);
   try{trackOnce('world-switch');RELOADING=true;removeEventListener('pagehide',save);localStorage.setItem(SAVE_KEY,JSON.stringify(o));lvlGo(lvlLabel(o));}catch(e){RELOADING=false;}}
-function worldMax(){try{const m=JSON.parse(localStorage.getItem((SAVE_KEY+'_worlds'))||'null');return Math.max(m&&m.max||0,S&&!S.progWorld&&S.classic==null&&S.prest||0);}catch(e){return S&&S.prest||0;}}
+function worldMax(){try{const m=JSON.parse(localStorage.getItem((SAVE_KEY+'_worlds'))||'null');return Math.max(m&&m.max||0,S&&!S.progWorld&&!S.adm&&S.classic==null&&S.prest||0);}catch(e){return S&&S.prest||0;}}
 function setWorldMax(P){try{localStorage.setItem((SAVE_KEY+'_worlds'),JSON.stringify({max:Math.max(P,worldMax())}));}catch(e){}}
 function worldsInit(){   // first run after the update: the newest world is where you are; the backup made at the last rebuild becomes the world before it
   try{if(localStorage.getItem((SAVE_KEY+'_worlds')))return;const P=S.prest||0;
@@ -10714,6 +10716,36 @@ function worldsCard(){const cur=S.prest||0,mx=worldMax(),opts=[],meta=ladMeta();
   return {id:'worlds',icon:'⭐',ok:()=>false,safe:0,title:['Your levels','Seviyelerin'],
     text:[`Every level adds one new thing and starts from scratch, with its own rivals and advantage. To open the next one: play at least ${ladDays()} days here and reach this level's goal. Stay where you enjoy it; only the level you are in runs.`,`Her seviye yeni bir şey ekler ve sıfırdan başlar; kendi rakipleri ve avantajı var. Sonrakini açmak için: burada en az ${ladDays()} gün oyna ve bu seviyenin hedefine ulaş. Keyif aldığın yerde kal; sadece içinde olduğun seviye işler.`],opts:()=>opts};}
 $('sWorlds').onclick=()=>{$('mSet').classList.remove('on');openCard(worldsCard());};
+/* v0.97.2 admin: a hidden code opens every level for testing. Admin levels live in their own slots
+   (wKey(P)+'_a'), never touch the real ladder, earn no Holding, achievements or records, and can
+   never open the next level by themselves. Turning admin off takes you back to your real level. */
+const ADM_H=2281425058,ADM_KEY=SAVE_KEY+'_adm';
+function isAdm(){try{return localStorage.getItem(ADM_KEY)==='1';}catch(e){return false;}}
+function admSet(on){try{if(on)localStorage.setItem(ADM_KEY,'1');else localStorage.removeItem(ADM_KEY);}catch(e){}}
+function admReal(){const m=ladMeta(),c=Math.min(m.cur||0,worldMax());return readSave(wKey(c))?wKey(c):SAVE_BACKUP;}
+function admGo(P){
+  const key=wKey(P)+'_a';if(key===curSlot())return;
+  if(readSave(key)){switchTo(key);return;}
+  const f=fresh();for(const k of LAD_KEEP)if(S[k]!==undefined)f[k]=S[k];
+  f.prest=P;f.lvl=1;f.cash=0;f.lad=1;f.gShuf=1;f.adm=1;f.crew.boxes=[];f.mode='pro';
+  {const F=FOCUS[P+1];if(F&&F.reg){f.regions=f.regions||{};for(const r of F.reg)f.regions[r]=true;}}
+  save();S.lastSave=Date.now();
+  try{localStorage.setItem(curSlot(),JSON.stringify(S));}catch(e){toast(L('Not enough room on this phone. Nothing changed.','Telefonda yer yok. Hiçbir şey değişmedi.'),'');return;}
+  if(!inClassic()&&!inProg()&&!S.adm){const m=ladMeta();m.cur=S.prest||0;setLadMeta(m);}
+  for(const k of WORLD_KEEP)if(S[k]!==undefined)f[k]=S[k];f.lastSave=Date.now();
+  try{RELOADING=true;removeEventListener('pagehide',save);localStorage.setItem(SAVE_KEY,JSON.stringify(f));lvlGo(lvlLabel(f),true);}catch(e){RELOADING=false;}}
+function admCard(){const opts=[],cur=S.adm?(S.prest||0):-1;
+  if(S.adm){opts.push(O('💰 +$1M','💰 +$1M','Test money, only on this admin level.','Test parası, sadece bu admin seviyesinde.',0,()=>{S.cash+=1e6;save();}));
+    opts.push(O('↩️ Back to my real game','↩️ Gerçek oyunuma dön','Your real level, exactly as you left it.','Gerçek seviyen, bıraktığın gibi.',0,()=>switchTo(admReal())));}
+  for(let P=0;P<SEV_MAX;P++){const has=!!readSave(wKey(P)+'_a');
+    opts.push(O(`Level ${P+1} · ${sevName(P+1)}${P===cur?' · here':has?' · go':' · new'}`,`Seviye ${P+1} · ${sevName(P+1)}${P===cur?' · buradasın':has?' · geç':' · yeni'}`,
+      has?'Your admin copy of this level.':'Starts from scratch: $0, an empty map.',has?'Bu seviyenin admin kopyası.':'Sıfırdan başlar: $0, boş harita.',0,P===cur?NOOP:()=>admGo(P)));}
+  opts.push(O('🔒 Turn admin off','🔒 Admini kapat','Back to your real game; the code turns it on again.','Gerçek oyununa dönersin; kod tekrar açar.',0,()=>{admSet(false);if(S.adm)switchTo(admReal());else syncSet&&syncSet();}));
+  opts.push(O('Close','Kapat','Stay here.','Burada kal.',0,NOOP));
+  return {id:'adm',icon:'🛠️',ok:()=>false,safe:0,title:['Admin · levels','Admin · seviyeler'],
+    text:['Test any level. Admin levels are kept apart from your real game and give no Holding, achievements or records.','İstediğin seviyeyi test et. Admin seviyeleri gerçek oyunundan ayrı tutulur; Holding, başarım ya da rekor vermez.'],opts:()=>opts};}
+$('sAdm').onclick=()=>{$('mSet').classList.remove('on');openCard(admCard());};
+
 /* v0.80: a review link, never a reward. Asked once, on the first visit to a second world; always in Settings. */
 const PLAY_URL='https://play.google.com/store/apps/details?id=games.baseload.megawattmogul';
 function openPlayPage(){try{trackOnce('rate-open');}catch(e){}try{window.open(PLAY_URL,'_blank');}catch(e){location.href=PLAY_URL;}}
@@ -10731,7 +10763,7 @@ let _prof=null,celebT=0;
 function prof(){if(_prof)return _prof;let o=null;try{o=JSON.parse(localStorage.getItem(PROF_KEY)||'null');}catch(e){}
   _prof=Object.assign({hp:0,st:{},ach:{},hats:[],daily:{}},o||{});_prof.st=_prof.st||{};_prof.ach=_prof.ach||{};_prof.hats=_prof.hats||[];_prof.daily=_prof.daily||{};return _prof;}
 function profSave(){try{if(_prof)localStorage.setItem(PROF_KEY,JSON.stringify(_prof));}catch(e){}}
-function careerOn(){return typeof S!=='undefined'&&!!S&&!inProg();}
+function careerOn(){return typeof S!=='undefined'&&!!S&&!inProg()&&!S.adm;}
 function pst(k,n){if(!careerOn())return;const P=prof();P.st[k]=(P.st[k]||0)+(n==null?1:n);achCheck(k);}
 function pmax(k,v){if(!careerOn())return;const P=prof();if(v>(P.st[k]||0)){P.st[k]=v;achCheck(k);}}
 /* ---- 1. Holding: a number that only grows. Income ×(1 + 0.15·log10(1+HP/10)) on every level. ---- */
@@ -11330,7 +11362,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.97.1';
+const GAME_VERSION='0.97.2';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -11873,6 +11905,7 @@ function startProgram(p){
 async function codeEnter(){
   const v=prompt(L('Enter your access code','Erişim kodunu gir'));
   if(v===null)return;
+  if(codeHash(v)===ADM_H){admSet(true);toast(L('🛠️ Admin on: Settings › 🛠️ Admin','🛠️ Admin açık: Ayarlar › 🛠️ Admin'),'big');return;}
   let p=PROGRAMS.find(x=>x.h&&x.h===codeHash(v));
   if(!p&&String(v).replace(/[^A-Za-z0-9]/g,'').length>=8&&window.crypto&&crypto.subtle){
     for(const P of PACKS){try{const J=await packOpen(v,P);packStore(J);p=packAdd(J);break;}catch(e){}}}
