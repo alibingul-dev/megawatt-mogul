@@ -491,7 +491,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.98.0</div>
+  <div class="t-ver" id="tVer">v0.98.1</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -744,7 +744,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.98.0 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.98.1 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6904,6 +6904,8 @@ function onHour(h){
   try{svcAutoHour();}catch(e){}
   try{omHour();}catch(e){}
   try{kgupHour(h);}catch(e){}
+  /* v0.98.1: every 10 days the finance report opens by itself, only while you are playing */
+  try{if(h>=9&&h<=12&&S.day>0&&S.day%10===0&&S.repAuto!==S.day&&has('report')&&!inProg()&&!(typeof inPack==='function'&&inPack())&&!cardOpen&&!tutOpen&&!document.querySelector('.modal.on')){S.repAuto=S.day;openReport(1);}}catch(e){}
   try{imbalanceHour(h);}catch(e){}
   try{gopHour(h);}catch(e){}
   if(h===23&&S.imbDay){toast(L(`⚖️ Imbalance today: −$${fmt(S.imbDay)}. The battery covered ${S.imbCov||0} hours.`,`⚖️ Bugünkü dengesizlik bedeli: −$${fmt(S.imbDay)}. Batarya ${S.imbCov||0} saati karşıladı.`),'');S.imbDay=0;S.imbCov=0;}
@@ -9329,6 +9331,7 @@ $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.98.1',t:['Finance report every 10 days','10 günde bir finansal rapor'],l:[['Every tenth day the finance report opens by itself while you play.','Her onuncu gün oynarken finansal rapor kendiliğinden açılır.']]},
  {v:'0.98.0',t:['Two new levels: day-ahead market and forecast notice','İki yeni seviye: gün öncesi piyasası ve KGÜP'],l:[['Level 19: promise tomorrow\'s cells at 17:00 — +20% on what you deliver, a fine for what you miss.','Seviye 19: yarının hücrelerine 17:00’de söz ver — teslim ettiğine +%20, eksik kalana ceza.'],['Level 20: each morning choose how big plants are declared; the system short or long decides which mistake is expensive.','Seviye 20: her sabah büyük santrallerin bildirimini seç; sistemin açık ya da fazla olması hangi hatanın pahalı olduğunu belirler.']]},
  {v:'0.97.3',t:['Daily report in the app','Uygulamada günlük rapor'],l:[['Settings › 🔔: one note a day after 8 hours away, never at night. Made on the phone; nothing is sent anywhere.','Ayarlar › 🔔: 8 saat uzak kalırsan günde bir not, gece asla. Telefonda hazırlanır, hiçbir yere gönderilmez.']]},
  {v:'0.97.2',t:['Admin test levels','Admin test seviyeleri'],l:[['A hidden code opens every level for testing, kept apart from your real game.','Gizli bir kod test için tüm seviyeleri açar; gerçek oyunundan ayrı tutulur.']]},
@@ -11426,7 +11429,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.98.0';
+const GAME_VERSION='0.98.1';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
