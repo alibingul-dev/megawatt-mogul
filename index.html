@@ -448,6 +448,13 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 #radOv .rad-end .rad-x{position:absolute;width:36px!important;margin:0!important;top:10px;right:10px;width:36px;height:36px;min-width:0!important;padding:0!important;border-radius:50%;background:#EEF1F6;border:0;color:#1D2433;font-size:17px;font-weight:800}
 #radOv .rad-chip{position:absolute;top:calc(env(safe-area-inset-top) + 160px);left:50%;transform:translateX(-50%);pointer-events:auto;background:#2E5E12;color:#fff;border:0;border-radius:14px;padding:10px 16px;font-family:var(--body);font-weight:800;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.35);width:max-content;max-width:90vw}
 #radOv .rad-end button.sec{margin-top:8px;background:#EEF1F6;color:#1D2433}
+#cardText{white-space:pre-line}
+.rtabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}
+.rtabs button{flex:1;min-width:64px;padding:7px 6px;border-radius:10px;border:1px solid #D6DCE6;background:#F4F6FA;color:#3A4558;font-weight:700;font-size:13px}
+.rtabs button.on{background:#2F6BFF;border-color:#2F6BFF;color:#fff;box-shadow:0 3px 8px rgba(47,107,255,.35)}
+.ela-lv{margin:8px 0;border:1px solid #E1E6EE;border-radius:12px;padding:8px 10px;background:#FAFBFD}
+.ela-lv summary{font-weight:800;cursor:pointer}
+.ela-lv p{margin:6px 0 0;font-size:13px}
 body.radDead #sideCol .rb:not(.zb):not(#repBtn):not(#infoBtn),body.radDead #devilBtn{display:none!important}
 #radOv .rad-sym{width:80vmin;height:80vmin;animation:radBlink .8s ease-in-out infinite alternate}#radOv.boom .rad-sym{animation-duration:1.6s;position:absolute;opacity:.25}
 #radOv .rad-sym svg{width:100%;height:100%}
@@ -491,7 +498,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.98.1</div>
+  <div class="t-ver" id="tVer">v0.98.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -529,7 +536,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
       <button class="rb" id="buildBtn" aria-label="Build here" hidden><span>🏗️</span><span class="cap" id="cap-build">Build</span></button>
       <button class="rb" id="rankBtn" aria-label="Ladder" hidden><span>🏆</span><span class="cap" id="cap-rank">Ladder</span></button>
       <button class="rb" id="repBtn" aria-label="Finance report"><span>📊</span><span class="cap" id="cap-rep">Report</span></button>
-      <button class="rb" id="infoBtn" aria-label="Tips"><span>ℹ️</span><span class="cap" id="cap-info">Tips</span><span class="badge" id="infoDot" hidden>!</span></button>
+      <button class="rb" id="infoBtn" aria-label="Ela"><span>👩‍🔧</span><span class="cap" id="cap-info">Ela</span><span class="badge" id="infoDot" hidden>!</span></button>
       <button class="rb zb" id="zIn" aria-label="Zoom in"><span>＋</span><span class="cap" id="cap-zin">Closer</span></button>
       <button class="rb zb" id="zOut" aria-label="Zoom out"><span>－</span><span class="cap" id="cap-zout">Wider</span></button>
   <button class="rb crewb" id="crewBtn" aria-label="Crew plan" hidden><span>👷</span><span class="cnum" id="crewN">1/45</span><span class="badge" id="crewAlert" hidden>!</span></button>
@@ -647,10 +654,11 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
 </div></div>
 <div class="modal" id="mRep"><div class="sheet tips">
   <h2 id="repTitle">Finance report</h2>
+  <div class="rtabs" id="repTabs"></div>
   <div class="mgrid" id="repCards"></div>
   <canvas id="repChart" style="width:100%;height:150px;display:block;margin:10px 0" aria-label="Earnings by day"></canvas>
   <div id="repBody"></div>
-  <div class="btns" style="grid-template-columns:1fr 1fr"><button id="repPrev" hidden>‹</button><button id="repNext" hidden>›</button></div>
+  <div class="btns" style="grid-template-columns:1fr 1fr;display:none"><button id="repPrev" hidden>‹</button><button id="repNext" hidden>›</button></div>
   <div class="btns"><button class="pri" id="repClose" data-i18n="close">Close</button></div>
 </div></div>
 
@@ -744,7 +752,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.98.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.98.2 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6438,51 +6446,92 @@ function gopOn(){return ladOnly()&&has('gop');}
 function kgupOn(){return ladOnly()&&has('kgup');}
 /* L19 GÖP: at 17:00 promise tomorrow's cells; settled at midnight against what was really sold */
 function gopBase(){return Math.max(10,Math.round(S.gopLast||0));}
+function wxName(w){const W=WEATHER[w]||WEATHER.sunny;return `${W.icon} ${tt(W.name)}`;}
 function gopCard(){const b=gopBase(),av=Math.round(todayAvg()*100)/100,
     o=(f,en,tr)=>{const q=Math.round(b*f);return O(`${en} · ${q} cells`,`${tr} · ${q} hücre`,
       q?`Delivered: +$${fmt(q*av*0.2)} at most · missed: −$${fmt(av*0.5)} per cell.`:'No promise, no bonus, no risk.',
       q?`Teslim: en fazla +$${fmt(q*av*0.2)} · eksik: hücre başı −$${fmt(av*0.5)}.`:'Söz yok, prim yok, risk yok.',0,()=>{S.gopNext={q,day:S.day+1};});};
+  /* v0.98.2: the three things a real trader looks at before a day-ahead bid */
+  let tw='sunny';try{tw=makeDay(S.day+1).weather;}catch(e){}
+  const W=WEATHER[tw]||WEATHER.sunny,sp=Math.round((W.solar-1)*100),wp=Math.round((W.wind-1)*100),sg=v=>(v>0?'+':v<0?'−':'±')+Math.abs(v)+'%';
+  const hist=(S.gopHist||[]).slice(-5),kept=hist.filter(x=>x).length;
+  const lines=[
+    [`📊 Your sales: yesterday ${fmt(S.gopPrev||0)} · today ${fmt(S.gopLast||0)} cells.`,`📊 Satışın: dün ${fmt(S.gopPrev||0)} · bugün ${fmt(S.gopLast||0)} hücre.`],
+    [`${W.icon} Tomorrow: ${W.name[0]} — solar ${sg(sp)}, wind ${sg(wp)}.`,`${W.icon} Yarın: ${W.name[1]} — güneş ${sg(sp)}, rüzgâr ${sg(wp)}.`],
+    [hist.length?`✅ Promise record: ${kept} of your last ${hist.length} kept in full.`:'✅ Promise record: no promises yet.',hist.length?`✅ Söz karnen: son ${hist.length} sözün ${kept} tanesi tam tutuldu.`:'✅ Söz karnen: henüz söz yok.']];
   return {id:'gop',icon:'📅',ok:()=>false,safe:0,title:['Day-ahead market · tomorrow','Gün öncesi piyasası · yarın'],
-    text:[`Today you sold ${fmt(S.gopLast||0)} cells. How many do you promise for tomorrow?`,`Bugün ${fmt(S.gopLast||0)} hücre sattın. Yarın için kaç hücre söz veriyorsun?`],
+    text:[lines.map(x=>x[0]).join('\n')+'\nHow many cells do you promise for tomorrow?',lines.map(x=>x[1]).join('\n')+'\nYarın için kaç hücre söz veriyorsun?'],
     opts:()=>[o(0.5,'Careful','Temkinli'),o(0.8,'Steady','Dengeli'),o(1.1,'Bold','İddialı'),o(0,'No promise','Söz verme')]};}
 function gopHour(h){
   if(!gopOn())return;
-  if(h===0){const sold=(S.soldCells||0)-(S.gopSold0==null?(S.soldCells||0):S.gopSold0);S.gopLast=sold;S.gopSold0=S.soldCells||0;
+  if(h===0){const sold=(S.soldCells||0)-(S.gopSold0==null?(S.soldCells||0):S.gopSold0);S.gopPrev=sold;S.gopLast=0;S.gopSold0=S.soldCells||0;
     const g=S.gop;S.gop=null;
     if(g&&g.day===S.day-1&&g.q>0){const d=Math.min(sold,g.q),miss=g.q-d,bon=Math.round(d*g.av*0.2),pen=Math.round(miss*g.av*0.5),net=bon-pen;
       S.cash=Math.max(0,S.cash+net);try{logLedger('gop',net,'gop');}catch(e){}if(!miss){S.stats.gopFull=(S.stats.gopFull||0)+1;}
+      S.gopHist=(S.gopHist||[]).concat(!miss).slice(-5);
       toast(miss?L(`📅 Day-ahead: ${d}/${g.q} delivered · +$${fmt(bon)} −$${fmt(pen)}`,`📅 GÖP: ${d}/${g.q} teslim · +$${fmt(bon)} −$${fmt(pen)}`)
                 :L(`📅 Day-ahead promise kept: ${g.q} cells · +$${fmt(bon)}`,`📅 GÖP sözü tutuldu: ${g.q} hücre · +$${fmt(bon)}`),miss?'':'good');}
     const n=S.gopNext;S.gopNext=null;if(n&&n.day===S.day&&n.q>0)S.gop={q:n.q,day:S.day,av:todayAvg()};}
   if(h>=17&&h<=20&&!S.gopNext&&S.gopAsk!==S.day&&!cardOpen&&!tutOpen){S.gopAsk=S.day;S.gopLast=(S.soldCells||0)-(S.gopSold0==null?0:S.gopSold0);openCard(gopCard());}}
-/* L20 KGÜP: the day's system direction sets which mistake is expensive (critical fractile, in three choices) */
-function sysDir(){const r=dayRng(373),x=r();const d=x<0.35?'short':x<0.7?'long':'calm';const y=r();
-  const hint=y<0.75?d:(d==='short'?'long':d==='long'?'calm':'short');return {d,hint};}
-function kgupPen(){const d=sysDir().d,b={careful:-0.5,avg:0,bold:0.5}[S.kgupPick||'avg'];
-  const sp=d==='short'?1.6:d==='long'?0.4:1,lp=d==='short'?0.4:d==='long'?1.6:1;return {b,sp,lp};}
+/* L20 KGÜP. v0.98.2: the direction is not a coin. Three signals push it — today's weather (wind and
+   rain fill the system, a still sunny day empties it), yesterday's direction (it tends to stay) and
+   the operator's outlook (right three days in four). Reading all three beats trusting one. */
+const KG_NAME={short:['short','AÇIK'],long:['long','FAZLA'],calm:['calm','DENGEDE']};
+function wxPush(w){return (w==='stormy'||w==='rainy')?'long':(w==='sunny'||w==='snowy')?'short':'calm';}
+function sysDir(){
+  if(S.kgDir&&S.kgDir.day===S.day)return S.kgDir;
+  const r=dayRng(373),wx=wxPush(DAY&&DAY.weather),prev=S.kgPrev||null,P={short:1,long:1,calm:0.8};
+  P[wx]+=wx==='calm'?0.6:1.2;if(prev)P[prev]+=0.9;
+  const tot=P.short+P.long+P.calm;let x=r()*tot,d='calm';for(const k of ['short','long','calm']){if(x<P[k]){d=k;break;}x-=P[k];}
+  const y=r(),hint=y<0.75?d:(d==='short'?'long':d==='long'?'calm':'short');
+  S.kgDir={day:S.day,d,hint,wx,prev,w:(DAY&&DAY.weather)||'sunny'};return S.kgDir;}
+const KG_B={careful:-0.5,avg:0,bold:0.5};
+function kgupPen(){const d=sysDir().d;return {sp:d==='short'?1.6:d==='long'?0.4:1,lp:d==='short'?0.4:d==='long'?1.6:1};}
 function kgupExp(k){return k.sp*Math.pow(k.b+1,2)/4+k.lp*Math.pow(1-k.b,2)/4;}   // expected cost, uniform error in [-1,1]
-function kgupCost(k){const e=Math.random()*2-1,dv=k.b-e;return 0.4*(dv>0?dv*k.sp:-dv*k.lp);}
-function kgupCard(){const h=sysDir().hint,ht={short:L('probably SHORT (deficit)','büyük ihtimalle AÇIK'),long:L('probably LONG (surplus)','büyük ihtimalle FAZLA'),calm:L('probably CALM','büyük ihtimalle DENGEDE')}[h];
+function kgupAt(k,b,e){const dv=b-e;return 0.4*(dv>0?dv*k.sp:-dv*k.lp);}
+function kgNm(d){return L(KG_NAME[d][0],KG_NAME[d][1]);}
+function kgupSignals(){const D=sysDir();return [
+  [`${wxName(D.w)} today: ${D.wx==='long'?'wind and rain fill the system → pushes LONG':D.wx==='short'?'a still day empties the system → pushes SHORT':'no clear push'}.`,
+   `${wxName(D.w)} bugün: ${D.wx==='long'?'rüzgâr ve yağış sistemi doldurur → FAZLAya iter':D.wx==='short'?'durgun gün sistemi boşaltır → AÇIĞa iter':'belirgin bir itiş yok'}.`],
+  [D.prev?`📈 Yesterday the system was ${KG_NAME[D.prev][0]}; it tends to stay.`:'📈 Yesterday: no record yet.',D.prev?`📈 Dün sistem ${KG_NAME[D.prev][1]}ydı; yön çoğu zaman sürer.`:'📈 Dün: henüz kayıt yok.'],
+  [`📡 Operator's outlook: ${KG_NAME[D.hint][0]} (right about 3 days in 4).`,`📡 Operatör öngörüsü: ${KG_NAME[D.hint][1]} (yaklaşık 4 günün 3'ünde doğru).`]];}
+function kgupCard(){const sg=kgupSignals();
   const pick=k=>()=>{S.kgupPick=k;S.kgupDay=S.day;};
   return {id:'kgup',icon:'📡',ok:()=>false,safe:0,title:['Forecast notice · today','KGÜP bildirimi · bugün'],
-    text:[`System operator's outlook: ${ht}. The outlook is right about three days in four.`,`Sistem operatörünün öngörüsü: ${ht}. Öngörü yaklaşık dört günün üçünde doğru çıkar.`],
+    text:[sg.map(x=>x[0]).join('\n'),sg.map(x=>x[1]).join('\n')],
     opts:()=>[O('Careful (declare low)','Temkinli (düşük bildir)','Best when the system is short.','Sistem açıksa en iyisi.',0,pick('careful')),
               O('Average','Ortalama','Best on a calm day.','Sakin günde en iyisi.',0,pick('avg')),
               O('Bold (declare high)','İddialı (yüksek bildir)','Best when the system is long.','Sistem fazlaysa en iyisi.',0,pick('bold'))]};}
+/* the day's scorecard: the same hourly errors priced under all three notices, side by side */
+function kgupResCard(){const D=sysDir(),cf=S.kgCF||{careful:0,avg:0,bold:0},pk=S.kgupPick||'avg',best=['careful','avg','bold'].reduce((a,b)=>cf[b]<cf[a]?b:a,'avg');
+  const nm={careful:L('Careful','Temkinli'),avg:L('Average','Ortalama'),bold:L('Bold','İddialı')};
+  const ok=(sig)=>sig===D.d?'✅':'❌';
+  const sigs=[`${wxName(D.w)} ${ok(D.wx)}`,D.prev?`📈 ${ok(D.prev)}`:'',`📡 ${ok(D.hint)}`].filter(Boolean).join(' · ');
+  const row=['careful','avg','bold'].map(k=>`${nm[k]} −$${fmt(Math.round(cf[k]))}${k===pk?L(' (yours)',' (senin)'):''}`).join(' · ');
+  const diff=Math.round(cf[pk]-cf[best]);
+  return {id:'kgres',icon:'📡',ok:()=>false,safe:1,title:['Forecast notice · today\'s result','KGÜP · günün karnesi'],
+    text:[`The system was ${KG_NAME[D.d][0].toUpperCase()}. Signals: ${sigs}\nImbalance under each notice: ${row}\n${diff>0?`You paid $${fmt(diff)} more than the cheapest (${nm[best]}).`:'Your notice was the cheapest. ✅'}`,
+          `Sistem bugün ${KG_NAME[D.d][1]} çıktı. Dayanaklar: ${sigs}\nHer bildirimle dengesizlik bedeli: ${row}\n${diff>0?`En ucuzdan (${nm[best]}) $${fmt(diff)} fazla ödedin.`:'Bildirimin en ucuzuydu. ✅'}`],
+    opts:()=>[O('Got it','Anladım','Tomorrow brings new signals.','Yarın yeni dayanaklar gelir.',0,NOOP)]};}
 function kgupHour(h){
   if(!kgupOn())return;
   if(h===0&&S.kgupDay!==S.day)S.kgupPick='avg';
-  if(h===23&&S.kgupDay===S.day){const d=sysDir().d,best=d==='short'?'careful':d==='long'?'bold':'avg',ok=S.kgupPick===best;
-    if(ok)S.stats.kgupBest=(S.stats.kgupBest||0)+1;
-    const nm={short:L('short','açık'),long:L('long','fazla'),calm:L('calm','dengede')}[d];
-    toast(ok?L(`📡 The system was ${nm} — your notice was the cheapest.`,`📡 Sistem ${nm} çıktı — bildirimin en ucuzuydu.`):L(`📡 The system was ${nm}. Cheapest notice would have been: ${best==='careful'?'careful':best==='bold'?'bold':'average'}.`,`📡 Sistem ${nm} çıktı. En ucuz bildirim: ${best==='careful'?'temkinli':best==='bold'?'iddialı':'ortalama'}.`),ok?'good':'');}
+  if(h===23&&S.kgupDay===S.day&&S.kgRes!==S.day){S.kgRes=S.day;const D=sysDir(),cf=S.kgCF&&S.kgCF.day===S.day?S.kgCF:null;
+    const best=cf?['careful','avg','bold'].reduce((a,b)=>cf[b]<cf[a]?b:a,'avg'):(D.d==='short'?'careful':D.d==='long'?'bold':'avg');
+    if(S.kgupPick===best)S.stats.kgupBest=(S.stats.kgupBest||0)+1;
+    S.kgPrev=D.d;
+    if(cf&&!cardOpen&&!tutOpen&&!document.querySelector('.modal.on'))openCard(kgupResCard());
+    else toast(L(`📡 The system was ${KG_NAME[D.d][0]}.`,`📡 Sistem ${KG_NAME[D.d][1]} çıktı.`),'');}
   if(h>=6&&h<=10&&S.kgupDay!==S.day&&S.kgupAsk!==S.day&&!cardOpen&&!tutOpen&&S.plants.some(p=>p.type==='bigwind'||p.type==='solarfarm')){S.kgupAsk=S.day;S.kgupPick='avg';openCard(kgupCard());}}
 function imbalanceHour(h){                                                               // L11
   if(!has('imbalance')||inProg())return;
   const big=S.plants.filter(p=>(p.type==='bigwind'||p.type==='solarfarm')&&!p.broken&&!p.fire);if(!big.length)return;
-  const kg=kgupOn()?kgupPen():null;
-  let c=0,cov=0;for(const p of big){let x=kg?kgupCost(kg)*basePrice(h,h+0.5)*(p.type==='bigwind'?1.2:0.9):(0.1+Math.random()*0.2)*basePrice(h,h+0.5)*(p.type==='bigwind'?1.2:0.9);
-    if(batAt('bat')>=1){batSet('bat',batAt('bat')-1);x*=0.4;cov++;}c+=x;}
+  const kg=kgupOn()?kgupPen():null;if(kg&&!(S.kgCF&&S.kgCF.day===S.day))S.kgCF={day:S.day,careful:0,avg:0,bold:0};
+  let c=0,cov=0;for(const p of big){const pr=basePrice(h,h+0.5)*(p.type==='bigwind'?1.2:0.9);let x;
+    const bc=batAt('bat')>=1?0.4:1;if(bc<1){batSet('bat',batAt('bat')-1);cov++;}
+    if(kg){const e=Math.random()*2-1;for(const b in KG_B)S.kgCF[b]+=kgupAt(kg,KG_B[b],e)*pr*bc;x=kgupAt(kg,KG_B[S.kgupPick||'avg'],e)*pr;}
+    else x=(0.1+Math.random()*0.2)*pr;
+    x*=bc;c+=x;}
   c=Math.round(c);if(c<=0)return;S.cash=Math.max(0,S.cash-c);S.imbDay=(S.imbDay||0)+c;S.imbCov=(S.imbCov||0)+cov;try{logLedger('imbalance',-c,'imb');}catch(e){}}
 function basePrice(h,t){
   if(!has('price'))return FIXED_P;               // v0.86 level 1: one price, all day
@@ -6545,7 +6594,8 @@ let _gOrd=null,_gSeed=null;
 function goalOrd(){const seed=(S.seed||1)+'|'+(S.gShuf&&S.lad&&!inClassic()&&!cozy()&&sev()>1?1:0);if(_gSeed===seed&&_gOrd)return _gOrd;_gSeed=seed;
   const o=GOALS.map((_,i)=>i);if(seed.endsWith('|1')){const r=dRng((S.seed||1)>>>0),rest=o.slice(2);for(let i=rest.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[rest[i],rest[j]]=[rest[j],rest[i]];}_gOrd=o.slice(0,2).concat(rest);}else _gOrd=o;return _gOrd;}
 function goalAt(i){return i==null||i<0?undefined:GOALS[goalOrd()[i]];}
-function curGoal(){const out=S.goalOut||[];for(let i=S.goal;i<GOALS.length;i++){if(out.includes(i))continue;if(goalLocked(goalAt(i)))continue;return i;}return inClassic()||cozy()?S.goal:-1;}   // v0.86: nothing doable → the level goal shows
+function curGoal(){if(!inClassic()&&!cozy()&&!inProg()&&sev()>=3)return -1;   /* v0.98.2: from level 3 on, the strip shows the level's goal, not the basics */
+  const out=S.goalOut||[];for(let i=S.goal;i<GOALS.length;i++){if(out.includes(i))continue;if(goalLocked(goalAt(i)))continue;return i;}return inClassic()||cozy()?S.goal:-1;}   // v0.86: nothing doable → the level goal shows
 function padNeedLv(p){const k=p.kind==='upg'?({bag:'upgrades',boots:'upgrades',helper:'crew',batcap:'battery',bateff:'battery',grid:'grid'})[p.key]:
   p.kind==='gate'?(p.region==='east'?'nuclear':'regions'):({battery:'battery',town:'regions',nuclear:'nuclear'})[p.type];return k&&!has(k)?UNLOCK[k]:0;}
 function padVisible(p){
@@ -8192,7 +8242,7 @@ function hud(dt){
   const chip=cozy()?`<b class="lvlchip">☕</b> · `:inProg()?`<b class="lvlchip">🎓</b> · `:inClassic()?`<b class="lvlchip">🏛️ ${L('Classic','Klasik')}</b> · `:`<b class="lvlchip">${L('Level','Seviye')} ${sev()}</b> · `;
   const gp=G&&G.at();const gl=gp&&gp.kind&&!cozy()?padNeedLv(gp):0;
   if(!up&&!cozy()&&prestOk()){$('goal').innerHTML=chip+L(`⭐ Level ${sev()+1} · ${sevName(sev()+1)} can be opened — tap here`,`⭐ Seviye ${sev()+1} · ${sevName(sev()+1)} açılabilir — dokun`);}else
-  $('goal').innerHTML=chip+(G?`${tt(G.t)}${gl?` · 🔒 ${L('opens as you grow','büyüdükçe açılır')}`:''}${G.r?`<small>+$${fmt(G.r)}</small>`:''}`:(!cozy()&&!inClassic()&&!inProg()&&sev()<SEV_MAX?'🎯 '+ladProgTxt():L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.')));
+  $('goal').innerHTML=chip+(G?`${tt(G.t)}${gl?` · 🔒 ${L('opens as you grow','büyüdükçe açılır')}`:''}${G.r?`<small>+$${fmt(G.r)}</small>`:''}`:(!cozy()&&!inClassic()&&!inProg()&&(sev()<SEV_MAX||ladGoal())?'🎯 '+ladProgTxt():L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.')));
   {const n=maintList().length;$('mntBtn').hidden=!(has('svcplan')||n>0);   /* v0.90.8: before the maintenance level the button shows up only when there is a job waiting */const b=$('mntN');b.hidden=!n;b.textContent=n>9?'9+':String(n);}
   $('rankBtn').hidden=!has('report');{const wb=$('worldBtn');wb.hidden=cozy()||inProg()||!(worldMax()>=1||prestOk()||S.lad||inClassic());if(!wb.hidden){$('cap-world').textContent=inClassic()?L('Classic','Klasik'):L('Level','Seviye')+' '+sev();wb.classList.toggle('pulse',prestOk());}}$('buildBtn').hidden=cozy();   // v0.79.3: moving a plant is open from level 1
   if(S.lang!==padLang){padLang=S.lang;try{relabelPads();}catch(e){}}
@@ -8613,9 +8663,9 @@ function openCard(c0){
      choice costs more than you have, the worst one — do nothing and take the hit — is added. */
   if(!opts.some(o=>!(o.cost>0&&o.cost>S.cash)))opts.push(O('Do nothing (worst case)','Hiçbir şey yapma (en kötüsü)','No money for the rest. Word gets around: prices −10% for 2 days.','Diğerlerine para yok. Laf yayılır: fiyatlar 2 gün −%10.',0,()=>addMod('price',0.9,48)));
   /* v0.92.2: the levels card can be closed from its corner */
-  {const cx=$('cardX');if(cx){cx.hidden=c.id!=='worlds'&&c.id!=='adm';cx.onclick=e=>{e.stopPropagation();$('mCard').classList.remove('on');cardOpen=false;last=0;};}}
+  {const cx=$('cardX');if(cx){cx.hidden=c.id!=='worlds'&&c.id!=='adm'&&c.id!=='kgres';cx.onclick=e=>{e.stopPropagation();$('mCard').classList.remove('on');cardOpen=false;last=0;};}}
   $('cardOpts').innerHTML=opts.map((o,i)=>{const no=o.cost>0&&o.cost>S.cash;return `<button data-o="${i}" ${no?'disabled':''}><b>${tt(o.t)}</b><small>${tt(o.d)}</small>${no?`<span class="nomoney">${L('Not enough money','Yeterli para yok')} · 👛 $${fmt(S.cash)}</span>`:''}</button>`;}).join('');
-  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','adm','gop','kgup','prestige','rate','quiz','svc','progexit','streak','exit'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
+  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','adm','gop','kgup','kgres','prestige','rate','quiz','svc','progexit','streak','exit'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
     S.cardPrefs=S.cardPrefs||{};S.cardPrefs[c.id]=k;logLedger('card',-(o.cost||0),c.id+':'+k);track('card-'+c.id+'-'+k);
     $('mCard').classList.remove('on');cardOpen=false;curCardId=null;last=0;if(c.id!=='exit'){sfx.goal();toast(`${c.icon} ${tt(o.t)}`,'good');}save();};
   $('mCard').classList.add('on');
@@ -8907,7 +8957,7 @@ function openReport(page){
     $('repPrev').hidden=repMax()<2;$('repNext').hidden=true;
     $('repPrev').textContent=has('report3')?L('‹ Crew','‹ Ekip'):has('report2')?L('‹ Health','‹ Sağlık'):L('‹ Finance','‹ Finans');
   }
-  $('mRep').classList.add('on');trackOnce('report-opened');
+  repTabsDraw();$('mRep').classList.add('on');trackOnce('report-opened');
 }
 function fmtPerk(P){
   if(!P)return '';
@@ -9020,7 +9070,11 @@ function ladIntro(n){
 function featTick(){
   if(!playing||tutOpen||cardOpen||placing||inProg()||document.body.classList.contains('title')||document.querySelector('.modal.on'))return;   // v0.87.13: a program tells its own story
   if(Date.now()-featAt<FEAT_GAP)return;
-  S.feat=S.feat||{};const f=FEAT.find(x=>!S.feat[x.k]&&featOpen(x));if(!f)return;
+  S.feat=S.feat||{};
+  /* v0.98.2: from level 3 on a player knows the basics — Ela only explains what this level adds;
+     older topics are marked learnt quietly and stay readable under the 👩‍🔧 Ela button */
+  if(!cozy()&&!inClassic()&&sev()>=3)for(const x of FEAT)if(!S.feat[x.k]&&FSEV[x.k]!==sev()&&featOpen(x))S.feat[x.k]=1;
+  const f=FEAT.find(x=>!S.feat[x.k]&&featOpen(x));if(!f)return;
   S.feat[f.k]=1;featAt=Date.now();save();
   if(f.hl){(S.featNew=S.featNew||{})[f.hl]=1;}
   featSay(f,()=>featDots());try{trackOnce('feat-'+f.k);}catch(e){}
@@ -9327,10 +9381,19 @@ const repMax=()=>(has('report3')?3:has('report2')?2:1)+1;   // the ladder is alw
 $('repNext').onclick=()=>openReport(Math.min(repMax(),repPage+1));
 $('repBody').addEventListener('click',e=>{if(e.target.closest('#advGo'))applyAdvice();});
 $('repPrev').onclick=()=>openReport(Math.max(1,repPage-1));
+/* v0.98.2: every page is a tab, all visible at once; the open one is filled and lifted */
+function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg.push([2,L('Health','Sağlık')]);if(has('report3'))pg.push([3,L('Crew','Ekip')]);pg.push([repMax(),L('Ladder','Sıralama')]);
+  const el=$('repTabs');if(!el)return;el.innerHTML=pg.map(([n,t])=>`<button data-rp="${n}" class="${n===repPage?'on':''}">${t}</button>`).join('');
+  el.onclick=e=>{const b=e.target.closest('button[data-rp]');if(b)openReport(+b.dataset.rp);};
+  try{$('repTitle').textContent=$('repTitle').textContent.replace(/ · \d+\/\d+$/,'');}catch(e){}}
 
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.98.2',t:['Ela button, decision signals, report tabs','Ela butonu, karar dayanakları, rapor sekmeleri'],l:[
+  ['👩‍🔧 Ela: every topic up to your level in one place, tactics included. From level 3 on Ela only explains what the level adds.','👩‍🔧 Ela: seviyene kadar tüm konular tek yerde, taktikler dahil. Seviye 3’ten sonra Ela sadece seviyenin yeniliğini anlatır.'],
+  ['Day-ahead and forecast-notice cards show what to base the choice on; the forecast notice ends the day with a scorecard of all three choices.','GÖP ve KGÜP kartları seçimin dayanaklarını gösterir; KGÜP günü üç seçimin bedelini yan yana gösteren bir karneyle kapanır.'],
+  ['All finance report pages are tabs, visible at once.','Finansal raporun tüm sayfaları aynı anda görünen sekmeler oldu.']]},
  {v:'0.98.1',t:['Finance report every 10 days','10 günde bir finansal rapor'],l:[['Every tenth day the finance report opens by itself while you play.','Her onuncu gün oynarken finansal rapor kendiliğinden açılır.']]},
  {v:'0.98.0',t:['Two new levels: day-ahead market and forecast notice','İki yeni seviye: gün öncesi piyasası ve KGÜP'],l:[['Level 19: promise tomorrow\'s cells at 17:00 — +20% on what you deliver, a fine for what you miss.','Seviye 19: yarının hücrelerine 17:00’de söz ver — teslim ettiğine +%20, eksik kalana ceza.'],['Level 20: each morning choose how big plants are declared; the system short or long decides which mistake is expensive.','Seviye 20: her sabah büyük santrallerin bildirimini seç; sistemin açık ya da fazla olması hangi hatanın pahalı olduğunu belirler.']]},
  {v:'0.97.3',t:['Daily report in the app','Uygulamada günlük rapor'],l:[['Settings › 🔔: one note a day after 8 hours away, never at night. Made on the phone; nothing is sent anywhere.','Ayarlar › 🔔: 8 saat uzak kalırsan günde bir not, gece asla. Telefonda hazırlanır, hiçbir yere gönderilmez.']]},
@@ -9939,7 +10002,24 @@ function openTips(){
 }
 let tipT=0;
 function checkTips(dt){tipT+=dt;if(tipT<1)return;tipT=0;const seen=S.tipsSeen||{};const fresh=TIPS.some(x=>x.ok()&&!seen[x.id]);$('infoDot').hidden=!fresh;}
-$('infoBtn').onclick=openTips;
+/* v0.98.2: the Ela button. Everything Ela has explained, level by level up to the level you are on
+   (higher levels are not shown at all), plus the tactics you have unlocked. */
+function elaLvLines(n){const s=SEV[n];if(!s)return [];const out=(s.ela||[]).map(b=>tt(b));
+  for(const k of s.k){const f=FEAT.find(x=>x.k===k);if(f)for(const b of f.l)out.push(tt(b));}
+  if(s.goal)out.push('🎯 '+tt(s.goal.t));return out;}
+function openEla(){
+  const seen=S.tipsSeen||{},un=TIPS.filter(x=>{try{return x.ok();}catch(e){return false;}});
+  const lad=!cozy()&&!inClassic()&&!inProg();let html='';
+  if(lad){for(let n=sev();n>=1;n--){const ls=elaLvLines(n);if(!ls.length)continue;
+      html+=`<details class="ela-lv" ${n===sev()?'open':''}><summary>${L('Level','Seviye')} ${n} · ${sevName(n)}${n===sev()?L(' · now',' · şimdi'):''}</summary>${ls.map(x=>`<p>${x}</p>`).join('')}</details>`;}}
+  else{const fs=FEAT.filter(f=>(S.feat||{})[f.k]);html+=fs.map(f=>{const o=OPENTXT[f.k]||[[f.k,f.k]];return `<details class="ela-lv"><summary>${tt(o[0])}</summary>${f.l.map(b=>`<p>${tt(b)}</p>`).join('')}</details>`;}).join('');}
+  if(un.length)html+=`<details class="ela-lv" ${lad?'':'open'}><summary>💡 ${L('Tactics','Taktikler')} · ${un.length}</summary>`+un.map(x=>`<div class="tip ${seen[x.id]?'':'new'}"><b>${x.icon} ${tt(x.t)}</b><span>${tt(x.d)}</span></div>`).join('')+`</details>`;
+  $('tipsTitle').textContent='👩‍🔧 Ela';
+  $('tipsSub').textContent=lad?L(`Everything up to level ${sev()}. Tap a level to open it.`,`Seviye ${sev()}'e kadar her şey. Bir seviyeye dokun, açılsın.`):L('What Ela has explained so far.','Ela’nın şimdiye kadar anlattıkları.');
+  $('tipsList').innerHTML=html||`<p>${L('Ela explains each new thing when it opens.','Ela her yeni şeyi açıldığında anlatır.')}</p>`;
+  un.forEach(x=>seen[x.id]=1);S.tipsSeen=seen;$('infoDot').hidden=true;
+  $('mTips').classList.add('on');trackOnce('ela-opened');save();}
+$('infoBtn').onclick=openEla;
 $('tChar').onclick=showJoke;
 $('tChar').onkeydown=e=>{if(e.key==='Enter'||e.key===' ')showJoke();};
 $('tipsClose').onclick=()=>$('mTips').classList.remove('on');
@@ -11429,7 +11509,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.98.1';
+const GAME_VERSION='0.98.2';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
@@ -11848,7 +11928,7 @@ function pgDoneBar(){
   $('pgDoneExit').onclick=()=>{el.hidden=true;leaveProgram();};}
 function syncCaps(){
   const C=[['cap-prog','Program','Program'],['cap-grid','Lines','Hatlar'],['cap-rep','Report','Rapor'],
-           ['cap-info','Tips','Taktik'],['cap-mnt','Upkeep','Bakım'],['cap-rank','Ladder','Sıralama'],['cap-build','Build','İnşa'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
+           ['cap-info','Ela','Ela'],['cap-mnt','Upkeep','Bakım'],['cap-rank','Ladder','Sıralama'],['cap-build','Build','İnşa'],['cap-zin','Closer','Yakın'],['cap-zout','Wider','Uzak']];
   for(const [id,en,tr] of C){const e=$(id);if(e)e.textContent=L(en,tr);}
 }
 function syncProgBtn(){
