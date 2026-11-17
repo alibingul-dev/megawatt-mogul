@@ -450,7 +450,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 #radOv .rad-end button.sec{margin-top:8px;background:#EEF1F6;color:#1D2433}
 #cardText{white-space:pre-line}
 .rtabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}
-.rtabs button{flex:1;min-width:64px;padding:7px 6px;border-radius:10px;border:1px solid #D6DCE6;background:#F4F6FA;color:#3A4558;font-weight:700;font-size:13px}
+.rtabs button{flex:1;min-width:64px;padding:7px 6px;border-radius:999px;border:1.5px solid #2F6BFF;background:#fff;color:#2F6BFF;font-weight:800;font-size:13px}
 .rtabs button.on{background:#2F6BFF;border-color:#2F6BFF;color:#fff;box-shadow:0 3px 8px rgba(47,107,255,.35)}
 .ela-lv{margin:8px 0;border:1px solid #E1E6EE;border-radius:12px;padding:8px 10px;background:#FAFBFD}
 .ela-lv summary{font-weight:800;cursor:pointer}
@@ -498,7 +498,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.98.3</div>
+  <div class="t-ver" id="tVer">v0.98.4</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -752,7 +752,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.98.3 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.98.4 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9395,6 +9395,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.98.4',t:['Report tabs look like buttons','Rapor sekmeleri buton gibi'],l:[['Tabs are outlined pills, no longer the same colour as the boxes below.','Sekmeler artık çerçeveli düğmeler; alttaki kutularla aynı renkte değil.']]},
  {v:'0.98.3',t:['Imbalance follows the production profile','Dengesizlik üretim profiline göre'],l:[['Big plants pay imbalance in proportion to what they produce each hour: no sun at night, no imbalance for solar farms.','Büyük santraller dengesizliği her saat ürettikleri kadar öder: gece güneş yok, güneş tarlasına dengesizlik de yok.']]},
  {v:'0.98.2',t:['Ela button, decision signals, report tabs','Ela butonu, karar dayanakları, rapor sekmeleri'],l:[
   ['👩‍🔧 Ela: every topic up to your level in one place, tactics included. From level 3 on Ela only explains what the level adds.','👩‍🔧 Ela: seviyene kadar tüm konular tek yerde, taktikler dahil. Seviye 3’ten sonra Ela sadece seviyenin yeniliğini anlatır.'],
@@ -11515,7 +11516,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.98.3';
+const GAME_VERSION='0.98.4';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
