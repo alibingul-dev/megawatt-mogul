@@ -500,7 +500,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.99.2</div>
+  <div class="t-ver" id="tVer">v0.99.3</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -754,7 +754,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.99.2 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.99.3 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8222,7 +8222,8 @@ function render(dt,now){
   // floats
   floats.forEach(f=>{place('fl'+f.id,'fl'+(f.cls?' '+f.cls:''),f.x,f.y,3+f.rise,f.txt);LB['fl'+f.id].el.style.opacity=Math.max(0,f.life);});
   // guide
-  const G=progGoalObj()||goalAt(curGoal()),tg=G?G.at():null;
+  const G=progGoalObj()||goalAt(curGoal());let tg=G?G.at():null;
+  if(tg&&tg.kind&&!tg.pg&&!padVisible(tg))tg=null;   /* v0.99.3: never point at a square that is not drawn */
   if(tg){
     const d=Math.hypot(tg.x-S.px,tg.y-S.py),a=Math.atan2(tg.x-S.px,tg.y-S.py);
     arrow.visible=d>110;arrow.position.set(PX+Math.sin(a)*1.9,0.35,PZ+Math.cos(a)*1.9);arrow.rotation.set(Math.PI/2,a,0);
@@ -9407,6 +9408,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.99.3',t:['No arrow to empty ground','Boş yeri gösteren ok yok'],l:[['The yellow guide only points at squares you can see.','Sarı yön oku sadece görünen kareleri gösterir.']]},
  {v:'0.99.2',t:['Bigger buttons on a computer','Bilgisayarda büyük butonlar'],l:[['On big screens the top bar, map and side buttons are larger.','Büyük ekranlarda üst şerit, mini harita ve yan butonlar daha büyük.']]},
  {v:'0.99.1',t:['Banner fits wide screens','Uyarı şeridi geniş ekrana uyuyor'],l:[['On a computer the market alert stays a compact strip in the middle.','Bilgisayarda piyasa uyarısı ortada kısa bir şerit olarak kalır.']]},
  {v:'0.99.0',t:['Calmer screen, gift every 4 hours','Sakin ekran, 4 saatte bir hediye'],l:[['Messages come one at a time and stay left of the buttons; small news no longer piles up.','Mesajlar tek tek gelir ve butonların solunda kalır; küçük haberler artık üst üste yığılmaz.'],['🎁 A free gift every 4 hours on the left. It waits for you and grows with your world.','🎁 Solda 4 saatte bir ücretsiz hediye. Seni bekler, dünyanla birlikte büyür.']]},
@@ -11540,7 +11542,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.99.2';
+const GAME_VERSION='0.99.3';
 /* v0.99.0: a free gift every 4 real hours. It waits for you, it never stacks, and it scales with the world. */
 const GIFT_KEY=SAVE_KEY+'_gift',GIFT_MS=4*3600*1000;
 function giftLast(){try{return +localStorage.getItem(GIFT_KEY)||0;}catch(e){return 0;}}
