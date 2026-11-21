@@ -166,6 +166,7 @@ body.far .hlp{display:none}
 .wrench{font-size:22px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
 .hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 10px 0;display:flex;flex-direction:column;gap:6px;pointer-events:none}   /* v0.87.7: wallet in the top-left corner, settings in the top-right, on any screen */
 .hud>.goal,.hud>.banner{max-width:min(520px,100%)}
+@media (min-width:1000px) and (min-height:640px){.hud,#mini,#sideCol,#leftCol,#toasts{zoom:1.45}}   /* v0.99.2: readable on a computer */
 .hud>.banner{position:absolute;top:100%;margin-top:6px;left:50%;transform:translateX(-50%);width:min(520px,calc(100vw - 172px));max-width:none;font-size:14px;line-height:1.25;padding:5px 10px}   /* v0.98.8: the banner floats, the side columns stay put */
 .bar{display:flex;gap:6px;align-items:flex-start}
 .bar>.box{min-height:62px}
@@ -499,7 +500,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.99.1</div>
+  <div class="t-ver" id="tVer">v0.99.2</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -753,7 +754,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.99.1 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.99.2 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9406,6 +9407,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.99.2',t:['Bigger buttons on a computer','Bilgisayarda büyük butonlar'],l:[['On big screens the top bar, map and side buttons are larger.','Büyük ekranlarda üst şerit, mini harita ve yan butonlar daha büyük.']]},
  {v:'0.99.1',t:['Banner fits wide screens','Uyarı şeridi geniş ekrana uyuyor'],l:[['On a computer the market alert stays a compact strip in the middle.','Bilgisayarda piyasa uyarısı ortada kısa bir şerit olarak kalır.']]},
  {v:'0.99.0',t:['Calmer screen, gift every 4 hours','Sakin ekran, 4 saatte bir hediye'],l:[['Messages come one at a time and stay left of the buttons; small news no longer piles up.','Mesajlar tek tek gelir ve butonların solunda kalır; küçük haberler artık üst üste yığılmaz.'],['🎁 A free gift every 4 hours on the left. It waits for you and grows with your world.','🎁 Solda 4 saatte bir ücretsiz hediye. Seni bekler, dünyanla birlikte büyür.']]},
  {v:'0.98.8',t:['Buttons stay put','Butonlar yerinde kalıyor'],l:[['Market alerts no longer push the side buttons and the map down.','Piyasa uyarıları artık yan butonları ve haritayı aşağı itmiyor.']]},
@@ -10256,7 +10258,8 @@ let miniT=0;
 function updateMini(dt){
   miniT+=dt;if(miniT<0.2)return;miniT=0;
   const hudEl=document.querySelector('.hud');const r=hudEl.getBoundingClientRect();   /* banner is absolute now, so the hud box ends at the last goal line */
-  const m=$('mini');m.style.top=(r.bottom+8)+'px';$('sideCol').style.top=(r.bottom+8)+'px';$('leftCol').style.top=(r.bottom+8+(m.style.display==='none'?0:121))+'px';
+  const m=$('mini');const zz=el=>parseFloat(getComputedStyle(el).zoom)||1;   /* v0.99.2: columns may be zoomed on big screens */
+  m.style.top=(r.bottom+8)/zz(m)+'px';$('sideCol').style.top=(r.bottom+8)/zz($('sideCol'))+'px';$('leftCol').style.top=(r.bottom+8+(m.style.display==='none'?0:121*zz(m)))/zz($('leftCol'))+'px';
   const dpr=Math.min(2,devicePixelRatio||1);if(m.width!==74*dpr){m.width=74*dpr;m.height=Math.round(74*dpr*WORLD.h/WORLD.w);}
   drawMap(m,false);
   if($('mMap').classList.contains('on'))drawMap($('bigmap'),true);
@@ -11537,7 +11540,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.99.1';
+const GAME_VERSION='0.99.2';
 /* v0.99.0: a free gift every 4 real hours. It waits for you, it never stacks, and it scales with the world. */
 const GIFT_KEY=SAVE_KEY+'_gift',GIFT_MS=4*3600*1000;
 function giftLast(){try{return +localStorage.getItem(GIFT_KEY)||0;}catch(e){return 0;}}
