@@ -166,6 +166,7 @@ body.far .hlp{display:none}
 .wrench{font-size:22px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
 .hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 10px 0;display:flex;flex-direction:column;gap:6px;pointer-events:none}   /* v0.87.7: wallet in the top-left corner, settings in the top-right, on any screen */
 .hud>.goal,.hud>.banner{max-width:min(520px,100%)}
+.hud>.banner{position:absolute;top:100%;margin-top:6px;left:92px;right:80px;max-width:none;font-size:14px;line-height:1.25;padding:5px 10px}   /* v0.98.8: the banner floats, the side columns stay put */
 .bar{display:flex;gap:6px;align-items:flex-start}
 .bar>.box{min-height:62px}
 .bar>.box:first-child{max-width:52%}          /* the wallet card must never squeeze the price chart */
@@ -498,7 +499,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.98.7</div>
+  <div class="t-ver" id="tVer">v0.98.8</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -752,7 +753,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.98.7 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.98.8 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9395,6 +9396,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.98.8',t:['Buttons stay put','Butonlar yerinde kalıyor'],l:[['Market alerts no longer push the side buttons and the map down.','Piyasa uyarıları artık yan butonları ve haritayı aşağı itmiyor.']]},
  {v:'0.98.7',t:['Version in the corner','Köşede sürüm'],l:[['The game version is shown small in the bottom-left corner.','Oyunun sürümü sol alt köşede küçük yazıyla görünür.']]},
  {v:'0.98.6',t:['😈 stays put','😈 yerinde kalıyor'],l:[['From level 2 the 😈 button stays on the left, even after Nightmare is turned off.','2. seviyeden itibaren 😈 butonu, Kâbus kapatıldıktan sonra da solda kalır.']]},
  {v:'0.98.5',t:['Nightmare is easy to stop','Kâbus kolayca durur'],l:[['Turning Nightmare on asks first and says how to stop it.','Kâbus açılmadan önce sorar ve nasıl durdurulacağını söyler.'],['While it runs, 👹 always stays on the left; Turn off ends it.','Açıkken 👹 hep solda kalır; Kapat ile biter.'],['Changing time speed in Settings also ends Nightmare.','Ayarlar\'da zaman hızını değiştirmek de Kâbus\'u bitirir.']]},
@@ -10241,7 +10243,7 @@ function drawMap(cv,big){
 let miniT=0;
 function updateMini(dt){
   miniT+=dt;if(miniT<0.2)return;miniT=0;
-  const hudEl=document.querySelector('.hud');const r=hudEl.getBoundingClientRect();
+  const hudEl=document.querySelector('.hud');const r=hudEl.getBoundingClientRect();   /* banner is absolute now, so the hud box ends at the last goal line */
   const m=$('mini');m.style.top=(r.bottom+8)+'px';$('sideCol').style.top=(r.bottom+8)+'px';$('leftCol').style.top=(r.bottom+8+(m.style.display==='none'?0:121))+'px';
   const dpr=Math.min(2,devicePixelRatio||1);if(m.width!==74*dpr){m.width=74*dpr;m.height=Math.round(74*dpr*WORLD.h/WORLD.w);}
   drawMap(m,false);
@@ -11523,7 +11525,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.98.7';
+const GAME_VERSION='0.98.8';
 /* v0.98.7: tiny version stamp in the bottom-left corner, so every screenshot says which build it is */
 try{const vs=document.createElement('div');vs.id='verStamp';vs.textContent='v'+GAME_VERSION;
   vs.style.cssText='position:fixed;left:6px;bottom:calc(4px + env(safe-area-inset-bottom,0px));font:600 10px/1 system-ui,sans-serif;color:rgba(255,255,255,.75);text-shadow:0 0 2px rgba(0,0,0,.8);pointer-events:none;z-index:9999';
