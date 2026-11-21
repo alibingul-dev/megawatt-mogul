@@ -208,7 +208,7 @@ body.title #leftCol{visibility:hidden}
 @keyframes wpulse{0%,100%{box-shadow:0 3px 0 rgba(0,0,0,.18),0 0 0 0 rgba(255,210,63,.9)}50%{box-shadow:0 3px 0 rgba(0,0,0,.18),0 0 0 8px rgba(255,210,63,0)}}
 #mMap canvas{max-width:92vw;max-height:78vh;border-radius:18px;border:3px solid #fff}
 #flashOv{position:fixed;inset:0;background:#EAF2FF;opacity:0;pointer-events:none;z-index:3;transition:opacity .08s linear}
-#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 150px);width:min(440px,calc(100% - 24px));display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:5}
+#toasts{position:fixed;left:12px;right:86px;margin:0 auto;bottom:calc(env(safe-area-inset-bottom) + 150px);max-width:440px;display:flex;flex-direction:column;gap:6px;pointer-events:none;z-index:5}
 .toast{background:rgba(29,36,51,.94);color:#fff;border-radius:14px;padding:9px 13px;font-family:var(--disp);font-size:14px;font-weight:400;text-align:center;animation:tin .25s ease-out}
 .toast.good{background:rgba(24,140,86,.96)}
 .toast.big{background:rgba(232,54,79,.97);font-family:var(--disp);font-size:18px;font-weight:400}
@@ -463,7 +463,7 @@ body.radDead #sideCol .rb:not(.zb):not(#repBtn):not(#infoBtn),body.radDead #devi
 #radOv .rad-bar{position:absolute;top:calc(env(safe-area-inset-top) + 160px);left:50%;transform:translateX(-50%);background:#1D2433;color:#FFD400;font-family:var(--body);font-weight:800;padding:10px 16px;border-radius:14px;font-size:15px;line-height:1.3;text-align:center;width:max-content;max-width:90vw;box-shadow:0 4px 14px rgba(0,0,0,.35)}
 #radOv .rad-end{position:relative;background:#fff;border-radius:22px;padding:22px 22px 18px;max-width:86vw;width:360px;text-align:center;pointer-events:auto;box-shadow:0 10px 40px rgba(0,0,0,.45)}
 #radOv .rad-end h2{margin:4px 0 8px;font-size:22px}#radOv .rad-end p{margin:0 0 14px;color:#3A4254;font-size:14.5px;line-height:1.4}#radOv .rad-end button{width:100%;padding:13px;font-size:17px}
-#devilBtn{margin-top:8px}#devilBtn.nm{background:#5B2A86!important;color:#fff}#devilBtn.nm .cap{color:#fff}
+#devilBtn{margin-top:8px}#giftBtn.ready{animation:giftPulse 1.2s ease-in-out infinite;background:#FFE27A!important}@keyframes giftPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}#devilBtn.nm{background:#5B2A86!important;color:#fff}#devilBtn.nm .cap{color:#fff}
 .dvRow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#F4F1FA;margin:6px 0;text-align:left}
 .dvRow .dvI{font-size:24px;width:30px;text-align:center}.dvRow b{display:block;font-size:15px}.dvRow small{display:block;color:#5B6475;font-size:12.5px;line-height:1.3}
 .dvRow button{margin-left:auto;min-width:84px;padding:8px 10px;font-size:14px;flex:none}.dvRow.off{opacity:.5}
@@ -499,7 +499,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.98.8</div>
+  <div class="t-ver" id="tVer">v0.99.0</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -543,7 +543,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
   <button class="rb crewb" id="crewBtn" aria-label="Crew plan" hidden><span>👷</span><span class="cnum" id="crewN">1/45</span><span class="badge" id="crewAlert" hidden>!</span></button>
 </div>
 <canvas id="mini" width="90" height="128" aria-label="Mini map. Tap to enlarge."></canvas>
-<div id="leftCol"><button class="rb" id="worldBtn" aria-label="Levels" hidden><span>⭐</span><span class="cap" id="cap-world">Level 1</span></button><button class="rb" id="devilBtn" aria-label="Chaos" hidden><span>😈</span><span class="cap" id="cap-dev">Chaos</span></button><button class="rb" id="careerBtn" aria-label="Career" hidden><span>💼</span><span class="cap" id="cap-car">+0%</span><span class="badge" id="carDot" hidden>!</span></button><button class="rb" id="progExit" aria-label="Close the mode" hidden style="margin-top:8px"><span>🎓</span><span class="cap" id="cap-pexit">Close</span></button></div>
+<div id="leftCol"><button class="rb" id="worldBtn" aria-label="Levels" hidden><span>⭐</span><span class="cap" id="cap-world">Level 1</span></button><button class="rb" id="devilBtn" aria-label="Chaos" hidden><span>😈</span><span class="cap" id="cap-dev">Chaos</span></button><button class="rb" id="giftBtn" aria-label="Gift" hidden><span>🎁</span><span class="cap" id="cap-gift">4:00</span></button><button class="rb" id="careerBtn" aria-label="Career" hidden><span>💼</span><span class="cap" id="cap-car">+0%</span><span class="badge" id="carDot" hidden>!</span></button><button class="rb" id="progExit" aria-label="Close the mode" hidden style="margin-top:8px"><span>🎓</span><span class="cap" id="cap-pexit">Close</span></button></div>
 <div class="modal" id="mMap"><div style="position:relative"><canvas id="bigmap" aria-label="Map"></canvas><button id="mapX" type="button" aria-label="Close" style="position:absolute;top:8px;right:8px;width:38px;height:38px;min-width:0;padding:0;border-radius:50%;background:#fff;border:0;color:#1D2433;font-size:18px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.25)">✕</button></div></div>
 <div id="flashOv"></div>
 <div id="radOv" hidden><div class="rad-sym"><svg viewBox="-100 -100 200 200"><circle r="98" fill="#FFD400" stroke="#1D2433" stroke-width="6"/><g fill="#1D2433"><circle r="15"/><path d="M0 -24 L0 -84 A84 84 0 0 1 72.7 -42 L20.8 -12 A24 24 0 0 0 0 -24Z" transform="rotate(-30)"/><path d="M0 -24 L0 -84 A84 84 0 0 1 72.7 -42 L20.8 -12 A24 24 0 0 0 0 -24Z" transform="rotate(90)"/><path d="M0 -24 L0 -84 A84 84 0 0 1 72.7 -42 L20.8 -12 A24 24 0 0 0 0 -24Z" transform="rotate(210)"/></g></svg></div><div class="rad-bar" id="radBar" hidden></div><div class="rad-end" id="radEnd" hidden><div style="font-size:44px">☢️</div><h2 id="radEndT"></h2><p id="radEndP"></p><button class="pri" id="radReset"></button><button class="sec" id="radBack" hidden></button><button class="rad-x" id="radX" type="button" aria-label="Close">✕</button></div><button class="rad-chip" id="radChip" type="button" hidden></button></div>
@@ -753,7 +753,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.98.8 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.99.0 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6561,7 +6561,17 @@ const $=id=>document.getElementById(id);
 const SUF=['','K','M','B','T','Qa'];
 function fmt(n){if(n<0)return '-'+fmt(-n);if(n<1000)return n<10&&n%1?n.toFixed(1):Math.floor(n).toString();let i=0;while(n>=1000&&i<SUF.length-1){n/=1000;i++;}return(n<10?n.toFixed(2):n<100?n.toFixed(1):Math.floor(n))+SUF[i];}
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-function toast(m,c=''){try{crewQuip(m,c);}catch(_){}const e=document.createElement('div');e.className='toast '+c;e.textContent=m;$('toasts').appendChild(e);setTimeout(()=>e.remove(),c==='big'?4000:2800);while($('toasts').children.length>3)$('toasts').firstChild.remove();}
+/* v0.99.0: one toast at a time. Red ones (big/bad) queue; plain info is dropped when something is already showing. */
+const TQ=[];let tBusy=false,tLast='';
+function toastShow(){if(tBusy||!TQ.length)return;const {m,c}=TQ.shift();tBusy=true;const e=document.createElement('div');e.className='toast '+c;e.textContent=m;$('toasts').appendChild(e);
+  setTimeout(()=>{e.remove();tBusy=false;toastShow();},c==='big'||c==='bad'?3200:2200);}
+function toast(m,c=''){try{crewQuip(m,c);}catch(_){}
+  if(m===tLast&&(tBusy||TQ.length))return;tLast=m;
+  const loud=c==='big'||c==='bad';
+  if(!loud&&(tBusy||TQ.length))return;
+  if(TQ.some(q=>q.m===m))return;
+  TQ.push({m,c});while(TQ.length>2)TQ.splice(TQ.findIndex(q=>!(q.c==='big'||q.c==='bad'))>=0?TQ.findIndex(q=>!(q.c==='big'||q.c==='bad')):0,1);
+  toastShow();}
 function hint(k,m,c){if(S.hints[k])return;S.hints[k]=1;toast(m,c);}
 function hh(t){const h=Math.floor(t)%24,m=Math.floor((t%1)*6)*10;return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');}
 function dur(s){s=Math.floor(s);if(s<3600)return Math.floor(s/60)+'m';return Math.floor(s/3600)+'h '+Math.floor(s%3600/60)+'m';}
@@ -9396,6 +9406,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.99.0',t:['Calmer screen, gift every 4 hours','Sakin ekran, 4 saatte bir hediye'],l:[['Messages come one at a time and stay left of the buttons; small news no longer piles up.','Mesajlar tek tek gelir ve butonların solunda kalır; küçük haberler artık üst üste yığılmaz.'],['🎁 A free gift every 4 hours on the left. It waits for you and grows with your world.','🎁 Solda 4 saatte bir ücretsiz hediye. Seni bekler, dünyanla birlikte büyür.']]},
  {v:'0.98.8',t:['Buttons stay put','Butonlar yerinde kalıyor'],l:[['Market alerts no longer push the side buttons and the map down.','Piyasa uyarıları artık yan butonları ve haritayı aşağı itmiyor.']]},
  {v:'0.98.7',t:['Version in the corner','Köşede sürüm'],l:[['The game version is shown small in the bottom-left corner.','Oyunun sürümü sol alt köşede küçük yazıyla görünür.']]},
  {v:'0.98.6',t:['😈 stays put','😈 yerinde kalıyor'],l:[['From level 2 the 😈 button stays on the left, even after Nightmare is turned off.','2. seviyeden itibaren 😈 butonu, Kâbus kapatıldıktan sonra da solda kalır.']]},
@@ -11525,7 +11536,19 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.98.8';
+const GAME_VERSION='0.99.0';
+/* v0.99.0: a free gift every 4 real hours. It waits for you, it never stacks, and it scales with the world. */
+const GIFT_KEY=SAVE_KEY+'_gift',GIFT_MS=4*3600*1000;
+function giftLast(){try{return +localStorage.getItem(GIFT_KEY)||0;}catch(e){return 0;}}
+function giftLeft(){return Math.max(0,giftLast()+GIFT_MS-Date.now());}
+function giftAmt(){return 2*Math.max(25,Math.round((S.lastDayEarned||0)*0.05));}
+function giftTick(){try{const b=$('giftBtn');const off=document.body.classList.contains('title')||!playing||inProg()||!careerOn();b.hidden=off;if(off)return;
+  const l=giftLeft();b.classList.toggle('ready',!l);if(!l){$('cap-gift').textContent=L('Open!','Aç!');}else{const m=Math.ceil(l/60000);$('cap-gift').textContent=Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}}catch(e){}}
+setInterval(giftTick,1000);
+$('giftBtn').onclick=()=>{if(giftLeft()){toast(L('🎁 Next gift in '+$('cap-gift').textContent,'🎁 Sıradaki hediye '+$('cap-gift').textContent+' sonra'),'');return;}
+  const a=giftAmt();S.cash+=a;S.earned+=a;try{localStorage.setItem(GIFT_KEY,String(Date.now()));}catch(e){}
+  try{logLedger('goal',a,'gift');}catch(e){}try{sfx.goal();}catch(e){}try{floatTxt(S.px,S.py,'🎁 +$'+fmt(a),'');}catch(e){}
+  toast(L(`🎁 Gift: +$${fmt(a)}. The next one comes in 4 hours.`,`🎁 Hediye: +$${fmt(a)}. Sıradaki 4 saat sonra.`),'good');save();giftTick();};
 /* v0.98.7: tiny version stamp in the bottom-left corner, so every screenshot says which build it is */
 try{const vs=document.createElement('div');vs.id='verStamp';vs.textContent='v'+GAME_VERSION;
   vs.style.cssText='position:fixed;left:6px;bottom:calc(4px + env(safe-area-inset-bottom,0px));font:600 10px/1 system-ui,sans-serif;color:rgba(255,255,255,.75);text-shadow:0 0 2px rgba(0,0,0,.8);pointer-events:none;z-index:9999';
