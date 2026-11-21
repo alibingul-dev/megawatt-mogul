@@ -500,7 +500,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.99.5</div>
+  <div class="t-ver" id="tVer">v0.99.6</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -754,7 +754,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.99.5 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.99.6 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8735,7 +8735,8 @@ function showTut(){
   if(!keep)tutHide();
   document.querySelectorAll('.tut-hl').forEach(e=>e.classList.remove('tut-hl'));
   tutPadId=st.pad||null;try{if(inPack()){const G=progGoalObj();$('goal').style.display=G&&G.hide?'none':'';if(G&&!G.hide)$('goal').innerHTML='<b class="lvlchip">🎓</b> · '+tt(G.t);}}catch(e){}camAim=null;if(st.cam){try{const a=st.cam();if(a&&isFinite(a.x)&&isFinite(a.y))camAim={x:a.x,y:a.y,night:!!a.night,move:!!st.move};}catch(e){}}
-  $('tutName').textContent=L('Ela · Field engineer','Ela · Saha mühendisi');
+  const dz=st.who==='d';$('tutName').textContent=dz?L('Deniz · New intern','Deniz · Yeni stajyer'):L('Ela · Field engineer','Ela · Saha mühendisi');
+  try{const im=typeof thumbs!=='undefined'&&(thumbs[dz?'character-male-b':'character-female-d']);if(im)$('tutImg').src=im;}catch(e){}
   $('tutText').textContent=tt(st.b||st.t);   // a programme line carries its body in .b
   $('tutStep').textContent=`${tutI+1}/${seq.length}`;
   $('tutSkip').textContent=L('Skip','Geç');$('tutBack').textContent=L('Back','Geri');$('tutBack').hidden=tutI===0;
@@ -9069,6 +9070,33 @@ function featOpen(f){try{return f.need?f.need():has(f.k);}catch(e){return false;
 function featSay(f,after){
   const seq=f.l.map((b,i)=>featLine(f,b,i));seq.okLbl=['Got it','Anladım'];elaSay(seq,after||null);
 }
+/* v0.99.6: level openings are a talk — Deniz (new intern) asks, Ela answers. One line per tap, ≤2 sentences.
+   Each level: what's new (➕) then the catch (➖). Level 1 opens with the two of them meeting. */
+const DLG_HI=[["Hi Ela!","Selam Ela!"],["Morning, Ela!","Günaydın Ela!"],["Ela, got a minute?","Ela, bir dakikan var mı?"]];
+const DLG={
+ 1:[['d',"Hi, I'm Deniz. Today is my first day.","Merhaba, ben Deniz. Bugün ilk günüm."],['e',"Welcome, Deniz! I'm Ela, the field engineer.","Hoş geldin Deniz! Ben Ela, saha mühendisiyim."],
+    ['d',"So what do we actually do here?","Peki biz burada tam olarak ne yapıyoruz?"],['e',"We make electricity from wind and sun. You build it, carry it, sell it.","Rüzgârla ve güneşle elektrik üretiyoruz. Sen kurarsın, taşırsın, satarsın."],['d',"Does the price change?","Fiyat değişiyor mu?"],['e',"Not here, it stays the same. Learn the job first.","Burada hep aynı. Önce işi öğren."]],
+ 2:[['d',"Can I put a plant anywhere now?","Santrali her yere koyabiliyor muyum artık?"],['e',"Yes, wherever you like.","Evet, nereye istersen."],['d',"So it's free?","Bedava mı yani?"],['e',"It isn't. Plants can break down, so keep an eye on them.","Değil. Santraller bozulabilir, gözün üstlerinde olsun."]],
+ 3:[['d',"Why does the price keep moving?","Fiyat neden sürekli oynuyor?"],['e',"At night everyone sleeps and power gets cheap. In the evening everyone is home and it gets expensive.","Gece herkes uyur, elektrik ucuzlar. Akşam herkes evde, pahalanır."],['d',"So I wait for the evening?","O zaman akşamı mı bekleyeceğim?"],['e',"Exactly. Whoever sells at the expensive hour wins.","Aynen öyle. Pahalı saatte satan kazanır."]],
+ 4:[['d',"What's this huge box?","Bu kocaman kutu ne?"],['e',"A battery. Fill it when it's cheap, sell when it's expensive.","Batarya. Ucuzken doldurursun, pahalıyken satarsın."],['d',"Any downside?","Kötü bir yanı da var mı?"],['e',"Sudden price shocks come. Sometimes an order to cut output comes too.","Ani fiyat şokları gelir. Bazen de \"üretimi kes\" talimatı gelir."]],
+ 5:[['d',"Do I have to carry everything myself?","Bütün taşımayı ben mi yapacağım?"],['e',"You can hire helpers now. They carry for you.","Artık yardımcı tutabilirsin, senin yerine taşırlar."],['d',"So the more the better?","Ne kadar çok tutarsam o kadar iyi o zaman?"],['e',"Each one gets paid every day. Don't keep anyone standing idle.","Her biri her gün maaş alıyor. Boşta duranı tutma."]],
+ 6:[['d',"Does the news change the game?","Bu haberler oyunu etkiliyor mu?"],['e',"It does. It moves the price.","Etkiliyor. Fiyatı oynatıyorlar."],['d',"And the cards?","Peki ya kartlar?"],['e',"Every card is a choice, and every choice has a price.","Her kart bir seçim, her seçimin de bir bedeli var."]],
+ 7:[['d',"Does a river plant work at night too?","Akarsu santrali gece de çalışır mı?"],['e',"It does. It doesn't need the sun.","Çalışır, güneşe ihtiyacı yok."],['d',"Does it never stop?","Hiç durmuyor mu?"],['e',"On dry days the stream shrinks, and so does the output.","Kurak günlerde dere azalır, üretim de düşer."]],
+ 8:[['d',"What's a shift?","Vardiya da neyin nesi?"],['e',"The day is split in three. At any hour only a third of your crew works.","Gün üçe bölünüyor. Her saatte ekibin sadece üçte biri çalışıyor."],['d',"Is the night crew more expensive?","Gece çalışan daha mı pahalı?"],['e',"Yes. Choose well who works the night.","Evet. Geceye kimi koyacağını iyi seç."]],
+ 9:[['d',"Did the map get bigger?","Harita büyüdü mü?"],['e',"It did. There are far fields, town markets and depots.","Büyüdü. Uzak sahalar, kasaba pazarları ve depolar var."],['d',"Do my plants stay the same forever?","Kurduğum santraller hep aynı kalır mı?"],['e',"No, they produce less as they age.","Kalmaz, yaşlandıkça daha az üretirler."]],
+ 10:[['d',"Do I fix breakdowns one by one?","Arızalarla tek tek mi uğraşacağım?"],['e',"No, you pick a maintenance policy.","Hayır, bir bakım politikası seçeceksin."],['d',"Which one is better?","Hangisi daha iyi?"],['e',"Automatic service costs money and time. Running to failure means risk.","Otomatik bakım para ve zaman alır. Bozulana kadar çalıştırmak ise risk demek."]],
+ 11:[['d',"These turbines are huge!","Bu türbinler çok büyük!"],['e',"Big output, big money.","Büyük üretim, büyük para."],['d',"What's the catch?","Kötü yanı ne?"],['e',"You say \"I'll produce this much\". Miss it, and you pay the gap every hour.","\"Şu kadar üreteceğim\" dersin. Tutturamazsan farkı her saat ödersin."]],
+ 12:[['d',"Can I give helpers jobs?","Yardımcılara görev de verebiliyor muyum?"],['e',"Yes: one stores, one chases the peak price, one handles disasters.","Evet: biri depolar, biri zirve fiyatı kovalar, biri afetlere bakar."],['d',"Disasters?","Afet mi?"],['e',"Storms and fires can happen. And the damage is heavy.","Fırtına ve yangın çıkabiliyor. Hasar da ağır olur."]],
+ 13:[['d',"Does the turbine brand matter?","Türbinin markası fark eder mi?"],['e',"It does. The cheap one breaks often.","Eder. Ucuz olan sık bozulur."],['d',"And the expensive one?","Pahalı olan?"],['e',"It breaks less, but it empties your wallet.","Az bozulur ama cebini yakar."]],
+ 14:[['d',"What are these lines for?","Bu hatlar ne işe yarıyor?"],['e',"They carry output by themselves. Nothing left for you to do.","Üretimi kendileri taşıyorlar, sana iş kalmıyor."],['d',"There must be a trap here too.","Buranın da bir tuzağı vardır kesin."],['e',"Rivals dump energy into the market. The price stays at the bottom for hours.","Rakipler piyasaya enerji boşaltıyor. Fiyat saatlerce dipte kalıyor."]],
+ 15:[['d',"How is a dam different from the river?","Baraj nehirden ne farklı?"],['e',"A dam keeps the water. You let it run at the peak.","Baraj suyu biriktirir. Zirvede salarsın."],['d',"Then the peak pays a fortune?","O zaman zirve servet kazandırır?"],['e',"There's a price cap now. The peak can't go above a certain level.","Artık tavan fiyat var. Zirve belli bir yerin üstüne çıkamaz."]],
+ 16:[['d',"Can the battery sell to the grid directly?","Batarya şebekeye doğrudan satabilir mi?"],['e',"It can. It can also hold a reserve band for the grid.","Satabilir. Şebeke için rezerv bandı da tutabilir."],['d',"Is it free?","Bedava mı?"],['e',"No. The market takes a fee on every sale.","Hayır. Piyasa her satıştan ücret alır."]],
+ 17:[['d',"Turbines at sea?","Denize türbin mi?"],['e',"At sea the wind blows steadier.","Denizde rüzgâr daha istikrarlı eser."],['d',"Sounds perfect.","Kusursuz gibi."],['e',"Salt air wears them out. Sea turbines age faster.","Tuzlu hava aşındırır. Deniz türbinleri daha hızlı yaşlanır."]],
+ 18:[['d',"Can I sell tomorrow's energy today?","Yarının enerjisini bugünden satabilir miyim?"],['e',"Yes, usually at a better price.","Evet, çoğu zaman daha iyi fiyata."],['d',"What if I can't deliver?","Ya teslim edemezsem?"],['e',"Every cell you promised and didn't deliver gets charged.","Söz verip teslim etmediğin her hücre faturalanır."]],
+ 19:[['d',"What do I declare every morning?","Her sabah neyi bildiriyorum?"],['e',"How much your big plants will produce. You choose the figure.","Büyük santrallerinin ne kadar üreteceğini. Rakamı sen seçersin."],['d',"So which mistake is expensive?","Hangi hata pahalı peki?"],['e',"It depends on the system. Short: producing too little hurts. Long: producing too much does.","Sisteme bağlı. Sistem açıksa eksik, fazlaysa fazla üretmek pahalı."]]
+};
+function dlgSeq(n){const a=DLG[n];if(!a)return null;return a.map(([w,en,tr],i)=>{let b=[en,tr];
+  if(i===0&&n>1){const h=DLG_HI[n%3];b=[h[0]+' '+en,h[1]+' '+tr];}return {b,who:w};});}
 function ladIntro(n){
   const s=SEV[n];if(!s)return;const m=ladMeta(),seq=[];
   if(n===1&&m.moved&&!S.ladMsg){S.ladMsg=1;
@@ -9079,7 +9107,7 @@ function ladIntro(n){
     f.l.forEach((b,i)=>fs.push(featLine(f,b,i)));}
   /* v0.87.4: the level summary and the feature lines said the same thing twice. With feature lines, the
      summary becomes a one-line title; level 1 keeps its own lines (the fixed price is said nowhere else). */
-  if(fs.length&&n>1)seq.push({b:[`Level ${n}: ${s.n[0]}. Here is what is new.`,`Seviye ${n}: ${s.n[1]}. Neler yeni, anlatayım.`]});
+  const dq=dlgSeq(n);if(dq)seq.push(...dq);else if(fs.length&&n>1)seq.push({b:[`Level ${n}: ${s.n[0]}. Here is what is new.`,`Seviye ${n}: ${s.n[1]}. Neler yeni, anlatayım.`]});
   else for(const b of s.ela||[])seq.push({b});
   seq.push(...fs);
   if(s.goal)seq.push({b:[`This level's goal: ${s.goal.t[0]}. Play at least ${ladDays(n)} days, then ⭐ opens level ${n+1}.`,`Bu seviyenin hedefi: ${s.goal.t[1]}. En az ${ladDays(n)} gün oyna, sonra ⭐ Seviye ${n+1}'i açar.`],hl:'#worldBtn'});
@@ -9408,6 +9436,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.99.6',t:['Deniz and Ela talk','Deniz ve Ela konuşuyor'],l:[['Level openings are now a short talk: Deniz, the new intern, asks and Ela answers. Tap for the next line, Skip any time.','Seviye açılışları artık kısa bir sohbet: yeni stajyer Deniz soruyor, Ela cevaplıyor. Sonraki satır için dokun, istediğin an Geç.']]},
  {v:'0.99.5',t:['Mode name on the goal strip','Hedef şeridinde mod adı'],l:[['Cozy mode now says its name next to ☕.','Çerezlik mod artık ☕ yanında adını yazıyor.']]},
  {v:'0.99.4',t:['Cozy goals fixed','Çerezlik hedefleri düzeldi'],l:[['In cozy mode a goal no longer asks for a square that is not on the map yet.','Çerezlik modda hedef artık haritada henüz olmayan bir kareyi istemiyor.']]},
  {v:'0.99.3',t:['No arrow to empty ground','Boş yeri gösteren ok yok'],l:[['The yellow guide only points at squares you can see.','Sarı yön oku sadece görünen kareleri gösterir.']]},
@@ -10034,7 +10063,7 @@ let tipT=0;
 function checkTips(dt){tipT+=dt;if(tipT<1)return;tipT=0;const seen=S.tipsSeen||{};const fresh=TIPS.some(x=>x.ok()&&!seen[x.id]);$('infoDot').hidden=!fresh;}
 /* v0.98.2: the Ela button. Everything Ela has explained, level by level up to the level you are on
    (higher levels are not shown at all), plus the tactics you have unlocked. */
-function elaLvLines(n){const s=SEV[n];if(!s)return [];const out=(s.ela||[]).map(b=>tt(b));
+function elaLvLines(n){const s=SEV[n];if(!s)return [];const dq=dlgSeq(n),out=dq?dq.map(x=>`<b>${x.who==='d'?'Deniz':'Ela'}:</b> ${tt(x.b)}`):(s.ela||[]).map(b=>tt(b));
   for(const k of s.k){const f=FEAT.find(x=>x.k===k);if(f)for(const b of f.l)out.push(tt(b));}
   if(s.goal)out.push('🎯 '+tt(s.goal.t));return out;}
 function openEla(){
@@ -11544,7 +11573,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.99.5';
+const GAME_VERSION='0.99.6';
 /* v0.99.0: a free gift every 4 real hours. It waits for you, it never stacks, and it scales with the world. */
 const GIFT_KEY=SAVE_KEY+'_gift',GIFT_MS=4*3600*1000;
 function giftLast(){try{return +localStorage.getItem(GIFT_KEY)||0;}catch(e){return 0;}}
