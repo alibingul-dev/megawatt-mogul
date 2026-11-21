@@ -500,7 +500,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.99.4</div>
+  <div class="t-ver" id="tVer">v0.99.5</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -754,7 +754,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.99.4 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.99.5 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8257,7 +8257,7 @@ function hud(dt){
   $('pnow').textContent='$'+pr.toFixed(1);const l=$('lvl');l.textContent=lv[0];l.style.background=lv[2];
   $('clock').textContent=hh(t);{const se=seasonOf(S.day),w=WEATHER[DAY.weather];$('day').textContent=`${w.icon}${se.icon} ${dateLabel(S.day)}`;$('day').title=`${tt(w.name)} · ${tt(se.name)} · ${L('Company age','Şirket yaşı')}: ${S.day+1}`;}
   const G=progGoalObj()||focusGoal()||goalAt(curGoal());const up=!cozy()&&canLevel();$('goal').className='goal'+(up?' lvlup':'');$('goal').style.display=G&&G.hide?'none':'';
-  const chip=cozy()?`<b class="lvlchip">☕</b> · `:inProg()?`<b class="lvlchip">🎓</b> · `:inClassic()?`<b class="lvlchip">🏛️ ${L('Classic','Klasik')}</b> · `:`<b class="lvlchip">${L('Level','Seviye')} ${sev()}</b> · `;
+  const chip=cozy()?`<b class="lvlchip">☕ ${L('Cozy','Çerezlik')}</b> · `:inProg()?`<b class="lvlchip">🎓</b> · `:inClassic()?`<b class="lvlchip">🏛️ ${L('Classic','Klasik')}</b> · `:`<b class="lvlchip">${L('Level','Seviye')} ${sev()}</b> · `;
   const gp=G&&G.at();const gl=gp&&gp.kind&&!cozy()?padNeedLv(gp):0;
   if(!up&&!cozy()&&prestOk()){$('goal').innerHTML=chip+L(`⭐ Level ${sev()+1} · ${sevName(sev()+1)} can be opened — tap here`,`⭐ Seviye ${sev()+1} · ${sevName(sev()+1)} açılabilir — dokun`);}else
   $('goal').innerHTML=chip+(G?`${tt(G.t)}${gl?` · 🔒 ${L('opens as you grow','büyüdükçe açılır')}`:''}${G.r?`<small>+$${fmt(G.r)}</small>`:''}`:(!cozy()&&!inClassic()&&!inProg()&&(sev()<SEV_MAX||ladGoal())?'🎯 '+ladProgTxt():L('🎯 Grow your empire. More regions coming.','🎯 İmparatorluğunu büyüt. Yeni bölgeler yolda.')));
@@ -9408,6 +9408,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.99.5',t:['Mode name on the goal strip','Hedef şeridinde mod adı'],l:[['Cozy mode now says its name next to ☕.','Çerezlik mod artık ☕ yanında adını yazıyor.']]},
  {v:'0.99.4',t:['Cozy goals fixed','Çerezlik hedefleri düzeldi'],l:[['In cozy mode a goal no longer asks for a square that is not on the map yet.','Çerezlik modda hedef artık haritada henüz olmayan bir kareyi istemiyor.']]},
  {v:'0.99.3',t:['No arrow to empty ground','Boş yeri gösteren ok yok'],l:[['The yellow guide only points at squares you can see.','Sarı yön oku sadece görünen kareleri gösterir.']]},
  {v:'0.99.2',t:['Bigger buttons on a computer','Bilgisayarda büyük butonlar'],l:[['On big screens the top bar, map and side buttons are larger.','Büyük ekranlarda üst şerit, mini harita ve yan butonlar daha büyük.']]},
@@ -11543,7 +11544,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.99.4';
+const GAME_VERSION='0.99.5';
 /* v0.99.0: a free gift every 4 real hours. It waits for you, it never stacks, and it scales with the world. */
 const GIFT_KEY=SAVE_KEY+'_gift',GIFT_MS=4*3600*1000;
 function giftLast(){try{return +localStorage.getItem(GIFT_KEY)||0;}catch(e){return 0;}}

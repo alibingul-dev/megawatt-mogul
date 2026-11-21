@@ -5,7 +5,7 @@
    do not. Everything else is cache-first: those files never change without a
    version bump here. */
 
-const CACHE = 'mwmogul-v0.99.4';
+const CACHE = 'mwmogul-v0.99.5';
 const SHELL = [
   './',
   './index.html',
