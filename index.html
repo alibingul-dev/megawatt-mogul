@@ -498,7 +498,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.98.5</div>
+  <div class="t-ver" id="tVer">v0.98.6</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -752,7 +752,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.98.5 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.98.6 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9395,6 +9395,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.98.6',t:['😈 stays put','😈 yerinde kalıyor'],l:[['From level 2 the 😈 button stays on the left, even after Nightmare is turned off.','2. seviyeden itibaren 😈 butonu, Kâbus kapatıldıktan sonra da solda kalır.']]},
  {v:'0.98.5',t:['Nightmare is easy to stop','Kâbus kolayca durur'],l:[['Turning Nightmare on asks first and says how to stop it.','Kâbus açılmadan önce sorar ve nasıl durdurulacağını söyler.'],['While it runs, 👹 always stays on the left; Turn off ends it.','Açıkken 👹 hep solda kalır; Kapat ile biter.'],['Changing time speed in Settings also ends Nightmare.','Ayarlar\'da zaman hızını değiştirmek de Kâbus\'u bitirir.']]},
  {v:'0.98.4',t:['Report tabs look like buttons','Rapor sekmeleri buton gibi'],l:[['Tabs are outlined pills, no longer the same colour as the boxes below.','Sekmeler artık çerçeveli düğmeler; alttaki kutularla aynı renkte değil.']]},
  {v:'0.98.3',t:['Imbalance follows the production profile','Dengesizlik üretim profiline göre'],l:[['Big plants pay imbalance in proportion to what they produce each hour: no sun at night, no imbalance for solar farms.','Büyük santraller dengesizliği her saat ürettikleri kadar öder: gece güneş yok, güneş tarlasına dengesizlik de yok.']]},
@@ -11131,12 +11132,12 @@ function openCareer(tab){if(tab)carTab=tab;const P=prof();
   const T=[['sum','💼',L('Summary','Özet')],['mg','🎯',L('Goals','Hedefler')],['daily','📈',L('Daily','Günlük')+(dailyDone()?'':' •')],['ach','🏅',L('Badges','Başarım')]];
   $('carTabs').innerHTML=T.map(([k,i,n])=>`<button data-ct="${k}" class="${carTab===k?'on':''}">${i} ${n}</button>`).join('');
   $('carBody').innerHTML=careerHtml();$('mCar').classList.add('on');}
-function careerHud(){try{
+function careerHud(){try{{const d=$('devilBtn');d.hidden=document.body.classList.contains('title')||!playing||inPack()||(!S.nm&&sev()<2&&!DEV_H.some(h=>h.k!=='card'&&h.ok()));if(!d.hidden){d.classList.toggle('nm',!!S.nm);$('cap-dev').textContent=S.nm?L('Nightmare','Kâbus'):L('Chaos','Kaos');}}}catch(e){}
+  try{
   const b=$('careerBtn');b.hidden=document.body.classList.contains('title')||!careerOn();if(!b.hidden){$('cap-car').textContent='+'+holdPct()+'%';$('carDot').hidden=!!dailyDone();}
   const w=hotWin(),e=$('hotC');e.hidden=!w;if(w){const left=Math.max(0,Math.ceil((w.end-hourNow()%24)*HOUR));const m=cmbMult();
     e.textContent=`${w.k==='spike'?L('⚡ SPIKE','⚡ SIÇRAMA'):L('🌆 Peak','🌆 Zirve')} · ${left}${L('s','sn')}${m>1?` · ${L('combo','kombo')} ×${m.toFixed(1)}`:''}`;e.style.background=w.k==='spike'?'#E5A800':'#FF8A3D';}
   {const e2=$('sfkC');let on=false;try{on=ancOn()&&ancUnits()>0&&!inPack();}catch(e){}e2.hidden=!on;if(on)e2.textContent=`⚖️ ${L('Reserve','SFK')} +$${fmt(ancHourly())}/${L('h','sa')}`;}
-  {const d=$('devilBtn');d.hidden=document.body.classList.contains('title')||!playing||inPack()||(!S.nm&&!DEV_H.some(h=>h.k!=='card'&&h.ok()));if(!d.hidden){d.classList.toggle('nm',!!S.nm);$('cap-dev').textContent=S.nm?L('Nightmare','Kâbus'):L('Chaos','Kaos');}}
   const bl=boostLeft(),be=$('boostC');be.hidden=!bl||!careerOn();if(!be.hidden){const s=Math.ceil(bl/1000);be.textContent=`🚀 ×2 · ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
   const ml=$('mgLine'),g=careerOn()&&!tutOpen&&playing?mgBest():null;ml.hidden=!g;if(g){const T=mgDef(g);ml.innerHTML=`${mgText(g)} · <b>${T.k==='earn'?'$'+fmt(g.have)+'/$'+fmt(g.need):Math.floor(g.have)+'/'+g.need}</b> <small>🎁</small>`;}
 }catch(e){}}
@@ -11521,7 +11522,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.98.5';
+const GAME_VERSION='0.98.6';
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
