@@ -500,7 +500,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.99.9</div>
+  <div class="t-ver" id="tVer">v0.99.10</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -755,7 +755,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.99.9 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.99.10 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -6977,7 +6977,7 @@ function onHour(h){
   try{imbalanceHour(h);}catch(e){}
   try{gopHour(h);}catch(e){}
   if(h===23&&S.imbDay){toast(L(`⚖️ Imbalance today: −$${fmt(S.imbDay)}. The battery covered ${S.imbCov||0} hours.`,`⚖️ Bugünkü dengesizlik bedeli: −$${fmt(S.imbDay)}. Batarya ${S.imbCov||0} saati karşıladı.`),'');S.imbDay=0;S.imbCov=0;}
-  if(h===0&&S.nm&&S.nmSince!=null&&S.day-1>=S.nmSince){try{pst('nmDays');}catch(e){}toast(L('👹 A full day in nightmare. Still standing.','👹 Kâbusta tam bir gün. Hâlâ ayaktasın.'),'good');}
+  if(h===0&&S.nm&&S.nmSince!=null&&S.day-1>=S.nmSince){try{pst('nmDays');}catch(e){}toast(L(`👹 Nightmare tightens · day ${nmDays()}`,`👹 Kâbus yoğunlaşıyor · gün ${nmDays()}`),'');}
   if(h===6&&droughtOn())toast(L('🏜️ A dry day: river and dam output is down to 40% today.','🏜️ Kurak gün: akarsu ve baraj üretimi bugün %40’a düştü.'),'');
   {const dw=dumpWin();if(dw&&h===dw[0]-1){sfx.warn();toast(L(`📉 Rivals are dumping energy ${dw[0]}:00–${dw[1]}:00. Prices −45%. Store, don't sell.`,`📉 Rakipler ${dw[0]}:00–${dw[1]}:00 arası enerji boşaltıyor. Fiyatlar −%45. Satma, depola.`),'big');}}
   try{if(bilDue()&&h>=10&&h<=20&&!cardOpen&&!tutOpen){bilMakeOffer();
@@ -9437,6 +9437,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.99.10',t:['Nightmare gets harder','Kâbus zorlaşıyor'],l:[['Every day in Nightmare the problems and cards come 15% faster. Nightmare now opens at level 5.','Kâbus’ta her gün sorunlar ve kartlar %15 daha sık gelir. Kâbus artık Seviye 5’te açılır.']]},
  {v:'0.99.9',t:['Nightmare asks before it ends','Kâbus bitmeden sorar'],l:[['Slowing time down in Nightmare now asks whether to turn it off. The left button shows 👹 while Nightmare is on.','Kâbus’tayken zamanı yavaşlatmak artık kapatmak isteyip istemediğini sorar. Kâbus açıkken soldaki buton 👹 olur.']]},
  {v:'0.99.8',t:['Google Play link','Google Play linki'],l:[['⚙️ Settings › Game now has "Open in Google Play": check for updates in one tap.','⚙️ Ayarlar › Oyun\'da artık "Google Play\'de aç" var: güncellemeye tek dokunuşla bak.']]},
  {v:'0.99.7',t:['Missed deal message','Kaçan anlaşma mesajı'],l:[['The missed-deal message is now in your language, and a $0 charge no longer shows as a red alert.','Kaçan anlaşma mesajı artık senin dilinde; $0 bedel artık kırmızı uyarı olarak çıkmıyor.']]},
@@ -11233,6 +11234,7 @@ const DEV_H=[
 function devHtml(){
   const on=DEV_H.filter(h=>h.ok());
   let x=`<div class="dvRow nmr"><span class="dvI">👹</span><div><b>${L('Nightmare mode','Kâbus modu')}</b><small>${S.nm?L('On. Top speed, problems back to back, cards come faster. Holding ×1.5.','Açık. En yüksek hız, sorunlar ard arda, kartlar daha sık. Holding ×1,5.'):L('Top speed, problems back to back, cards come faster. Holding ×1.5.','En yüksek hız, sorunlar ard arda, kartlar daha sık. Holding ×1,5.')}</small></div><button data-nm="1" class="${S.nm?'pri':''}">${S.nm?L('Turn off','Kapat'):L('Turn on','Aç')}</button></div>`;
+  if(!S.nm&&sev()<NM_LV&&!inClassic()){x=`<div class="dvRow nmr"><span class="dvI">🔒</span><div><b>${L('Nightmare mode','Kâbus modu')}</b><small>${L(`Opens at level ${NM_LV}.`,`Seviye ${NM_LV}’te açılır.`)}</small></div></div>`;nmAsk=false;}
   if(nmAsk&&!S.nm)x+=`<div class="dvRow nmr"><span class="dvI">😈</span><div><b>${L('Sure?','Emin misin?')}</b><small>${L('Nightmare is hard. To stop it later, tap 👹 on the left and press Turn off.','Kâbus zordur. Sonra durdurmak için soldaki 👹 butonuna dokun, Kapat\'a bas.')}</small></div><button data-nmy="1" class="pri">${L('Yes, start','Evet, başlat')}</button><button data-nmc="1">${L('Cancel','Vazgeç')}</button></div>`;
   x+=on.map(h=>`<div class="dvRow"><span class="dvI">${h.i}</span><div><b>${tt(h.n)}</b><small>${tt(h.d)}</small></div><button data-dv="${h.k}">${L('Call','Çağır')}</button></div>`).join('');   /* v0.94.2: only what this level can throw at you */
   return {x,n:on.length};
@@ -11255,6 +11257,11 @@ $('devBody').onclick=e=>{
   setTimeout(()=>{let r=0;try{r=h.go();}catch(err){}if(!r)toast(L('Nothing to hit right now.','Şu an vurulacak hedef yok.'),'');else try{trackOnce('devil-'+h.k);}catch(err){}save();},300);
 };
 let nmT=0,nmCardT=0,nmNext=8,nmCardNext=30;
+/* v0.99.10: Nightmare is not a place to live. Each Nightmare day the pace tightens 15% (floors 3 s / 12 s);
+   from day 3 the 'let them recover' brake waits for half the fleet down instead of a third. Opens at level 5. */
+const NM_LV=5;
+function nmDays(){return Math.max(0,(S.day||0)-(S.nmSince!=null?S.nmSince:(S.day||0)));}
+function nmF(){return Math.pow(0.85,Math.min(nmDays(),12));}
 function nmSet(on){
   if(on){chaosSnapTake();S.nmSpeed=S.speed||1;S.nm=true;S.nmSince=S.day;S.speed=12;nmT=0;nmCardT=0;nmNext=6;nmCardNext=25;sfx.warn();
     toast(L('👹 Nightmare on. To stop: 👹 on the left › Turn off.','👹 Kâbus açık. Durdurmak için: soldaki 👹 › Kapat.'),'big');try{trackOnce('nightmare-on');}catch(e){}}
@@ -11268,11 +11275,11 @@ function nmTick(){
   nmT++;nmCardT++;
   if(nmT>=nmNext){
     const fleet=S.plants.filter(q=>PLANT_TYPES[q.type]&&!isNuke(q)).length,down=S.plants.filter(q=>q.broken).length;
-    const busy=down>=Math.max(1,Math.ceil(fleet/3))||burning().length>=1||(S.batFire||0)>0||!!S.tw;
+    const busy=down>=Math.max(1,Math.ceil(fleet/(nmDays()>=3?2:3)))||burning().length>=1||(S.batFire||0)>0||!!S.tw;
     if(!busy){const pool=DEV_H.filter(h=>h.k!=='card'&&h.k!=='nuke'&&h.ok()&&!(h.k==='heavy'&&Math.random()<0.6)&&!(h.k==='tw'&&Math.random()<0.6)&&!(h.k==='batfire'&&Math.random()<0.7));
       for(let g=0;g<4&&pool.length;g++){const h=pool.splice(Math.floor(Math.random()*pool.length),1)[0];let r=0;try{r=h.go();}catch(e){}if(r)break;}}
-    nmT=0;nmNext=busy?4:9+Math.floor(Math.random()*7);}
-  if(nmCardT>=nmCardNext&&has('cards')){const c=pickCard();if(c)openCard(c);nmCardT=0;nmCardNext=28+Math.floor(Math.random()*15);}
+    nmT=0;nmNext=busy?4:Math.max(3,Math.round((9+Math.random()*7)*nmF()));}
+  if(nmCardT>=nmCardNext&&has('cards')){const c=pickCard();if(c)openCard(c);nmCardT=0;nmCardNext=Math.max(12,Math.round((28+Math.random()*15)*nmF()));}
 }
 setInterval(()=>{try{nmTick();}catch(e){}},1000);
 /* ===================== v0.94 NUCLEAR ACCIDENT =====================
@@ -11582,7 +11589,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.99.9';
+const GAME_VERSION='0.99.10';
 /* v0.99.0: a free gift every 4 real hours. It waits for you, it never stacks, and it scales with the world. */
 const GIFT_KEY=SAVE_KEY+'_gift',GIFT_MS=4*3600*1000;
 function giftLast(){try{return +localStorage.getItem(GIFT_KEY)||0;}catch(e){return 0;}}
