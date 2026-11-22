@@ -397,7 +397,7 @@ body.title .hud,body.title #toasts,body.title .help{visibility:hidden}
 .lk-grid img{width:100%;height:100%;object-fit:contain;display:block}
 .lk-hats{display:flex;justify-content:center;gap:10px;margin-top:14px}
 .lk-hats button{width:40px;height:40px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #CBD3DD}
-.lk-hats button.on{box-shadow:0 0 0 3px var(--bat)}
+.lk-hats button.on{box-shadow:0 0 0 3px var(--bat)}#lkGls{flex-wrap:wrap;align-items:center;gap:8px}#lkGls button{width:34px;height:34px}
 .t-status{color:#fff;font-weight:700;font-size:13px;min-height:18px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
 #diag{font-family:monospace;font-size:12px;max-width:88vw;text-align:left;white-space:pre-wrap;word-break:break-word;background:rgba(0,0,0,.45);color:#fff;padding:8px 10px;border-radius:10px}
 @media (max-height:700px){#tChar{width:104px;height:104px}.t-char{bottom:4%;left:5%;right:auto}.t-bubble{bottom:34px;font-size:12.5px;max-width:min(200px,50vw)}.t-turb{width:78px;right:5%;left:auto}}
@@ -500,7 +500,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.99.10</div>
+  <div class="t-ver" id="tVer">v0.99.11</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -570,6 +570,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
   <p data-i18n="lookSub">Pick your engineer and hard hat. Helpers wear the other outfits.</p>
   <div class="lk-grid" id="lkChars"></div>
   <div class="lk-hats" id="lkHats"></div>
+  <div class="lk-hats" id="lkGls" hidden></div>
   <div class="btns"><button class="pri" id="lkDone" data-i18n="done">Done</button></div>
 </div></div>
 <div class="modal" id="mStart"><div class="sheet">
@@ -755,7 +756,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.99.10 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.99.11 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -7930,7 +7931,7 @@ const CHAR_NAMES=['character-male-e','character-female-d','character-male-c','ch
 const HAT_COLORS=['#FFC83D','#FF8A3D','#F2F4F7','#3E7BFA','#E8364F','#23B26D'];
 function lookOf(i){
   const L=S.look||{char:CHAR_NAMES[0],hat:HAT_COLORS[0]};
-  if(i===0)return{name:L.char,hat:L.hat};
+  if(i===0)return{name:L.char,hat:L.hat,gls:L.gls};
   const pool=CHAR_NAMES.filter(n=>n!==L.char);
   return{name:pool[(i-1)%pool.length],hat:'#FF8A3D'};
 }
@@ -7939,7 +7940,7 @@ function makeChar(i){
   if(!KIT){const p=makePerson(i===0?0x2F7BE0:0x34A853,new THREE.Color(look.hat).getHex());p.scale.setScalar(i===0?1.35:1.25);return p;}
   const src=KIT.chars[look.name]||KIT.chars[CHAR_NAMES[0]];
   const inner=THREE.SkeletonUtils.clone(src.scene);
-  inner.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){o.material=o.isSkinnedMesh?KIT.charMatSkin:KIT.charMat;o.castShadow=true;o.frustumCulled=false;}});
+  inner.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){o.material=charMatFor(o,look.gls);o.castShadow=true;o.frustumCulled=false;}});
   const box=new THREE.Box3().setFromObject(src.scene),H=box.max.y-box.min.y||1;
   const k=(i===0?3.0:2.6)/H;inner.scale.setScalar(k);
   const g=new THREE.Group();g.add(inner);
@@ -9437,6 +9438,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.99.11',t:['Black glasses','Siyah gözlük'],l:[['Engineers with glasses now wear black ones. Pick another colour in Your look.','Gözlüklü mühendisler artık siyah gözlük takıyor. Başka rengi Görünümün penceresinden seçebilirsin.']]},
  {v:'0.99.10',t:['Nightmare gets harder','Kâbus zorlaşıyor'],l:[['Every day in Nightmare the problems and cards come 15% faster. Nightmare now opens at level 5.','Kâbus’ta her gün sorunlar ve kartlar %15 daha sık gelir. Kâbus artık Seviye 5’te açılır.']]},
  {v:'0.99.9',t:['Nightmare asks before it ends','Kâbus bitmeden sorar'],l:[['Slowing time down in Nightmare now asks whether to turn it off. The left button shows 👹 while Nightmare is on.','Kâbus’tayken zamanı yavaşlatmak artık kapatmak isteyip istemediğini sorar. Kâbus açıkken soldaki buton 👹 olur.']]},
  {v:'0.99.8',t:['Google Play link','Google Play linki'],l:[['⚙️ Settings › Game now has "Open in Google Play": check for updates in one tap.','⚙️ Ayarlar › Oyun\'da artık "Google Play\'de aç" var: güncellemeye tek dokunuşla bak.']]},
@@ -10151,7 +10153,7 @@ function makeWaveFrames(){
   if(!KIT)return;
   const look=lookOf(0),src=KIT.chars[look.name]||KIT.chars[CHAR_NAMES[0]];if(!src)return;
   const o=THREE.SkeletonUtils.clone(src.scene);
-  o.traverse(m=>{if(m.isMesh||m.isSkinnedMesh){m.material=m.isSkinnedMesh?KIT.charMatSkin:KIT.charMat;m.frustumCulled=false;}});
+  o.traverse(m=>{if(m.isMesh||m.isSkinnedMesh){m.material=charMatFor(m,look.gls);m.frustumCulled=false;}});
   const mx=new THREE.AnimationMixer(o),clip=THREE.AnimationClip.findByName(src.animations,'idle');
   if(clip)mx.clipAction(clip).play();mx.update(0.4);
   const box=new THREE.Box3().setFromObject(src.scene),h=box.max.y-box.min.y;
@@ -11589,7 +11591,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.99.10';
+const GAME_VERSION='0.99.11';
 /* v0.99.0: a free gift every 4 real hours. It waits for you, it never stacks, and it scales with the world. */
 const GIFT_KEY=SAVE_KEY+'_gift',GIFT_MS=4*3600*1000;
 function giftLast(){try{return +localStorage.getItem(GIFT_KEY)||0;}catch(e){return 0;}}
@@ -11639,9 +11641,39 @@ async function loadKit(){
   kit.charMat=new THREE.MeshToonMaterial({map:ct,gradientMap:grad,emissive:0xffffff,emissiveMap:ct,emissiveIntensity:0.25});
   kit.charMatSkin=new THREE.MeshToonMaterial({map:ct,gradientMap:grad,skinning:true,emissive:0xffffff,emissiveMap:ct,emissiveIntensity:0.25});
   for(const[n,b64]of Object.entries(ASSETS.chars)){const bin=Uint8Array.from(atob(b64),c=>c.charCodeAt(0)).buffer;kit.chars[n]=await parse(bin);}
+  try{glsSplit(kit,ct.image);}catch(e){console.error('glasses',e);}
   return kit;
 }
 
+/* v0.99.11: glasses. The two engineers with glasses (male-a, male-e) wore white lenses
+   baked into the shared colour map. Their head triangles that sample those light blue-white
+   texels move into a second material group, so the glasses take any colour (default black). */
+const GLS_CHARS=['character-male-a','character-male-e'];
+const GLS_COLORS=['#24252B','#F2F4F7','#FFC83D','#E8364F','#3E7BFA','#23B26D'];
+const glsMats={};
+function glsSplit(kit,img){
+  const W=img.width,H=img.height,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const cx=cv.getContext('2d');cx.drawImage(img,0,0);const px=cx.getImageData(0,0,W,H).data;
+  for(const n of GLS_CHARS){
+    const c=kit.chars[n];if(!c)continue;
+    c.scene.traverse(o=>{
+      if(!(o.isMesh||o.isSkinnedMesh)||o.name!=='head-mesh'||!o.geometry.index||o.geometry.userData.gls)return;
+      const g=o.geometry,ix=g.index.array,uv=g.attributes.uv.array,keep=[],gl=[];
+      for(let t=0;t<ix.length;t+=3){
+        let u=0,v=0;for(let k=0;k<3;k++){u+=uv[ix[t+k]*2];v+=uv[ix[t+k]*2+1];}
+        const x=Math.min(W-1,Math.max(0,Math.floor(u/3*W))),y=Math.min(H-1,Math.max(0,Math.floor(v/3*H))),q=(y*W+x)*4;
+        const r=px[q],gg=px[q+1],b=px[q+2];
+        (Math.min(r,gg,b)>=130&&b>=r?gl:keep).push(ix[t],ix[t+1],ix[t+2]);
+      }
+      if(!gl.length)return;
+      const A=ix.constructor,na=new A(keep.length+gl.length);na.set(keep,0);na.set(gl,keep.length);
+      g.setIndex(new THREE.BufferAttribute(na,1));g.clearGroups();
+      g.addGroup(0,keep.length,0);g.addGroup(keep.length,gl.length,1);g.userData.gls=1;
+    });
+  }
+}
+function glsMat(col,skin){const k=col+(skin?'s':'');return glsMats[k]||(glsMats[k]=new THREE.MeshToonMaterial({color:col,gradientMap:grad,skinning:!!skin}));}
+function charMatFor(m,col){const base=m.isSkinnedMesh?KIT.charMatSkin:KIT.charMat;return m.geometry&&m.geometry.userData.gls?[base,glsMat(col||GLS_COLORS[0],m.isSkinnedMesh)]:base;}
 let thumbs={};
 function makeThumbs(){
   if(!KIT)return;
@@ -11654,7 +11686,7 @@ function makeThumbs(){
   for(const n of CHAR_NAMES){
     const src=KIT.chars[n];if(!src)continue;
     const o=THREE.SkeletonUtils.clone(src.scene);
-    o.traverse(m=>{if(m.isMesh||m.isSkinnedMesh){m.material=m.isSkinnedMesh?KIT.charMatSkin:KIT.charMat;m.frustumCulled=false;}});
+    o.traverse(m=>{if(m.isMesh||m.isSkinnedMesh){m.material=charMatFor(m,n===(S.look&&S.look.char)?S.look.gls:0);m.frustumCulled=false;}});
     const mx=new THREE.AnimationMixer(o);mx.clipAction(THREE.AnimationClip.findByName(src.animations,'idle')).play();mx.update(0.3);
     const b=new THREE.Box3().setFromObject(src.scene),h=b.max.y-b.min.y;
     tsc.add(o);cam.position.set(0,h*0.62,h*2.1);cam.lookAt(0,h*0.5,0);
@@ -11671,8 +11703,11 @@ function openLook(){
   $('lkChars').innerHTML=CHAR_NAMES.filter(n=>KIT&&KIT.chars[n]).map((n,i)=>`<button data-c="${n}" class="${n===LK.char?'on':''}" aria-label="Engineer ${i+1}"><img src="${thumbs[n]||''}" alt=""></button>`).join('')||'<p>Looks need the 3D models, which did not load.</p>';
   $('lkHats').innerHTML=HAT_COLORS.map(c=>`<button data-h="${c}" style="background:${c}" class="${c===LK.hat?'on':''}" aria-label="Hat color"></button>`).join('')
     +EXTRA_HATS.map(x=>{const own=prof().hats.includes(x.c);return `<button data-h="${x.c}" ${own?'':'data-lock="1"'} style="background:${x.c};${own?'':'opacity:.35'}" class="${x.c===LK.hat?'on':''}" aria-label="Special hat">${own?'':'🔒'}</button>`;}).join('');
+  const gOn=GLS_CHARS.includes(LK.char)&&KIT;$('lkGls').hidden=!gOn;
+  if(gOn){const cur=LK.gls||GLS_COLORS[0];$('lkGls').innerHTML=`<span style="font-weight:600;margin-right:6px">${L('👓 Glasses','👓 Gözlük')}</span>`+GLS_COLORS.map(c=>`<button data-g="${c}" style="background:${c}" class="${c===cur?'on':''}" aria-label="${L('Glasses colour','Gözlük rengi')}"></button>`).join('');}
   $('mLook').classList.add('on');
 }
+$('lkGls').addEventListener('click',e=>{const b=e.target.closest('button[data-g]');if(!b)return;S.look=Object.assign({char:CHAR_NAMES[0],hat:HAT_COLORS[0]},S.look||{},{gls:b.dataset.g});applyLook();try{makeThumbs();}catch(er){}openLook();sfx.pick();});
 function applyLook(){
   trackOnce('changed-look');
   if(!player)return;
