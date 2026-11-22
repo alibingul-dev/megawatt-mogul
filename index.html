@@ -500,7 +500,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.99.8</div>
+  <div class="t-ver" id="tVer">v0.99.9</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -755,7 +755,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.99.8 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.99.9 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -8684,7 +8684,7 @@ function openCard(c0){
   /* v0.92.2: the levels card can be closed from its corner */
   {const cx=$('cardX');if(cx){cx.hidden=c.id!=='worlds'&&c.id!=='adm'&&c.id!=='kgres';cx.onclick=e=>{e.stopPropagation();$('mCard').classList.remove('on');cardOpen=false;last=0;};}}
   $('cardOpts').innerHTML=opts.map((o,i)=>{const no=o.cost>0&&o.cost>S.cash;return `<button data-o="${i}" ${no?'disabled':''}><b>${tt(o.t)}</b><small>${tt(o.d)}</small>${no?`<span class="nomoney">${L('Not enough money','Yeterli para yok')} · 👛 $${fmt(S.cash)}</span>`:''}</button>`;}).join('');
-  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','adm','gop','kgup','kgres','prestige','rate','quiz','svc','progexit','streak','exit'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
+  $('cardOpts').onclick=e=>{const b=e.target.closest('button[data-o]');if(!b||b.disabled)return;const k=+b.dataset.o,o=opts[k];o.go();if(!['worlds','adm','gop','kgup','kgres','nmoff','prestige','rate','quiz','svc','progexit','streak','exit'].includes(c.id))S.stats.cardsN=(S.stats.cardsN||0)+1;
     S.cardPrefs=S.cardPrefs||{};S.cardPrefs[c.id]=k;logLedger('card',-(o.cost||0),c.id+':'+k);track('card-'+c.id+'-'+k);
     $('mCard').classList.remove('on');cardOpen=false;curCardId=null;last=0;if(c.id!=='exit'){sfx.goal();toast(`${c.icon} ${tt(o.t)}`,'good');}save();};
   $('mCard').classList.add('on');
@@ -9437,6 +9437,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.99.9',t:['Nightmare asks before it ends','Kâbus bitmeden sorar'],l:[['Slowing time down in Nightmare now asks whether to turn it off. The left button shows 👹 while Nightmare is on.','Kâbus’tayken zamanı yavaşlatmak artık kapatmak isteyip istemediğini sorar. Kâbus açıkken soldaki buton 👹 olur.']]},
  {v:'0.99.8',t:['Google Play link','Google Play linki'],l:[['⚙️ Settings › Game now has "Open in Google Play": check for updates in one tap.','⚙️ Ayarlar › Oyun\'da artık "Google Play\'de aç" var: güncellemeye tek dokunuşla bak.']]},
  {v:'0.99.7',t:['Missed deal message','Kaçan anlaşma mesajı'],l:[['The missed-deal message is now in your language, and a $0 charge no longer shows as a red alert.','Kaçan anlaşma mesajı artık senin dilinde; $0 bedel artık kırmızı uyarı olarak çıkmıyor.']]},
  {v:'0.99.6',t:['Deniz and Ela talk','Deniz ve Ela konuşuyor'],l:[['Level openings are now a short talk: Deniz, the new intern, asks and Ela answers. Tap for the next line, Skip any time.','Seviye açılışları artık kısa bir sohbet: yeni stajyer Deniz soruyor, Ela cevaplıyor. Sonraki satır için dokun, istediğin an Geç.']]},
@@ -10762,7 +10763,11 @@ $('sMode').onclick=()=>{
   S.mode=to;cozyGuard();syncSet();save();
   toast(L(`Now playing ${t}.`,`Art\u0131k ${t} modundas\u0131n.`),'good');
 };
-$('sSpeed').onclick=()=>{if(S.nm){nmSet(false);return;}S.speed=S.speed===1?4:S.speed===4?12:1;syncSet();};
+function nmOffCard(){return {id:'nmoff',icon:'👹',ok:()=>false,safe:1,title:['Turn Nightmare off?','Kâbus modu kapatılsın mı?'],
+  text:['Nightmare runs at ×12. Slowing down ends it.','Kâbus ×12 hızda çalışır. Yavaşlatmak Kâbus’u bitirir.'],
+  opts:()=>[O('Keep Nightmare','Kâbus devam etsin','Stay at ×12.','×12’de kal.',0,NOOP),O('Turn it off','Kapat','Back to your normal speed.','Normal hızına dön.',0,()=>nmSet(false))]};}
+$('sSpeed').onclick=()=>{if(S.nm){$('mSet').classList.remove('on');openCard(nmOffCard());return;}   // v0.99.9: slowing down asks before ending Nightmare
+S.speed=S.speed===1?4:S.speed===4?12:1;syncSet();};
 /* KVKK: say what is kept, and let anyone erase it without asking a human */
 function syncVol(){
   const a=Math.round(sfxVol()*100),b=Math.round(musVol()*100);
@@ -11186,7 +11191,7 @@ function openCareer(tab){if(tab)carTab=tab;const P=prof();
   const T=[['sum','💼',L('Summary','Özet')],['mg','🎯',L('Goals','Hedefler')],['daily','📈',L('Daily','Günlük')+(dailyDone()?'':' •')],['ach','🏅',L('Badges','Başarım')]];
   $('carTabs').innerHTML=T.map(([k,i,n])=>`<button data-ct="${k}" class="${carTab===k?'on':''}">${i} ${n}</button>`).join('');
   $('carBody').innerHTML=careerHtml();$('mCar').classList.add('on');}
-function careerHud(){try{{const d=$('devilBtn');d.hidden=document.body.classList.contains('title')||!playing||inPack()||(!S.nm&&sev()<2&&!DEV_H.some(h=>h.k!=='card'&&h.ok()));if(!d.hidden){d.classList.toggle('nm',!!S.nm);$('cap-dev').textContent=S.nm?L('Nightmare','Kâbus'):L('Chaos','Kaos');}}}catch(e){}
+function careerHud(){try{{const d=$('devilBtn');d.hidden=document.body.classList.contains('title')||!playing||inPack()||(!S.nm&&sev()<2&&!DEV_H.some(h=>h.k!=='card'&&h.ok()));if(!d.hidden){d.classList.toggle('nm',!!S.nm);d.firstElementChild.textContent=S.nm?'👹':'😈';$('cap-dev').textContent=S.nm?L('Nightmare','Kâbus'):L('Chaos','Kaos');}}}catch(e){}
   try{
   const b=$('careerBtn');b.hidden=document.body.classList.contains('title')||!careerOn();if(!b.hidden){$('cap-car').textContent='+'+holdPct()+'%';$('carDot').hidden=!!dailyDone();}
   const w=hotWin(),e=$('hotC');e.hidden=!w;if(w){const left=Math.max(0,Math.ceil((w.end-hourNow()%24)*HOUR));const m=cmbMult();
@@ -11228,7 +11233,7 @@ const DEV_H=[
 function devHtml(){
   const on=DEV_H.filter(h=>h.ok());
   let x=`<div class="dvRow nmr"><span class="dvI">👹</span><div><b>${L('Nightmare mode','Kâbus modu')}</b><small>${S.nm?L('On. Top speed, problems back to back, cards come faster. Holding ×1.5.','Açık. En yüksek hız, sorunlar ard arda, kartlar daha sık. Holding ×1,5.'):L('Top speed, problems back to back, cards come faster. Holding ×1.5.','En yüksek hız, sorunlar ard arda, kartlar daha sık. Holding ×1,5.')}</small></div><button data-nm="1" class="${S.nm?'pri':''}">${S.nm?L('Turn off','Kapat'):L('Turn on','Aç')}</button></div>`;
-  if(nmAsk&&!S.nm)x+=`<div class="dvRow nmr"><span class="dvI">⚠️</span><div><b>${L('Sure?','Emin misin?')}</b><small>${L('Nightmare is hard. To stop it later, tap 👹 on the left and press Turn off.','Kâbus zordur. Sonra durdurmak için soldaki 👹 butonuna dokun, Kapat\'a bas.')}</small></div><button data-nmy="1" class="pri">${L('Yes, start','Evet, başlat')}</button><button data-nmc="1">${L('Cancel','Vazgeç')}</button></div>`;
+  if(nmAsk&&!S.nm)x+=`<div class="dvRow nmr"><span class="dvI">😈</span><div><b>${L('Sure?','Emin misin?')}</b><small>${L('Nightmare is hard. To stop it later, tap 👹 on the left and press Turn off.','Kâbus zordur. Sonra durdurmak için soldaki 👹 butonuna dokun, Kapat\'a bas.')}</small></div><button data-nmy="1" class="pri">${L('Yes, start','Evet, başlat')}</button><button data-nmc="1">${L('Cancel','Vazgeç')}</button></div>`;
   x+=on.map(h=>`<div class="dvRow"><span class="dvI">${h.i}</span><div><b>${tt(h.n)}</b><small>${tt(h.d)}</small></div><button data-dv="${h.k}">${L('Call','Çağır')}</button></div>`).join('');   /* v0.94.2: only what this level can throw at you */
   return {x,n:on.length};
 }
@@ -11577,7 +11582,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.99.8';
+const GAME_VERSION='0.99.9';
 /* v0.99.0: a free gift every 4 real hours. It waits for you, it never stacks, and it scales with the world. */
 const GIFT_KEY=SAVE_KEY+'_gift',GIFT_MS=4*3600*1000;
 function giftLast(){try{return +localStorage.getItem(GIFT_KEY)||0;}catch(e){return 0;}}
@@ -11595,7 +11600,7 @@ try{const vs=document.createElement('div');vs.id='verStamp';vs.textContent='v'+G
   vs.style.cssText='position:fixed;left:6px;bottom:calc(4px + env(safe-area-inset-bottom,0px));font:600 10px/1 system-ui,sans-serif;color:rgba(255,255,255,.75);text-shadow:0 0 2px rgba(0,0,0,.8);pointer-events:none;z-index:9999';
   document.body.appendChild(vs);}catch(e){}
 /* v0.98.7: the 😈 button re-checks itself every second, even if a HUD frame fails before reaching it */
-setInterval(()=>{try{const d=$('devilBtn');if(!d||!playing)return;const hide=document.body.classList.contains('title')||inPack()||(!S.nm&&sev()<2&&!DEV_H.some(h=>h.k!=='card'&&h.ok()));if(d.hidden!==hide)d.hidden=hide;}catch(e){}},1000);
+setInterval(()=>{try{const d=$('devilBtn');if(!d||!playing)return;const hide=document.body.classList.contains('title')||inPack()||(!S.nm&&sev()<2&&!DEV_H.some(h=>h.k!=='card'&&h.ok()));if(d.hidden!==hide)d.hidden=hide;const ic=S.nm?'👹':'😈';if(d.firstElementChild.textContent!==ic)d.firstElementChild.textContent=ic;}catch(e){}},1000);
 function cmpVer(a,b){const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);
   for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d<0?-1:1;}return 0;}
 /* ledger: a compact history of what was earned and spent */
