@@ -500,7 +500,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <div id="diag" hidden></div>
   </div>
   <div class="t-char" id="tCharWrap" hidden><div class="t-bubble" id="tJoke" hidden></div><img id="tChar" alt="Your engineer" tabindex="0"></div>
-  <div class="t-ver" id="tVer">v0.99.7</div>
+  <div class="t-ver" id="tVer">v0.99.8</div>
   <div class="t-credit">Baseload Games · Trees by KayKit · Characters by Kenney</div>
 </div>
 <canvas id="gl" aria-label="Game map. Drag anywhere to move."></canvas>
@@ -720,6 +720,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button id="sPrest" hidden>⭐ Rebuild</button>
     <button id="sWorlds" hidden>⭐ Levels</button>
     <button id="sAdm" hidden>🛠️ Admin</button>
+    <button id="sPlay">🛒 Open in Google Play</button>
     <button id="sRate">⭐ Write a review on Play</button>
     <button id="sShare">📤 Share my score card</button>
     <button id="sShareApp">📲 Share the game</button>
@@ -754,7 +755,7 @@ v0.innerHTML='<div class="lv-card"><div class="lv-t"></div><div class="lv-s">…
     <button class="danger" id="sWipe">Reset the whole game</button>
     <button class="pri setback">‹ Back</button>
   </div>
-  <p style="margin-top:10px">Megawatt Mogul v0.99.7 · Baseload Games<br>
+  <p style="margin-top:10px">Megawatt Mogul v0.99.8 · Baseload Games<br>
   3D: three.js (MIT). Trees: KayKit (CC0). Characters: Kenney (CC0).<br>
   Fonts: Fredoka, Lilita One, Nunito — SIL Open Font License 1.1.<br>Music: Baseload Games.<br>
   Full licence texts are in the page source. Progress saves on this device.</p>
@@ -9436,6 +9437,7 @@ function repTabsDraw(){const pg=[[1,L('Finance','Finans')]];if(has('report2'))pg
 
 /* ======================= PATCH NOTES ======================= */
 const CHANGELOG=[
+ {v:'0.99.8',t:['Google Play link','Google Play linki'],l:[['⚙️ Settings › Game now has "Open in Google Play": check for updates in one tap.','⚙️ Ayarlar › Oyun\'da artık "Google Play\'de aç" var: güncellemeye tek dokunuşla bak.']]},
  {v:'0.99.7',t:['Missed deal message','Kaçan anlaşma mesajı'],l:[['The missed-deal message is now in your language, and a $0 charge no longer shows as a red alert.','Kaçan anlaşma mesajı artık senin dilinde; $0 bedel artık kırmızı uyarı olarak çıkmıyor.']]},
  {v:'0.99.6',t:['Deniz and Ela talk','Deniz ve Ela konuşuyor'],l:[['Level openings are now a short talk: Deniz, the new intern, asks and Ela answers. Tap for the next line, Skip any time.','Seviye açılışları artık kısa bir sohbet: yeni stajyer Deniz soruyor, Ela cevaplıyor. Sonraki satır için dokun, istediğin an Geç.']]},
  {v:'0.99.5',t:['Mode name on the goal strip','Hedef şeridinde mod adı'],l:[['Cozy mode now says its name next to ☕.','Çerezlik mod artık ☕ yanında adını yazıyor.']]},
@@ -10725,7 +10727,7 @@ function drawEarnChart(cv,pts){
 }
 
 /* ======================= SETTINGS ======================= */
-function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');$('sShareApp').textContent=L('📲 Share the game','📲 Oyunu paylaş');$('sTg').textContent=L('💬 Telegram community','💬 Telegram topluluğu');$('sExit').textContent=L('Ask before leaving: ','Çıkmadan önce sor: ')+((typeof exitAskOff==='function'&&exitAskOff())?L('off','kapalı'):L('on','açık'));{const a=$('sAdm');if(a){a.hidden=!isAdm();a.textContent='🛠️ Admin'+(S.adm?' · '+L('test level','test seviyesi'):'');}}{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
+function syncSet(){{const b=$('sPrest');b.hidden=!prestOk()&&!S.prest;$('sRate').textContent=L('⭐ Write a review on Play','⭐ Play\'de yorum yaz');$('sPlay').textContent=L('🛒 Open in Google Play','🛒 Google Play\'de aç');$('sShare').textContent=L('📤 Share my score card','📤 Skor kartımı paylaş');$('sShareApp').textContent=L('📲 Share the game','📲 Oyunu paylaş');$('sTg').textContent=L('💬 Telegram community','💬 Telegram topluluğu');$('sExit').textContent=L('Ask before leaving: ','Çıkmadan önce sor: ')+((typeof exitAskOff==='function'&&exitAskOff())?L('off','kapalı'):L('on','açık'));{const a=$('sAdm');if(a){a.hidden=!isAdm();a.textContent='🛠️ Admin'+(S.adm?' · '+L('test level','test seviyesi'):'');}}{const w=$('sWorlds');w.hidden=cozy()||worldMax()<1;w.textContent=`⭐ ${L('Levels','Seviyeler')} · 1–${worldMax()+1}`;}b.disabled=!prestOk();b.hidden=b.hidden||sev()>=SEV_MAX;b.textContent=`⭐ ${L('Open level','Seviye aç')} ${sev()+1}`+(prestOk()?'':` (⚛️ N1)`);}
   $('sQuip').textContent=L('Crew comments: ','Ekip yorumları: ')+(S.quipOff?L('off','kapalı'):L('on','açık'));
   $('sNotif').textContent=L('Daily report: ','Günlük rapor: ')+(S.notif?L('on','açık'):L('off','kapalı'));$('sRestore').textContent=L('Restore a backup','Yedeği geri yükle');$('sFlash').textContent=L('Flashes: ','Parlamalar: ')+(S.lowFlash?L('reduced','azaltılmış'):L('on','açık'));$('sSound').textContent=L('Sound: ','Ses: ')+(S.muted?L('off','kapalı'):L('on','açık'));$('sMusic').textContent=L('Music: ','Müzik: ')+(S.music===false?L('off','kapalı'):L('on','açık'));try{syncVol();}catch(e){}$('sFx').textContent=L('Event scenes: ','Olay sahneleri: ')+(S.fxOff?L('off','kapalı'):L('on','açık'));$('sShadow').textContent=L('Shadows: ','Gölgeler: ')+(S.shadows?L('on','açık'):L('off (faster)','kapalı (daha hızlı)'));$('sSpeed').textContent=L('Time speed: ','Zaman hızı: ')+(S.speed===1?L('normal','normal'):'×'+S.speed+L(' (test)',' (test)'));$('sUI').textContent=L('Panel size: ','Panel boyutu: ')+Math.round(uiScale()*100)+'%';$('sMode').textContent=L('Mode: ','Mod: ')+modeText(S.mode||'pro')[0];$('sCode').textContent='🔑 '+L('Enter a code','Kod gir');$('sWipe').textContent=L('Reset the whole game','Bütün oyunu sıfırla');$('sLearn').textContent='📚 '+L('What you have learned','Öğrendiklerin');$('sOnb').textContent='🎓 '+(S.prog?tt((PROGRAMS.find(x=>x.id===S.prog)||{name:['Program','Program']}).name):L('Orientation · Part 1','Oryantasyon · Bölüm 1'));try{syncProgBtn();}catch(e){}$('newsLbl').textContent=L("What's new",'Yenilikler');applyLang();}
 const SETPAGE={game:['setGame',['🎮','Game','Oyun'],['Language, look, tutorial, speed','Dil, görünüş, rehber, hız']],
@@ -11511,6 +11513,7 @@ const TG_URL='https://t.me/megawattmogul';
 $('sTg').onclick=()=>{$('mSet').classList.remove('on');try{window.open(TG_URL,'_blank');}catch(e){location.href=TG_URL;}};
 /* v0.96.1: in the app, the review card uses Play's own in-app review sheet (falls back to the Play page) */
 function askReview(){if(window.MMAndroid&&MMAndroid.review){try{MMAndroid.review();return;}catch(e){}}openPlayPage();}
+$('sPlay').onclick=()=>{$('mSet').classList.remove('on');try{if(window.MMAndroid)location.href=PLAY_URL;else window.open(PLAY_URL,'_blank');}catch(e){}};   // v0.99.8: store page, for updates
 $('sRate').onclick=()=>{$('mSet').classList.remove('on');openPlayPage();};
 $('worldBtn').onclick=()=>{trackOnce('world-btn');openCard(worldMax()>=1?worldsCard():prestCard());};
 /* ---- daily report notification: nothing leaves the phone. The game leaves a one-line
@@ -11574,7 +11577,7 @@ $('sWipe').onclick=()=>{if(confirm(L('Reset the whole game? Every level, your Cl
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const gap=(Date.now()-S.lastSave)/1000;if(playing&&gap>=60)offline(gap);last=0;}});
 
 /* ======================= VERSION AND LEDGER ======================= */
-const GAME_VERSION='0.99.7';
+const GAME_VERSION='0.99.8';
 /* v0.99.0: a free gift every 4 real hours. It waits for you, it never stacks, and it scales with the world. */
 const GIFT_KEY=SAVE_KEY+'_gift',GIFT_MS=4*3600*1000;
 function giftLast(){try{return +localStorage.getItem(GIFT_KEY)||0;}catch(e){return 0;}}
